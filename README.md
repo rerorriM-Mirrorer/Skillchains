@@ -16,6 +16,9 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 - Tracks a separate Magic Burst window only after a successful skillchain. A completed/closed chain can continue showing its MB timer.
 - Shows **all compatible character-learned** weapon skills, Scholar Immanence spells, Blue Magic, or applicable pet abilities, grouped by **resulting** skillchain and sorted by level. TP, recast, and other immediate execution prerequisites are **not** checked.
 - Keeps its own draggable learning panel separate from the resonance bars.
+  The list is bottom-anchored so additional compatible actions extend **upward**.
+  Learn mode shows compact `Result: Action` groups, sorted by skillchain
+  level internally but without level or step headings.
 - Displays the target's **currently resonating skillchain properties** just below
   the SC bar in smaller EnemyBar2-style Arial bold italic text with a dark stroke.
   The first WS shows all its properties (for example, Liquefaction, Detonation);
@@ -24,6 +27,9 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
   and is hidden with the SC bar or in Minimal mode. It can independently
   display full names, 3-letter labels, or nothing; the text stays white with
   a black outline until skillchain-level colors are deliberately selected.
+  The SC name caption includes a live `x.xs` expiration countdown. When the
+  separate MB bar is enabled, it reads `Magic Burst: x.xs`. Minimal remains
+  completely bars-only.
 - Does not auto-detect magic jobs, simulate skillchains, or use Japanese terminology.
 
 The color stops are **provisional** approximations, not colors sampled from FFXI effects.
@@ -59,13 +65,13 @@ source-directory name and is **not** the recommended installation package.
 | `//sc display sc` | Skillchain resonance only (**default**) |
 | `//sc display mb` | Magic Burst only |
 | `//sc display both` | Two independent windows |
-| `//sc mode learn` | Full grouped compatible action list (**default**) |
-| `//sc mode compact` | Property text and timers, no action list |
+| `//sc mode learn` | All learned compatible actions as `Light: Savage Blade` etc.; higher-level results first (**default**) |
+| `//sc mode compact` | Short standalone timer summary; bar captions retain property names and live timers |
 | `//sc mode minimal` | Bars only |
 | `//sc names full` | Full property names below SC bar (**default**) |
 | `//sc names short` | Three-letter properties separated by ` / ` |
 | `//sc names off` | Hide attached property caption in Learn/Compact too |
-| `//sc names offset 0 -4` | Move caption relative to the bar: X, Y pixels; negative Y moves upward. Omit values to report current offset. |
+| `//sc names offset 0 -11` | Position captions relative to their bars: X, Y pixels. Default is `0 -11`; omit values to report. |
 | `//sc edit` or `//sc edit on/off` | Drag the bar and learning panel; automatically recovers off-screen positions |
 | `//sc center` | Center both UI objects within the current client's viewport |
 | `//sc pos 200 450` | Set a precise bar position (clamped to the current viewport) |
@@ -98,8 +104,8 @@ The UI creates only its own objects, and disappears outside a tracked target's
 active window. It does not need EnemyBar2 to run.
 
 For a little overlap between the property names and the bottom of the resonance
-bar, try `//sc names offset 0 -4`. This is saved per character and follows the
-bar when moved or scaled; `//sc default` resets the offset to `0 0`. The first
+bar, try `//sc names offset 0 -11` (now the default). This is saved per character and follows the
+bar when moved or scaled; `//sc default` resets the offset to `0 -11`. The first
 number is horizontal adjustment and the second vertical adjustment. If Magic
 Burst is displayed too, a positive Y offset reserves extra clearance.
 
@@ -111,6 +117,22 @@ Resonance UI testing changes authored by A (Awake) with user-directed design.
 Existing upstream notices in the Lua source files remain intact.
 
 ## Changelog (cumulative)
+
+### 2026-10-13 — resonance.5 test: upward learning list and bar timers
+- Move the SC BAR edit drag handle farther above the bar so it no longer
+  covers the gradient during appearance review. Preserve dragging.
+- Set the default property-name offset to `0 -11` per user in-game preference;
+  `//sc default` restores that value without changing saved custom offsets
+  unless a reset is explicitly requested.
+- Attach live `x.xs` countdowns to property names on the SC bar and a separate
+  `Magic Burst: x.xs` caption to the MB bar. Minimal still shows only bars.
+- Remove the redundant step/availability headings from Learn mode; show
+  `Light: Savage Blade`-style groups sorted by resulting level, with all
+  learned compatible actions retained.
+- Save the learning panel's bottom edge when dragged, so new rows expand
+  upward. Cache measured text height for smoother multibox rendering.
+- Leave the dark learning-panel background and more transparent bar tracks
+  unchanged pending visual review. New behavior requires live verification.
 
 ### 2026-10-13 — v0.1.2 property-caption offset (resonance.4)
 - Add `//sc names offset <x> <y>` for independent, persistent property-label
