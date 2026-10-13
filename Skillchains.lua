@@ -49,6 +49,8 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- client; //sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
     mode='learn', display='sc', names='full', scale=1,
+    -- Text offsets are relative to the SC bar, not absolute screen coordinates.
+    name_offset={x=0,y=0},
     bar={x=466,y=696,width=310},
     list={x=465,y=300},
 }
@@ -458,14 +460,28 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message('Mode set to '..option..'.')
     elseif cmd=='names' then
-        if option~='full' and option~='short' and option~='off' then
+        if option=='offset' then
+            local offset=opts.name_offset
+            local x,y=tonumber(args[2]),tonumber(args[3])
+            if not x or not y then
+                message(('Name offset: %d, %d. Use //sc names offset <x> <y>.'):format(
+                    offset.x,offset.y))
+                return
+            end
+            -- Restrict extremes while allowing text to slightly overlap
+            -- the bar or move below it for small-screen arrangements.
+            offset.x=math.floor(math.max(-200,math.min(200,x))+.5)
+            offset.y=math.floor(math.max(-100,math.min(100,y))+.5)
+            config.save(settings)
+            message(('Name offset set to %d, %d pixels.'):format(offset.x,offset.y))
+        elseif option=='full' or option=='short' or option=='off' then
+            opts.names=option
+            config.save(settings)
+            message('Property labels set to '..option..'.')
+        else
             message('Property labels: '..(opts.names or 'full')..
-                '. Use full, short, or off.')
-            return
+                '. Use full, short, off, or offset <x> <y>.')
         end
-        opts.names=option
-        config.save(settings)
-        message('Property labels set to '..option..'.')
     elseif cmd=='center' then
         overlay:center()
         config.save(settings)
@@ -514,6 +530,7 @@ windower.register_event('addon command', function(cmd, ...)
         message('Bar width set to '..opts.bar.width..'.')
     elseif cmd=='default' then
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
+        opts.name_offset.x,opts.name_offset.y=0,0
         opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
         opts.list.x,opts.list.y=465,300
         overlay:scale(1)
@@ -544,7 +561,7 @@ windower.register_event('addon command', function(cmd, ...)
             opts.scale,opts.bar.width,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off; edit [on|off]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; edit [on|off]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
