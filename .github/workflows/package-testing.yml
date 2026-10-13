@@ -35,7 +35,7 @@ jobs:
       - name: Publish installation-ready ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-v0.1.2-test
+          name: Skillchains-resonance.5-test
           path: dist/package_content/
           if-no-files-found: error
           retention-days: 30
