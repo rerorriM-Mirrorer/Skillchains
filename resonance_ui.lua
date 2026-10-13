@@ -11,6 +11,17 @@ local elements = {
 }
 local fallback = {185,171,204}
 local segments = 24
+local abbreviations = {
+    Liquefaction='LQF', Induration='IND', Detonation='DET', Scission='SCI',
+    Impaction='IMP', Reverberation='RVB', Transfixion='TRN', Compression='COM',
+    Fusion='FUS', Fragmentation='FRG', Distortion='DST', Gravitation='GRV',
+    Light='LGT', Darkness='DRK', Radiance='RAD', Umbra='UMB',
+}
+local function viewport()
+    local size=windower.get_windower_settings() or {}
+    return size.ui_x_res or size.x_res or 1280,
+        size.ui_y_res or size.y_res or 720
+end
 
 local function clamp(v, lo, hi)
     return math.max(lo, math.min(hi, v))
@@ -77,10 +88,12 @@ end
 
 -- The currently reverberating properties belong visually to the target.
 -- Render every opening WS property; replace with the successful chain result.
-local function properties_label(properties, width, text_object)
+local function properties_label(properties, width, text_object, form)
     local lines, current = {}, ''
-    for _,name in ipairs(properties or {}) do
-        local next_line = current == '' and name or (current .. ', ' .. name)
+    for _,original in ipairs(properties or {}) do
+        local name=form=='short' and (abbreviations[original] or original) or original
+        local joiner=form=='short' and ' / ' or ', '
+        local next_line = current == '' and name or (current .. joiner .. name)
         text_object:text(next_line)
         local measured = text_object:extents()
         if current ~= '' and measured > width then
@@ -96,8 +109,9 @@ end
 
 local function format_list(state, show_sc, show_mb)
     local output = {}
-    local property = table.concat(state.active or {}, ', ')
-    output[#output+1] = property .. '  |  Step ' .. tostring(state.step or 1)
+    -- The active property has its own caption attached to the SC bar.
+    -- Do not repeat that name on the detachable learning panel.
+    output[#output+1] = 'Step ' .. tostring(state.step or 1)
     if show_sc and state.sc_left > 0 and not state.closed then
         output[#output+1] = 'AVAILABLE SKILLCHAINS'
         local groups = state.groups or {}
@@ -129,10 +143,22 @@ function ui.new(settings, sc_info)
     local self = {options=settings, sc_info=sc_info, editing=false, names={}}
     local prefix = 'sc_resonance_'
     for _,kind in ipairs({'sc','mb'}) do
-        self.names[kind] = {frame=prefix..kind..'_frame',base=prefix..kind..'_base',slices={}}
+        self.names[kind] = {
+            frame=prefix..kind..'_frame', base=prefix..kind..'_base',
+            cap_l=prefix..kind..'_cap_l', cap_r=prefix..kind..'_cap_r',
+            fill_l=prefix..kind..'_fill_l', fill_r=prefix..kind..'_fill_r',
+            slices={},
+        }
         local bar=self.names[kind]
-        create_prim(bar.frame,190,10,10,27)
-        create_prim(bar.base,135,42,44,66)
+        -- At a 5px bar height, omitting one pixel in each corner is enough
+        -- to suggest a capsule without texture assets or antialiasing.
+        -- The underlying tracks are darker and somewhat transparent.
+        create_prim(bar.frame,180,9,10,21)
+        create_prim(bar.cap_l,180,9,10,21)
+        create_prim(bar.cap_r,180,9,10,21)
+        create_prim(bar.base,115,18,21,39)
+        create_prim(bar.fill_l,220,200,190,220)
+        create_prim(bar.fill_r,220,200,190,220)
         for i=1,segments do
             local id=prefix..kind..'_'..i
             create_prim(id,220,200,190,220)
@@ -162,13 +188,20 @@ function ui.new(settings, sc_info)
     self.panel:hide()
     self.properties:hide()
 
+    function self:hide_bar(kind)
+        local bar=self.names[kind]
+        for _,id in ipairs({bar.frame,bar.base,bar.cap_l,bar.cap_r,
+            bar.fill_l,bar.fill_r}) do
+            windower.prim.set_visibility(id,false)
+        end
+        for i=1,segments do
+            windower.prim.set_visibility(bar.slices[i],false)
+        end
+    end
+
     function self:hide_bars()
         self.properties:hide()
-        for _,bar in pairs(self.names) do
-            windower.prim.set_visibility(bar.frame,false)
-            windower.prim.set_visibility(bar.base,false)
-            for i=1,segments do windower.prim.set_visibility(bar.slices[i],false) end
-        end
+        for kind in pairs(self.names) do self:hide_bar(kind) end
     end
 
     function self:hide()
@@ -185,32 +218,61 @@ function ui.new(settings, sc_info)
     function self:draw_bar(kind, y, fraction, waiting, palette_stops)
         local bar=self.names[kind]
         local opts=self.options
-        local scale=opts.scale
         local x=math.floor(opts.bar.x+.5)
         local width=math.max(24,math.floor(opts.bar.width+.5))
-        local height=math.max(3,math.floor(5*scale+.5))
-        local remaining=clamp(fraction,0,1)
-        local usable=width-2
-        local fill=math.floor(remaining*usable+.5)
-        windower.prim.set_position(bar.frame,x,y)
-        windower.prim.set_size(bar.frame,width,height+2)
+        local height=math.max(3,math.floor(5*opts.scale+.5))
+        local fill=math.floor(clamp(fraction,0,1)*(width-2)+.5)
+
+        -- Dark rounded outline: a central rectangle with 1px-inset endcaps.
+        windower.prim.set_position(bar.frame,x+1,y)
+        windower.prim.set_size(bar.frame,width-2,height+2)
         windower.prim.set_visibility(bar.frame,true)
+        windower.prim.set_position(bar.cap_l,x,y+1)
+        windower.prim.set_size(bar.cap_l,1,height)
+        windower.prim.set_visibility(bar.cap_l,true)
+        windower.prim.set_position(bar.cap_r,x+width-1,y+1)
+        windower.prim.set_size(bar.cap_r,1,height)
+        windower.prim.set_visibility(bar.cap_r,true)
+
         windower.prim.set_position(bar.base,x+1,y+1)
-        windower.prim.set_size(bar.base,usable,height)
+        windower.prim.set_size(bar.base,width-2,height)
         windower.prim.set_visibility(bar.base,true)
+
+        -- Update the gradient at the new absolute-time fraction. Do not
+        -- tween between distinct weapon skills; only each expiry runs smoothly.
+        local alpha=waiting and 105 or 230
         for i=1,segments do
             local id=bar.slices[i]
             local start=math.floor((i-1)*fill/segments)
             local finish=math.floor(i*fill/segments)
+            local draw_x=x+1+start
             local count=finish-start
-            if count > 0 then
+            if start==0 then draw_x=draw_x+1;count=count-1 end
+            if finish==fill then count=count-1 end
+            if count>0 then
                 local c=interpolate(palette_stops,(i-.5)/segments)
-                windower.prim.set_color(id,waiting and 105 or 230,c[1],c[2],c[3])
-                windower.prim.set_position(id,x+1+start,y+1)
+                windower.prim.set_color(id,alpha,c[1],c[2],c[3])
+                windower.prim.set_position(id,draw_x,y+1)
                 windower.prim.set_size(id,count,height)
                 windower.prim.set_visibility(id,true)
             else
                 windower.prim.set_visibility(id,false)
+            end
+        end
+        -- Narrowed end pixels give the filled portion matching rounded ends.
+        local cap_h=math.max(1,height-2)
+        for _,entry in ipairs({
+            {id=bar.fill_l,pos=x+1,color=palette_stops[1]},
+            {id=bar.fill_r,pos=x+fill,color=palette_stops[#palette_stops]}
+        }) do
+            if fill>0 and (entry.id~=bar.fill_r or fill>1) then
+                local c=entry.color
+                windower.prim.set_color(entry.id,alpha,c[1],c[2],c[3])
+                windower.prim.set_position(entry.id,entry.pos,y+2)
+                windower.prim.set_size(entry.id,1,cap_h)
+                windower.prim.set_visibility(entry.id,true)
+            else
+                windower.prim.set_visibility(entry.id,false)
             end
         end
         return height+2
