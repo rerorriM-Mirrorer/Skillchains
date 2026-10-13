@@ -12,6 +12,12 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 - Tracks a separate Magic Burst window only after a successful skillchain. A completed/closed chain can continue showing its MB timer.
 - Shows **all compatible character-learned** weapon skills, Scholar Immanence spells, Blue Magic, or applicable pet abilities, grouped by **resulting** skillchain and sorted by level. TP, recast, and other immediate execution prerequisites are **not** checked.
 - Keeps its own draggable learning panel separate from the resonance bars.
+- Displays the target's **currently resonating skillchain properties** just below
+  the SC bar in smaller EnemyBar2-style Arial bold italic text with a dark stroke.
+  The first WS shows all its properties (for example, Liquefaction, Detonation);
+  a completed skillchain shows its result (for example, Fusion). Long
+  property lists wrap. The label follows the SC bar, not the learning panel,
+  and is hidden with the SC bar or in Minimal mode.
 - Does not auto-detect magic jobs, simulate skillchains, or use Japanese terminology.
 
 The color stops are **provisional** approximations, not colors sampled from FFXI effects.
@@ -59,7 +65,10 @@ previously controlled the long text window. They now advise using `mode` and `di
 Resonance bars begin near Franklet's primary target HP bar in the shared screenshot,
 but **do not dynamically follow EnemyBar2** yet. Drag the bar via `//sc edit`,
 and use `//sc width` to match that client's actual HP bar. Scale does not shorten
-the bar's configured width. The learning panel can be placed above or elsewhere.
+the bar's configured width. The learning panel can be placed above or elsewhere. The property label sits
+**below** the SC bar, so leave a little extra vertical space beneath the target
+HP bar, especially at Franklet's small resolution. If both bars are displayed,
+the MB bar is pushed below the property label so the two do not overlap.
 Different-resolution clients have independent settings.
 
 The UI creates only its own objects, and disappears outside a tracked target's
@@ -74,7 +83,14 @@ Existing upstream notices in the Lua source files remain intact.
 
 ## Changelog (cumulative)
 
-### 2026-10-13 — v0.1 test (not yet live-tested)
+### 2026-10-13 — v0.1.1 test: attached property caption
+- Display current weapon-skill/skillchain properties directly under the SC bar,
+  independent of the learning panel; match EnemyBar2's smaller Arial bold
+  italic and stroked type. Wrap long captions and reserve clearance for the MB bar.
+- No new command or job-based detection. Minimal remains bars-only.
+- Source-reviewed; in-game rendering **not yet tested**.
+
+### 2026-10-13 — v0.1 test (initial combat behavior not yet live-tested)
 - Refresh ability data from posimagi.
 - Add independent skillchain continuation and post-chain Magic Burst timers.
 - Add editable gradient bars, stand-alone learning panel, grouping by resulting chain.
