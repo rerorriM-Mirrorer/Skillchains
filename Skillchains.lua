@@ -456,9 +456,15 @@ windower.register_event('addon command', function(cmd, ...)
         message('Edit '..(active and 'ON' or 'OFF')..
             '. Drag SC BAR and the separate learning panel.')
     elseif cmd=='scale' then
+        if option=='edit' then
+            local on=overlay:scale_edit()
+            config.save(settings)
+            message('Drag scaling '..(on and 'ON' or 'OFF')..'.')
+            return
+        end
         local number=tonumber(option)
         if not number then
-            message(('Scale: %.2f (range .5 to 2.5).'):format(opts.scale))
+            message(('Scale: %.2f (range .5 to 2.5). Use //sc scale edit to drag.'):format(opts.scale))
             return
         end
         overlay:scale(number)
@@ -498,7 +504,7 @@ windower.register_event('addon command', function(cmd, ...)
             _addon.version,opts.display,opts.mode,opts.scale,opts.bar.width,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; edit [on|off]; scale [.5-2.5]; width [pixels]; default; save [all]; status')
+        message('display sc|mb|both; mode learn|compact|minimal; edit [on|off]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
