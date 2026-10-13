@@ -23,6 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validate addon syntax with Lua 5.1
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.1
+          luac5.1 -p Skillchains.lua
+          luac5.1 -p skills.lua
+          luac5.1 -p resonance_ui.lua
       - name: Build and verify test archive
         run: python tools/package_testing.py
       - name: Publish installation-ready ZIP artifact
