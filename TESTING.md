@@ -2,7 +2,7 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
-## Current testing batch — 2026-10-13 / v0.1
+## Current testing batch — 2026-10-13 / v0.1.1 (property captions)
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
 **Status:** User confirmed the addon loads and basic commands work in FFXI; combat/visual behavior not yet tested.
@@ -11,6 +11,21 @@
 the four development documents. No `settings.xml`, launcher scripts, or EnemyBar2
 changes are included.
 **Precaution:** Back up your current Skillchains folder and its `data` before replacing files.
+
+### New checks for attached property captions
+
+- In Learn/Compact mode, perform a first weapon skill without making a
+  skillchain. Confirm all of its property names appear slightly below the
+  SC bar in smaller Arial bold italic text with a dark stroke.
+- Try a two-property opener (such as Red Lotus Blade); verify the comma-separated
+  list. Try a completed chain and confirm the label changes to the result.
+- With `//sc display both`, confirm MB bar sits **below** the property
+  caption, not on top of it. For a long set of chainbound properties,
+  verify wrapping and spacing.
+- In `//sc mode minimal`, verify the caption disappears, leaving bars only.
+  In `//sc display mb`, verify SC caption stays hidden.
+- Check how much space is available below EnemyBar2 on Franklet's small client.
+  If the text is clipped, move the SC bar upward using `//sc edit`.
 
 ### First in-game tests
 
@@ -76,7 +91,9 @@ felt early or late. We can adjust colors and alignment from the screenshots.
 
 ## Previous tests and checks
 
-- **2026-10-13, user-confirmed in-game smoke test:** Skillchains loaded and basic commands worked. Exact commands and combat/visual checks were not specified. User was still preparing the full test environment. Previous master behavior has not been
+- **2026-10-13, user-confirmed in-game smoke test:** Skillchains loaded and basic commands worked. Exact commands and combat/visual checks were not specified. User was still preparing the full test environment.
+- **2026-10-13, v0.1.1 caption change:** Implemented after smoke feedback.
+  No claim of in-game validation of this new label yet. Previous master behavior has not been
 reconstructed as a verified regression baseline; preserve master until a live pass
 is accepted.
 
@@ -84,6 +101,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
+| 2026-10-13 | v0.1.1 | Add attached property label and MB clearance in `resonance_ui.lua` | `9544346` | Committed / live untested |
 | 2026-10-13 | v0.1 | posimagi skill database refresh | `25513fb` | Committed / live untested |
 | 2026-10-13 | v0.1 | first standalone gradient renderer and independent timers | `a1ad1d3`, `b3238f3` | Committed / live untested |
 | 2026-10-13 | v0.1 | manual display, Light/Dark simplification, scale handle, schema correction, and load-time guard | `d0056c6`, `d021e08`, `71902d3`, `0308a9e`, `5522303`, `9f62963` | Committed / live untested |
@@ -96,6 +114,7 @@ is accepted.
 | 2026-10-13 | Franklet EnemyBar2 setup-mode screenshot, approximately 1280×709; main Target HP bar low on screen, subtarget and focus stacked above | User-provided screenshot in project conversation |
 | 2026-10-13 | Explicitly disable job/subjob MB detection; default SC only, `display sc|mb|both`; `sc edit` drag, add scaling mode; no Japanese nomenclature or simulated sequences | Project conversation |
 | 2026-10-13 | Addon loaded and basic commands worked; broader testing environment still being prepared | User report in project conversation |
+| 2026-10-13 | Requested a smaller EnemyBar2-style Arial bold italic label under the SC bar listing currently resonating properties, including the properties of the opening WS | Project conversation |
 
 Preserve this record; corrections use strike-through with the reason and replacement,
 rather than silently deleting prior entries.
