@@ -535,7 +535,7 @@ windower.register_event('addon command', function(cmd, ...)
         opts.list.x,opts.list.y=465,300
         overlay:scale(1)
         overlay:edit(false)
-        overlay.handle:pos(opts.bar.x,opts.bar.y-19)
+        overlay.handle:pos(opts.bar.x,opts.bar.y-34)
         overlay.panel:pos(opts.list.x,opts.list.y)
         config.save(settings)
         message('Display, scale, name offset and positions reset to testing defaults.')
