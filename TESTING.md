@@ -2,17 +2,42 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
-## Current testing batch — 2026-10-13 / v0.1.1 (property captions)
+## Current testing batch — 2026-10-13 / v0.1.2 (small-client recovery and motion)
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
-**Status:** User confirmed the addon loads and basic commands work in FFXI; combat/visual behavior not yet tested.
+**Status:** User previously confirmed the addon loads and basic commands work in FFXI. The new property-label, redraw, rounding, and off-screen-edit changes have not yet been tested live.
 **Delivery:** Download this branch as a ZIP and keep the three Lua files together.
 **Contents:** `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`, README and
 the four development documents. No `settings.xml`, launcher scripts, or EnemyBar2
 changes are included.
 **Precaution:** Back up your current Skillchains folder and its `data` before replacing files.
 
-### New checks for attached property captions
+### First checks for v0.1.2
+
+1. **Lionstag off-screen recovery:** Reload and use `//sc edit`. Confirm the SC
+   bar handle appears *on screen* even when the saved position originally fell
+   below the small client's viewport. Drag bar and learning panel independently,
+   exit edit, reload, confirm positions persisted. Try `//sc center` and
+   `//sc pos 100 200` as additional recovery commands.
+2. **Label choices:** Test `//sc names full`, `short`, `off`.
+   Level 1 abbreviation examples: `LQF / DET`; level 2: `FUS`, `FRG`,
+   `DST`, `GRV`; level 3: `LGT`, `DRK`; level 4: `RAD`, `UMB`.
+   Confirm white Arial bold italic text, black stroke, and wrapping.
+   Minimal mode should have no label irrespective of `names`.
+3. **Learning panel:** Names of currently resonating properties should be
+   under the bar, not repeated at the top of the learning panel. Available
+   resulting chains and all learned candidate actions must remain intact.
+4. **Countdown smoothness:** Watch a long SC window; motion should update at
+   roughly 30 Hz, with substantially smaller steps than the prior 0.1s cycle.
+   Check that a new WS/skillchain *snaps* to the new duration rather than
+   slowly interpolating between two different windows.
+5. **Rounded/translucent graphics:** On Lionstag and Cioara, inspect the 1px
+   rounded ends, dark translucent tracks, gradient integrity while shrinking,
+   and frame pacing with 4–6 clients. Report CPU use or rendering hitching.
+6. **Scale:** Check `//sc scale edit` remains visible on the small resolution
+   and that `//sc width` still independently controls bar length.
+
+### Previous v0.1.1 checks for attached property captions
 
 - In Learn/Compact mode, perform a first weapon skill without making a
   skillchain. Confirm all of its property names appear slightly below the
@@ -101,6 +126,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
+| 2026-10-13 | v0.1.2 | Smooth rendering, short labels, rounded dark tracks and off-screen edit recovery | `f989b8a`, `d6b13f0`, `32dca6d`, `6ae3365`, `a9f3ca3` | Committed / live untested |
 | 2026-10-13 | v0.1.1 | Add attached property label and MB clearance in `resonance_ui.lua` | `9544346` | Committed / live untested |
 | 2026-10-13 | v0.1 | posimagi skill database refresh | `25513fb` | Committed / live untested |
 | 2026-10-13 | v0.1 | first standalone gradient renderer and independent timers | `a1ad1d3`, `b3238f3` | Committed / live untested |
@@ -115,6 +141,7 @@ is accepted.
 | 2026-10-13 | Explicitly disable job/subjob MB detection; default SC only, `display sc|mb|both`; `sc edit` drag, add scaling mode; no Japanese nomenclature or simulated sequences | Project conversation |
 | 2026-10-13 | Addon loaded and basic commands worked; broader testing environment still being prepared | User report in project conversation |
 | 2026-10-13 | Requested a smaller EnemyBar2-style Arial bold italic label under the SC bar listing currently resonating properties, including the properties of the opening WS | Project conversation |
+| 2026-10-13 | Requested white caption with black stroke, future level colors, L1–L4 property abbreviations, less stutter during countdown, rounded bar corners and darker translucent tracks; reported SC bar off-screen and unmovable on Lionstag's small resolution | User report in project conversation |
 
 Preserve this record; corrections use strike-through with the reason and replacement,
 rather than silently deleting prior entries.
