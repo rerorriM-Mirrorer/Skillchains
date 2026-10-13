@@ -34,20 +34,21 @@ lower levels retain their specific burst element colors.
 
 1. Back up `addons/Skillchains/data` (if present), and keep a copy of your old addon folder.
 2. Download the [**Skillchains-v0.1.2-test**](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml) from the latest successful GitHub Actions run (Artifacts section), not GitHub's automatic source-code archive.
-3. Open it and copy the single inner `Skillchains/` folder's three Lua files
-   (`Skillchains.lua`, `skills.lua`, `resonance_ui.lua`) into
-   `Windower/addons/Skillchains/`.
+3. Open it and copy the installable `Skillchains/` folder into
+   `Windower/addons/`, merging with your existing `Skillchains/` folder if updating.
+   It contains `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`, and `README.md`.
 4. Keep your existing `Windower/addons/Skillchains/data/settings.xml` untouched.
 5. At the console, `lua reload Skillchains` (or `lua load Skillchains` on first install).
 6. Type `//sc help`, then use `//sc edit` to position the bar and learning panel.
 
-The curated testing ZIP contains `README.md`, `WORKFLOW.md`, and `TESTING.md`
-**at the archive root**, with exactly one `Skillchains/` addon directory.
+The curated testing ZIP contains **`WORKFLOW.md` and `TESTING.md` at the
+archive root**, with exactly one `Skillchains/` addon directory. The
+`README.md` is inside `Skillchains/`, alongside its three Lua files.
+A source copy also remains at the GitHub repository root.
 `WORKFLOW.md` is the consolidated NPCMirror guide: it includes AGATHOS,
-DESIGN and WORKFLOW principles; no separate `AGATHOS.md` or `DESIGN.md`.
-The documentation is not required to run the addon. GitHub's automatic
-branch ZIP wraps the entire repository in an extra source-directory name
-and is **not** the recommended installation package.
+DESIGN, and WORKFLOW principles; there are no separate retired documents.
+GitHub's automatic branch ZIP wraps the entire repository in an extra
+source-directory name and is **not** the recommended installation package.
 
 ## Commands
 
@@ -103,6 +104,13 @@ Resonance UI testing changes authored by A (Awake) with user-directed design.
 Existing upstream notices in the Lua source files remain intact.
 
 ## Changelog (cumulative)
+
+### 2026-10-13 — README installation-folder convention
+- Keep the source README at the repository root and place its package copy
+  **inside Skillchains/**, so it remains with the addon after installation.
+- Keep consolidated WORKFLOW.md and cumulative TESTING.md at the ZIP root.
+- Updated the reusable package builder and synced canonical NPCMirror workflow.
+- Packaging/documentation only; no Lua changes.
 
 ### 2026-10-13 — v0.1.2 testing-package correction
 - Adopt canonical NPCMirror `WORKFLOW.md` (Agathos, Design and Workflow combined)
