@@ -373,7 +373,7 @@ function ui.new(settings, sc_info)
         -- A long list of compatible abilities is static until the next
         -- skillchain event. Rebuilding it 30 times a second wastes resources.
         if str~=self.panel_cache then
-            self:set_panel_text(str)
+            self.panel:text(str)
             self.panel_cache=str
         end
     end
