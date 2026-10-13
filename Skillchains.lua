@@ -278,7 +278,7 @@ function colorize(t)
     if settings.color then
         temp = {}
         for k=1,#t do
-            temp[k] = '%s%s\\cr':format(colors[t[k]], t[k])
+            temp[k] = ('%s%s\\cr'):format(colors[t[k]], t[k])
         end
     end
     return _raw.table.concat(temp or t, ',')
