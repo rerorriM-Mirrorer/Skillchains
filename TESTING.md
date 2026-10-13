@@ -9,9 +9,10 @@
 **Delivery:** Download the artifact named `Skillchains-v0.1.2-test` from the
 latest successful [GitHub Actions packaging run](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml),
 rather than using GitHub's auto-generated repository source ZIP.
-The packaging workflow verifies the archive layout and CRC checks. Archive root: `README.md`, `WORKFLOW.md`, `TESTING.md`, and
-one `Skillchains/` folder containing `Skillchains.lua`, `skills.lua`,
-`resonance_ui.lua`. Only the inner addon folder's Lua files are installed.
+The packaging workflow verifies the archive layout and CRC checks. Archive
+root: `WORKFLOW.md`, `TESTING.md`, and one `Skillchains/` folder containing
+`README.md`, `Skillchains.lua`, `skills.lua`, and `resonance_ui.lua`.
+Install only that `Skillchains/` folder, preserving existing `data/`.
 **Conventions:** `WORKFLOW.md` is the consolidated canonical document from
 NPCMirror, containing AGATHOS, DESIGN and WORKFLOW. The retired
 `AGATHOS.md` and `DESIGN.md` documents are intentionally absent.
@@ -22,13 +23,14 @@ are included.
 ### Packaging verification (documentation-only correction)
 
 - Confirm the published GitHub Actions artifact ZIP has **one** `Skillchains/`
-  directory and the three markdown documents at the ZIP root. Do not install the documentation.
+  directory containing `README.md` and the three Lua files. Only the two
+  development documents `WORKFLOW.md` and `TESTING.md` stay at the ZIP root.
 - Confirm `WORKFLOW.md` matches NPCMirror's consolidated reference,
   containing Agathos, Design, and Workflow in a single file.
 - Confirm no `AGATHOS.md` or `DESIGN.md`, no settings.xml and no
   redundant parent folder inside the curated ZIP.
-- Installation: copy the three Lua files from `Skillchains/` into the
-  existing `Windower/addons/Skillchains/` folder, preserving `data/`.
+- Installation: copy or merge the entire `Skillchains/` folder into
+  `Windower/addons/`, preserving an existing `Skillchains/data/` directory.
 - No Lua or addon behavior is changed by this packaging correction. The
   reproducible script is `tools/package_testing.py`; the GitHub Action
   publishes the prepared package contents as one downloadable archive.
@@ -148,6 +150,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
+| 2026-10-13 | v0.1.2 README location | Place README inside installable folder, keep WORKFLOW/TESTING at ZIP root and sync NPCMirror guide | Canonical NPCMirror `WORKFLOW.md`; package builder updated | Documentation/package-only change |
 | 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs; CI produces one-addon-directory artifact | `5831d2b`, `2da4ec1`, `d97ee94`, `d64e819`, `df535cc` | GitHub Actions run 38449553310 succeeded, artifact 11838873673; no Lua behavior changes |
 | 2026-10-13 | v0.1.2 | Smooth rendering, short labels, rounded dark tracks and off-screen edit recovery | `f989b8a`, `d6b13f0`, `32dca6d`, `6ae3365`, `a9f3ca3` | Committed / live untested |
 | 2026-10-13 | v0.1.1 | Add attached property label and MB clearance in `resonance_ui.lua` | `9544346` | Committed / live untested |
@@ -166,6 +169,7 @@ is accepted.
 | 2026-10-13 | Requested a smaller EnemyBar2-style Arial bold italic label under the SC bar listing currently resonating properties, including the properties of the opening WS | Project conversation |
 | 2026-10-13 | Requested white caption with black stroke, future level colors, L1–L4 property abbreviations, less stutter during countdown, rounded bar corners and darker translucent tracks; reported SC bar off-screen and unmovable on Lionstag's small resolution | User report in project conversation |
 | 2026-10-13 | Reported ambiguous Skillchains versus Skillchains-resonance-ui-test folders in previous archive; pointed out retired AGATHOS/DESIGN documents and requested compliance with consolidated NPCMirror WORKFLOW.md | User report and document review |
+| 2026-10-13 | Requested that future testing ZIPs put README.md inside the installable addon folder, while WORKFLOW.md and TESTING.md remain at the ZIP root | User-approved convention |
 
 Preserve this record; corrections use strike-through with the reason and replacement,
 rather than silently deleting prior entries.
