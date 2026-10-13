@@ -39,7 +39,7 @@ lower levels retain their specific burst element colors.
 ## Install (test branch)
 
 1. Back up `addons/Skillchains/data` (if present), and keep a copy of your old addon folder.
-2. Download the [**Skillchains-v0.1.2-test**](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml) from the latest successful GitHub Actions run (Artifacts section), not GitHub's automatic source-code archive.
+2. Download the [**Skillchains-resonance.5-test**](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml) from the latest successful GitHub Actions run (Artifacts section), not GitHub's automatic source-code archive.
 3. Open it and copy the installable `Skillchains/` folder into
    `Windower/addons/`, merging with your existing `Skillchains/` folder if updating.
    It contains `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`, and `README.md`.
@@ -133,6 +133,9 @@ Existing upstream notices in the Lua source files remain intact.
   upward. Cache measured text height for smoother multibox rendering.
 - Leave the dark learning-panel background and more transparent bar tracks
   unchanged pending visual review. New behavior requires live verification.
+- Add automated Lua 5.1 syntax checking before publishing the testing ZIP;
+  fix an inherited parser-incompatible string-literal method call. Source
+  compiles, but the new UI behavior has not yet been tested in FFXI.
 
 ### 2026-10-13 — v0.1.2 property-caption offset (resonance.4)
 - Add `//sc names offset <x> <y>` for independent, persistent property-label
