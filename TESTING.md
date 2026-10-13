@@ -5,7 +5,7 @@
 ## Current testing batch — 2026-10-13 / v0.1
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
-**Status:** Implementation committed; **FFXI runtime testing pending**.
+**Status:** User confirmed the addon loads and basic commands work in FFXI; combat/visual behavior not yet tested.
 **Delivery:** Download this branch as a ZIP and keep the three Lua files together.
 **Contents:** `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`, README and
 the four development documents. No `settings.xml`, launcher scripts, or EnemyBar2
@@ -76,7 +76,7 @@ felt early or late. We can adjust colors and alignment from the screenshots.
 
 ## Previous tests and checks
 
-No user-confirmed v0.1 in-game results yet. Previous master behavior has not been
+- **2026-10-13, user-confirmed in-game smoke test:** Skillchains loaded and basic commands worked. Exact commands and combat/visual checks were not specified. User was still preparing the full test environment. Previous master behavior has not been
 reconstructed as a verified regression baseline; preserve master until a live pass
 is accepted.
 
@@ -95,6 +95,7 @@ is accepted.
 | 2026-10-08–13 | Skillchains design dialogue: eventual UI-free play, resonance under target HP, three information levels, separate learning panel, gradients, independent timing windows | Project conversation |
 | 2026-10-13 | Franklet EnemyBar2 setup-mode screenshot, approximately 1280×709; main Target HP bar low on screen, subtarget and focus stacked above | User-provided screenshot in project conversation |
 | 2026-10-13 | Explicitly disable job/subjob MB detection; default SC only, `display sc|mb|both`; `sc edit` drag, add scaling mode; no Japanese nomenclature or simulated sequences | Project conversation |
+| 2026-10-13 | Addon loaded and basic commands worked; broader testing environment still being prepared | User report in project conversation |
 
 Preserve this record; corrections use strike-through with the reason and replacement,
 rather than silently deleting prior entries.
