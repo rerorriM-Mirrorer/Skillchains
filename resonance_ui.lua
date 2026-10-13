@@ -208,15 +208,20 @@ function ui.new(settings, sc_info)
 
     -- list.y is the BOTTOM edge of the learning panel; new lines grow upward.
     function self:panel_height()
-        local _,h=self.panel:extents()
-        -- The Windower text extents cover glyphs; include the 4px padding
-        -- configured for the background at both its top and bottom.
-        return math.max(16,math.floor((h or 0)+8+.5))
+        if not self.panel_height_px then
+            local _,h=self.panel:extents()
+            -- Windower text extents cover the glyphs, not our background
+            -- padding. Cache the size until the panel text or scale changes.
+            self.panel_height_px=math.max(16,math.floor((h or 0)+8+.5))
+        end
+        return self.panel_height_px
     end
 
     function self:position_panel()
-        self.panel:pos(self.options.list.x,
-            self.options.list.y-self:panel_height())
+        local x=self.options.list.x
+        local y=math.floor(self.options.list.y-self:panel_height()+.5)
+        local px,py=self.panel:pos()
+        if px~=x or py~=y then self.panel:pos(x,y) end
     end
 
     function self:hide_bar(kind)
@@ -378,6 +383,7 @@ function ui.new(settings, sc_info)
     function self:scale(n)
         self.options.scale=clamp(n,.5,2.5)
         self.panel:size(math.max(7,math.floor(11*self.options.scale+.5)))
+        self.panel_height_px=nil
         self.handle:size(math.max(7,math.floor(10*self.options.scale+.5)))
         self.scalehandle:size(math.max(7,math.floor(10*self.options.scale+.5)))
         self.properties:size(math.max(7,math.floor(10*self.options.scale+.5)))
@@ -408,6 +414,13 @@ function ui.new(settings, sc_info)
         if str~=self.panel_cache then
             self.panel:text(str)
             self.panel_cache=str
+            self.panel_height_px=nil
+            if self.editing then
+                local _,py=self.panel:pos()
+                -- During dragging, the panel stays under the pointer even
+                -- when a changed list has a different height.
+                self.options.list.y=math.floor(py+self:panel_height()+.5)
+            end
         end
     end
 
