@@ -33,7 +33,7 @@ lower levels retain their specific burst element colors.
 ## Install (test branch)
 
 1. Back up `addons/Skillchains/data` (if present), and keep a copy of your old addon folder.
-2. Download the [**curated Skillchains-v0.1.2-test.zip**](packages/Skillchains-v0.1.2-test.zip), not GitHub's automatic source-code archive.
+2. Download the [**Skillchains-v0.1.2-test**](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml) from the latest successful GitHub Actions run (Artifacts section), not GitHub's automatic source-code archive.
 3. Open it and copy the single inner `Skillchains/` folder's three Lua files
    (`Skillchains.lua`, `skills.lua`, `resonance_ui.lua`) into
    `Windower/addons/Skillchains/`.
