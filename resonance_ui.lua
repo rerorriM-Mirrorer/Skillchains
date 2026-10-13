@@ -444,14 +444,19 @@ function ui.new(settings, sc_info)
                     self.property_rows=rows
                     self.property_cache=signature
                 end
-                self.properties:pos(math.floor(opt.bar.x+inset+.5),
-                    y+math.max(1,math.floor(2*opt.scale+.5)))
+                local name_offset=opt.name_offset or {x=0,y=0}
+                local caption_gap=math.max(1,math.floor(2*opt.scale+.5))
+                -- Apply the user's offset after the bar-relative anchor.
+                -- A negative Y brings the caption over the lower bar edge.
+                self.properties:pos(math.floor(opt.bar.x+inset+name_offset.x+.5),
+                    y+caption_gap+name_offset.y)
                 self.properties:show()
-                -- Reserve room for wrapped names before drawing the optional
-                -- MB indicator, keeping both clocks visually independent.
-                y=y+math.max(1,math.floor(2*opt.scale+.5))
+                -- Positive Y needs extra clearance for the optional MB bar;
+                -- negative Y does not collapse the normal safe spacing.
+                y=y+caption_gap
                     + (self.property_rows or 1)*math.max(9,math.floor(12*opt.scale+.5))
                     + math.max(2,math.floor(3*opt.scale+.5))
+                    + math.max(0,name_offset.y)
             else
                 self.properties:hide()
                 y=y+math.max(4,math.floor(5*opt.scale+.5))
