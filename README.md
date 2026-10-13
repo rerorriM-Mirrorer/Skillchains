@@ -33,14 +33,21 @@ lower levels retain their specific burst element colors.
 ## Install (test branch)
 
 1. Back up `addons/Skillchains/data` (if present), and keep a copy of your old addon folder.
-2. Download the **resonance-ui-v0.1-test** branch ZIP (not the repository's default `master` ZIP).
-3. Place `Skillchains.lua`, `skills.lua`, and `resonance_ui.lua` together in `Windower/addons/Skillchains/`.
-4. Do **not** overwrite your `data/settings.xml` with a test configuration.
+2. Download the **curated testing ZIP**, not GitHub's automatic source-code archive.
+3. Open it and copy the single inner `Skillchains/` folder's three Lua files
+   (`Skillchains.lua`, `skills.lua`, `resonance_ui.lua`) into
+   `Windower/addons/Skillchains/`.
+4. Keep your existing `Windower/addons/Skillchains/data/settings.xml` untouched.
 5. At the console, `lua reload Skillchains` (or `lua load Skillchains` on first install).
-6. Type `//sc help`, then use `//sc edit` before combat to position the two UI components.
+6. Type `//sc help`, then use `//sc edit` to position the bar and learning panel.
 
-The root documents `AGATHOS.md`, `DESIGN.md`, `WORKFLOW.md`, and `TESTING.md`
-accompany the development repository/testing ZIP; they are not needed at runtime.
+The curated testing ZIP contains `README.md`, `WORKFLOW.md`, and `TESTING.md`
+**at the archive root**, with exactly one `Skillchains/` addon directory.
+`WORKFLOW.md` is the consolidated NPCMirror guide: it includes AGATHOS,
+DESIGN and WORKFLOW principles; no separate `AGATHOS.md` or `DESIGN.md`.
+The documentation is not required to run the addon. GitHub's automatic
+branch ZIP wraps the entire repository in an extra source-directory name
+and is **not** the recommended installation package.
 
 ## Commands
 
@@ -96,6 +103,13 @@ Resonance UI testing changes authored by A (Awake) with user-directed design.
 Existing upstream notices in the Lua source files remain intact.
 
 ## Changelog (cumulative)
+
+### 2026-10-13 — v0.1.2 testing-package correction
+- Adopt canonical NPCMirror `WORKFLOW.md` (Agathos, Design and Workflow combined)
+  at repository and package root, with `TESTING.md` beside it.
+- Retire separate `AGATHOS.md` and `DESIGN.md` from the test branch.
+- Provide a curated ZIP with one `Skillchains/` runtime directory;
+  no addon behavior changes in this packaging correction.
 
 ### 2026-10-13 — v0.1.2 test: labels, smooth expiry and edit recovery
 - New `//sc names full|short|off` label choice, with abbreviations for
