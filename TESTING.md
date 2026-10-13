@@ -116,7 +116,7 @@ felt early or late. We can adjust colors and alignment from the screenshots.
 
 ## Previous tests and checks
 
-- **2026-10-13, user-confirmed in-game smoke test:** Skillchains loaded and basic commands worked. Exact commands and combat/visual checks were not specified. User was still preparing the full test environment.
+- **2026-10-13, user-confirmed in-game smoke test:** Skillchains loaded and basic commands worked. Exact commands were not specified. The user later observed the previous bar's choppy expiration animation and the SC drag handle inaccessible at Lionstag's small resolution; those are firsthand, *partial* live-rendering observations, not verification of the new changes.
 - **2026-10-13, v0.1.1 caption change:** Implemented after smoke feedback.
   No claim of in-game validation of this new label yet. Previous master behavior has not been
 reconstructed as a verified regression baseline; preserve master until a live pass
