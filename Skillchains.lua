@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.4'
+_addon.version = '2.20.08.25-resonance.5'
 
 require('luau')
 require('pack')
@@ -50,7 +50,7 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 default.Resonance = {
     mode='learn', display='sc', names='full', scale=1,
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
-    name_offset={x=0,y=0},
+    name_offset={x=0,y=-11},
     bar={x=466,y=696,width=310},
     list={x=465,y=300},
 }
@@ -503,7 +503,7 @@ windower.register_event('addon command', function(cmd, ...)
         local active=overlay:edit(desired)
         config.save(settings)
         message('Edit '..(active and 'ON' or 'OFF')..
-            '. Drag SC BAR and the separate learning panel.')
+            '. Drag the handle ABOVE the bar and the separate learning panel.')
     elseif cmd=='scale' then
         if option=='edit' then
             local on=overlay:scale_edit()
@@ -530,7 +530,7 @@ windower.register_event('addon command', function(cmd, ...)
         message('Bar width set to '..opts.bar.width..'.')
     elseif cmd=='default' then
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
-        opts.name_offset.x,opts.name_offset.y=0,0
+        opts.name_offset.x,opts.name_offset.y=0,-11
         opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
         opts.list.x,opts.list.y=465,300
         overlay:scale(1)
@@ -538,7 +538,7 @@ windower.register_event('addon command', function(cmd, ...)
         overlay.handle:pos(opts.bar.x,opts.bar.y-19)
         overlay.panel:pos(opts.list.x,opts.list.y)
         config.save(settings)
-        message('Display, scale and positions reset to testing defaults.')
+        message('Display, scale, name offset and positions reset to testing defaults.')
     elseif cmd=='save' then
         config.save(settings,option=='all' and 'all' or nil)
         message('Settings saved.')
