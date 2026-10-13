@@ -57,6 +57,7 @@ felt early or late. We can adjust colors and alignment from the screenshots.
 - Performed a **lightweight source lexical/bracket/block-balance check** against
   all three Lua files (passed). This is **not** Lua 5.1 compilation, full
   syntax validation, a runtime smoke test, or proof of timer correctness.
+- Source review also corrected an older unguarded equipment lookup and verified primitive API names.
 - GitHub branch writes were verified after editing; no private FFXI instance
   was accessible for runtime testing.
 
@@ -85,7 +86,7 @@ is accepted.
 | --- | --- | --- | --- | --- |
 | 2026-10-13 | v0.1 | posimagi skill database refresh | `25513fb` | Committed / live untested |
 | 2026-10-13 | v0.1 | first standalone gradient renderer and independent timers | `a1ad1d3`, `b3238f3` | Committed / live untested |
-| 2026-10-13 | v0.1 | manual display, Light/Dark simplification, scale handle and command refinements | Later branch commits | Committed / live untested |
+| 2026-10-13 | v0.1 | manual display, Light/Dark simplification, scale handle, schema correction, and load-time guard | `d0056c6`, `d021e08`, `71902d3`, `0308a9e`, `5522303`, `9f62963` | Committed / live untested |
 
 ## User-provided materials, observations, and requests
 
