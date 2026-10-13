@@ -25,6 +25,8 @@ No historical test results were reconstructed or verified during this documentat
 
 ## Cumulative changelog
 
+- **2026-10-13 — Navigation refinement:** Corrected the heading levels for the Testing Packages and Shared Development Conventions sections in `WORKFLOW.md` ([`37d3841`](https://github.com/rerorriM-Mirrorer/Skillchains/commit/37d3841344b09f73a098beeb84a035d99cb489ac)). Documentation only; no addon code changed.
+
 - **2026-10-13:** Adopted the shared two-document development convention without changing executable addon behavior.
 
 ## Delivered packages and documents
