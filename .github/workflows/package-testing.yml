@@ -1,0 +1,34 @@
+name: Skillchains testing package
+
+on:
+  push:
+    branches:
+      - resonance-ui-v0.1-test
+    paths:
+      - Skillchains.lua
+      - skills.lua
+      - resonance_ui.lua
+      - README.md
+      - WORKFLOW.md
+      - TESTING.md
+      - tools/package_testing.py
+      - .github/workflows/package-testing.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify test archive
+        run: python tools/package_testing.py
+      - name: Publish installation-ready ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Skillchains-v0.1.2-test
+          path: dist/package_content/
+          if-no-files-found: error
+          retention-days: 30
