@@ -6,8 +6,10 @@
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
 **Status:** User previously confirmed the addon loads and basic commands work in FFXI. The new property-label, redraw, rounding, and off-screen-edit changes have not yet been tested live.
-**Delivery:** Curated [`packages/Skillchains-v0.1.2-test.zip`](packages/Skillchains-v0.1.2-test.zip) (not GitHub's auto-generated
-source ZIP). Archive root: `README.md`, `WORKFLOW.md`, `TESTING.md`, and
+**Delivery:** Download the artifact named `Skillchains-v0.1.2-test` from the
+latest successful [GitHub Actions packaging run](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml),
+rather than using GitHub's auto-generated repository source ZIP.
+The packaging workflow verifies the archive layout and CRC checks. Archive root: `README.md`, `WORKFLOW.md`, `TESTING.md`, and
 one `Skillchains/` folder containing `Skillchains.lua`, `skills.lua`,
 `resonance_ui.lua`. Only the inner addon folder's Lua files are installed.
 **Conventions:** `WORKFLOW.md` is the consolidated canonical document from
@@ -19,15 +21,18 @@ are included.
 
 ### Packaging verification (documentation-only correction)
 
-- Confirm package ZIP has **one** `Skillchains/` directory and the
-  three markdown documents at the ZIP root. Do not install the documentation.
+- Confirm the published GitHub Actions artifact ZIP has **one** `Skillchains/`
+  directory and the three markdown documents at the ZIP root. Do not install the documentation.
 - Confirm `WORKFLOW.md` matches NPCMirror's consolidated reference,
   containing Agathos, Design, and Workflow in a single file.
 - Confirm no `AGATHOS.md` or `DESIGN.md`, no settings.xml and no
   redundant parent folder inside the curated ZIP.
 - Installation: copy the three Lua files from `Skillchains/` into the
   existing `Windower/addons/Skillchains/` folder, preserving `data/`.
-- No Lua or addon behavior is changed by this packaging correction.
+- No Lua or addon behavior is changed by this packaging correction. The
+  reproducible script is `tools/package_testing.py`; the GitHub Action
+  publishes the prepared package contents as one downloadable archive.
+  Initial GitHub Actions run `38449553310` completed successfully.
 
 ### First checks for v0.1.2
 
@@ -143,7 +148,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
-| 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs, deliver one-addon-directory archive | `5831d2b`, `2da4ec1`, `d97ee94`; `packages/Skillchains-v0.1.2-test.zip` | Documentation/package correction only |
+| 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs; CI produces one-addon-directory artifact | `5831d2b`, `2da4ec1`, `d97ee94`, `d64e819`, `df535cc` | GitHub Actions run 38449553310 succeeded, artifact 11838873673; no Lua behavior changes |
 | 2026-10-13 | v0.1.2 | Smooth rendering, short labels, rounded dark tracks and off-screen edit recovery | `f989b8a`, `d6b13f0`, `32dca6d`, `6ae3365`, `a9f3ca3` | Committed / live untested |
 | 2026-10-13 | v0.1.1 | Add attached property label and MB clearance in `resonance_ui.lua` | `9544346` | Committed / live untested |
 | 2026-10-13 | v0.1 | posimagi skill database refresh | `25513fb` | Committed / live untested |
