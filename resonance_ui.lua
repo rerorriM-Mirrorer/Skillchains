@@ -147,7 +147,7 @@ function ui.new(settings, sc_info)
             frame=prefix..kind..'_frame', base=prefix..kind..'_base',
             cap_l=prefix..kind..'_cap_l', cap_r=prefix..kind..'_cap_r',
             fill_l=prefix..kind..'_fill_l', fill_r=prefix..kind..'_fill_r',
-            slices={},
+            slices={},hidden=true,
         }
         local bar=self.names[kind]
         -- At a 5px bar height, omitting one pixel in each corner is enough
@@ -176,6 +176,8 @@ function ui.new(settings, sc_info)
         bg={visible=false}
     })
     self.property_cache = nil
+    self.panel_cache = nil
+    self.is_hidden = true
     self.handle = texts.new('SC BAR  [drag]', text_settings(settings.bar.x,settings.bar.y-19,10,true))
     self.scalehandle = texts.new('SC SCALE  [drag left/right]',
         text_settings(settings.bar.x+math.floor(100*settings.scale+.5),
@@ -190,6 +192,7 @@ function ui.new(settings, sc_info)
 
     function self:hide_bar(kind)
         local bar=self.names[kind]
+        if bar.hidden then return end
         for _,id in ipairs({bar.frame,bar.base,bar.cap_l,bar.cap_r,
             bar.fill_l,bar.fill_r}) do
             windower.prim.set_visibility(id,false)
@@ -197,6 +200,7 @@ function ui.new(settings, sc_info)
         for i=1,segments do
             windower.prim.set_visibility(bar.slices[i],false)
         end
+        bar.hidden=true
     end
 
     function self:hide_bars()
@@ -205,7 +209,9 @@ function ui.new(settings, sc_info)
     end
 
     function self:hide()
+        if self.is_hidden and not self.editing then return end
         self:hide_bars()
+        self.is_hidden=true
         if not self.editing then
             self.handle:hide()
             self.scalehandle:hide()
@@ -217,6 +223,7 @@ function ui.new(settings, sc_info)
     -- rather than cutting off its final element as the timer approaches zero.
     function self:draw_bar(kind, y, fraction, waiting, palette_stops)
         local bar=self.names[kind]
+        bar.hidden=false
         local opts=self.options
         local x=math.floor(opts.bar.x+.5)
         local width=math.max(24,math.floor(opts.bar.width+.5))
@@ -362,6 +369,15 @@ function ui.new(settings, sc_info)
         return toggle
     end
 
+    function self:set_panel_text(str)
+        -- A long list of compatible abilities is static until the next
+        -- skillchain event. Rebuilding it 30 times a second wastes resources.
+        if str~=self.panel_cache then
+            self:set_panel_text(str)
+            self.panel_cache=str
+        end
+    end
+
     function self:render(state)
         local opt=self.options
         if self.editing then
@@ -394,6 +410,7 @@ function ui.new(settings, sc_info)
             return
         end
 
+        self.is_hidden=false
         state.sc_info=self.sc_info
         local mode=opt.display
         local show_sc=(mode=='sc' or mode=='both')
@@ -445,7 +462,7 @@ function ui.new(settings, sc_info)
             self:draw_bar('mb',y,state.mb_left/total,false,palette(state,self.sc_info,true))
         end
         if opt.mode=='learn' and (sc_alive or mb_alive or self.editing) then
-            self.panel:text(format_list(state,show_sc,show_mb))
+            self:set_panel_text(format_list(state,show_sc,show_mb))
             self.panel:show()
         elseif opt.mode=='compact' and (sc_alive or mb_alive or self.editing) then
             local values={}
@@ -456,7 +473,7 @@ function ui.new(settings, sc_info)
             self.panel:show()
         else
             if self.editing then
-                self.panel:text('SC LEARNING PANEL  [drag]')
+                self:set_panel_text('SC LEARNING PANEL  [drag]')
                 self.panel:show()
             else
                 self.panel:hide()
