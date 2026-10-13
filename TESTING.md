@@ -2,10 +2,10 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
-## Current testing batch — 2026-10-13 / v0.1.2 (property-caption offset and small-client recovery)
+## Current testing batch — 2026-10-13 / resonance.5 (upward learning layout and bar timers)
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
-**Status:** User previously confirmed the addon loads and basic commands work in FFXI. The new property-label, redraw, rounding, and off-screen-edit changes have not yet been tested live.
+**Status:** User confirmed `//sc edit` dragging works well and liked the in-game appearance of the bars; `//sc names offset 0 -11` looked good on the user's client. The new learning layout, timestamps, and raised edit handle have not yet been tested live.
 **Delivery:** Download the artifact named `Skillchains-v0.1.2-test` from the
 latest successful [GitHub Actions packaging run](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml),
 rather than using GitHub's auto-generated repository source ZIP.
@@ -20,7 +20,40 @@ NPCMirror, containing AGATHOS, DESIGN and WORKFLOW. The retired
 are included.
 **Precaution:** Back up your current Skillchains folder and its `data` before replacing files.
 
-### Current targeted test: property-caption offset (resonance.4)
+### Current targeted test: resonance.5 learning layout, timers and edit
+- `//sc status` should report `resonance.5`. On an existing client,
+  `//sc names offset` should retain the user's previously saved custom value.
+  On a new character with no custom value, default should be `0 -11`.
+  `//sc default` should restore `0 -11`.
+- While a real SC window is active, verify the attached caption says
+  e.g. `LQF / DET  5.4s`. Watch the timer count down in tenths while
+  the bar shrinks smoothly. Test long property names for wrapping.
+- Use `//sc display mb` and `//sc display both` after a valid chain:
+  verify a separate `Magic Burst: 9.8s` caption follows the MB bar,
+  counts down, and does not overlap the SC label. Test MB-only after
+  the SC continuation expires and after a closed chain.
+- `//sc mode learn` should show `Light: Savage Blade`,
+  `Gravitation: Swift Blade`, and any other genuinely available learned
+  actions grouped by resulting skillchain, highest levels first, without
+  `Step`, `AVAILABLE SKILLCHAINS`, or `Lv.` prefixes. Do not
+  mistake these example names for guaranteed skills of a particular job.
+- Place the Learning panel near the lower screen, then create a
+  different skillchain with a longer list. Verify the panel's **bottom
+  edge stays fixed**, additional rows extend upward, and
+  `//sc edit` still drags the panel smoothly and saves its position.
+- `//sc edit` should show its SC BAR drag box **above**, not over
+  the resonance gradient. `//sc scale edit` must retain an accessible
+  scale handle on different resolutions.
+- `//sc mode minimal` must still mean bars only. The Compact panel
+  should still work, pending a future icon/color redesign.
+- The learning panel remains RGB (16,18,38) at alpha 175;
+  the bar track remains RGB (18,21,39) at alpha 115. This
+  build should **not** homogenize the two backgrounds.
+- Validate FPS and UI behavior with 1 client and several clients;
+  no new artwork, character settings, or unrelated addons are included.
+- **These changes are not yet verified in-game.**
+
+### Previous targeted test: property-caption offset (resonance.4)
 
 - After installing updated `Skillchains.lua` and `resonance_ui.lua`, reload
   Skillchains. Confirm `//sc status` reports `resonance.4`.
@@ -165,6 +198,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
+| 2026-10-13 | resonance.5 layout | Bar and MB captions with countdowns, upward-growing Learn panel, lifted edit handle, default Y -11 | `da28cda`, `677de95`, `7c6b178`, `a2784c6` | Committed / live untested |
 | 2026-10-13 | v0.1.2 offset | Add bar-relative property-label offset in `//sc names offset <x> <y>` | `15ec5e4`, `39323f9`, `ea1c5e8` | Committed / live untested |
 | 2026-10-13 | v0.1.2 README location | Place README inside installable folder, keep WORKFLOW/TESTING at ZIP root and sync NPCMirror guide | Canonical NPCMirror `WORKFLOW.md`; package builder updated | Documentation/package-only change |
 | 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs; CI produces one-addon-directory artifact | `5831d2b`, `2da4ec1`, `d97ee94`, `d64e819`, `df535cc` | GitHub Actions run 38449553310 succeeded, artifact 11838873673; no Lua behavior changes |
@@ -187,6 +221,7 @@ is accepted.
 | 2026-10-13 | Reported ambiguous Skillchains versus Skillchains-resonance-ui-test folders in previous archive; pointed out retired AGATHOS/DESIGN documents and requested compliance with consolidated NPCMirror WORKFLOW.md | User report and document review |
 | 2026-10-13 | Requested that future testing ZIPs put README.md inside the installable addon folder, while WORKFLOW.md and TESTING.md remain at the ZIP root | User-approved convention |
 | 2026-10-13 | Asked for a command to move the property name text upward until it slightly overlaps the resonance bar | User request in project conversation |
+| 2026-10-13 | Confirmed `//sc edit` dragging works, liked current bar appearance, found name offset Y=-11 suitable; requested edit handle above bar, bar-attached timers, simplified result-grouped learning list growing upward, and asked whether bar and panel backgrounds match | Direct user report in project conversation |
 
 Preserve this record; corrections use strike-through with the reason and replacement,
 rather than silently deleting prior entries.
