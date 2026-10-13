@@ -34,6 +34,12 @@ end
 -- one resulting property whose elements determine compatible burst spells.
 local function palette(state, sc_info, burst)
     local properties = state and state.active or {}
+    -- Advanced Light/Dark chains need only their two recognizable families.
+    if burst and (properties[1]=='Light' or properties[1]=='Radiance') then
+        return {elements.Light}
+    elseif burst and (properties[1]=='Darkness' or properties[1]=='Umbra') then
+        return {elements.Dark}
+    end
     local stops, seen = {}, {}
     for i=1,#properties do
         local name = properties[i]
@@ -69,11 +75,11 @@ local function text_settings(x,y,size,draggable)
     }
 end
 
-local function format_list(state)
+local function format_list(state, show_sc, show_mb)
     local output = {}
     local property = table.concat(state.active or {}, ', ')
     output[#output+1] = property .. '  |  Step ' .. tostring(state.step or 1)
-    if state.sc_left > 0 and not state.closed then
+    if show_sc and state.sc_left > 0 and not state.closed then
         output[#output+1] = 'AVAILABLE SKILLCHAINS'
         local groups = state.groups or {}
         if #groups == 0 then
@@ -89,9 +95,13 @@ local function format_list(state)
             end
         end
     end
-    if state.mb_left > 0 and state.step and state.step > 1 then
-        local match = state.sc_info and state.sc_info[state.active[1]] or {}
-        output[#output+1] = 'MAGIC BURST  ' .. table.concat(match, ' / ')
+    if show_mb and state.mb_left > 0 and state.step and state.step > 1 then
+        local property=state.active[1]
+        local match = state.sc_info and state.sc_info[property] or {}
+        local label=(property=='Light' or property=='Radiance') and 'Light'
+            or (property=='Darkness' or property=='Umbra') and 'Dark'
+            or table.concat(match, ' / ')
+        output[#output+1] = 'MAGIC BURST  ' .. label
     end
     return table.concat(output, '\n')
 end
@@ -229,7 +239,7 @@ function ui.new(settings, sc_info)
             self:draw_bar('mb',y,state.mb_left/total,false,palette(state,self.sc_info,true))
         end
         if opt.mode=='learn' and (sc_alive or mb_alive or self.editing) then
-            self.panel:text(format_list(state))
+            self.panel:text(format_list(state,show_sc,show_mb))
             self.panel:show()
         elseif opt.mode=='compact' and (sc_alive or mb_alive or self.editing) then
             local str=table.concat(state.active or {},', ')
