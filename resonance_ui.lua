@@ -122,9 +122,14 @@ function ui.new(settings, sc_info)
     end
 
     self.handle = texts.new('SC BAR  [drag]', text_settings(settings.bar.x,settings.bar.y-19,10,true))
+    self.scalehandle = texts.new('SC SCALE  [drag left/right]',
+        text_settings(settings.bar.x+math.floor(100*settings.scale+.5),
+            settings.bar.y+13,10,true))
+    self.scaling = false
     self.panel = texts.new('Skillchains', text_settings(settings.list.x,settings.list.y,
         math.floor(11*settings.scale+.5),false))
     self.handle:hide()
+    self.scalehandle:hide()
     self.panel:hide()
 
     function self:hide_bars()
@@ -139,6 +144,7 @@ function ui.new(settings, sc_info)
         self:hide_bars()
         if not self.editing then
             self.handle:hide()
+            self.scalehandle:hide()
             self.panel:hide()
         end
     end
@@ -182,6 +188,7 @@ function ui.new(settings, sc_info)
     function self:edit(toggle)
         if toggle==nil then toggle=not self.editing end
         self.editing=toggle
+        if not toggle then self.scaling=false; self.scalehandle:hide() end
         self.panel:draggable(toggle)
         if toggle then
             self.handle:pos(self.options.bar.x,self.options.bar.y-19)
@@ -198,6 +205,23 @@ function ui.new(settings, sc_info)
         self.options.scale=clamp(n,.5,2.5)
         self.panel:size(math.max(7,math.floor(11*self.options.scale+.5)))
         self.handle:size(math.max(7,math.floor(10*self.options.scale+.5)))
+        self.scalehandle:size(math.max(7,math.floor(10*self.options.scale+.5)))
+    end
+
+    -- Drag the separate scaling handle horizontally. This changes thickness,
+    -- spacing and typography, but keeps the bar's HP-matched width independent.
+    function self:scale_edit(toggle)
+        if toggle==nil then toggle=not self.scaling end
+        if toggle then
+            self:edit(true)
+            self.scalehandle:pos(self.options.bar.x+math.floor(100*self.options.scale+.5),
+                self.options.bar.y+13)
+            self.scalehandle:show()
+        else
+            self.scalehandle:hide()
+        end
+        self.scaling=toggle
+        return toggle
     end
 
     function self:render(state)
@@ -209,6 +233,11 @@ function ui.new(settings, sc_info)
             opt.bar.x, opt.bar.y = math.floor(hx+.5),math.floor(hy+19+.5)
             local px,py=self.panel:pos()
             opt.list.x,opt.list.y=math.floor(px+.5),math.floor(py+.5)
+            if self.scaling then
+                local sx=self.scalehandle:pos()
+                local value=clamp((sx-opt.bar.x)/100,.5,2.5)
+                if math.abs(value-opt.scale) > .015 then self:scale(value) end
+            end
             state=state or {
                 active={'Fusion'},step=2,sc_left=5,sc_total=8,
                 sc_wait=0,mb_left=7,mb_total=10,closed=false,
@@ -260,6 +289,7 @@ function ui.new(settings, sc_info)
     function self:destroy()
         self.panel:destroy()
         self.handle:destroy()
+        self.scalehandle:destroy()
         for _,bar in pairs(self.names) do
             windower.prim.delete(bar.frame)
             windower.prim.delete(bar.base)
