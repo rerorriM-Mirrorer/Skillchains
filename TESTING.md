@@ -6,11 +6,28 @@
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
 **Status:** User previously confirmed the addon loads and basic commands work in FFXI. The new property-label, redraw, rounding, and off-screen-edit changes have not yet been tested live.
-**Delivery:** Download this branch as a ZIP and keep the three Lua files together.
-**Contents:** `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`, README and
-the four development documents. No `settings.xml`, launcher scripts, or EnemyBar2
-changes are included.
+**Delivery:** Curated `Skillchains-v0.1.2-test.zip` (not GitHub's auto-generated
+source ZIP). Archive root: `README.md`, `WORKFLOW.md`, `TESTING.md`, and
+one `Skillchains/` folder containing `Skillchains.lua`, `skills.lua`,
+`resonance_ui.lua`. Only the inner addon folder's Lua files are installed.
+**Conventions:** `WORKFLOW.md` is the consolidated canonical document from
+NPCMirror, containing AGATHOS, DESIGN and WORKFLOW. The retired
+`AGATHOS.md` and `DESIGN.md` documents are intentionally absent.
+**Runtime:** No `settings.xml`, launcher scripts, or EnemyBar2 modifications
+are included.
 **Precaution:** Back up your current Skillchains folder and its `data` before replacing files.
+
+### Packaging verification (documentation-only correction)
+
+- Confirm package ZIP has **one** `Skillchains/` directory and the
+  three markdown documents at the ZIP root. Do not install the documentation.
+- Confirm `WORKFLOW.md` matches NPCMirror's consolidated reference,
+  containing Agathos, Design, and Workflow in a single file.
+- Confirm no `AGATHOS.md` or `DESIGN.md`, no settings.xml and no
+  redundant parent folder inside the curated ZIP.
+- Installation: copy the three Lua files from `Skillchains/` into the
+  existing `Windower/addons/Skillchains/` folder, preserving `data/`.
+- No Lua or addon behavior is changed by this packaging correction.
 
 ### First checks for v0.1.2
 
@@ -126,6 +143,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
+| 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs, deliver one-addon-directory archive | `5831d2b`, `2da4ec1`, `d97ee94` | Documentation/package correction only |
 | 2026-10-13 | v0.1.2 | Smooth rendering, short labels, rounded dark tracks and off-screen edit recovery | `f989b8a`, `d6b13f0`, `32dca6d`, `6ae3365`, `a9f3ca3` | Committed / live untested |
 | 2026-10-13 | v0.1.1 | Add attached property label and MB clearance in `resonance_ui.lua` | `9544346` | Committed / live untested |
 | 2026-10-13 | v0.1 | posimagi skill database refresh | `25513fb` | Committed / live untested |
@@ -142,6 +160,7 @@ is accepted.
 | 2026-10-13 | Addon loaded and basic commands worked; broader testing environment still being prepared | User report in project conversation |
 | 2026-10-13 | Requested a smaller EnemyBar2-style Arial bold italic label under the SC bar listing currently resonating properties, including the properties of the opening WS | Project conversation |
 | 2026-10-13 | Requested white caption with black stroke, future level colors, L1–L4 property abbreviations, less stutter during countdown, rounded bar corners and darker translucent tracks; reported SC bar off-screen and unmovable on Lionstag's small resolution | User report in project conversation |
+| 2026-10-13 | Reported ambiguous Skillchains versus Skillchains-resonance-ui-test folders in previous archive; pointed out retired AGATHOS/DESIGN documents and requested compliance with consolidated NPCMirror WORKFLOW.md | User report and document review |
 
 Preserve this record; corrections use strike-through with the reason and replacement,
 rather than silently deleting prior entries.
