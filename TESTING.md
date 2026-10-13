@@ -2,7 +2,7 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
-## Current testing batch — 2026-10-13 / v0.1.2 (small-client recovery and motion)
+## Current testing batch — 2026-10-13 / v0.1.2 (property-caption offset and small-client recovery)
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
 **Status:** User previously confirmed the addon loads and basic commands work in FFXI. The new property-label, redraw, rounding, and off-screen-edit changes have not yet been tested live.
@@ -19,6 +19,21 @@ NPCMirror, containing AGATHOS, DESIGN and WORKFLOW. The retired
 **Runtime:** No `settings.xml`, launcher scripts, or EnemyBar2 modifications
 are included.
 **Precaution:** Back up your current Skillchains folder and its `data` before replacing files.
+
+### Current targeted test: property-caption offset (resonance.4)
+
+- After installing updated `Skillchains.lua` and `resonance_ui.lua`, reload
+  Skillchains. Confirm `//sc status` reports `resonance.4`.
+- Use `//sc names offset` (without numbers) to report the saved X/Y values.
+  Then use `//sc names offset 0 -4` and perform a weapon skill. Verify the
+  property names rise approximately four pixels and slightly overlap the SC
+  bar; the bar itself must not move.
+- Use `//sc names short` and `//sc names full` to confirm both use the same
+  saved offsets. Drag the SC bar, reload, and confirm its caption follows.
+- Test `//sc display both` with an upward offset and also `//sc names offset 0 5`
+  to confirm the MB bar remains clear of the caption.
+- Use `//sc default` to reset offsets to `0 0` (this also resets other UI choices).
+  No Lua runtime testing has yet been performed for this change.
 
 ### Packaging verification (documentation-only correction)
 
@@ -150,6 +165,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
+| 2026-10-13 | v0.1.2 offset | Add bar-relative property-label offset in `//sc names offset <x> <y>` | `15ec5e4`, `39323f9`, `ea1c5e8` | Committed / live untested |
 | 2026-10-13 | v0.1.2 README location | Place README inside installable folder, keep WORKFLOW/TESTING at ZIP root and sync NPCMirror guide | Canonical NPCMirror `WORKFLOW.md`; package builder updated | Documentation/package-only change |
 | 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs; CI produces one-addon-directory artifact | `5831d2b`, `2da4ec1`, `d97ee94`, `d64e819`, `df535cc` | GitHub Actions run 38449553310 succeeded, artifact 11838873673; no Lua behavior changes |
 | 2026-10-13 | v0.1.2 | Smooth rendering, short labels, rounded dark tracks and off-screen edit recovery | `f989b8a`, `d6b13f0`, `32dca6d`, `6ae3365`, `a9f3ca3` | Committed / live untested |
@@ -170,6 +186,7 @@ is accepted.
 | 2026-10-13 | Requested white caption with black stroke, future level colors, L1–L4 property abbreviations, less stutter during countdown, rounded bar corners and darker translucent tracks; reported SC bar off-screen and unmovable on Lionstag's small resolution | User report in project conversation |
 | 2026-10-13 | Reported ambiguous Skillchains versus Skillchains-resonance-ui-test folders in previous archive; pointed out retired AGATHOS/DESIGN documents and requested compliance with consolidated NPCMirror WORKFLOW.md | User report and document review |
 | 2026-10-13 | Requested that future testing ZIPs put README.md inside the installable addon folder, while WORKFLOW.md and TESTING.md remain at the ZIP root | User-approved convention |
+| 2026-10-13 | Asked for a command to move the property name text upward until it slightly overlaps the resonance bar | User request in project conversation |
 
 Preserve this record; corrections use strike-through with the reason and replacement,
 rather than silently deleting prior entries.
