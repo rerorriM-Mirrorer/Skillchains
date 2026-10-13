@@ -492,6 +492,12 @@ windower.register_event('addon command', function(cmd, ...)
     elseif cmd=='save' then
         config.save(settings,option=='all' and 'all' or nil)
         message('Settings saved.')
+    elseif cmd=='burst' or cmd=='props' or cmd=='step' or cmd=='timer' or cmd=='color' then
+        message('Legacy text-layout toggle replaced by //sc mode and //sc display.')
+    elseif cmd=='aeonic' then
+        settings.aeonic=not settings.aeonic
+        config.save(settings)
+        message('Aeonic fallback '..(settings.aeonic and 'on' or 'off')..'.')
     elseif default.Show[cmd] then
         if not ensure_player() then message('Log in before changing job filters.') return end
         local on=settings.Show[cmd][info.job]
