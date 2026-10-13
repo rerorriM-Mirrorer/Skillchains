@@ -6,7 +6,7 @@
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
 **Status:** User previously confirmed the addon loads and basic commands work in FFXI. The new property-label, redraw, rounding, and off-screen-edit changes have not yet been tested live.
-**Delivery:** Curated `Skillchains-v0.1.2-test.zip` (not GitHub's auto-generated
+**Delivery:** Curated [`packages/Skillchains-v0.1.2-test.zip`](packages/Skillchains-v0.1.2-test.zip) (not GitHub's auto-generated
 source ZIP). Archive root: `README.md`, `WORKFLOW.md`, `TESTING.md`, and
 one `Skillchains/` folder containing `Skillchains.lua`, `skills.lua`,
 `resonance_ui.lua`. Only the inner addon folder's Lua files are installed.
@@ -143,7 +143,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
-| 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs, deliver one-addon-directory archive | `5831d2b`, `2da4ec1`, `d97ee94` | Documentation/package correction only |
+| 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs, deliver one-addon-directory archive | `5831d2b`, `2da4ec1`, `d97ee94`; `packages/Skillchains-v0.1.2-test.zip` | Documentation/package correction only |
 | 2026-10-13 | v0.1.2 | Smooth rendering, short labels, rounded dark tracks and off-screen edit recovery | `f989b8a`, `d6b13f0`, `32dca6d`, `6ae3365`, `a9f3ca3` | Committed / live untested |
 | 2026-10-13 | v0.1.1 | Add attached property label and MB clearance in `resonance_ui.lua` | `9544346` | Committed / live untested |
 | 2026-10-13 | v0.1 | posimagi skill database refresh | `25513fb` | Committed / live untested |
