@@ -75,6 +75,25 @@ local function text_settings(x,y,size,draggable)
     }
 end
 
+-- The currently reverberating properties belong visually to the target.
+-- Render every opening WS property; replace with the successful chain result.
+local function properties_label(properties, width, text_object)
+    local lines, current = {}, ''
+    for _,name in ipairs(properties or {}) do
+        local next_line = current == '' and name or (current .. ', ' .. name)
+        text_object:text(next_line)
+        local measured = text_object:extents()
+        if current ~= '' and measured > width then
+            lines[#lines+1] = current
+            current = name
+        else
+            current = next_line
+        end
+    end
+    if current ~= '' then lines[#lines+1] = current end
+    return #lines > 0 and table.concat(lines, '\n') or '', math.max(1,#lines)
+end
+
 local function format_list(state, show_sc, show_mb)
     local output = {}
     local property = table.concat(state.active or {}, ', ')
@@ -121,6 +140,16 @@ function ui.new(settings, sc_info)
         end
     end
 
+    -- EnemyBar2 target names use Arial, bold, italic, and a dark stroke.
+    -- The smaller label is attached to the bar, not the draggable learning panel.
+    self.properties = texts.new('', {
+        pos={x=settings.bar.x+3,y=settings.bar.y+7},
+        flags={bold=true,italic=true,draggable=false},
+        text={font='Arial',size=10,alpha=245,red=239,green=225,blue=229,
+            stroke={width=2,alpha=180,red=50,green=50,blue=50}},
+        bg={visible=false}
+    })
+    self.property_cache = nil
     self.handle = texts.new('SC BAR  [drag]', text_settings(settings.bar.x,settings.bar.y-19,10,true))
     self.scalehandle = texts.new('SC SCALE  [drag left/right]',
         text_settings(settings.bar.x+math.floor(100*settings.scale+.5),
@@ -131,8 +160,10 @@ function ui.new(settings, sc_info)
     self.handle:hide()
     self.scalehandle:hide()
     self.panel:hide()
+    self.properties:hide()
 
     function self:hide_bars()
+        self.properties:hide()
         for _,bar in pairs(self.names) do
             windower.prim.set_visibility(bar.frame,false)
             windower.prim.set_visibility(bar.base,false)
@@ -206,6 +237,9 @@ function ui.new(settings, sc_info)
         self.panel:size(math.max(7,math.floor(11*self.options.scale+.5)))
         self.handle:size(math.max(7,math.floor(10*self.options.scale+.5)))
         self.scalehandle:size(math.max(7,math.floor(10*self.options.scale+.5)))
+        self.properties:size(math.max(7,math.floor(10*self.options.scale+.5)))
+        self.properties:stroke_width(math.max(1,math.floor(1.5*self.options.scale+.5)))
+        self.property_cache=nil
     end
 
     -- Drag the separate scaling handle horizontally. This changes thickness,
@@ -260,8 +294,31 @@ function ui.new(settings, sc_info)
         if sc_alive then
             local total=math.max(.1,state.sc_total or 8)
             local fraction=state.sc_left/total
-            self:draw_bar('sc',y,fraction,state.sc_wait>0,palette(state,self.sc_info,false))
-            y=y+math.max(3,math.floor(5*opt.scale+.5))+math.max(4,math.floor(5*opt.scale+.5))
+            local bar_height=self:draw_bar('sc',y,fraction,state.sc_wait>0,
+                palette(state,self.sc_info,false))
+            y=y+bar_height
+            if opt.mode~='minimal' then
+                local inset=math.max(2,math.floor(3*opt.scale+.5))
+                local label_width=math.max(30,opt.bar.width-inset*2)
+                local signature=table.concat(state.active or {},'|')
+                    ..':'..tostring(label_width)..':'..tostring(opt.scale)
+                if signature~=self.property_cache then
+                    local label,rows=properties_label(state.active,label_width,self.properties)
+                    self.properties:text(label)
+                    self.property_rows=rows
+                    self.property_cache=signature
+                end
+                self.properties:pos(math.floor(opt.bar.x+inset+.5),
+                    y+math.max(1,math.floor(2*opt.scale+.5)))
+                self.properties:show()
+                -- Reserve room for wrapped names before drawing the optional
+                -- MB indicator, keeping both clocks visually independent.
+                y=y+math.max(1,math.floor(2*opt.scale+.5))
+                    + (self.property_rows or 1)*math.max(9,math.floor(12*opt.scale+.5))
+                    + math.max(2,math.floor(3*opt.scale+.5))
+            else
+                y=y+math.max(4,math.floor(5*opt.scale+.5))
+            end
         end
         if mb_alive then
             local total=math.max(.1,state.mb_total or 10)
@@ -287,6 +344,7 @@ function ui.new(settings, sc_info)
     end
 
     function self:destroy()
+        self.properties:destroy()
         self.panel:destroy()
         self.handle:destroy()
         self.scalehandle:destroy()
