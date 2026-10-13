@@ -65,6 +65,7 @@ source-directory name and is **not** the recommended installation package.
 | `//sc names full` | Full property names below SC bar (**default**) |
 | `//sc names short` | Three-letter properties separated by ` / ` |
 | `//sc names off` | Hide attached property caption in Learn/Compact too |
+| `//sc names offset 0 -4` | Move caption relative to the bar: X, Y pixels; negative Y moves upward. Omit values to report current offset. |
 | `//sc edit` or `//sc edit on/off` | Drag the bar and learning panel; automatically recovers off-screen positions |
 | `//sc center` | Center both UI objects within the current client's viewport |
 | `//sc pos 200 450` | Set a precise bar position (clamped to the current viewport) |
@@ -96,6 +97,12 @@ recovery command and `//sc pos x y` offers direct adjustment.
 The UI creates only its own objects, and disappears outside a tracked target's
 active window. It does not need EnemyBar2 to run.
 
+For a little overlap between the property names and the bottom of the resonance
+bar, try `//sc names offset 0 -4`. This is saved per character and follows the
+bar when moved or scaled; `//sc default` resets the offset to `0 0`. The first
+number is horizontal adjustment and the second vertical adjustment. If Magic
+Burst is displayed too, a positive Y offset reserves extra clearance.
+
 ## Credits and provenance
 
 Original addon copyright © 2017 Ivaar, under its BSD-style source notice.
@@ -104,6 +111,13 @@ Resonance UI testing changes authored by A (Awake) with user-directed design.
 Existing upstream notices in the Lua source files remain intact.
 
 ## Changelog (cumulative)
+
+### 2026-10-13 — v0.1.2 property-caption offset (resonance.4)
+- Add `//sc names offset <x> <y>` for independent, persistent property-label
+  positioning relative to the SC bar; e.g. `0 -4` overlaps the bar slightly.
+- Preserve whitespace between caption and MB bar for positive downward offsets;
+  include offset reset in `//sc default`.
+- Add command help and testing instructions. New behavior not yet tested in game.
 
 ### 2026-10-13 — README installation-folder convention
 - Keep the source README at the repository root and place its package copy
