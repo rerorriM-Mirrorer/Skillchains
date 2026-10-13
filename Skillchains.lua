@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.2'
+_addon.version = '2.20.08.25-resonance.3'
 
 require('luau')
 require('pack')
@@ -48,7 +48,7 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- The UI is independent of EnemyBar2. The initial position suits a small
 -- client; //sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
-    mode='learn', display='sc', scale=1,
+    mode='learn', display='sc', names='full', scale=1,
     bar={x=466,y=696,width=310},
     list={x=465,y=300},
 }
@@ -287,7 +287,10 @@ local next_frame = os.clock()
 windower.register_event('prerender', function()
     local now=os.clock()
     if now < next_frame then return end
-    next_frame=now+.1
+    -- Previous 0.1s updates made the countdown visibly step between pixels.
+    -- The remaining width comes from absolute expiry timestamps; at ~30Hz
+    -- it glides during the same window, yet resets immediately on a new WS.
+    next_frame=now+(1/30)
     for id,state in pairs(resonating) do
         -- Do not remove a completed chain while its MB window is active.
         if math.max(state.times,state.mb_window or 0) + 1 < now then
@@ -454,6 +457,29 @@ windower.register_event('addon command', function(cmd, ...)
         opts.mode=option
         config.save(settings)
         message('Mode set to '..option..'.')
+    elseif cmd=='names' then
+        if option~='full' and option~='short' and option~='off' then
+            message('Property labels: '..(opts.names or 'full')..
+                '. Use full, short, or off.')
+            return
+        end
+        opts.names=option
+        config.save(settings)
+        message('Property labels set to '..option..'.')
+    elseif cmd=='center' then
+        overlay:center()
+        config.save(settings)
+        message('Resonance bar and learning panel moved into the screen center.')
+    elseif cmd=='pos' then
+        local x,y=tonumber(args[1]),tonumber(args[2])
+        if not x or not y then
+            message(('Bar position: %d, %d. Use //sc pos <x> <y>.'):format(
+                opts.bar.x,opts.bar.y))
+            return
+        end
+        overlay:set_position(x,y)
+        config.save(settings)
+        message(('Bar moved to %d, %d.'):format(opts.bar.x,opts.bar.y))
     elseif cmd=='edit' or cmd=='move' then
         local desired
         if option=='on' then desired=true
@@ -487,7 +513,7 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message('Bar width set to '..opts.bar.width..'.')
     elseif cmd=='default' then
-        opts.display,opts.mode,opts.scale='sc','learn',1
+        opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
         opts.list.x,opts.list.y=465,300
         overlay:scale(1)
@@ -513,11 +539,12 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message(cmd..' suggestions '..(on and 'disabled' or 'enabled')..' for '..info.job..'.')
     elseif cmd=='status' then
-        message(('v%s | %s | %s | scale %.2f | width %d | edit %s'):format(
-            _addon.version,opts.display,opts.mode,opts.scale,opts.bar.width,
+        message(('v%s | %s | %s | names %s | scale %.2f | width %d | edit %s'):format(
+            _addon.version,opts.display,opts.mode,opts.names or 'full',
+            opts.scale,opts.bar.width,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; edit [on|off]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off; edit [on|off]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
