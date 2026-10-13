@@ -11,6 +11,8 @@ local elements = {
 }
 local fallback = {185,171,204}
 local segments = 24
+local bar_handle_offset = 34
+local scale_handle_offset = 62
 local abbreviations = {
     Liquefaction='LQF', Induration='IND', Detonation='DET', Scission='SCI',
     Impaction='IMP', Reverberation='RVB', Transfixion='TRN', Compression='COM',
@@ -88,7 +90,13 @@ end
 
 -- The currently reverberating properties belong visually to the target.
 -- Render every opening WS property; replace with the successful chain result.
-local function properties_label(properties, width, text_object, form)
+-- Always display the expiry countdown with the corresponding bar caption.
+-- Reserve enough horizontal space for the suffix when wrapping long names.
+local function countdown(seconds)
+    return ('%.1fs'):format(math.max(0,seconds or 0))
+end
+
+local function properties_label(properties, width, text_object, form, timer)
     local lines, current = {}, ''
     for _,original in ipairs(properties or {}) do
         local name=form=='short' and (abbreviations[original] or original) or original
@@ -103,41 +111,40 @@ local function properties_label(properties, width, text_object, form)
             current = next_line
         end
     end
+    if timer then
+        local next_line = current == '' and timer or (current .. '  ' .. timer)
+        text_object:text(next_line)
+        if current ~= '' and text_object:extents() > width then
+            lines[#lines+1] = current
+            current = timer
+        else
+            current = next_line
+        end
+    end
     if current ~= '' then lines[#lines+1] = current end
-    return #lines > 0 and table.concat(lines, '\n') or '', math.max(1,#lines)
+    return table.concat(lines, '\n'), math.max(1,#lines)
 end
 
-local function format_list(state, show_sc, show_mb)
-    local output = {}
-    -- The active property has its own caption attached to the SC bar.
-    -- Do not repeat that name on the detachable learning panel.
-    output[#output+1] = 'Step ' .. tostring(state.step or 1)
-    if show_sc and state.sc_left > 0 and not state.closed then
-        output[#output+1] = 'AVAILABLE SKILLCHAINS'
-        local groups = state.groups or {}
-        if #groups == 0 then
-            output[#output+1] = '  No compatible learned actions'
-        else
-            for i=1,#groups do
-                local group=groups[i]
-                output[#output+1] = ('Lv.%d  %s'):format(group.level,group.property)
-                for j=1,#group.actions do
-                    local action=group.actions[j]
-                    output[#output+1] = ('  %s  (%s)'):format(action.name,action.via or '?')
-                end
+-- The detection core already groups possible learned actions by their
+-- resulting skillchain and sorts those groups by level (highest first).
+-- Display the useful names directly, without redundant level/step headings.
+local function format_list(state)
+    local groups=state.groups or {}
+    if #groups==0 then return 'No compatible learned actions' end
+    local lines={}
+    for _,group in ipairs(groups) do
+        local actions=group.actions or {}
+        if #actions>0 then
+            if #lines>0 then lines[#lines+1]='' end
+            lines[#lines+1]=group.property..': '..actions[1].name
+            for j=2,#actions do
+                lines[#lines+1]='    '..actions[j].name
             end
         end
     end
-    if show_mb and state.mb_left > 0 and state.step and state.step > 1 then
-        local property=state.active[1]
-        local match = state.sc_info and state.sc_info[property] or {}
-        local label=(property=='Light' or property=='Radiance') and 'Light'
-            or (property=='Darkness' or property=='Umbra') and 'Dark'
-            or table.concat(match, ' / ')
-        output[#output+1] = 'MAGIC BURST  ' .. label
-    end
-    return table.concat(output, '\n')
+    return table.concat(lines,'\n')
 end
+
 
 function ui.new(settings, sc_info)
     local self = {options=settings, sc_info=sc_info, editing=false, names={}}
@@ -175,13 +182,21 @@ function ui.new(settings, sc_info)
             stroke={width=2,alpha=235,red=0,green=0,blue=0}},
         bg={visible=false}
     })
+    self.mb_caption = texts.new('', {
+        pos={x=settings.bar.x+3,y=settings.bar.y+7},
+        flags={bold=true,italic=true,draggable=false},
+        text={font='Arial',size=10,alpha=245,red=255,green=255,blue=255,
+            stroke={width=2,alpha=235,red=0,green=0,blue=0}},
+        bg={visible=false}
+    })
     self.property_cache = nil
+    self.mb_caption_cache = nil
     self.panel_cache = nil
     self.is_hidden = true
-    self.handle = texts.new('SC BAR  [drag]', text_settings(settings.bar.x,settings.bar.y-19,10,true))
+    self.handle = texts.new('SC BAR  [drag]', text_settings(settings.bar.x,settings.bar.y-bar_handle_offset,10,true))
     self.scalehandle = texts.new('SC SCALE  [drag left/right]',
         text_settings(settings.bar.x+math.floor(100*settings.scale+.5),
-            settings.bar.y-36,10,true))
+            settings.bar.y-scale_handle_offset,10,true))
     self.scaling = false
     self.panel = texts.new('Skillchains', text_settings(settings.list.x,settings.list.y,
         math.floor(11*settings.scale+.5),false))
@@ -189,6 +204,20 @@ function ui.new(settings, sc_info)
     self.scalehandle:hide()
     self.panel:hide()
     self.properties:hide()
+    self.mb_caption:hide()
+
+    -- list.y is the BOTTOM edge of the learning panel; new lines grow upward.
+    function self:panel_height()
+        local _,h=self.panel:extents()
+        -- The Windower text extents cover glyphs; include the 4px padding
+        -- configured for the background at both its top and bottom.
+        return math.max(16,math.floor((h or 0)+8+.5))
+    end
+
+    function self:position_panel()
+        self.panel:pos(self.options.list.x,
+            self.options.list.y-self:panel_height())
+    end
 
     function self:hide_bar(kind)
         local bar=self.names[kind]
@@ -205,6 +234,7 @@ function ui.new(settings, sc_info)
 
     function self:hide_bars()
         self.properties:hide()
+        self.mb_caption:hide()
         for kind in pairs(self.names) do self:hide_bar(kind) end
     end
 
@@ -295,9 +325,10 @@ function ui.new(settings, sc_info)
         opt.bar.x=math.floor(clamp(opt.bar.x,8,max_x)+.5)
         opt.bar.y=math.floor(clamp(opt.bar.y,42,max_y)+.5)
         opt.list.x=math.floor(clamp(opt.list.x,8,math.max(8,w-135))+.5)
-        opt.list.y=math.floor(clamp(opt.list.y,12,math.max(12,h-75))+.5)
-        self.handle:pos(opt.bar.x,opt.bar.y-19)
-        self.panel:pos(opt.list.x,opt.list.y)
+        -- The saved anchor is the lower edge, regardless of line count.
+        opt.list.y=math.floor(clamp(opt.list.y,20,math.max(20,h-12))+.5)
+        self.handle:pos(opt.bar.x,opt.bar.y-bar_handle_offset)
+        self:position_panel()
         if self.scaling then
             self:place_scalehandle()
         end
@@ -315,7 +346,7 @@ function ui.new(settings, sc_info)
         opt.bar.x=math.floor((w-opt.bar.width)/2)
         opt.bar.y=math.floor(h*.65)
         opt.list.x=math.floor(math.max(8,(w-265)/2))
-        opt.list.y=math.floor(h*.19)
+        opt.list.y=math.floor(h*.65)
         self:rescue()
     end
 
@@ -324,7 +355,7 @@ function ui.new(settings, sc_info)
     function self:place_scalehandle()
         local w,h=viewport()
         local x=clamp(self.options.bar.x+100*self.options.scale,8,math.max(8,w-185))
-        local y=clamp(self.options.bar.y-36,5,math.max(5,h-22))
+        local y=clamp(self.options.bar.y-scale_handle_offset,5,math.max(5,h-22))
         self.scalehandle:pos(x,y)
         self.scale_anchor=x-100*self.options.scale
     end
@@ -351,6 +382,8 @@ function ui.new(settings, sc_info)
         self.scalehandle:size(math.max(7,math.floor(10*self.options.scale+.5)))
         self.properties:size(math.max(7,math.floor(10*self.options.scale+.5)))
         self.properties:stroke_width(math.max(1,math.floor(1.5*self.options.scale+.5)))
+        self.mb_caption:size(math.max(7,math.floor(10*self.options.scale+.5)))
+        self.mb_caption:stroke_width(math.max(1,math.floor(1.5*self.options.scale+.5)))
         self.property_cache=nil
     end
 
@@ -386,13 +419,19 @@ function ui.new(settings, sc_info)
             local w,h=viewport()
             local hx,hy=self.handle:pos()
             local bx=math.floor(clamp(hx,8,math.max(8,w-90))+.5)
-            local by=math.floor(clamp(hy+19,42,math.max(42,h-55))+.5)
+            local by=math.floor(clamp(hy+bar_handle_offset,42,math.max(42,h-55))+.5)
             opt.bar.x,opt.bar.y=bx,by
-            if bx~=hx or by-19~=hy then self.handle:pos(bx,by-19) end
+            if bx~=hx or by-bar_handle_offset~=hy then
+                self.handle:pos(bx,by-bar_handle_offset)
+            end
             local px,py=self.panel:pos()
+            local ph=self:panel_height()
             local lx=math.floor(clamp(px,8,math.max(8,w-135))+.5)
-            local ly=math.floor(clamp(py,12,math.max(12,h-75))+.5)
-            opt.list.x,opt.list.y=lx,ly
+            -- When the panel is dragged in edit mode, preserve its BOTTOM
+            -- edge. Longer lists then grow upward without jumping on exit.
+            local limit=math.max(8,h-12-ph)
+            local ly=math.floor(clamp(py,8,limit)+.5)
+            opt.list.x,opt.list.y=lx,ly+ph
             if lx~=px or ly~=py then self.panel:pos(lx,ly) end
             if self.scaling then
                 local sx=self.scalehandle:pos()
@@ -437,9 +476,10 @@ function ui.new(settings, sc_info)
                 local signature=table.concat(state.active or {},'|')
                     ..':'..tostring(label_width)..':'..tostring(opt.scale)
                     ..':'..tostring(opt.names or 'full')
+                    ..':'..countdown(state.sc_left)
                 if signature~=self.property_cache then
                     local label,rows=properties_label(state.active,label_width,
-                        self.properties,opt.names or 'full')
+                        self.properties,opt.names or 'full',countdown(state.sc_left))
                     self.properties:text(label)
                     self.property_rows=rows
                     self.property_cache=signature
@@ -464,17 +504,41 @@ function ui.new(settings, sc_info)
         end
         if mb_alive then
             local total=math.max(.1,state.mb_total or 10)
-            self:draw_bar('mb',y,state.mb_left/total,false,palette(state,self.sc_info,true))
+            local mb_height=self:draw_bar('mb',y,state.mb_left/total,false,
+                palette(state,self.sc_info,true))
+            if opt.mode~='minimal' then
+                local caption='Magic Burst: '..countdown(state.mb_left)
+                if caption~=self.mb_caption_cache then
+                    self.mb_caption:text(caption)
+                    self.mb_caption_cache=caption
+                end
+                local offset=opt.name_offset or {x=0,y=0}
+                local gap=math.max(1,math.floor(2*opt.scale+.5))
+                local inset=math.max(2,math.floor(3*opt.scale+.5))
+                self.mb_caption:pos(math.floor(opt.bar.x+inset+offset.x+.5),
+                    y+mb_height+gap+offset.y)
+                self.mb_caption:show()
+            else
+                self.mb_caption:hide()
+            end
+        else
+            self.mb_caption:hide()
         end
-        if opt.mode=='learn' and (sc_alive or mb_alive or self.editing) then
-            self:set_panel_text(format_list(state,show_sc,show_mb))
+        if opt.mode=='learn' and (sc_alive or self.editing) then
+            local description=sc_alive and format_list(state) or
+                'SC LEARNING PANEL  [drag]'
+            self:set_panel_text(description)
+            if not self.editing then self:position_panel() end
             self.panel:show()
         elseif opt.mode=='compact' and (sc_alive or mb_alive or self.editing) then
+            -- Compact mode stays as its existing short timer summary until
+            -- we design the requested icons and colored compact properties.
             local values={}
             if sc_alive then values[#values+1]=('SC %.1fs'):format(state.sc_left) end
             if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
-            local str=table.concat(values,'  /  ')
-            self.panel:text(str)
+            local description=table.concat(values,'  /  ')
+            self:set_panel_text(description)
+            if not self.editing then self:position_panel() end
             self.panel:show()
         else
             if self.editing then
@@ -488,6 +552,7 @@ function ui.new(settings, sc_info)
 
     function self:destroy()
         self.properties:destroy()
+        self.mb_caption:destroy()
         self.panel:destroy()
         self.handle:destroy()
         self.scalehandle:destroy()
