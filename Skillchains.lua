@@ -28,13 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25'
+_addon.version = '2.20.08.25-resonance.1'
 
 require('luau')
 require('pack')
 require('actions')
 texts = require('texts')
 skills = require('skills')
+local resonance_view = require('resonance_ui')
 
 _static = S{'WAR','MNK','WHM','BLM','RDM','THF','PLD','DRK','BST','BRD','RNG','SAM','NIN','DRG','SMN','BLU','COR','PUP','DNC','SCH','GEO','RUN'}
 
@@ -44,9 +45,17 @@ default.UpdateFrequency = 0.2
 default.aeonic = false
 default.color = false
 default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true}}
+-- The UI is independent of EnemyBar2. The initial position suits a small
+-- client; //sc edit can relocate the bar and learning panel separately.
+default.Resonance = {
+    mode='learn', display='sc', scale=1,
+    bar={x=466,y=696,width=310},
+    list={x=465,y=300},
+}
 
 settings = config.load(default)
-skill_props = texts.new('',settings.display,settings)
+-- The original full-text window is superseded by resonance_ui.lua.
+-- Existing settings.display is retained for migration compatibility.
 message_ids = S{110,185,187,317,802}
 skillchain_ids = S{288,289,290,291,292,293,294,295,296,297,298,299,300,301,385,386,387,388,389,390,391,392,393,394,395,396,397,767,768,769,770}
 buff_dur = {[163]=40,[164]=30,[470]=60}
@@ -124,32 +133,18 @@ local aeonic_weapon = {
     [22143] = 'Fomalhaut'
 }
 
-initialize = function(text, settings)
-    if not windower.ffxi.get_info().logged_in then
-        return
-    end
-    if not info.job then
-        local player = windower.ffxi.get_player()
-        info.job = player.main_job
-        info.player = player.id
-    end
-    local properties = L{}
-    if settings.Show.timer[info.job] then
-        properties:append('${timer}')
-    end
-    if settings.Show.step[info.job] then
-        properties:append('Step: ${step} → ${name}')
-    end
-    if settings.Show.props[info.job] then
-        properties:append('[${props}] ${elements}')
-    elseif settings.Show.burst[info.job] then
-        properties:append('${elements}')
-    end
-    properties:append('${disp_info}')
-    text:clear()
-    text:append(properties:concat('\n'))
+-- Previously, a long text object was constructed on every configuration reload.
+-- The new renderer owns its own independently draggable bar and learning panel.
+local overlay = resonance_view.new(settings.Resonance, sc_info)
+
+local function ensure_player()
+    if not windower.ffxi.get_info().logged_in then return false end
+    local player = windower.ffxi.get_player()
+    if not player then return false end
+    info.job, info.player = player.main_job, player.id
+    buffs[info.player] = buffs[info.player] or {}
+    return true
 end
-skill_props:register_event('reload', initialize)
 
 function update_weapon()
     if not settings.Show.weapon[info.job] then
@@ -198,42 +193,75 @@ function check_props(old, new)
     end
 end
 
-function add_skills(t, abilities, active, resource, AM)
-    local tt = {{},{},{},{}}
-    for k=1,#abilities do
-        local ability_id = abilities[k]
-        local skillchain = skills[resource][ability_id]
-        if skillchain then
-            local lv, prop, aeonic = check_props(active, aeonic_prop(skillchain, info.player))
-            if prop then
-                prop = AM and aeonic or prop
-                tt[lv][#tt[lv]+1] = settings.color and
-                    '%-16s → Lv.%d %s%-14s\\cr':format(res[resource][ability_id].name, lv, colors[prop], prop) or
-                    '%-16s → Lv.%d %-14s':format(res[resource][ability_id].name, lv, prop)
+-- Group all *learned* compatible actions by resulting skillchain, rather
+-- than imposing a fixed number of suggestions. TP/recast readiness is not
+-- checked; this teaches properties, not immediate execution availability.
+function check_results(reson)
+    local by_key = {}
+    local all = {}
+    local function append(abilities, resource, am)
+        if not abilities or not skills[resource] then return end
+        for _,id in ipairs(abilities) do
+            local ability = skills[resource][id]
+            if ability then
+                local props = aeonic_prop(ability, info.player)
+                local level, prop, aeonic = check_props(reson.active, props)
+                if prop then
+                    local result = (am and aeonic) or prop
+                    local key = tostring(level)..':'..result
+                    local group = by_key[key]
+                    if not group then
+                        group={level=level, property=result, actions={}}
+                        by_key[key]=group
+                        all[#all+1]=group
+                    end
+                    local via
+                    -- Identify the property that actually completed this chain.
+                    for _,first in ipairs(reson.active) do
+                        local options=sc_info[first]
+                        if options then
+                            for _,second in ipairs(props) do
+                                if options[second] and (options[second][2]==prop or
+                                    options[second][3]==result) then
+                                    via=second
+                                    break
+                                end
+                            end
+                        end
+                        if via then break end
+                    end
+                    local label=res[resource] and res[resource][id]
+                    group.actions[#group.actions+1]={
+                        name=label and label.name or ability.en or tostring(id),
+                        via=via or table.concat(props,'/')
+                    }
+                end
             end
         end
     end
-    for x=4,1,-1 do
-        for k=#tt[x],1,-1 do
-            t[#t+1] = tt[x][k]
-        end
-    end
-    return t
-end
 
-function check_results(reson)
-    local t = {}
     if settings.Show.spell[info.job] and info.job == 'SCH' then
-        t = add_skills(t, {0,1,2,3,4,5,6,7}, reson.active, 'elements')
+        append({0,1,2,3,4,5,6,7},'elements')
     elseif settings.Show.spell[info.job] and info.job == 'BLU' then
-        t = add_skills(t, windower.ffxi.get_mjob_data().spells, reson.active, 'spells')
+        local mjob = windower.ffxi.get_mjob_data()
+        append(mjob and mjob.spells,'spells')
     elseif settings.Show.pet[info.job] and windower.ffxi.get_mob_by_target('pet') then
-        t = add_skills(t, windower.ffxi.get_abilities().job_abilities, reson.active, 'job_abilities')
+        local abilities=windower.ffxi.get_abilities()
+        append(abilities and abilities.job_abilities,'job_abilities')
     end
     if settings.Show.weapon[info.job] then
-        t = add_skills(t, windower.ffxi.get_abilities().weapon_skills, reson.active, 'weapon_skills', info.aeonic and aeonic_am(reson.step))
+        local abilities=windower.ffxi.get_abilities()
+        append(abilities and abilities.weapon_skills,'weapon_skills',
+            info.aeonic and aeonic_am(reson.step))
     end
-    return _raw.table.concat(t, '\n')
+    table.sort(all,function(left,right)
+        if left.level ~= right.level then return left.level > right.level end
+        return left.property < right.property
+    end)
+    for _,group in ipairs(all) do
+        table.sort(group.actions,function(left,right) return left.name < right.name end)
+    end
+    return all
 end
 
 function colorize(t)
@@ -250,47 +278,37 @@ end
 local next_frame = os.clock()
 
 windower.register_event('prerender', function()
-    local now = os.clock()
-
-    if now < next_frame then
+    local now=os.clock()
+    if now < next_frame then return end
+    next_frame=now+.1
+    for id,state in pairs(resonating) do
+        -- Do not remove a completed chain while its MB window is active.
+        if math.max(state.times,state.mb_window or 0) + 1 < now then
+            resonating[id]=nil
+        end
+    end
+    if not ensure_player() then overlay:render(nil) return end
+    local target=windower.ffxi.get_mob_by_target('t','bt')
+    local reson=target and resonating[target.id]
+    if not target or target.hpp<=0 or not reson then
+        overlay:render(nil)
         return
     end
-
-    next_frame = now + 0.1
-
-    for k, v in pairs(resonating) do
-        if v.times - now + 10 < 0 then
-            resonating[k] = nil
-        end
+    local sc_left=math.max(0,reson.times-now)
+    local mb_left=math.max(0,(reson.mb_window or 0)-now)
+    if sc_left<=0 and mb_left<=0 then
+        overlay:render(nil)
+        return
     end
-
-    local targ = windower.ffxi.get_mob_by_target('t', 'bt')
-    targ_id = targ and targ.id
-    local reson = resonating[targ_id]
-    local timer = reson and (reson.times - now) or 0
-
-    if targ and targ.hpp > 0 and timer > 0 then
-        if not reson.closed then
-            reson.disp_info = reson.disp_info or check_results(reson)
-            local delay = reson.delay
-            reson.timer = now < delay and
-                '\\cs(255,0,0)Wait  %.1f\\cr':format(delay - now) or
-                '\\cs(0,255,0)Go!   %.1f\\cr':format(timer)
-        elseif settings.Show.burst[info.job] then
-            reson.disp_info = ''
-            reson.timer = 'Burst %d':format(timer)
-        else
-            resonating[targ_id] = nil
-            return
-        end
-        reson.name = res[reson.res][reson.id].name
-        reson.props = reson.props or not reson.bound and colorize(reson.active) or 'Chainbound Lv.%d':format(reson.bound)
-        reson.elements = reson.elements or reson.step > 1 and settings.Show.burst[info.job] and '(%s)':format(colorize(sc_info[reson.active[1]])) or ''
-        skill_props:update(reson)
-        skill_props:show()
-    elseif not visible then
-        skill_props:hide()
+    if not reson.groups and sc_left>0 and not reson.closed then
+        reson.groups=check_results(reson)
     end
+    overlay:render({
+        active=reson.active,step=reson.step,closed=reson.closed,
+        sc_left=sc_left,sc_wait=math.max(0,reson.delay-now),
+        sc_total=math.max(.1,reson.times-reson.delay),
+        mb_left=mb_left,mb_total=10,groups=reson.groups,
+    })
 end)
 
 function check_buff(t, i)
@@ -326,6 +344,9 @@ function apply_properties(target, resource, action_id, properties, delay, step, 
         active=properties,
         delay=clock+delay,
         times=clock+delay+8-step,
+        -- Burst is possible only after a real chain result, not after its opener.
+        -- Keep this clock independent of the next skillchain step's delay.
+        mb_window=step>1 and clock+10 or 0,
         step=step,
         closed=closed,
         bound=bound
@@ -401,40 +422,85 @@ windower.register_event('incoming chunk', function(id, data)
     end
 end)
 
+local function message(str)
+    windower.add_to_chat(207,'Skillchains: '..str)
+end
+
 windower.register_event('addon command', function(cmd, ...)
-    cmd = cmd and cmd:lower()
-    if cmd == 'move' then
-        visible = not visible
-        if visible and not skill_props:visible() then
-            skill_props:update({disp_info='     --- SkillChains ---\n\n\n\nClick and drag to move display.'})
-            skill_props:show()
-        elseif not visible then
-            skill_props:hide()
+    cmd=(cmd or 'status'):lower()
+    local args={...}
+    local option=args[1] and args[1]:lower()
+    local opts=settings.Resonance
+    if cmd=='display' then
+        if option~='sc' and option~='mb' and option~='both' then
+            message('Display: '..opts.display..'. Use sc, mb, or both.')
+            return
         end
-    elseif cmd == 'save' then
-        local arg = ... and ...:lower() == 'all' and 'all'
-        config.save(settings, arg)
-        windower.add_to_chat(207, '%s: settings saved to %s character%s.':format(_addon.name, arg or 'current', arg and 's' or ''))
-    elseif default.Show[cmd] then
-        if not default.Show[cmd][info.job] then
-            return error('unable to set %s on %s.':format(cmd, info.job))
-        end
-        local key = settings.Show[cmd][info.job]
-        if not key then
-            settings.Show[cmd]:add(info.job)
-        else
-            settings.Show[cmd]:remove(info.job)
-        end
+        opts.display=option
         config.save(settings)
-        config.reload(settings)
-        windower.add_to_chat(207, '%s: %s info will no%s be displayed on %s.':format(_addon.name, cmd, key and ' longer' or 'w', info.job))--'t' or 'w'
-    elseif type(default[cmd]) == 'boolean' then
-        settings[cmd] = not settings[cmd]
-        windower.add_to_chat(207, '%s: %s %s':format(_addon.name, cmd, settings[cmd] and 'on' or 'off'))
-    elseif cmd == 'eval' then
-        assert(loadstring(table.concat({...}, ' ')))()
+        message('Display set to '..option..'.')
+    elseif cmd=='mode' then
+        if option~='learn' and option~='compact' and option~='minimal' then
+            message('Mode: '..opts.mode..'. Use learn, compact, or minimal.')
+            return
+        end
+        opts.mode=option
+        config.save(settings)
+        message('Mode set to '..option..'.')
+    elseif cmd=='edit' or cmd=='move' then
+        local desired
+        if option=='on' then desired=true
+        elseif option=='off' then desired=false end
+        local active=overlay:edit(desired)
+        config.save(settings)
+        message('Edit '..(active and 'ON' or 'OFF')..
+            '. Drag SC BAR and the separate learning panel.')
+    elseif cmd=='scale' then
+        local number=tonumber(option)
+        if not number then
+            message(('Scale: %.2f (range .5 to 2.5).'):format(opts.scale))
+            return
+        end
+        overlay:scale(number)
+        config.save(settings)
+        message(('Scale set to %.2f.'):format(opts.scale))
+    elseif cmd=='width' then
+        local number=tonumber(option)
+        if not number then
+            message('Bar width: '..opts.bar.width..' pixels.')
+            return
+        end
+        opts.bar.width=math.max(40,math.min(1600,math.floor(number+.5)))
+        config.save(settings)
+        message('Bar width set to '..opts.bar.width..'.')
+    elseif cmd=='default' then
+        opts.display,opts.mode,opts.scale='sc','learn',1
+        opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
+        opts.list.x,opts.list.y=465,300
+        overlay:scale(1)
+        overlay:edit(false)
+        overlay.handle:pos(opts.bar.x,opts.bar.y-19)
+        overlay.panel:pos(opts.list.x,opts.list.y)
+        config.save(settings)
+        message('Display, scale and positions reset to testing defaults.')
+    elseif cmd=='save' then
+        config.save(settings,option=='all' and 'all' or nil)
+        message('Settings saved.')
+    elseif default.Show[cmd] then
+        if not ensure_player() then message('Log in before changing job filters.') return end
+        local on=settings.Show[cmd][info.job]
+        if on then settings.Show[cmd]:remove(info.job)
+        else settings.Show[cmd]:add(info.job) end
+        config.save(settings)
+        message(cmd..' suggestions '..(on and 'disabled' or 'enabled')..' for '..info.job..'.')
+    elseif cmd=='status' then
+        message(('v%s | %s | %s | scale %.2f | width %d | edit %s'):format(
+            _addon.version,opts.display,opts.mode,opts.scale,opts.bar.width,
+            overlay.editing and 'on' or 'off'))
+    elseif cmd=='help' then
+        message('display sc|mb|both; mode learn|compact|minimal; edit [on|off]; scale [.5-2.5]; width [pixels]; default; save [all]; status')
     else
-        windower.add_to_chat(207, '%s: valid commands [save | move | burst | weapon | spell | pet | props | step | timer | color | aeonic]':format(_addon.name))
+        message('Unknown command. Use //sc help.')
     end
 end)
 
@@ -448,10 +514,11 @@ end)
 
 windower.register_event('zone change', function()
     resonating = {}
+    overlay:hide()
 end)
 
 windower.register_event('load', function()
-    if windower.ffxi.get_info().logged_in then
+    if ensure_player() then
         local equip = windower.ffxi.get_items('equipment')
         info.main_weapon = equip.main
         info.main_bag = equip.main_bag
@@ -462,12 +529,18 @@ windower.register_event('load', function()
     end
 end)
 
+windower.register_event('login', function()
+    ensure_player()
+end)
+
 windower.register_event('unload', function()
-    coroutine.close(check_weapon)
+    if check_weapon then coroutine.close(check_weapon) end
+    overlay:destroy()
 end)
 
 windower.register_event('logout', function()
-    coroutine.close(check_weapon)
+    if check_weapon then coroutine.close(check_weapon) end
+    overlay:hide()
     check_weapon = nil
     info = {}
     resonating = {}
