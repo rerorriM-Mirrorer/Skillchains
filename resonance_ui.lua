@@ -171,8 +171,8 @@ function ui.new(settings, sc_info)
     self.properties = texts.new('', {
         pos={x=settings.bar.x+3,y=settings.bar.y+7},
         flags={bold=true,italic=true,draggable=false},
-        text={font='Arial',size=10,alpha=245,red=239,green=225,blue=229,
-            stroke={width=2,alpha=180,red=50,green=50,blue=50}},
+        text={font='Arial',size=10,alpha=245,red=255,green=255,blue=255,
+            stroke={width=2,alpha=235,red=0,green=0,blue=0}},
         bg={visible=false}
     })
     self.property_cache = nil
@@ -278,15 +278,58 @@ function ui.new(settings, sc_info)
         return height+2
     end
 
+    -- A saved position from a larger client may put every drag handle beyond
+    -- a smaller client's viewport. Recover the layout on entering edit mode.
+    function self:rescue()
+        local w,h=viewport()
+        local opt=self.options
+        local max_x=math.max(8,w-90)
+        local max_y=math.max(42,h-55)
+        opt.bar.x=math.floor(clamp(opt.bar.x,8,max_x)+.5)
+        opt.bar.y=math.floor(clamp(opt.bar.y,42,max_y)+.5)
+        opt.list.x=math.floor(clamp(opt.list.x,8,math.max(8,w-135))+.5)
+        opt.list.y=math.floor(clamp(opt.list.y,12,math.max(12,h-75))+.5)
+        self.handle:pos(opt.bar.x,opt.bar.y-19)
+        self.panel:pos(opt.list.x,opt.list.y)
+        if self.scaling then
+            self:place_scalehandle()
+        end
+    end
+
+    function self:set_position(x,y)
+        self.options.bar.x=x
+        self.options.bar.y=y
+        self:rescue()
+    end
+
+    function self:center()
+        local w,h=viewport()
+        local opt=self.options
+        opt.bar.x=math.floor((w-opt.bar.width)/2)
+        opt.bar.y=math.floor(h*.65)
+        opt.list.x=math.floor(math.max(8,(w-265)/2))
+        opt.list.y=math.floor(h*.19)
+        self:rescue()
+    end
+
+    -- Anchoring relative to the visible handle avoids losing the scale
+    -- control when the SC bar is close to the right edge of a small client.
+    function self:place_scalehandle()
+        local w,h=viewport()
+        local x=clamp(self.options.bar.x+100*self.options.scale,8,math.max(8,w-185))
+        local y=clamp(self.options.bar.y-36,5,math.max(5,h-22))
+        self.scalehandle:pos(x,y)
+        self.scale_anchor=x-100*self.options.scale
+    end
+
     function self:edit(toggle)
         if toggle==nil then toggle=not self.editing end
         self.editing=toggle
         if not toggle then self.scaling=false; self.scalehandle:hide() end
         self.panel:draggable(toggle)
         if toggle then
-            self.handle:pos(self.options.bar.x,self.options.bar.y-19)
+            self:rescue()
             self.handle:show()
-            self.panel:pos(self.options.list.x,self.options.list.y)
             self.panel:show()
         else
             self.handle:hide()
@@ -310,8 +353,7 @@ function ui.new(settings, sc_info)
         if toggle==nil then toggle=not self.scaling end
         if toggle then
             self:edit(true)
-            self.scalehandle:pos(self.options.bar.x+math.floor(100*self.options.scale+.5),
-                self.options.bar.y-36)
+            self:place_scalehandle()
             self.scalehandle:show()
         else
             self.scalehandle:hide()
@@ -325,13 +367,20 @@ function ui.new(settings, sc_info)
         if self.editing then
             -- Position follows draggable text objects. Saving happens when
             -- the user exits edit mode; no writes on every frame.
+            local w,h=viewport()
             local hx,hy=self.handle:pos()
-            opt.bar.x, opt.bar.y = math.floor(hx+.5),math.floor(hy+19+.5)
+            local bx=math.floor(clamp(hx,8,math.max(8,w-90))+.5)
+            local by=math.floor(clamp(hy+19,42,math.max(42,h-55))+.5)
+            opt.bar.x,opt.bar.y=bx,by
+            if bx~=hx or by-19~=hy then self.handle:pos(bx,by-19) end
             local px,py=self.panel:pos()
-            opt.list.x,opt.list.y=math.floor(px+.5),math.floor(py+.5)
+            local lx=math.floor(clamp(px,8,math.max(8,w-135))+.5)
+            local ly=math.floor(clamp(py,12,math.max(12,h-75))+.5)
+            opt.list.x,opt.list.y=lx,ly
+            if lx~=px or ly~=py then self.panel:pos(lx,ly) end
             if self.scaling then
                 local sx=self.scalehandle:pos()
-                local value=clamp((sx-opt.bar.x)/100,.5,2.5)
+                local value=clamp((sx-(self.scale_anchor or bx))/100,.5,2.5)
                 if math.abs(value-opt.scale) > .015 then self:scale(value) end
             end
             state=state or {
@@ -351,7 +400,13 @@ function ui.new(settings, sc_info)
         local show_mb=(mode=='mb' or mode=='both')
         local sc_alive=show_sc and state.sc_left and state.sc_left>0 and not state.closed
         local mb_alive=show_mb and state.mb_left and state.mb_left>0 and state.step>1
-        self:hide_bars()
+        -- Avoid hiding the active bar between frames; this also eliminates
+        -- repeated visibility flicker at higher redraw rates.
+        if not sc_alive then
+            self:hide_bar('sc')
+            self.properties:hide()
+        end
+        if not mb_alive then self:hide_bar('mb') end
         local y=math.floor(opt.bar.y+.5)
         if sc_alive then
             local total=math.max(.1,state.sc_total or 8)
@@ -359,13 +414,15 @@ function ui.new(settings, sc_info)
             local bar_height=self:draw_bar('sc',y,fraction,state.sc_wait>0,
                 palette(state,self.sc_info,false))
             y=y+bar_height
-            if opt.mode~='minimal' then
+            if opt.mode~='minimal' and opt.names~='off' then
                 local inset=math.max(2,math.floor(3*opt.scale+.5))
                 local label_width=math.max(30,opt.bar.width-inset*2)
                 local signature=table.concat(state.active or {},'|')
                     ..':'..tostring(label_width)..':'..tostring(opt.scale)
+                    ..':'..tostring(opt.names or 'full')
                 if signature~=self.property_cache then
-                    local label,rows=properties_label(state.active,label_width,self.properties)
+                    local label,rows=properties_label(state.active,label_width,
+                        self.properties,opt.names or 'full')
                     self.properties:text(label)
                     self.property_rows=rows
                     self.property_cache=signature
@@ -379,6 +436,7 @@ function ui.new(settings, sc_info)
                     + (self.property_rows or 1)*math.max(9,math.floor(12*opt.scale+.5))
                     + math.max(2,math.floor(3*opt.scale+.5))
             else
+                self.properties:hide()
                 y=y+math.max(4,math.floor(5*opt.scale+.5))
             end
         end
@@ -390,9 +448,10 @@ function ui.new(settings, sc_info)
             self.panel:text(format_list(state,show_sc,show_mb))
             self.panel:show()
         elseif opt.mode=='compact' and (sc_alive or mb_alive or self.editing) then
-            local str=table.concat(state.active or {},', ')
-            if sc_alive then str=str..('  SC %.1fs'):format(state.sc_left) end
-            if mb_alive then str=str..('  MB %.1fs'):format(state.mb_left) end
+            local values={}
+            if sc_alive then values[#values+1]=('SC %.1fs'):format(state.sc_left) end
+            if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
+            local str=table.concat(values,'  /  ')
             self.panel:text(str)
             self.panel:show()
         else
@@ -411,8 +470,10 @@ function ui.new(settings, sc_info)
         self.handle:destroy()
         self.scalehandle:destroy()
         for _,bar in pairs(self.names) do
-            windower.prim.delete(bar.frame)
-            windower.prim.delete(bar.base)
+            for _,id in ipairs({bar.frame,bar.base,bar.cap_l,bar.cap_r,
+                bar.fill_l,bar.fill_r}) do
+                windower.prim.delete(id)
+            end
             for i=1,segments do windower.prim.delete(bar.slices[i]) end
         end
     end
