@@ -18,7 +18,7 @@ LUA = ("Skillchains.lua", "skills.lua", "resonance_ui.lua")
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--name", default="Skillchains-v0.1.2-test")
+    parser.add_argument("--name", default="Skillchains-resonance.5-test")
     args = parser.parse_args()
     dist = ROOT / "dist"
     staging = dist / "package_content"
