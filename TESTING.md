@@ -6,7 +6,7 @@
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
 **Status:** User confirmed `//sc edit` dragging works well and liked the in-game appearance of the bars; `//sc names offset 0 -11` looked good on the user's client. The new learning layout, timestamps, and raised edit handle have not yet been tested live.
-**Delivery:** Download the artifact named `Skillchains-v0.1.2-test` from the
+**Delivery:** Download the artifact named `Skillchains-resonance.5-test` from the
 latest successful [GitHub Actions packaging run](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml),
 rather than using GitHub's auto-generated repository source ZIP.
 The packaging workflow verifies the archive layout and CRC checks. Archive
@@ -163,6 +163,12 @@ felt early or late. We can adjust colors and alignment from the screenshots.
 
 ## Checks completed before delivery
 
+- **resonance.5:** A GitHub Actions run using the Lua 5.1 compiler
+  (`luac5.1 -p`) passed for `Skillchains.lua`, `skills.lua`, and
+  `resonance_ui.lua` after correcting a previously inherited string-literal
+  method call to use parenthesized Lua 5.1-compatible syntax. Packaging
+  validation also passed. This is **not an in-game runtime or regression test**.
+
 - Compared original and posimagi action tables; refreshed the fork's `skills.lua`.
 - Reviewed Windower `texts` APIs for draggable text, positioning, font size,
   and text updates; reviewed XIVCrossbar's previous skillchain timing implementation.
@@ -198,7 +204,7 @@ is accepted.
 
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
-| 2026-10-13 | resonance.5 layout | Bar and MB captions with countdowns, upward-growing Learn panel, lifted edit handle, default Y -11 | `da28cda`, `677de95`, `7c6b178`, `a2784c6` | Committed / live untested |
+| 2026-10-13 | resonance.5 layout | Bar and MB captions with countdowns, upward-growing Learn panel, lifted edit handle, default Y -11; Lua 5.1 compatibility and parser check | `da28cda`, `677de95`, `7c6b178`, `a2784c6`, `c2f848c` | Committed / Lua 5.1 syntax passed / live untested |
 | 2026-10-13 | v0.1.2 offset | Add bar-relative property-label offset in `//sc names offset <x> <y>` | `15ec5e4`, `39323f9`, `ea1c5e8` | Committed / live untested |
 | 2026-10-13 | v0.1.2 README location | Place README inside installable folder, keep WORKFLOW/TESTING at ZIP root and sync NPCMirror guide | Canonical NPCMirror `WORKFLOW.md`; package builder updated | Documentation/package-only change |
 | 2026-10-13 | v0.1.2 packaging | Adopt consolidated NPCMirror workflow, retire duplicate docs; CI produces one-addon-directory artifact | `5831d2b`, `2da4ec1`, `d97ee94`, `d64e819`, `df535cc` | GitHub Actions run 38449553310 succeeded, artifact 11838873673; no Lua behavior changes |
