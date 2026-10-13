@@ -68,7 +68,7 @@ local function text_settings(x,y,size,draggable)
     return {
         pos={x=x,y=y},
         flags={draggable=draggable},
-        text={font='Verdana',size=size,color={alpha=245,red=231,green=225,blue=236},
+        text={font='Verdana',size=size,alpha=245,red=231,green=225,blue=236,
             stroke={width=1,alpha=210,red=14,green=13,blue=30}},
         bg={visible=true,alpha=175,red=16,green=18,blue=38},
         padding=4
