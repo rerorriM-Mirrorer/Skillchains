@@ -35,9 +35,9 @@ end
 local function palette(state, sc_info, burst)
     local properties = state and state.active or {}
     -- Advanced Light/Dark chains need only their two recognizable families.
-    if burst and (properties[1]=='Light' or properties[1]=='Radiance') then
+    if properties[1]=='Light' or properties[1]=='Radiance' then
         return {elements.Light}
-    elseif burst and (properties[1]=='Darkness' or properties[1]=='Umbra') then
+    elseif properties[1]=='Darkness' or properties[1]=='Umbra' then
         return {elements.Dark}
     end
     local stops, seen = {}, {}
@@ -124,7 +124,7 @@ function ui.new(settings, sc_info)
     self.handle = texts.new('SC BAR  [drag]', text_settings(settings.bar.x,settings.bar.y-19,10,true))
     self.scalehandle = texts.new('SC SCALE  [drag left/right]',
         text_settings(settings.bar.x+math.floor(100*settings.scale+.5),
-            settings.bar.y+13,10,true))
+            settings.bar.y-36,10,true))
     self.scaling = false
     self.panel = texts.new('Skillchains', text_settings(settings.list.x,settings.list.y,
         math.floor(11*settings.scale+.5),false))
@@ -215,7 +215,7 @@ function ui.new(settings, sc_info)
         if toggle then
             self:edit(true)
             self.scalehandle:pos(self.options.bar.x+math.floor(100*self.options.scale+.5),
-                self.options.bar.y+13)
+                self.options.bar.y-36)
             self.scalehandle:show()
         else
             self.scalehandle:hide()
