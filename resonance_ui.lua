@@ -31,6 +31,17 @@ local function clamp(v, lo, hi)
     return math.max(lo, math.min(hi, v))
 end
 
+-- Shared screen-origin grid: snap the widget's anchor, never individual
+-- primitives. Floor matches BarFiller2/EnemyBar2; retain bounds on small UIs.
+local function snap_axis(pixel, grid, minimum, maximum)
+    local value=math.floor(clamp(pixel,minimum,maximum)/grid)*grid
+    if value<minimum then
+        local first=math.ceil(minimum/grid)*grid
+        return first<=maximum and first or minimum
+    end
+    return value
+end
+
 local function interpolate(stops, t)
     if #stops == 0 then return fallback end
     if #stops == 1 then return stops[1] end
@@ -132,7 +143,28 @@ end
 -- Display the useful names directly, without redundant level/step headings.
 
 function ui.new(settings, sc_info)
-    local self = {options=settings, sc_info=sc_info, editing=false, names={}}
+    local self = {options=settings, sc_info=sc_info, editing=false, names={},
+        ctrl_keys={[29]=false,[157]=false}}
+    -- Native Windower text handles retain mouse capture. Keyboard events
+    -- only update modifier state; no mouse or key events are consumed.
+    function self:set_ctrl(dik, down)
+        if self.ctrl_keys[dik]~=nil then
+            self.ctrl_keys[dik]=down and true or false
+        end
+    end
+    function self:grid_active()
+        return self.ctrl_keys[29] or self.ctrl_keys[157]
+    end
+    function self:anchor(value,minimum,maximum)
+        local rounded=math.floor(clamp(value,minimum,maximum)+.5)
+        if self:grid_active() then
+            local grid=tonumber(self.options.grid) or 10
+            if grid>=1 and grid<math.huge and grid==math.floor(grid) then
+                return snap_axis(rounded,grid,minimum,maximum)
+            end
+        end
+        return rounded
+    end
     local prefix = 'sc_resonance_'
     for _,kind in ipairs({'sc','mb'}) do
         self.names[kind] = {
@@ -456,8 +488,8 @@ function ui.new(settings, sc_info)
             -- the user exits edit mode; no writes on every frame.
             local w,h=viewport()
             local hx,hy=self.handle:pos()
-            local bx=math.floor(clamp(hx,8,math.max(8,w-90))+.5)
-            local by=math.floor(clamp(hy+bar_handle_offset,42,math.max(42,h-55))+.5)
+            local bx=self:anchor(hx,8,math.max(8,w-90))
+            local by=self:anchor(hy+bar_handle_offset,42,math.max(42,h-55))
             opt.bar.x,opt.bar.y=bx,by
             if bx~=hx or by-bar_handle_offset~=hy then
                 self.handle:pos(bx,by-bar_handle_offset)
@@ -466,10 +498,12 @@ function ui.new(settings, sc_info)
             -- delta so a changing number of suggestions cannot jump rows.
             local px,py=self.panel:pos()
             if self.panel_drag_x and self.panel_drag_y then
-                opt.list.x=math.floor(clamp(opt.list.x+px-self.panel_drag_x,
-                    8,math.max(8,w-215))+.5)
-                opt.list.y=math.floor(clamp(opt.list.y+py-self.panel_drag_y,
-                    25,math.max(25,h-12))+.5)
+                -- list.x and list.y are the panel's own anchor (lower edge).
+                -- Only the anchor snaps; pooled text/icons remain local to it.
+                local nx=opt.list.x+px-self.panel_drag_x
+                local ny=opt.list.y+py-self.panel_drag_y
+                opt.list.x=self:anchor(nx,8,math.max(8,w-215))
+                opt.list.y=self:anchor(ny,25,math.max(25,h-12))
             end
             self.panel_drag_x,self.panel_drag_y=px,py
             if self.scaling then
