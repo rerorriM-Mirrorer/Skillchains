@@ -2,6 +2,16 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Current Development Status — 2026-10-18 (attribution normalization)
+
+- **Repository / branch:** `rerorriM-Mirrorer/Skillchains` / `targetsc-companion-v0.1`; starting source `0b1f920410107e6fe4cb1cd9346d967d8c047e37`.
+- **Change:** Use **A** alone in the README's resonance UI attribution. Bridge, renderer, TargetSC and other runtime sources are unchanged.
+- **Verification:** The one prior reference was removed; exact-word search, strict substitution-only diff review, and Git whitespace check passed.
+- **Live FFXI status:** No new in-game test. Existing TargetSC integration acceptance remains pending below.
+- **Next:** Resume the documented TargetSC live integration tests; confirm published branch head after the documentation commit.
+
+---
+
 ## TargetSC companion interface — 2026-10-18 / targetsc.1
 
 **Working branch:** `targetsc-companion-v0.1`, based on personal
