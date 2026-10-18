@@ -1,0 +1,45 @@
+name: Skillchains + TargetSC grid test package
+
+on:
+  push:
+    branches:
+      - development/targetsc-resonance-grid
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Lua 5.1
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.1
+      - name: Validate runtime Lua 5.1
+        run: |
+          for f in Skillchains.lua skills.lua resonance_ui.lua learning_ui.lua targetsc_bridge.lua TargetSC/TargetSC.lua TargetSC/resonance.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
+            luac5.1 -p "$f"
+          done
+      - name: Simulate Skillchains and TargetSC
+        run: |
+          lua5.1 tools/test_learning_ui.lua
+          lua5.1 TargetSC/tests/test_resonance.lua
+          lua5.1 TargetSC/tests/test_addon.lua
+          lua5.1 TargetSC/tests/test_missing.lua
+          lua5.1 TargetSC/tests/test_missing.lua mismatch
+          git show e095657a2e7ecc5a49d05e96c1b78523a4860af5:Skillchains.lua > /tmp/Skillchains-baseline.lua
+          lua5.1 TargetSC/tests/test_skillchains_regression.lua /tmp/Skillchains-baseline.lua
+      - name: Package complete installable addons
+        run: python3 tools/package_targetsc.py
+      - name: Publish complete testing package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Skillchains-TargetSC-Grid1-test
+          path: dist/targetsc-package/
+          if-no-files-found: error
+          retention-days: 30
