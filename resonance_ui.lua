@@ -426,15 +426,16 @@ function ui.new(settings, sc_info)
             if bx~=hx or by-bar_handle_offset~=hy then
                 self.handle:pos(bx,by-bar_handle_offset)
             end
+            -- The edit guide is not the list itself. Track its movement
+            -- delta so a changing number of suggestions cannot jump rows.
             local px,py=self.panel:pos()
-            local ph=self:panel_height()
-            local lx=math.floor(clamp(px,8,math.max(8,w-135))+.5)
-            -- When the panel is dragged in edit mode, preserve its BOTTOM
-            -- edge. Longer lists then grow upward without jumping on exit.
-            local limit=math.max(8,h-12-ph)
-            local ly=math.floor(clamp(py,8,limit)+.5)
-            opt.list.x,opt.list.y=lx,ly+ph
-            if lx~=px or ly~=py then self.panel:pos(lx,ly) end
+            if self.panel_drag_x and self.panel_drag_y then
+                opt.list.x=math.floor(clamp(opt.list.x+px-self.panel_drag_x,
+                    8,math.max(8,w-215))+.5)
+                opt.list.y=math.floor(clamp(opt.list.y+py-self.panel_drag_y,
+                    25,math.max(25,h-12))+.5)
+            end
+            self.panel_drag_x,self.panel_drag_y=px,py
             if self.scaling then
                 local sx=self.scalehandle:pos()
                 local value=clamp((sx-(self.scale_anchor or bx))/100,.5,2.5)
@@ -443,8 +444,14 @@ function ui.new(settings, sc_info)
             state=state or {
                 active={'Fusion'},step=2,sc_left=5,sc_total=8,
                 sc_wait=0,mb_left=7,mb_total=10,closed=false,
-                groups={{level=3,property='Light',
-                    actions={{name='Savage Blade',via='Fragmentation'}}}},
+                groups={
+                    {level=3,property='Light',actions={
+                        {name='Savage Blade',properties={'Fragmentation','Scission'}}}},
+                    {level=2,property='Gravitation',actions={
+                        {name='Swift Blade',properties={'Gravitation'}}}},
+                    {level=1,property='Liquefaction',actions={
+                        {name='Example Ability',properties={'Liquefaction','Detonation'}}}},
+                },
             }
         elseif not state then
             self:hide()
@@ -527,32 +534,36 @@ function ui.new(settings, sc_info)
             self.mb_caption:hide()
         end
         if opt.mode=='learn' and (sc_alive or self.editing) then
-            local description=sc_alive and format_list(state) or
-                'SC LEARNING PANEL  [drag]'
-            self:set_panel_text(description)
-            if not self.editing then self:position_panel() end
-            self.panel:show()
-        elseif opt.mode=='compact' and (sc_alive or mb_alive or self.editing) then
-            -- Compact mode stays as its existing short timer summary until
-            -- we design the requested icons and colored compact properties.
-            local values={}
-            if sc_alive then values[#values+1]=('SC %.1fs'):format(state.sc_left) end
-            if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
-            local description=table.concat(values,'  /  ')
-            self:set_panel_text(description)
-            if not self.editing then self:position_panel() end
-            self.panel:show()
+            -- Color represents the predicted RESULT. Icons represent the
+            -- action's own skillchain properties (possibly several).
+            self.learning:render(state.groups or {},opt.list.x,opt.list.y,opt.scale)
+            if not self.editing then self.panel:hide() end
         else
-            if self.editing then
-                self:set_panel_text('SC LEARNING PANEL  [drag]')
+            self.learning:hide()
+            if opt.mode=='compact' and not self.editing and (sc_alive or mb_alive) then
+                local values={}
+                if sc_alive then values[#values+1]=('SC %.1fs'):format(state.sc_left) end
+                if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
+                self:set_panel_text(table.concat(values,'  /  '))
+                self:position_panel()
                 self.panel:show()
-            else
+            elseif not self.editing then
                 self.panel:hide()
             end
+        end
+        if self.editing then
+            self:set_panel_text('LEARNING  [drag]')
+            -- Place the small draggable guide just above the visible rows.
+            local guide_height=math.max(20,math.floor(23*opt.scale+.5))
+            local py=math.max(2,math.floor(opt.list.y-self.learning:height()-guide_height+.5))
+            self.panel:pos(opt.list.x,py)
+            self.panel_drag_x,self.panel_drag_y=opt.list.x,py
+            self.panel:show()
         end
     end
 
     function self:destroy()
+        self.learning:destroy()
         self.properties:destroy()
         self.mb_caption:destroy()
         self.panel:destroy()
