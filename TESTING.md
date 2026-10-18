@@ -2,16 +2,17 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
-## Current testing batch — 2026-10-13 / resonance.5 (upward learning layout and bar timers)
+## Current testing batch — 2026-10-18 / resonance.6 (ability-first color and icon layout)
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
-**Status:** User confirmed `//sc edit` dragging works well and liked the in-game appearance of the bars; `//sc names offset 0 -11` looked good on the user's client. The new learning layout, timestamps, and raised edit handle have not yet been tested live.
-**Delivery:** Download the artifact named `Skillchains-resonance.5-test` from the
+**Status:** User confirmed earlier `//sc edit` dragging and liked the bar appearance; `//sc names offset 0 -11` looked good. The new ability-first Learn layout, local PNG icons, and revised drag guide are **not yet tested in FFXI**. Earlier resonance.5 runtime tests also remain pending.
+**Delivery:** Download the artifact named `Skillchains-resonance.6-test` from the
 latest successful [GitHub Actions packaging run](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml),
 rather than using GitHub's auto-generated repository source ZIP.
 The packaging workflow verifies the archive layout and CRC checks. Archive
 root: `WORKFLOW.md`, `TESTING.md`, and one `Skillchains/` folder containing
-`README.md`, `Skillchains.lua`, `skills.lua`, and `resonance_ui.lua`.
+`README.md`, `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`,
+`learning_ui.lua`, and `images/skillchain/` containing 14 PNG icons.
 Install only that `Skillchains/` folder, preserving existing `data/`.
 **Conventions:** `WORKFLOW.md` is the consolidated canonical document from
 NPCMirror, containing AGATHOS, DESIGN and WORKFLOW. The retired
@@ -20,7 +21,55 @@ NPCMirror, containing AGATHOS, DESIGN and WORKFLOW. The retired
 are included.
 **Precaution:** Back up your current Skillchains folder and its `data` before replacing files.
 
-### Current targeted test: resonance.5 learning layout, timers and edit
+### Current targeted test: resonance.6 ability-first Learn mode (LIVE PENDING)
+- Back up the installed Skillchains folder and character settings. Copy the
+  complete updated addon folder with all **four Lua files** and the included
+  `images/skillchain/` directory. Do not run incomplete two-file patches.
+  `//sc status` should report `resonance.6`. The working branch is
+  `resonance-ui-v0.1-test`; master stays unchanged.
+- On a character with different learned weapon skills, trigger an opening
+  skillchain property. In `//sc mode learn`, verify each compatible learned
+  **ability name comes first**, tinted by the resulting skillchain palette.
+  The result name/level should not be printed. Property icons on the **right**
+  show the action's own properties, not the predicted result, and their final
+  right edge aligns between rows of different name lengths.
+- Confirm the same predicted result is used as in resonance.5, using FFXI
+  skillchain property-priority rules. An ability is not duplicated merely
+  because multiple theoretical pairings might exist. Group ordering remains
+  by higher resulting skillchain level first.
+- Switch target or advance a skillchain while Learn is visible: old rows and
+  icons should disappear immediately; no stale artifacts, blank icons, or
+  source-path errors. `//sc edit` should show a small handle ABOVE the list,
+  not a tinted background behind the suggestions. Dragging should move the
+  whole list, preserve its bottom anchor, and survive addon reload.
+- Verify a transparent learning background, Arial bold italic with black
+  stroke matching our existing SC bar caption, and readable light/dark result
+  colors over both bright scenery and dark backgrounds.
+- Confirm tiny property icons ALSO precede property labels on the SC
+  resonance bar (possibly several icons for an opening WS) and the MB label.
+  Test `//sc names full|short|off`, `//sc names offset 0 -11`,
+  `//sc mode minimal`, `//sc display sc|mb|both`. Bar countdowns,
+  rounded ends, gradients, edit and drag must continue working.
+- On Lionstag's small client, test long names, 1/2/3-property abilities,
+  many learned compatible actions, and an anchor low on screen.
+  The list should grow upward; when too long to fit, display `+N more`
+  instead of running offscreen. Do not interpret this as losing actions.
+- Test with 1 and 4–6 concurrent clients for FPS and cleanup after unload.
+  Nothing in this simulation proves real Windower image loading is correct.
+- The original addon shows MB burst **elements**, not an eligible learned
+  burst spell list. That feature remains unimplemented.
+- **Evidence:** screenshots of a multi-property action, a Light/Dark result,
+  drag/edit view, and any console log showing a Lua error.
+- **Verification:** GitHub Actions Lua 5.1 parser passes all four addon files;
+  synthetic Windower tests passed for learning layout, right-edge icon
+  alignment, anchored rows, object pooling, bar/MB captions, drag delta and
+  cleanup; ZIP validation checks 14 PNG signatures and complete content.
+  These are **simulated and static checks, NOT in-game testing**.
+- **Security precaution:** A previous GitHub Actions ZIP raised a Firefox
+  malware warning. Do not bypass future warnings. Individual source Lua
+  files and PNG assets can be inspected on GitHub and scanned before install.
+
+### Previous targeted test: resonance.5 learning layout, timers and edit
 - `//sc status` should report `resonance.5`. On an existing client,
   `//sc names offset` should retain the user's previously saved custom value.
   On a new character with no custom value, default should be `0 -11`.
@@ -202,6 +251,8 @@ is accepted.
 
 ## Delivered packages and commits
 
+| 2026-10-18 | resonance.6 ability-first Learn UI | Local property PNGs, colored/transparent rows with right-aligned icons, SC/MB icon captions, pooling and anchored edit guide | `af53257`, `a5c0ecf`, `79fd425`, `e634d41`, `fd6b1c5`, `91b18f4` | Lua 5.1 and synthetic smoke passed; FFXI pending |
+
 | Date | Batch | Work | Reference | Status |
 | --- | --- | --- | --- | --- |
 | 2026-10-13 | resonance.5 layout | Bar and MB captions with countdowns, upward-growing Learn panel, lifted edit handle, default Y -11; Lua 5.1 compatibility and parser check | `da28cda`, `677de95`, `7c6b178`, `a2784c6`, `c2f848c` | Committed / Lua 5.1 syntax passed / live untested |
@@ -215,6 +266,14 @@ is accepted.
 | 2026-10-13 | v0.1 | manual display, Light/Dark simplification, scale handle, schema correction, and load-time guard | `d0056c6`, `d021e08`, `71902d3`, `0308a9e`, `5522303`, `9f62963` | Committed / live untested |
 
 ## User-provided materials, observations, and requests
+
+- **2026-10-18:** User chose ability-first, left-aligned names, colored by the
+  resulting FFXI-resolved skillchain, with each ability's own property PNGs in
+  a fixed right-aligned icon column. Confirmed one expected result per ability
+  using existing FFXI priority logic, rather than enumerating speculative
+  combinations; requested transparent styling and typography consistent with
+  bar labels, reusing XIVCrossbar property icon assets. Explicitly authorized
+  implementation. MB spells inventory recommendations are separate/future.
 
 | Date | Material or instruction | Provenance |
 | --- | --- | --- |
