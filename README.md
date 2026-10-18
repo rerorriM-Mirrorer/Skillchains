@@ -1,4 +1,4 @@
-# Skillchains — Resonance UI testing build v0.1
+# Skillchains — Resonance UI testing build resonance.6
 
 A standalone FFXI Windower 4 addon based on Ivaar's original Skillchains, updated by posimagi.
 This test branch adds a restrained, FFXI-inspired visual layer without modifying EnemyBar2 or XIVCrossbar.
@@ -17,8 +17,12 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 - Shows **all compatible character-learned** weapon skills, Scholar Immanence spells, Blue Magic, or applicable pet abilities, grouped by **resulting** skillchain and sorted by level. TP, recast, and other immediate execution prerequisites are **not** checked.
 - Keeps its own draggable learning panel separate from the resonance bars.
   The list is bottom-anchored so additional compatible actions extend **upward**.
-  Learn mode shows compact `Result: Action` groups, sorted by skillchain
-  level internally but without level or step headings.
+  Learn mode shows **ability names first**, colored by the predicted result
+  using the resonance bar's elemental palette. The action's own skillchain
+  property PNG icons form a **fixed right-aligned column**. Higher-level
+  results appear first; the FFXI prediction logic still selects one expected
+  result per action. There is no redundant level or result heading.
+  The Learn background is transparent; only a small edit handle is opaque.
 - Displays the target's **currently resonating skillchain properties** just below
   the SC bar in smaller EnemyBar2-style Arial bold italic text with a dark stroke.
   The first WS shows all its properties (for example, Liquefaction, Detonation);
@@ -27,6 +31,8 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
   and is hidden with the SC bar or in Minimal mode. It can independently
   display full names, 3-letter labels, or nothing; the text stays white with
   a black outline until skillchain-level colors are deliberately selected.
+  Small skillchain-property icons now precede the SC property names and
+  the MB caption. Radiance/Umbra temporarily reuse Light/Darkness artwork.
   The SC name caption includes a live `x.xs` expiration countdown. When the
   separate MB bar is enabled, it reads `Magic Burst: x.xs`. Minimal remains
   completely bars-only.
@@ -39,17 +45,19 @@ lower levels retain their specific burst element colors.
 ## Install (test branch)
 
 1. Back up `addons/Skillchains/data` (if present), and keep a copy of your old addon folder.
-2. Download the [**Skillchains-resonance.5-test**](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml) from the latest successful GitHub Actions run (Artifacts section), not GitHub's automatic source-code archive.
+2. Download the [**Skillchains-resonance.6-test**](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml) from the latest successful GitHub Actions run (Artifacts section), not GitHub's automatic source-code archive.
 3. Open it and copy the installable `Skillchains/` folder into
    `Windower/addons/`, merging with your existing `Skillchains/` folder if updating.
-   It contains `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`, and `README.md`.
+   It contains `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`,
+   `learning_ui.lua`, 14 PNGs under `images/skillchain/`, and `README.md`.
 4. Keep your existing `Windower/addons/Skillchains/data/settings.xml` untouched.
 5. At the console, `lua reload Skillchains` (or `lua load Skillchains` on first install).
 6. Type `//sc help`, then use `//sc edit` to position the bar and learning panel.
 
 The curated testing ZIP contains **`WORKFLOW.md` and `TESTING.md` at the
 archive root**, with exactly one `Skillchains/` addon directory. The
-`README.md` is inside `Skillchains/`, alongside its three Lua files.
+`README.md` is inside `Skillchains/`, alongside its four Lua files and
+the skillchain icon directory.
 A source copy also remains at the GitHub repository root.
 `WORKFLOW.md` is the consolidated NPCMirror guide: it includes AGATHOS,
 DESIGN, and WORKFLOW principles; there are no separate retired documents.
@@ -65,7 +73,7 @@ source-directory name and is **not** the recommended installation package.
 | `//sc display sc` | Skillchain resonance only (**default**) |
 | `//sc display mb` | Magic Burst only |
 | `//sc display both` | Two independent windows |
-| `//sc mode learn` | All learned compatible actions as `Light: Savage Blade` etc.; higher-level results first (**default**) |
+| `//sc mode learn` | Transparent, color-coded ability names and right-aligned own-property icons; higher-level resulting chains first (**default**) |
 | `//sc mode compact` | Short standalone timer summary; bar captions retain property names and live timers |
 | `//sc mode minimal` | Bars only |
 | `//sc names full` | Full property names below SC bar (**default**) |
@@ -115,8 +123,35 @@ Original addon copyright © 2017 Ivaar, under its BSD-style source notice.
 Skill data refresh and newer skill additions from posimagi/Skillchains.
 Resonance UI testing changes authored by A (Awake) with user-directed design.
 Existing upstream notices in the Lua source files remain intact.
+The 14 colored skillchain PNGs are copies of the user fork's
+[XIVCrossbar default icon pack](https://github.com/rerorriM-Mirrorer/xivcrossbar/tree/master/images/icons/iconpacks/default/skillchain)
+and are supplied locally to keep Skillchains independent of XIVCrossbar.
+Check artwork provenance and redistribution terms before a public release.
+
+The original addon displays Magic Burst **elements**, not an inventory-filtered
+list of usable burst spells. This build does not add burst spell suggestions;
+`//sc spell` continues to cover compatible skillchain-forming spells on
+eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-18 — resonance.6 test: ability-first Learn mode
+- Show only ability names in Learn mode, with colors derived from the
+  predicted result's resonance palette and the action's own property icons
+  in a fixed, right-aligned column. Existing game-result prediction and
+  high-level-first ordering remain unchanged; no speculative outcomes.
+- Use transparent Learn rows with Arial bold italic text and black stroke,
+  retaining the bottom-anchored, upward-growing design. Keep an independently
+  draggable small guide visible only in edit mode.
+- Add local copies of XIVCrossbar's 14 PNG skillchain icons, used both in the
+  Learn rows and next to SC/MB bar captions. The addon needs no XIVCrossbar
+  runtime dependency. Radiance and Umbra reuse Light and Darkness icons.
+- Pool and reuse text/image objects, clipping long learning lists to the
+  viewport with a `+N more` marker when necessary. Preserve Compact and
+  Minimal modes, all bar timers, widths, scale and saved positions.
+- Add Lua 5.1 parsing, simulated Windower layout checks, and ZIP icon
+  manifest/signature verification. Actual FFXI gameplay still needs testing.
+
 
 ### 2026-10-13 — resonance.5 test: upward learning list and bar timers
 - Move the SC BAR edit drag handle farther above the bar so it no longer
