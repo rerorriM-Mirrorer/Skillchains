@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.5'
+_addon.version = '2.20.08.25-resonance.6'
 
 require('luau')
 require('pack')
@@ -242,7 +242,11 @@ function check_results(reson)
                     local label=res[resource] and res[resource][id]
                     group.actions[#group.actions+1]={
                         name=label and label.name or ability.en or tostring(id),
-                        via=via or table.concat(props,'/')
+                        via=via or table.concat(props,'/'),
+                        -- Retain every inherent property for the right-aligned
+                        -- icon column; result detection still chooses one
+                        -- actual expected skillchain per action.
+                        properties=props,
                     }
                 end
             end
