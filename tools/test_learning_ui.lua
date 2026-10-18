@@ -1,7 +1,8 @@
 -- Pure simulated Windower smoke check: no FFXI client or external libs.
 local created_labels,created_images=0,0
+local viewport_w,viewport_h=960,540
 windower={addon_path='Skillchains/',get_windower_settings=function()
-    return {ui_x_res=960,ui_y_res=540}
+    return {ui_x_res=viewport_w,ui_y_res=viewport_h}
 end}
 package.preload.texts=function()
     return {new=function(initial,settings)
@@ -116,6 +117,81 @@ assert(opt.list.x==192 and opt.list.y==original_bottom-20,
 overlay:render(state)
 assert(opt.list.x==192 and opt.list.y==original_bottom-20,
     'Guide repositioning should not move the list again')
+-- Ctrl+drag: snap the TWO intentional anchors separately. Native text
+-- objects simulate the existing Windower drag handles; no mouse hook.
+local bx,by=overlay.handle:pos()
+overlay.handle:pos(277,by+5)
+overlay:render(state)
+assert(opt.bar.x==277 and opt.bar.y==375,'Unmodified bar drag remains free')
+overlay:set_ctrl(29,true)
+overlay.handle:pos(286,112)
+overlay:render(state)
+assert(opt.bar.x==280 and opt.bar.y==140,'Left Ctrl snaps bar anchor from screen origin')
+assert(prims.sc_resonance_sc_frame.x==281,'SC frame follows the same parent anchor')
+assert(overlay.properties.x==opt.bar.x+math.floor(3*opt.scale+.5)+
+    2*(math.max(10,math.floor(12*opt.scale+.5))+math.max(1,math.floor(2*opt.scale+.5)))+2,
+    'SC caption continues to follow bar anchor through icon offsets')
+local gx,gy=overlay.panel:pos()
+overlay.panel:pos(gx+37,gy-18)
+overlay:render(state)
+assert(opt.list.x==220 and opt.list.y==280,
+    'Learning bottom anchor snaps independently to screen grid')
+assert(overlay.learning.rows[1].label.x==opt.list.x)
+assert(overlay.learning.rows[1].label.y==opt.list.y-overlay.learning:height())
+-- Right Ctrl must remain active if left Ctrl is released.
+overlay:set_ctrl(157,true)
+overlay:set_ctrl(29,false)
+overlay.handle:pos(296,117)
+overlay:render(state)
+assert(opt.bar.x==290 and opt.bar.y==150,
+    'Right Ctrl persists independently of left Ctrl')
+overlay:set_ctrl(157,false)
+overlay.handle:pos(297,117)
+overlay:render(state)
+assert(opt.bar.x==297 and opt.bar.y==151,'Releasing Ctrl restores free dragging')
+-- Non-10px grid still shares absolute origin (not relative to scale or widget).
+opt.grid=16
+overlay:set_ctrl(29,true)
+overlay.handle:pos(301,115)
+overlay:render(state)
+assert(opt.bar.x==288 and opt.bar.y==144,'Adjustable grid uses screen 0,0')
+-- Snap to valid boundaries, including Y minimum and display's right/bottom.
+overlay.handle:pos(9999,9999)
+overlay:render(state)
+assert(opt.bar.x==864 and opt.bar.y==480)
+overlay.handle:pos(-999,-999)
+overlay:render(state)
+assert(opt.bar.x==16 and opt.bar.y==48)
+-- Minimal permitted grid, then extreme small/large scales.
+opt.grid=1
+for _,scale in ipairs({.5,2.5}) do
+    overlay:scale(scale)
+    overlay.handle:pos(169,120)
+    overlay:render(state)
+    assert(opt.bar.x==169 and opt.bar.y==154)
+    assert(prims.sc_resonance_sc_frame.x==opt.bar.x+1,
+        'No accumulating bar position error after scaling')
+    assert(overlay.learning.rows[1].label.x==opt.list.x)
+end
+viewport_w,viewport_h=1280,720
+opt.grid=10
+overlay:set_ctrl(29,false)
+overlay.handle:pos(643,203)
+overlay:render(state)
+assert(opt.bar.x==643 and opt.bar.y==237,
+    'Larger viewport free movement works independent of scale')
+overlay:set_ctrl(29,true)
+overlay.handle:pos(643,203)
+overlay:render(state)
+assert(opt.bar.x==643 and opt.bar.y==237,
+    'Holding Ctrl alone does not snap without movement')
+overlay.handle:pos(644,204)
+overlay:render(state)
+assert(opt.bar.x==640 and opt.bar.y==230,
+    'Dragging on larger resolution snaps independently of scale')
+overlay:set_ctrl(29,false)
+overlay:scale(1)
+viewport_w,viewport_h=960,540
 overlay:edit(false)
 overlay:render(state)
 assert(not overlay.panel.visible and overlay.learning.displayed==2)
