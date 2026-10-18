@@ -6,6 +6,7 @@ installable Skillchains/ directory with README.md and runtime Lua files.
 Never package character settings.
 """
 from pathlib import Path
+import re
 import argparse
 import shutil
 import zipfile
@@ -13,12 +14,15 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 ROOT_DOCS = ("WORKFLOW.md", "TESTING.md")
 ADDON_DOCS = ("README.md",)
-LUA = ("Skillchains.lua", "skills.lua", "resonance_ui.lua")
+LUA = ("Skillchains.lua", "skills.lua", "resonance_ui.lua", "learning_ui.lua")
+ICON_SOURCE = ROOT / "images" / "skillchain"
+ICONS = tuple(sorted(path.name for path in ICON_SOURCE.glob("*.png")))
+assert len(ICONS) == 14, "Expected 14 property PNG icons"
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--name", default="Skillchains-resonance.5-test")
+    parser.add_argument("--name", default="Skillchains-resonance.6-test")
     args = parser.parse_args()
     dist = ROOT / "dist"
     staging = dist / "package_content"
@@ -31,9 +35,14 @@ def main():
         shutil.copy2(ROOT / filename, staging / "Skillchains" / filename)
     for filename in LUA:
         shutil.copy2(ROOT / filename, staging / "Skillchains" / filename)
+    (staging / "Skillchains" / "images" / "skillchain").mkdir(parents=True)
+    for filename in ICONS:
+        shutil.copy2(ICON_SOURCE / filename,
+                     staging / "Skillchains" / "images" / "skillchain" / filename)
 
     archive = dist / (args.name + ".zip")
-    manifest = [*ROOT_DOCS, *(f"Skillchains/{name}" for name in (*ADDON_DOCS, *LUA))]
+    manifest = [*ROOT_DOCS, *(f"Skillchains/{name}" for name in (*ADDON_DOCS, *LUA)),
+                *(f"Skillchains/images/skillchain/{name}" for name in ICONS)]
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
         for name in manifest:
             zf.write(staging / name, arcname=name)
@@ -45,6 +54,9 @@ def main():
             assert zf.read("Skillchains/" + filename).strip(), filename
         assert "README.md" not in zf.namelist()
         assert "Skillchains/README.md" in zf.namelist()
+        for name in ICONS:
+            data = zf.read("Skillchains/images/skillchain/" + name)
+            assert data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), name
         assert b"## AGATHOS" in zf.read("WORKFLOW.md")
         assert b"## DESIGN" in zf.read("WORKFLOW.md")
         assert b"## WORKFLOW" in zf.read("WORKFLOW.md")
