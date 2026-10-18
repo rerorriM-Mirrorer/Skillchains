@@ -54,10 +54,10 @@ lower levels retain their specific burst element colors.
 5. At the console, `lua reload Skillchains` (or `lua load Skillchains` on first install).
 6. Type `//sc help`, then use `//sc edit` to position the bar and learning panel.
 
-The curated testing ZIP contains **`WORKFLOW.md` and `TESTING.md` at the
-archive root**, with exactly one `Skillchains/` addon directory. The
-`README.md` is inside `Skillchains/`, alongside its four Lua files and
-the skillchain icon directory.
+The curated testing ZIP contains exactly one `Skillchains/` directory.
+Its `README.md`, `WORKFLOW.md`, and `TESTING.md` sit **inside that
+installable folder** alongside the four Lua files and property icons, following
+NPCMirror's current packaging convention.
 A source copy also remains at the GitHub repository root.
 `WORKFLOW.md` is the consolidated NPCMirror guide: it includes AGATHOS,
 DESIGN, and WORKFLOW principles; there are no separate retired documents.
@@ -134,6 +134,11 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-18 — canonical package documentation alignment
+- Place WORKFLOW.md and TESTING.md inside the packaged Skillchains folder
+  according to NPCMirror's current workflow, preserving source copies at
+  the repository root. Add AGENTS.md to the source repository.
 
 ### 2026-10-18 — resonance.6 test: ability-first Learn mode
 - Show only ability names in Learn mode, with colors derived from the
