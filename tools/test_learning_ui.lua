@@ -14,7 +14,10 @@ package.preload.texts=function()
         function obj:size(v) if v then self._size=v end return self._size end
         function obj:stroke_width() end
         function obj:color(r,g,b) self.rgb={r,g,b} end
-        function obj:pos(x,y) self.x,self.y=x,y end
+        function obj:pos(x,y)
+            if x==nil then return self.x,self.y end
+            self.x,self.y=x,y
+        end
         function obj:show() self.visible=true end
         function obj:hide() self.visible=false end
         function obj:destroy() self.destroyed=true end
