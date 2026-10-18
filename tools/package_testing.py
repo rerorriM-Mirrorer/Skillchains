@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build a clean Skillchains testing package (stdlib only).
 
-The archive root contains WORKFLOW.md, TESTING.md, and exactly one
-installable Skillchains/ directory with README.md and runtime Lua files.
+The archive root contains exactly one installable Skillchains/ directory.
+README.md, WORKFLOW.md, TESTING.md and runtime files all live inside it.
 Never package character settings.
 """
 from pathlib import Path
@@ -29,7 +29,7 @@ def main():
         shutil.rmtree(staging)
     (staging / "Skillchains").mkdir(parents=True)
     for filename in ROOT_DOCS:
-        shutil.copy2(ROOT / filename, staging / filename)
+        shutil.copy2(ROOT / filename, staging / "Skillchains" / filename)
     for filename in ADDON_DOCS:
         shutil.copy2(ROOT / filename, staging / "Skillchains" / filename)
     for filename in LUA:
@@ -40,7 +40,7 @@ def main():
                      staging / "Skillchains" / "images" / "skillchain" / filename)
 
     archive = dist / (args.name + ".zip")
-    manifest = [*ROOT_DOCS, *(f"Skillchains/{name}" for name in (*ADDON_DOCS, *LUA)),
+    manifest = [*(f"Skillchains/{name}" for name in (*ROOT_DOCS, *ADDON_DOCS, *LUA)),
                 *(f"Skillchains/images/skillchain/{name}" for name in ICONS)]
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
         for name in manifest:
@@ -56,9 +56,11 @@ def main():
         for name in ICONS:
             data = zf.read("Skillchains/images/skillchain/" + name)
             assert data.startswith(bytes((137, 80, 78, 71, 13, 10, 26, 10))), name
-        assert b"## AGATHOS" in zf.read("WORKFLOW.md")
-        assert b"## DESIGN" in zf.read("WORKFLOW.md")
-        assert b"## WORKFLOW" in zf.read("WORKFLOW.md")
+        assert b"## AGATHOS" in zf.read("Skillchains/WORKFLOW.md")
+        assert b"## DESIGN" in zf.read("Skillchains/WORKFLOW.md")
+        assert b"## WORKFLOW" in zf.read("Skillchains/WORKFLOW.md")
+        assert "WORKFLOW.md" not in zf.namelist()
+        assert "TESTING.md" not in zf.namelist()
         assert not any(x.endswith("settings.xml") for x in zf.namelist())
 
     print(f"Created and verified: {archive.relative_to(ROOT)}")
