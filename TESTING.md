@@ -2,6 +2,91 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Current testing batch — 2026-10-18 / Grid1 Ctrl+drag (not game-tested)
+
+**Source:** `rerorriM-Mirrorer/Skillchains` branch
+`development/targetsc-resonance-grid`, branched from the current
+`targetsc-companion-v0.1` at `c8778a358ae42c0c68ddc8b00f60ee8307c0fc7d`.
+Both original testing branches and `master` remain unchanged.
+**Install:** Use the complete `Skillchains-TargetSC-Grid1-test` GitHub Actions
+artifact (two installable folders: `Skillchains/`, `TargetSC/`). Back up
+the current Skillchains folder and data; **close FFXI before replacing
+TargetSC's DLL**. Preserve existing per-character settings.
+The addon's status version adds `-grid.1`. No DLL/native source changes.
+
+**Changes:** Both Ctrl keys (Windower DirectInput 29/157) independently
+request snapping only while an existing Windower draggable handle moves.
+Grid anchored at screen/UI (0,0), floor to 10 pixels by default (configurable
+1–200 via `//sc grid [pixels]`). Bar uses `Resonance.bar.x/y` as its
+top-left reference; the learning list uses independent
+`Resonance.list.x/y`, with Y at its **bottom**. Every bar/text/icon position
+continues to derive from its respective saved anchor. Scale handle still
+means resizing, **not** snapping or moving the widget. Native mouse/keyboard
+input is not suppressed. Existing TargetSC bridge/events and combat state
+are unchanged. A dedicated shared struck-bell animation and composite
+SC/MB-underbar **plan** is in
+`TargetSC/docs/SHARED_RESONANCE_PLAN.md`; those visual features are not part
+of Grid1.
+
+**Source inspection:** Current `AGENTS.md`, `WORKFLOW.md`, `TESTING.md`
+from both Skillchains branches and TargetSC were read directly from GitHub;
+BarFiller2 `docs/ALIGNMENT.md` and its Ctrl implementation and EnemyBar2
+working instructions were consulted. This patch does not borrow EnemyBar2
+mouse interception; Skillchains already uses draggable Windower `texts`.
+
+**Automated verification:** GitHub Actions runs Lua5.1 parser, synthetic
+learning/drag tests (free movement, both Ctrl keys independently, Ctrl-without-
+movement nonjump, 10/16/1 grids, 960x540 and 1280x720 viewports, offscreen
+clamps, scale 0.5/2.5, icon/frame layout), existing TargetSC bridge/ring/
+lifecycle simulations, original Skillchains bar snapshot comparison, and
+complete package validation (including Windows DLL, 14 PNGs, docs, hashes).
+All are **static or simulated checks**, not actual FFXI gameplay tests.
+
+### Live checks requested — pending
+
+1. Before touching files, back up addon and `data/`; close game clients
+   before replacing the TargetSC DLL. Load `Skillchains` then `TargetSC`.
+   Check `//sc status` includes `grid.1`, `//sc grid` displays 10, and
+   `//sc targetsc` / `//tsc status` still report a connected bridge.
+2. In `//sc edit`, drag the **SC bar** with no modifier in both axes: smooth
+   1px positioning and correct icon/text/frame alignment. With **left Ctrl**
+   drag from non-grid coordinates and check 10px screen-origin floor
+   multiples; release Ctrl to resume free movement. Repeat **right Ctrl**,
+   both held then release one, and press Ctrl without moving the mouse
+   (must not jump).
+3. Repeat on independent **learning-panel handle**; ensure the list grows
+   upward without jumping and still follows the handle. Test short vs long
+   suggestion lists and an empty list. Drag near each edge and ensure saved
+   anchors remain on screen.
+4. Try `//sc grid 16`, then Ctrl+drag. Observe actual 16px positioning
+   unrelated to scale; `//sc grid` and `//sc status` report correctly.
+   Reset with `//sc grid 10`. Test `//sc default` only after saving your
+   character's layout if you intend to restore it.
+5. Repeat at scale 0.5, 1, 2.5 and on the small 960x540 Lionstag client
+   versus larger client. Test drag while the bar is active and preview edit.
+   Confirm `//sc scale edit` still resizes, not relocates/snaps.
+6. Exit edit, reload and confirm positions/grid survived. Compare SC/MB
+   bars, countdown captions, pool icons, Learn/Compact/Minimal, and
+   TargetSC's in-world rings. Test with 1 and several clients and report
+   whether any controller or menu keystroke is unexpectedly intercepted.
+
+**Alignment observations separate from Grid1:** The bar already uses one
+`opts.bar` anchor and derives frame/caps/segments/captions/icons from it.
+Its configured width is intentionally NOT scaled, while bar thickness,
+font and icon sizes ARE scaled. Fractional fill segments are rounded
+independently and font glyph baselines follow their own metrics, so a
+1-pixel local offset is possible across scales; this patch does not silently
+redesign those visuals. The learning list is bottom-anchored on purpose.
+Existing `rescue()` and edit-time horizontal list clamps use different
+right-edge safeguards (`w-135` vs `w-215`), worth harmonizing only after
+live layout evidence. The new grid changes positions, not those local
+design-space offsets. TargetSC rings use world/model coordinates and are
+not HUD-grid objects.
+
+**Live FFXI verification:** NOT RUN.
+
+---
+
 ## Current Development Status — 2026-10-18 (attribution normalization)
 
 - **Repository / branch:** `rerorriM-Mirrorer/Skillchains` / `targetsc-companion-v0.1`; starting source `0b1f920410107e6fe4cb1cd9346d967d8c047e37`.
