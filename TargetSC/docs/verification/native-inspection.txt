@@ -1,0 +1,8 @@
+file: PE32 executable (DLL), Intel 80386
+DLL Name: KERNEL32.dll
+DLL Name: msvcrt.dll
+[Ordinal/Name Pointer] Table
+	[   0] luaopen__TargetSC
+
+
+SHA256 38a39509087fef50e377a1ef689124973e6595f2726f3d35de543dce982b8e8e

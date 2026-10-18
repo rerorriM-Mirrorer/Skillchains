@@ -7,6 +7,8 @@
 personal `resonance-ui-v0.1-test` at
 `e095657a2e7ecc5a49d05e96c1b78523a4860af5`. Personal branch and master unchanged.
 Skillchains bridge commit: `43943483518847f317228d0f0fc3ba472d642685`.
+Native renderer/source commit: `2dfd6b2f92e7f400cc1ffcbefe2f7823c9efd7a2`.
+Lua motion/controls/tests commit: `3c445d5adabc0ce7aa4e57f4f116618dbad154fc`.
 Each curated package's `BUILD_INFO.json` identifies its exact final commit and
 native binary hash. All work is testing-branch work, **not a live-validated baseline**.
 
@@ -121,7 +123,7 @@ records, **not in-game logs or screenshots**.
 | Date | Batch | References | Status |
 | --- | --- | --- | --- |
 | 2026-10-18 | Test1 interface | Bridge 4394348; personal baseline e095657 | Committed/pushed on isolated branch; simulated baseline preserved |
-| 2026-10-18 | Test1 companion | Exact package source commit in BUILD_INFO.json | Native cross-compiled; static/simulated checks pass; live pending |
+| 2026-10-18 | Test1 companion | Native 2dfd6b2; motion/controls 3c445d5; exact final package source commit in BUILD_INFO.json | Native cross-compiled; static/simulated checks pass; live pending |
 
 ## User materials and requests
 

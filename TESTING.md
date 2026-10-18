@@ -27,6 +27,8 @@ The personal branch and master are unchanged. Authoring identity: **A.**
 - **Remaining (live FFXI):** confirm subscription/load/reload ordering, bar/ring
   synchronization with a real extension, confirmed MB detection and no UI
   regressions. Existing resonance.6 live tests below remain outstanding.
+- **Published conceptual commits:** bridge `4394348`, native renderer `2dfd6b2`,
+  Lua motion/controls and simulation tests `3c445d5`.
 - Package names, branch and final commit references are in
   `TargetSC/TESTING.md` and each package's `BUILD_INFO.json`.
 

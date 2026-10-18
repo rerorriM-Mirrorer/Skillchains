@@ -14,11 +14,15 @@ windower={addon_path='./TargetSC/',add_to_chat=function(_,s)messages[#messages+1
         get_mob_by_target=function()return nil end}}
 package.preload.chat=function()string.color=function(s)return s end return {}end
 package.preload.config=function()return {load=function(d)return d end,save=function()end}end
-package.preload._TargetSC=function()error('simulated missing DLL')end
+local mismatch=arg[1]=='mismatch'
+package.preload._TargetSC=function()
+    if mismatch then return {version=function()return '99.0'end} end
+    error('simulated missing DLL')
+end
 assert(loadfile('TargetSC/TargetSC.lua'))()
 events.load() events['addon command']('status') events['addon command']('help')
 events['addon command']('preview') events['addon command']('off')
 events.prerender() events['zone change']() events.unload()
-assert(table.concat(messages,'\n'):find('simulated missing DLL',1,true))
+assert(table.concat(messages,'\n'):find(mismatch and 'Native API/version mismatch' or 'simulated missing DLL',1,true))
 assert(command_count<=3,'no polling or per-frame console spam')
-print('PASS missing native/source handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic')
+print('PASS '..(mismatch and 'mismatched native' or 'missing native/source')..' handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic')

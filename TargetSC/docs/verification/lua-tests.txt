@@ -1,0 +1,35 @@
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p skillchains/targetsc_bridge.lua skillchains/skills.lua skillchains/Skillchains.lua skillchains/resonance_ui.lua skillchains/learning_ui.lua skillchains/TargetSC/resonance.lua skillchains/TargetSC/TargetSC.lua skillchains/TargetSC/tests/test_addon.lua skillchains/TargetSC/tests/test_skillchains_regression.lua skillchains/TargetSC/tests/test_resonance.lua skillchains/TargetSC/tests/test_missing.lua
+exit=0
+
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 tools/test_learning_ui.lua
+learning_ui simulation passed: ordering, property images, alignment, anchor, pooling and clipping
+resonance_ui integration simulation passed: bars, captions, icons, drag guide, cleanup
+exit=0
+
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_resonance.lua
+PASS publisher/consumer integration: deadlines, transitions, AoE MB, closed chains, lifecycle, snapshots, client isolation
+PASS animation sweep: 7 palettes x 1121 frames, finite/bounded geometry, model scale clamps
+exit=0
+
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_addon.lua
+PASS actual addon lifecycle/commands: preview timeline, native submissions, identity gate, cutscene, zone, off/on, settings, help, restart/unload
+exit=0
+
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_missing.lua
+PASS missing native/source handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic
+exit=0
+
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_skillchains_regression.lua ../skillchains-baseline.lua
+PASS actual Skillchains baseline comparison: opener, chain timers, confirmed MB, MB-only tail, closed chain, expiry, zone/logout; 14 identical bar snapshots
+exit=0
+
+Final native API guard / deferred gap recovery review:
+$ lua5.1 TargetSC/tests/test_addon.lua
+PASS actual addon lifecycle/commands: preview timeline, native submissions, identity gate, cutscene, zone, off/on, settings, help, restart/unload
+exit=0
+$ lua5.1 TargetSC/tests/test_missing.lua
+PASS missing native/source handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic
+exit=0
+$ lua5.1 TargetSC/tests/test_missing.lua mismatch
+PASS mismatched native handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic
+exit=0
