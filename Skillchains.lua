@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.6-targetsc.1'
+_addon.version = '2.20.08.25-resonance.6-targetsc.1-grid.1'
 
 require('luau')
 require('pack')
@@ -48,7 +48,7 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- The UI is independent of EnemyBar2. The initial position suits a small
 -- client; //sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
-    mode='learn', display='sc', names='full', scale=1,
+    mode='learn', display='sc', names='full', scale=1, grid=10,
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=0,y=-11},
     bar={x=466,y=696,width=310},
@@ -449,6 +449,12 @@ local function message(str)
     windower.add_to_chat(207,'Skillchains: '..str)
 end
 
+-- Read modifiers without intercepting normal keyboard/controller input.
+-- Either Ctrl key can request snap while existing draggable text moves.
+windower.register_event('keyboard', function(dik, down)
+    if dik==29 or dik==157 then overlay:set_ctrl(dik,down) end
+end)
+
 windower.register_event('addon command', function(cmd, ...)
     cmd=(cmd or 'status'):lower()
     local args={...}
@@ -520,7 +526,7 @@ windower.register_event('addon command', function(cmd, ...)
         local active=overlay:edit(desired)
         config.save(settings)
         message('Edit '..(active and 'ON' or 'OFF')..
-            '. Drag the handle ABOVE the bar and the separate learning panel.')
+            '. Drag the bar or learning handle; hold either Ctrl for grid snapping.')
     elseif cmd=='scale' then
         if option=='edit' then
             local on=overlay:scale_edit()
@@ -536,6 +542,19 @@ windower.register_event('addon command', function(cmd, ...)
         overlay:scale(number)
         config.save(settings)
         message(('Scale set to %.2f.'):format(opts.scale))
+    elseif cmd=='grid' then
+        local grid=tonumber(option)
+        if option==nil then
+            message(('Ctrl+drag grid: %d UI pixels from screen 0,0. Use //sc grid <pixels>.'):format(opts.grid or 10))
+            return
+        end
+        if not grid or grid~=math.floor(grid) or grid<1 or grid>200 then
+            message('Use //sc grid <pixels> with a whole number from 1 to 200.')
+            return
+        end
+        opts.grid=grid
+        config.save(settings)
+        message(('Ctrl+drag grid set to %d UI pixels, screen origin 0,0.'):format(grid))
     elseif cmd=='width' then
         local number=tonumber(option)
         if not number then
@@ -547,6 +566,7 @@ windower.register_event('addon command', function(cmd, ...)
         message('Bar width set to '..opts.bar.width..'.')
     elseif cmd=='default' then
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
+        opts.grid=10
         opts.name_offset.x,opts.name_offset.y=0,-11
         opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
         opts.list.x,opts.list.y=465,300
@@ -573,12 +593,12 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message(cmd..' suggestions '..(on and 'disabled' or 'enabled')..' for '..info.job..'.')
     elseif cmd=='status' then
-        message(('v%s | %s | %s | names %s | scale %.2f | width %d | edit %s'):format(
+        message(('v%s | %s | %s | names %s | scale %.2f | width %d | grid %d | edit %s'):format(
             _addon.version,opts.display,opts.mode,opts.names or 'full',
-            opts.scale,opts.bar.width,
+            opts.scale,opts.bar.width,opts.grid or 10,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; edit [on|off]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
