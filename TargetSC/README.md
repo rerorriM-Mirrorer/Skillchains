@@ -18,6 +18,16 @@ as PE32/i386. Lua and simulated event/lifecycle tests passed. **It has not been
 loaded in Windower or tested in FFXI.** No screenshot or render is presented as a
 live result.
 
+## Current development: Skillchains Grid1 (2026-10-18)
+
+The branch `development/targetsc-resonance-grid` carries a layout-only
+Skillchains Ctrl+drag update. The existing TargetSC 0.1.0 DLL and bridge
+remain unmodified. A paired full test package with both addon folders is
+produced by `.github/workflows/targetsc-grid-testing.yml`.
+The shared struck-bell and composite MB-underbar design is recorded in
+[`docs/SHARED_RESONANCE_PLAN.md`](docs/SHARED_RESONANCE_PLAN.md).
+Those animations have **not** been implemented here.
+
 ## Install
 
 1. Close the FFXI clients before replacing native DLL files. Back up existing
