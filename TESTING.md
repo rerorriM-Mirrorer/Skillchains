@@ -2,6 +2,34 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## TargetSC companion interface — 2026-10-18 / targetsc.1
+
+**Working branch:** `targetsc-companion-v0.1`, based on personal
+`resonance-ui-v0.1-test` at `e095657a2e7ecc5a49d05e96c1b78523a4860af5`.
+The personal branch and master are unchanged. Authoring identity: **A.**
+
+- Optional `targetsc_bridge.lua` publishes existing absolute continuation/MB
+  deadlines, properties/elements and the already-resolved aeonic tier.
+- Uses `lua i TargetSC _event ...` only on state changes and snapshot/lifecycle
+  events. No cross-client IPC, packet injection, filesystem polling or per-frame
+  commands. `//sc targetsc` reports subscription/event/send-failure counters.
+- Confirmed Magic Burst message observation is inside Skillchains' existing
+  action callback, across all targets; it never modifies either timer. Known
+  spell resource elements are published; unidentified ability/WS burst elements
+  are explicitly marked Unknown, not guessed.
+- Install the complete compatible `Skillchains/` folder, including the new
+  fifth Lua file, preserving `data/`; load it before TargetSC. Skillchains has
+  no native dependency and continues operating without TargetSC.
+- **Completed (simulated):** actual modified Skillchains compared with pinned
+  baseline over opener, successful chain, MB, MB-only, closed chain, expiration,
+  zoning and logout: **14 identical bar-render snapshots**. Existing learning
+  and resonance UI simulations pass. All runtime Lua parses as Lua 5.1.
+- **Remaining (live FFXI):** confirm subscription/load/reload ordering, bar/ring
+  synchronization with a real extension, confirmed MB detection and no UI
+  regressions. Existing resonance.6 live tests below remain outstanding.
+- Package names, branch and final commit references are in
+  `TargetSC/TESTING.md` and each package's `BUILD_INFO.json`.
+
 ## Current testing batch — 2026-10-18 / resonance.6 (ability-first color and icon layout)
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.

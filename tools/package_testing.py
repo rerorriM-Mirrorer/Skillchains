@@ -13,7 +13,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 ROOT_DOCS = ("WORKFLOW.md", "TESTING.md")
 ADDON_DOCS = ("README.md",)
-LUA = ("Skillchains.lua", "skills.lua", "resonance_ui.lua", "learning_ui.lua")
+LUA = ("Skillchains.lua", "skills.lua", "resonance_ui.lua", "learning_ui.lua", "targetsc_bridge.lua")
 ICON_SOURCE = ROOT / "images" / "skillchain"
 ICONS = tuple(sorted(path.name for path in ICON_SOURCE.glob("*.png")))
 assert len(ICONS) == 14, "Expected 14 property PNG icons"

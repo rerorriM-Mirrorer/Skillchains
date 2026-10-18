@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.6'
+_addon.version = '2.20.08.25-resonance.6-targetsc.1'
 
 require('luau')
 require('pack')
@@ -110,6 +110,9 @@ sc_info = {
     Detonation = {'Wind', Compression={2,'Gravitation'}, Scission={1,'Scission'}, lvl=1},
     Impaction = {'Lightning', Liquefaction={1,'Liquefaction'}, Detonation={1,'Detonation'}, lvl=1},
 }
+
+-- Optional companion publisher; the existing UI and timing remain authoritative.
+local targetsc = require('targetsc_bridge').new(sc_info, res, windower.send_command)
 
 chainbound = {}
 chainbound[1] = L{'Compression','Liquefaction','Induration','Reverberation','Scission'}
@@ -300,6 +303,7 @@ windower.register_event('prerender', function()
     for id,state in pairs(resonating) do
         -- Do not remove a completed chain while its MB window is active.
         if math.max(state.times,state.mb_window or 0) + 1 < now then
+            targetsc:expire(id)
             resonating[id]=nil
         end
     end
@@ -352,7 +356,7 @@ categories = S{
     'job_ability_unblinkable',
 }
 
-function apply_properties(target, resource, action_id, properties, delay, step, closed, bound)
+function apply_properties(target, resource, action_id, properties, delay, step, closed, bound, result_level)
     local clock = os.clock()
     resonating[target] = {
         res=resource,
@@ -365,14 +369,17 @@ function apply_properties(target, resource, action_id, properties, delay, step, 
         mb_window=step>1 and clock+10 or 0,
         step=step,
         closed=closed,
-        bound=bound
+        bound=bound,
+        result_level=result_level, -- Publish the already resolved aeonic tier.
     }
+    targetsc:state(target,resonating[target])
     if target == targ_id then
         next_frame = clock
     end
 end
 
 function action_handler(act)
+    targetsc:bursts(act)
     local actionpacket = ActionPacket.new(act)
     local category = actionpacket:get_category_string()
 
@@ -402,7 +409,7 @@ function action_handler(act)
 
         local closed = step > 5 or level == 4
 
-        apply_properties(target.id, resource, action_id, {skillchain}, delay, step, closed)
+        apply_properties(target.id, resource, action_id, {skillchain}, delay, step, closed, nil, level)
     elseif ability and (message_ids:contains(message_id) or message_id == 2 and buffs[actor] and chain_buff(buffs[actor])) then
         apply_properties(target.id, resource, action_id, aeonic_prop(ability, actor), ability.delay or 3, 1)
     elseif message_id == 529 then
@@ -447,7 +454,13 @@ windower.register_event('addon command', function(cmd, ...)
     local args={...}
     local option=args[1] and args[1]:lower()
     local opts=settings.Resonance
-    if cmd=='display' then
+    if cmd=='targetsc' then
+        if option=='subscribe' then targetsc:subscribe(resonating)
+        elseif option=='unsubscribe' then targetsc.subscribed=false
+        else message(('TargetSC bridge v1: subscribed=%s, events=%d, send failures=%d'):format(
+            tostring(targetsc.subscribed),targetsc.sequence,targetsc.failures)) end
+        return
+    elseif cmd=='display' then
         if option~='sc' and option~='mb' and option~='both' then
             message('Display: '..opts.display..'. Use sc, mb, or both.')
             return
@@ -580,11 +593,13 @@ windower.register_event('job change', function(job, lvl)
 end)
 
 windower.register_event('zone change', function()
+    targetsc:reset('zone')
     resonating = {}
     overlay:hide()
 end)
 
 windower.register_event('load', function()
+    targetsc:announce()
     if ensure_player() then
         local equip = windower.ffxi.get_items('equipment')
         info.main_weapon = equip.main
@@ -601,11 +616,13 @@ windower.register_event('login', function()
 end)
 
 windower.register_event('unload', function()
+    targetsc:stop()
     if check_weapon then coroutine.close(check_weapon) end
     overlay:destroy()
 end)
 
 windower.register_event('logout', function()
+    targetsc:reset('logout')
     if check_weapon then coroutine.close(check_weapon) end
     overlay:hide()
     check_weapon = nil

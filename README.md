@@ -5,6 +5,17 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
 
+## Optional TargetSC companion (targetsc.1)
+
+On the isolated `targetsc-companion-v0.1` branch, Skillchains can publish its
+existing state to TargetSC's 3D ring renderer. Install the full Skillchains
+folder with `targetsc_bridge.lua`; no DLL belongs in Skillchains. Existing bars,
+learning suggestions, configuration and timing formulas are retained.
+
+Load Skillchains, then TargetSC. `//sc targetsc` reports bridge status;
+`//tsc sync` requests a fresh snapshot. Unloading TargetSC unsubscribes it.
+See [TargetSC/README.md](TargetSC/README.md) for installation and previews.
+
 ## What it does
 
 - Tracks individual targets' skillchain resonance and Magic Burst opportunities using action packets.
@@ -134,6 +145,13 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-18 — targetsc.1 optional state publisher (A.)
+- Publish authoritative SC/MB deadlines and resolved property/tier metadata
+  on state transitions; keep combat/UI behavior and per-client ownership.
+- Observe confirmed Magic Burst messages for the companion, without resetting
+  timers or independently interpreting combat in TargetSC.
+- Retain the resonance.6 baseline; all new live integration tests are pending.
 
 ### 2026-10-18 — canonical package documentation alignment
 - Place WORKFLOW.md and TESTING.md inside the packaged Skillchains folder
