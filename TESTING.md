@@ -10,9 +10,12 @@
 latest successful [GitHub Actions packaging run](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/package-testing.yml),
 rather than using GitHub's auto-generated repository source ZIP.
 The packaging workflow verifies the archive layout and CRC checks. Archive
-root: `WORKFLOW.md`, `TESTING.md`, and one `Skillchains/` folder containing
-`README.md`, `Skillchains.lua`, `skills.lua`, `resonance_ui.lua`,
-`learning_ui.lua`, and `images/skillchain/` containing 14 PNG icons.
+root: exactly one `Skillchains/` folder containing `README.md`,
+`WORKFLOW.md`, `TESTING.md`, four Lua files (`Skillchains.lua`,
+`skills.lua`, `resonance_ui.lua`, `learning_ui.lua`), and
+`images/skillchain/` containing 14 PNG icons. This follows the latest
+canonical NPCMirror workflow; earlier packages placed development docs
+outside the addon folder.
 Install only that `Skillchains/` folder, preserving existing `data/`.
 **Conventions:** `WORKFLOW.md` is the consolidated canonical document from
 NPCMirror, containing AGATHOS, DESIGN and WORKFLOW. The retired
@@ -60,6 +63,11 @@ are included.
   burst spell list. That feature remains unimplemented.
 - **Evidence:** screenshots of a multi-property action, a Light/Dark result,
   drag/edit view, and any console log showing a Lua error.
+- **Packaging convention update (2026-10-18):** NPCMirror's current
+  `WORKFLOW.md` requires `WORKFLOW.md` and `TESTING.md` inside the
+  installable addon folder. This change supersedes the older root-docs layout
+  for this and future Skillchains test packages; historical test records
+  remain below. A repository-root `AGENTS.md` was added.
 - **Verification:** GitHub Actions Lua 5.1 parser passes all four addon files;
   synthetic Windower tests passed for learning layout, right-edge icon
   alignment, anchored rows, object pooling, bar/MB captions, drag delta and
@@ -117,11 +125,12 @@ are included.
 - Use `//sc default` to reset offsets to `0 0` (this also resets other UI choices).
   No Lua runtime testing has yet been performed for this change.
 
-### Packaging verification (documentation-only correction)
+### Previous packaging verification (2026-10-13; superseded convention)
 
-- Confirm the published GitHub Actions artifact ZIP has **one** `Skillchains/`
-  directory containing `README.md` and the three Lua files. Only the two
-  development documents `WORKFLOW.md` and `TESTING.md` stay at the ZIP root.
+- ~~Confirm the published GitHub Actions artifact ZIP has one `Skillchains/`
+  directory with README and three Lua files, with WORKFLOW.md and TESTING.md
+  at the ZIP root.~~ Superseded 2026-10-18: current ZIP has four Lua files,
+  14 icons and both development documents **inside** `Skillchains/`.
 - Confirm `WORKFLOW.md` matches NPCMirror's consolidated reference,
   containing Agathos, Design, and Workflow in a single file.
 - Confirm no `AGATHOS.md` or `DESIGN.md`, no settings.xml and no
