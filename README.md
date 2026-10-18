@@ -121,7 +121,7 @@ Burst is displayed too, a positive Y offset reserves extra clearance.
 
 Original addon copyright © 2017 Ivaar, under its BSD-style source notice.
 Skill data refresh and newer skill additions from posimagi/Skillchains.
-Resonance UI testing changes authored by A (Awake) with user-directed design.
+Resonance UI testing changes authored by A (A) with user-directed design.
 Existing upstream notices in the Lua source files remain intact.
 The 14 colored skillchain PNGs are copies of the user fork's
 [XIVCrossbar default icon pack](https://github.com/rerorriM-Mirrorer/xivcrossbar/tree/master/images/icons/iconpacks/default/skillchain)

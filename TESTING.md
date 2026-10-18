@@ -2,6 +2,15 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Current Development Status — 2026-10-18 (attribution normalization)
+
+- **Branch / starting source:** `resonance-ui-v0.1-test` / `e095657a2e7ecc5a49d05e96c1b78523a4860af5`.
+- **Change:** Use **A** alone in the README's resonance UI attribution. Runtime logic, settings and historical tests are unchanged.
+- **Verification:** Text-only diff and exact-word search; no new in-game acceptance.
+- **Next:** Continue existing resonance UI live checks and verify the published branch head.
+
+---
+
 ## Current testing batch — 2026-10-18 / resonance.6 (ability-first color and icon layout)
 
 **Branch:** `resonance-ui-v0.1-test`; master remains at its previous live baseline.
