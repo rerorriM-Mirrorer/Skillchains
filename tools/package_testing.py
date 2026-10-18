@@ -6,7 +6,6 @@ installable Skillchains/ directory with README.md and runtime Lua files.
 Never package character settings.
 """
 from pathlib import Path
-import re
 import argparse
 import shutil
 import zipfile
@@ -56,7 +55,7 @@ def main():
         assert "Skillchains/README.md" in zf.namelist()
         for name in ICONS:
             data = zf.read("Skillchains/images/skillchain/" + name)
-            assert data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), name
+            assert data.startswith(bytes((137, 80, 78, 71, 13, 10, 26, 10))), name
         assert b"## AGATHOS" in zf.read("WORKFLOW.md")
         assert b"## DESIGN" in zf.read("WORKFLOW.md")
         assert b"## WORKFLOW" in zf.read("WORKFLOW.md")
