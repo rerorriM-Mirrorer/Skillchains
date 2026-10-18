@@ -5,6 +5,29 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
 
+## Development update — Grid1 (2026-10-18)
+
+The experimental `development/targetsc-resonance-grid` branch includes the
+existing optional TargetSC companion and independently snapped HUD anchors.
+The Skillchains version is `resonance.6-targetsc.1-grid.1`. **This is not
+the known-good release.** Use the complete *Skillchains-TargetSC-Grid1-test*
+testing artifact from [GitHub Actions](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/targetsc-grid-testing.yml)
+for this branch; it contains both installable addons and their cumulative
+README/WORKFLOW/TESTING documents.
+
+Enter `//sc edit`, then drag either the SC bar or learning-panel handle.
+Normal dragging stays free. Hold **left or right Ctrl** to snap that
+widget's independent parent anchor to a shared (0,0)-origin UI-pixel grid.
+Default spacing is 10 pixels; `//sc grid 16` changes it and
+`//sc grid` reports the value. Changes are stored in existing character
+configuration; `//sc default` resets the grid to 10. Scale-drag is unchanged.
+No new mouse input interception, TargetSC renderer change, or game-state
+change is included in Grid1.
+
+Future synchronized "struck bell" animation and a composite SC/MB HUD
+underbar are designed—but **not implemented**—in
+[TargetSC/docs/SHARED_RESONANCE_PLAN.md](TargetSC/docs/SHARED_RESONANCE_PLAN.md).
+
 ## Optional TargetSC companion (targetsc.1)
 
 On the isolated `targetsc-companion-v0.1` branch, Skillchains can publish its
@@ -91,8 +114,8 @@ source-directory name and is **not** the recommended installation package.
 | `//sc names short` | Three-letter properties separated by ` / ` |
 | `//sc names off` | Hide attached property caption in Learn/Compact too |
 | `//sc names offset 0 -11` | Position captions relative to their bars: X, Y pixels. Default is `0 -11`; omit values to report. |
-| `//sc edit` or `//sc edit on/off` | Drag the bar and learning panel; automatically recovers off-screen positions |
-| `//sc center` | Center both UI objects within the current client's viewport |
+| `//sc edit` or `//sc edit on/off` | Drag bar and learning panel freely; hold either Ctrl to snap their independent anchors |
+| `//sc grid [pixels]` | Show/set shared screen-origin Ctrl+drag grid; default 10, range 1–200 |\n| `//sc center` | Center both UI objects within the current client's viewport |
 | `//sc pos 200 450` | Set a precise bar position (clamped to the current viewport) |
 | `//sc scale edit` | Toggle the draggable horizontal scale handle (also enters edit mode) |
 | `//sc scale 0.8` | Uniform thickness/spacing/text scale (0.5–2.5); omitting number reports |
@@ -145,6 +168,20 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-18 — Grid1: Ctrl+drag positioning
+- Introduce a shared UI-pixel grid anchored to screen (0,0) with floor
+  snapping for either Ctrl key. Bar and learning panel retain independent
+  saved anchors; internal primitives are never individually snapped.
+- Preserve free drag, edit handles, existing viewport recovery, scale,
+  bar width, property icons, TargetSC publisher events and all existing
+  animation/timing behavior. Default spacing is 10 pixels, adjustable via
+  `//sc grid [pixels]`. Keyboard observer does not consume inputs.
+- Add synthetic dual-Ctrl, non-drag keypress, boundary, scale and multi-size
+  tests. **No FFXI/Windows live verification yet.**
+- Document the separate, future unified resonance animation plan alongside
+  TargetSC; that work is not part of Grid1.
+
 
 ### 2026-10-18 — targetsc.1 optional state publisher (A.)
 - Publish authoritative SC/MB deadlines and resolved property/tier metadata
