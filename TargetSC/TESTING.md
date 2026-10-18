@@ -1,6 +1,32 @@
 # TargetSC TESTING.md — start here
 
-## Current delivery — 2026-10-18 / 0.1.0 Test1
+## Current integration package — Grid1 (2026-10-18)
+
+The `development/targetsc-resonance-grid` branch supplies a complete
+two-addon Grid1 test package while leaving TargetSC's native DLL, bridge
+protocol, 3D motion, source clocks and 0.1.0 runtime unchanged. Skillchains
+now supports independent Ctrl+drag 10px HUD anchor snapping. The option
+is local to Skillchains; TargetSC's model-anchored rings have no screen-grid
+coordinate system and are intentionally unaffected.
+
+**Test:** install the full paired `Skillchains-TargetSC-Grid1-test`
+artifact (close FFXI before touching the native DLL); test ordinary/left
+Ctrl/right Ctrl drag, separate learning anchor, saved positions, boundaries,
+multi-client resolutions, 0.5/2.5 scales, and `//sc grid 16`. Then confirm
+`//tsc status`, subscription/resync, ring behavior, confirmed MB effects
+and lifecycle exactly as described in the original Test1 below.
+
+**Verification:** Lua syntax, synthetic HUD layout and existing TargetSC
+simulations, complete packaging and source baseline comparisons via Actions.
+Not yet live tested in Windower/FFXI.
+**Next visual phase:** See `docs/SHARED_RESONANCE_PLAN.md` for one common
+struck-bell event timeline driving both the HUD and rings, with a pale
+independent-clock MB underbar. No new animation or SC/MB timer changes are
+shipped in Grid1.
+
+---
+
+## Previous delivery — 2026-10-18 / 0.1.0 Test1
 
 **Author:** A. **Repository:** `rerorriM-Mirrorer/Skillchains`.
 **Branch:** `targetsc-companion-v0.1`. Dedicated companion branch based on the
