@@ -2,6 +2,7 @@
 -- Rendering belongs here; action-packet interpretation stays in Skillchains.lua.
 -- The bars and learning panel are independent of EnemyBar2 and XIVCrossbar.
 local texts = require('texts')
+local learning = require('learning_ui')
 local ui = {}
 
 local elements = {
@@ -128,23 +129,6 @@ end
 -- The detection core already groups possible learned actions by their
 -- resulting skillchain and sorts those groups by level (highest first).
 -- Display the useful names directly, without redundant level/step headings.
-local function format_list(state)
-    local groups=state.groups or {}
-    if #groups==0 then return 'No compatible learned actions' end
-    local lines={}
-    for _,group in ipairs(groups) do
-        local actions=group.actions or {}
-        if #actions>0 then
-            if #lines>0 then lines[#lines+1]='' end
-            lines[#lines+1]=group.property..': '..actions[1].name
-            for j=2,#actions do
-                lines[#lines+1]='    '..actions[j].name
-            end
-        end
-    end
-    return table.concat(lines,'\n')
-end
-
 
 function ui.new(settings, sc_info)
     local self = {options=settings, sc_info=sc_info, editing=false, names={}}
@@ -198,8 +182,16 @@ function ui.new(settings, sc_info)
         text_settings(settings.bar.x+math.floor(100*settings.scale+.5),
             settings.bar.y-scale_handle_offset,10,true))
     self.scaling = false
-    self.panel = texts.new('Skillchains', text_settings(settings.list.x,settings.list.y,
+    self.panel = texts.new('LEARNING  [drag]', text_settings(settings.list.x,settings.list.y,
         math.floor(11*settings.scale+.5),false))
+    -- The same element palette drives the bar and ability suggestions.
+    -- Lighten dark stop colors to keep small stroked text legible.
+    self.learning = learning.new(function(result)
+        local col=interpolate(palette({active={result}},sc_info,false),.5)
+        return {math.floor(col[1]*.70+255*.30+.5),
+            math.floor(col[2]*.70+255*.30+.5),
+            math.floor(col[3]*.70+255*.30+.5)}
+    end)
     self.handle:hide()
     self.scalehandle:hide()
     self.panel:hide()
@@ -245,6 +237,7 @@ function ui.new(settings, sc_info)
 
     function self:hide()
         if self.is_hidden and not self.editing then return end
+        self.learning:hide()
         self:hide_bars()
         self.is_hidden=true
         if not self.editing then
@@ -333,7 +326,7 @@ function ui.new(settings, sc_info)
         -- The saved anchor is the lower edge, regardless of line count.
         opt.list.y=math.floor(clamp(opt.list.y,20,math.max(20,h-12))+.5)
         self.handle:pos(opt.bar.x,opt.bar.y-bar_handle_offset)
-        self:position_panel()
+        self.panel:pos(opt.list.x,opt.list.y-24)
         if self.scaling then
             self:place_scalehandle()
         end
@@ -373,7 +366,9 @@ function ui.new(settings, sc_info)
         if toggle then
             self:rescue()
             self.handle:show()
+            self:set_panel_text('LEARNING  [drag]')
             self.panel:show()
+            self.panel_drag_x,self.panel_drag_y=self.panel:pos()
         else
             self.handle:hide()
         end
@@ -415,12 +410,6 @@ function ui.new(settings, sc_info)
             self.panel:text(str)
             self.panel_cache=str
             self.panel_height_px=nil
-            if self.editing then
-                local _,py=self.panel:pos()
-                -- During dragging, the panel stays under the pointer even
-                -- when a changed list has a different height.
-                self.options.list.y=math.floor(py+self:panel_height()+.5)
-            end
         end
     end
 
