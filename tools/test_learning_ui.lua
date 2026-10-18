@@ -6,7 +6,7 @@ end}
 package.preload.texts=function()
     return {new=function(_,initial)
         created_labels=created_labels+1
-        local obj={_text='',_size=11,visible=false}
+        local obj={_text=initial or '',_size=11,visible=false}
         function obj:text(v) if v then self._text=v end return self._text end
         function obj:extents() return #self._text*self._size*.60,self._size end
         function obj:size(v) if v then self._size=v end return self._size end
@@ -16,6 +16,7 @@ package.preload.texts=function()
         function obj:show() self.visible=true end
         function obj:hide() self.visible=false end
         function obj:destroy() self.destroyed=true end
+        function obj:draggable(v) self.is_draggable=v end
         return obj
     end}
 end
@@ -68,3 +69,53 @@ assert(not r.rows[1].label.visible and not r.rows[1].icons[1].image.visible)
 r:destroy()
 assert(r.rows and #r.rows==0)
 print('learning_ui simulation passed: ordering, property images, alignment, anchor, pooling and clipping')
+-- Integration with the actual resonance bars: no live FFXI required.
+local prims={}
+windower.prim={
+    create=function(id) prims[id]={} end,
+    set_color=function(id,a,r,g,b) end,
+    set_visibility=function(id,on) assert(prims[id]);prims[id].visible=on end,
+    set_position=function(id,x,y) assert(prims[id]);prims[id].x=x;prims[id].y=y end,
+    set_size=function(id,w,h) assert(prims[id]);prims[id].w=w;prims[id].h=h end,
+    delete=function(id) prims[id]=nil end
+}
+local opt={
+    mode='learn',display='both',names='full',scale=1,
+    name_offset={x=0,y=-11},
+    bar={x=180,y=370,width=260},list={x=180,y=320}
+}
+local info={
+    Liquefaction={'Fire'},Detonation={'Wind'},Fragmentation={'Wind','Lightning'},
+    Scission={'Earth'},Light={'Light'},Gravitation={'Dark','Earth'}
+}
+local overlay=require('resonance_ui').new(opt,info)
+local state={
+    active={'Fragmentation','Scission'},step=2,sc_left=4.5,sc_total=8,
+    sc_wait=0,mb_left=7,mb_total=10,closed=false,
+    groups=groups
+}
+overlay:render(state)
+assert(overlay.learning.displayed==2)
+assert(overlay.properties.visible and overlay.mb_caption.visible)
+assert(overlay.caption_icons.sc[1].image.visible)
+assert(overlay.caption_icons.sc[2].image.visible)
+assert(overlay.caption_icons.mb[1].image.visible)
+local original_bottom=opt.list.y
+overlay:edit(true)
+overlay:render(state)
+local px,py=overlay.panel:pos()
+overlay.panel:pos(px+12,py-20)
+overlay:render(state)
+assert(opt.list.x==192 and opt.list.y==original_bottom-20,
+    'Dragging guide should move the anchored list once')
+overlay:render(state)
+assert(opt.list.x==192 and opt.list.y==original_bottom-20,
+    'Guide repositioning should not move the list again')
+overlay:edit(false)
+overlay:render(state)
+assert(not overlay.panel.visible and overlay.learning.displayed==2)
+overlay:render(nil)
+assert(overlay.learning.displayed==0)
+overlay:destroy()
+print('resonance_ui integration simulation passed: bars, captions, icons, drag guide, cleanup')
+
