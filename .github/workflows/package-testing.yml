@@ -8,6 +8,9 @@ on:
       - Skillchains.lua
       - skills.lua
       - resonance_ui.lua
+      - learning_ui.lua
+      - images/skillchain/**
+      - tools/test_learning_ui.lua
       - README.md
       - WORKFLOW.md
       - TESTING.md
@@ -30,12 +33,16 @@ jobs:
           luac5.1 -p Skillchains.lua
           luac5.1 -p skills.lua
           luac5.1 -p resonance_ui.lua
+          luac5.1 -p learning_ui.lua
+          luac5.1 -p tools/test_learning_ui.lua
+      - name: Simulate learning layout without FFXI
+        run: lua5.1 tools/test_learning_ui.lua
       - name: Build and verify test archive
         run: python tools/package_testing.py
       - name: Publish installation-ready ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-resonance.5-test
+          name: Skillchains-resonance.6-test
           path: dist/package_content/
           if-no-files-found: error
           retention-days: 30
