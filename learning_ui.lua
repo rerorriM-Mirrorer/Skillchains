@@ -4,7 +4,7 @@
 local texts=require('texts')
 local images=require('images')
 local M={}
-local fallback={Compression='darkness',Radiance='light',Umbra='darkness'}
+local fallback={Radiance='light',Umbra='darkness'}
 local function clamp(x,lo,hi) return math.max(lo,math.min(hi,x)) end
 local function viewport()
     local w=windower.get_windower_settings() or {}
@@ -63,14 +63,17 @@ function M.new(color_for_result)
     end
     function self:render(groups,x,bottom,scale)
         local width,height=viewport()
+        x=clamp(x,8,math.max(8,width-215))
+        bottom=clamp(bottom,25,math.max(25,height-12))
         local rh=math.max(12,math.floor(18*scale+.5))
         local glyphsize=math.max(10,math.floor(15*scale+.5))
         local gap=math.max(1,math.floor(2*scale+.5))
         local font=math.max(7,math.floor(11*scale+.5))
         -- The column has one fixed RIGHT edge for every row, regardless
         -- of action-name length or number of inherent properties.
-        local panelwidth=math.min(math.floor(315*scale+.5),width-x-8)
+        local panelwidth=math.max(120,math.min(math.floor(315*scale+.5),width-x-8))
         local all=flatten(groups)
+        if #all==0 then all[1]={name='No compatible learned actions',properties={}} end
         local limit=math.max(0,math.floor((bottom-9)/rh))
         local visible=math.min(#all,limit)
         local truncated=#all>visible
@@ -84,8 +87,10 @@ function M.new(color_for_result)
             local item=all[i]
             if i>visible then item={name='+'..(#all-visible)..' more',properties={}} end
             local row=self:ensure_row(i,font)
-            row.label:size(font)
-            row.label:stroke_width(math.max(1,math.floor(1.5*scale+.5)))
+            if row.last_font~=font then
+                row.label:size(font)
+                row.label:stroke_width(math.max(1,math.floor(1.5*scale+.5)))
+            end
             local c=item.result and self.color_for_result(item.result) or {205,205,210}
             local color_key=table.concat(c,',')
             if row.last_color~=color_key then
@@ -107,7 +112,10 @@ function M.new(color_for_result)
                 row.last_name=item.name;row.last_max=label_max;row.last_font=font
             end
             local yy=math.floor(top+(i-1)*rh+.5)
-            row.label:pos(x,yy)
+            if row.last_x~=x or row.last_y~=yy then
+                row.label:pos(x,yy)
+                row.last_x,row.last_y=x,yy
+            end
             row.label:show()
             local start=right-(n*glyphsize+(n-1)*gap)
             for j=1,n do
@@ -120,8 +128,13 @@ function M.new(color_for_result)
                 elseif slot.path~=path then
                     slot.image:path(path);slot.path=path
                 end
-                slot.image:size(glyphsize,glyphsize)
-                slot.image:pos(math.floor(start+(j-1)*(glyphsize+gap)+.5),yy)
+                local ix=math.floor(start+(j-1)*(glyphsize+gap)+.5)
+                if slot.last_size~=glyphsize then
+                    slot.image:size(glyphsize,glyphsize);slot.last_size=glyphsize
+                end
+                if slot.last_x~=ix or slot.last_y~=yy then
+                    slot.image:pos(ix,yy);slot.last_x,slot.last_y=ix,yy
+                end
                 slot.image:show()
             end
             for j=n+1,#row.icons do row.icons[j].image:hide() end
