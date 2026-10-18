@@ -4,9 +4,11 @@ windower={addon_path='Skillchains/',get_windower_settings=function()
     return {ui_x_res=960,ui_y_res=540}
 end}
 package.preload.texts=function()
-    return {new=function(_,initial)
+    return {new=function(initial,settings)
         created_labels=created_labels+1
-        local obj={_text=initial or '',_size=11,visible=false}
+        local obj={_text=initial or '',_size=11,visible=false,
+            x=settings and settings.pos and settings.pos.x or 0,
+            y=settings and settings.pos and settings.pos.y or 0}
         function obj:text(v) if v then self._text=v end return self._text end
         function obj:extents() return #self._text*self._size*.60,self._size end
         function obj:size(v) if v then self._size=v end return self._size end
