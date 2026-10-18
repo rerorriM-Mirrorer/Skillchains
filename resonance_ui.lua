@@ -488,16 +488,22 @@ function ui.new(settings, sc_info)
             -- the user exits edit mode; no writes on every frame.
             local w,h=viewport()
             local hx,hy=self.handle:pos()
-            local bx=self:anchor(hx,8,math.max(8,w-90))
-            local by=self:anchor(hy+bar_handle_offset,42,math.max(42,h-55))
-            opt.bar.x,opt.bar.y=bx,by
-            if bx~=hx or by-bar_handle_offset~=hy then
-                self.handle:pos(bx,by-bar_handle_offset)
+            local bx,by=opt.bar.x,opt.bar.y
+            -- A pressed Ctrl without mouse movement must not jump an
+            -- already-placed widget onto the grid.
+            if hx~=opt.bar.x or hy+bar_handle_offset~=opt.bar.y then
+                bx=self:anchor(hx,8,math.max(8,w-90))
+                by=self:anchor(hy+bar_handle_offset,42,math.max(42,h-55))
+                opt.bar.x,opt.bar.y=bx,by
+                if bx~=hx or by-bar_handle_offset~=hy then
+                    self.handle:pos(bx,by-bar_handle_offset)
+                end
             end
             -- The edit guide is not the list itself. Track its movement
             -- delta so a changing number of suggestions cannot jump rows.
             local px,py=self.panel:pos()
-            if self.panel_drag_x and self.panel_drag_y then
+            if self.panel_drag_x and self.panel_drag_y
+                and (px~=self.panel_drag_x or py~=self.panel_drag_y) then
                 -- list.x and list.y are the panel's own anchor (lower edge).
                 -- Only the anchor snaps; pooled text/icons remain local to it.
                 local nx=opt.list.x+px-self.panel_drag_x
