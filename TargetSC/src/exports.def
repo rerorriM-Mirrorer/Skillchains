@@ -1,0 +1,3 @@
+LIBRARY _TargetSC
+EXPORTS
+    luaopen__TargetSC
