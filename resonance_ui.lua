@@ -2,6 +2,7 @@
 -- Rendering belongs here; action-packet interpretation stays in Skillchains.lua.
 -- The bars and learning panel are independent of EnemyBar2 and XIVCrossbar.
 local texts = require('texts')
+local images = require('images')
 local learning = require('learning_ui')
 local ui = {}
 
@@ -175,6 +176,39 @@ function ui.new(settings, sc_info)
     })
     self.property_cache = nil
     self.mb_caption_cache = nil
+    self.caption_icons = {sc={},mb={}}
+    -- The same small source PNGs used in the Learn column also precede
+    -- the attached SC property names and the Magic Burst label.
+    function self:place_caption_icons(kind,properties,x,y,scale)
+        local slots=self.caption_icons[kind]
+        local icon_size=math.max(10,math.floor(12*scale+.5))
+        local gap=math.max(1,math.floor(2*scale+.5))
+        for i,property in ipairs(properties or {}) do
+            local filename=(property=='Radiance' and 'light'
+                or property=='Umbra' and 'darkness' or property:lower())..'.png'
+            local path=windower.addon_path..'images/skillchain/'..filename
+            local slot=slots[i]
+            if not slot then
+                slot={path=path,image=images.new('',{
+                    pos={x=x,y=y},visible=false,draggable=false,
+                    size={width=icon_size,height=icon_size},
+                    color={alpha=240,red=255,green=255,blue=255},
+                    texture={path=path,fit=true}
+                })}
+                slots[i]=slot
+            elseif slot.path~=path then
+                slot.image:path(path);slot.path=path
+            end
+            slot.image:size(icon_size,icon_size)
+            slot.image:pos(x+(i-1)*(icon_size+gap),y)
+            slot.image:show()
+        end
+        for i=#(properties or {})+1,#slots do slots[i].image:hide() end
+        return #(properties or {})>0 and (#properties*(icon_size+gap)+2) or 0
+    end
+    function self:hide_caption_icons(kind)
+        for _,slot in ipairs(self.caption_icons[kind]) do slot.image:hide() end
+    end
     self.panel_cache = nil
     self.is_hidden = true
     self.handle = texts.new('SC BAR  [drag]', text_settings(settings.bar.x,settings.bar.y-bar_handle_offset,10,true))
@@ -230,6 +264,8 @@ function ui.new(settings, sc_info)
     end
 
     function self:hide_bars()
+        self:hide_caption_icons('sc')
+        self:hide_caption_icons('mb')
         self.properties:hide()
         self.mb_caption:hide()
         for kind in pairs(self.names) do self:hide_bar(kind) end
@@ -468,10 +504,11 @@ function ui.new(settings, sc_info)
         -- Avoid hiding the active bar between frames; this also eliminates
         -- repeated visibility flicker at higher redraw rates.
         if not sc_alive then
+            self:hide_caption_icons('sc')
             self:hide_bar('sc')
             self.properties:hide()
         end
-        if not mb_alive then self:hide_bar('mb') end
+        if not mb_alive then self:hide_caption_icons('mb');self:hide_bar('mb') end
         local y=math.floor(opt.bar.y+.5)
         if sc_alive then
             local total=math.max(.1,state.sc_total or 8)
@@ -481,7 +518,12 @@ function ui.new(settings, sc_info)
             y=y+bar_height
             if opt.mode~='minimal' and opt.names~='off' then
                 local inset=math.max(2,math.floor(3*opt.scale+.5))
-                local label_width=math.max(30,opt.bar.width-inset*2)
+                local name_offset=opt.name_offset or {x=0,y=0}
+                local caption_gap=math.max(1,math.floor(2*opt.scale+.5))
+                local caption_y=y+caption_gap+name_offset.y
+                local icon_width=self:place_caption_icons('sc',state.active,
+                    math.floor(opt.bar.x+inset+name_offset.x+.5),caption_y,opt.scale)
+                local label_width=math.max(30,opt.bar.width-inset*2-icon_width)
                 local signature=table.concat(state.active or {},'|')
                     ..':'..tostring(label_width)..':'..tostring(opt.scale)
                     ..':'..tostring(opt.names or 'full')
@@ -493,12 +535,10 @@ function ui.new(settings, sc_info)
                     self.property_rows=rows
                     self.property_cache=signature
                 end
-                local name_offset=opt.name_offset or {x=0,y=0}
-                local caption_gap=math.max(1,math.floor(2*opt.scale+.5))
                 -- Apply the user's offset after the bar-relative anchor.
-                -- A negative Y brings the caption over the lower bar edge.
-                self.properties:pos(math.floor(opt.bar.x+inset+name_offset.x+.5),
-                    y+caption_gap+name_offset.y)
+                -- Icons occupy a small prefix, while names and timer wrap.
+                self.properties:pos(math.floor(opt.bar.x+inset+name_offset.x+icon_width+.5),
+                    caption_y)
                 self.properties:show()
                 -- Positive Y needs extra clearance for the optional MB bar;
                 -- negative Y does not collapse the normal safe spacing.
@@ -507,6 +547,7 @@ function ui.new(settings, sc_info)
                     + math.max(2,math.floor(3*opt.scale+.5))
                     + math.max(0,name_offset.y)
             else
+                self:hide_caption_icons('sc')
                 self.properties:hide()
                 y=y+math.max(4,math.floor(5*opt.scale+.5))
             end
@@ -524,13 +565,18 @@ function ui.new(settings, sc_info)
                 local offset=opt.name_offset or {x=0,y=0}
                 local gap=math.max(1,math.floor(2*opt.scale+.5))
                 local inset=math.max(2,math.floor(3*opt.scale+.5))
-                self.mb_caption:pos(math.floor(opt.bar.x+inset+offset.x+.5),
-                    y+mb_height+gap+offset.y)
+                local bx=math.floor(opt.bar.x+inset+offset.x+.5)
+                local by=y+mb_height+gap+offset.y
+                local icon_w=self:place_caption_icons('mb',
+                    {state.active and state.active[1] or 'Light'},bx,by,opt.scale)
+                self.mb_caption:pos(bx+icon_w,by)
                 self.mb_caption:show()
             else
+                self:hide_caption_icons('mb')
                 self.mb_caption:hide()
             end
         else
+            self:hide_caption_icons('mb')
             self.mb_caption:hide()
         end
         if opt.mode=='learn' and (sc_alive or self.editing) then
@@ -563,6 +609,9 @@ function ui.new(settings, sc_info)
     end
 
     function self:destroy()
+        for _,slots in pairs(self.caption_icons) do
+            for _,slot in ipairs(slots) do slot.image:destroy() end
+        end
         self.learning:destroy()
         self.properties:destroy()
         self.mb_caption:destroy()
