@@ -222,8 +222,12 @@ function ui.new(settings, sc_info)
         local slots=self.caption_icons[kind]
         local icon_size=math.max(7,math.floor(10*scale+.5))
         local gap=math.max(1,math.floor(scale+.5))
-        -- The glyph has transparent margins. Drop it toward Arial's baseline.
-        y=y+math.max(1,math.floor(2*scale+.5))
+        -- Match the user's preferred SC baseline and permit fine adjustment
+        -- independent from //sc names offset (which still moves both).
+        local extra=kind=='sc' and (self.options.icon_offset or {x=0,y=0})
+            or {x=0,y=0}
+        x=x+(extra.x or 0)
+        y=y+math.max(2,math.floor(5*scale+.5))+(extra.y or 0)
         for i,property in ipairs(properties or {}) do
             local filename=(property=='Radiance' and 'light'
                 or property=='Umbra' and 'darkness' or property:lower())..'.png'
@@ -350,13 +354,18 @@ function ui.new(settings, sc_info)
         windower.prim.set_visibility(bar.cap_r,true)
 
         windower.prim.set_position(bar.base,x+1,y+1)
-        windower.prim.set_color(bar.base,math.floor(115*clamp(self.bar_opacity or 1,0,1)+.5),18,21,39)
+        -- The dark, translucent empty track NEVER participates in the
+        -- countdown-opacity wave. Only the opener's initial reveal hides it.
+        windower.prim.set_color(bar.base,math.floor(115*
+            clamp(self.base_opacity or 1,0,1)+.5),18,21,39)
         windower.prim.set_size(bar.base,width-2,height)
         windower.prim.set_visibility(bar.base,true)
 
         -- Update the gradient at the new absolute-time fraction. Do not
         -- tween between distinct weapon skills; only each expiry runs smoothly.
-        local alpha=(waiting and 105 or 230*clamp(self.bar_brightness or 1,0,1))*
+        -- Absolute deadline still controls LENGTH. The separate brightness
+        -- tween is continuous across prewindow -> active-window transition.
+        local alpha=230*clamp(self.bar_brightness or 1,0,1)*
             clamp(self.bar_opacity or 1,0,1)
         for i=1,segments do
             local id=bar.slices[i]
@@ -589,14 +598,17 @@ function ui.new(settings, sc_info)
                 end
             end
             self.bar_brightness=state.step==1 and
-                self.fx:open_brightness(state) or 1
-            self.bar_opacity=self.fx:opacity(state,effects)*
-                self.fx:bar_reveal(state,effects)
+                self.fx:open_brightness(state) or
+                self.fx:chain_brightness(state)
+            local reveal=self.fx:bar_reveal(state,effects)
+            self.bar_opacity=self.fx:opacity(state,effects)*reveal
+            self.base_opacity=reveal
             self.bar_shake=self.fx:shake(state,effects)
             local shake=self.bar_shake
             local bar_height=self:draw_bar('sc',y,fraction,state.sc_wait>0,
                 bar_color)
-            self.bar_shake,self.bar_opacity,self.bar_brightness=0,1,1
+            self.bar_shake,self.bar_opacity,self.bar_brightness,self.base_opacity=
+                0,1,1,1
             local fill=math.floor(clamp(fraction,0,1)*(opt.bar.width-2)+.5)
             self.fx:render(state,effects,{
                 x=math.floor(opt.bar.x+shake+.5),y=y,
