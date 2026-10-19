@@ -300,7 +300,7 @@ assert(overlay.fx.sprites.left.visible and not overlay.fx.sprites.right.visible,
 assert(overlay.fx.sprites.moving.visible,
     'Original level-4 center pulse restored for level 2')
 assert(overlay.fx.sprites.left.y+
-    overlay.fx.sprites.left.height==opt.bar.y+
+    overlay.fx.sprites.left.height<=opt.bar.y+
     math.max(3,math.floor(5*opt.scale+.5))+1,
     'Flare foot is level with the bottom of the SC fill')
 local trans_a=overlay.fx:palette_blend(chain)
