@@ -62,8 +62,9 @@ function M.new(color_for_result)
         end
         return row
     end
-    function self:render(groups,x,bottom,scale)
+    function self:render(groups,x,bottom,scale,opacity)
         local width,height=viewport()
+        local alpha=math.floor(245*clamp(opacity or 1,0,1)+.5)
         x=clamp(x,8,math.max(8,width-215))
         bottom=clamp(bottom,25,math.max(25,height-12))
         local rh=math.max(12,math.floor(18*scale+.5))
@@ -132,6 +133,7 @@ function M.new(color_for_result)
                 row.label:pos(x,yy)
                 row.last_x,row.last_y=x,yy
             end
+            row.label:alpha(alpha)
             row.label:show()
             local start=column_x
             for j=1,n do
@@ -148,10 +150,11 @@ function M.new(color_for_result)
                 if slot.last_size~=glyphsize then
                     slot.image:size(glyphsize,glyphsize);slot.last_size=glyphsize
                 end
-                if slot.last_x~=ix or slot.last_y~=yy then
-                    local iy=yy+math.max(0,math.floor((rh-glyphsize)/2))
-                    slot.image:pos(ix,iy);slot.last_x,slot.last_y=ix,yy
+                local iy=yy+math.max(0,math.floor((rh-glyphsize)/2))
+                if slot.last_x~=ix or slot.last_y~=iy then
+                    slot.image:pos(ix,iy);slot.last_x,slot.last_y=ix,iy
                 end
+                slot.image:alpha(math.floor(240*clamp(opacity or 1,0,1)+.5))
                 slot.image:show()
             end
             for j=n+1,#row.icons do row.icons[j].image:hide() end
