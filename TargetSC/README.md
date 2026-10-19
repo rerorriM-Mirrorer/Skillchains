@@ -18,6 +18,17 @@ as PE32/i386. Lua and simulated event/lifecycle tests passed. **It has not been
 loaded in Windower or tested in FFXI.** No screenshot or render is presented as a
 live result.
 
+## Skillchains Animation3 paired test — 2026-10-19
+
+This paired package contains Skillchains' updated rounded opener,
+first-beat caption entrance, dark-track/halo refinements, smaller
+well-spaced learning icons, and the independent `//sc icons offset`
+command. The complete TargetSC companion is included **unchanged**:
+its DLL, world-space rings, event bridge and Magic Burst handling
+are exactly the same as the preceding paired build. This is a
+compatibility build, not an in-game-verified TargetSC update.
+See both copies of `TESTING.md` for installation and testing steps.
+
 ## Paired Skillchains Animation2 test (2026-10-19)
 
 The latest testing branch `development/skillchains-resonance-animation3`
