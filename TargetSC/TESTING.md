@@ -1,5 +1,14 @@
 # TargetSC TESTING.md — start here
 
+## Skillchains Animation4 paired compatibility
+
+The paired Skillchains Animation4 test updates only Skillchains HUD
+rendering and configuration defaults. TargetSC native DLL, Lua,
+rings, bridge and MB behavior remain unchanged. No new TargetSC
+in-game verification is claimed.
+
+---
+
 ## Skillchains Animation3 paired package — 2026-10-19
 
 The `development/skillchains-resonance-animation4` branch contains
