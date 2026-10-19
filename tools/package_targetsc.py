@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-TargetSC-Animation5-Full'
+NAME = 'Skillchains-TargetSC-Animation6-Full'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
 BASELINE = 'e095657a2e7ecc5a49d05e96c1b78523a4860af5'
@@ -37,7 +37,7 @@ def main():
     assert not git('status', '--porcelain', '--untracked-files=normal'), 'Commit work before packaging'
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains Animation5 / TargetSC unchanged', 'author': 'A.',
+    info = {'batch': 'Skillchains Animation6 / TargetSC unchanged', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'bridge_commit': '43943483518847f317228d0f0fc3ba472d642685',
@@ -60,7 +60,9 @@ def main():
         shutil.copy2(file, dest)
     # Soft-alpha procedural textures adapted from EnemyBar2.
     fx_art = [ROOT / 'images/resonance/ghost_glow.png',
-              ROOT / 'images/resonance/ghost_flare.png']
+              ROOT / 'images/resonance/ghost_flare.png',
+              ROOT / 'images/resonance/edge_flare_left.png',
+              ROOT / 'images/resonance/edge_flare_right.png']
     for file in fx_art:
         assert file.is_file()
         dest = STAGE / 'Skillchains/images/resonance' / file.name
