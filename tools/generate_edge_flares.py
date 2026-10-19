@@ -47,7 +47,7 @@ def alpha_at(x, y):
               * math.exp(-((px - strand_x) / 2.5) ** 2)) if py < 77 else 0
     halo = (42 * math.exp(-((px - 53) / 15) ** 2 -
                           ((py - 74) / 22) ** 2)) if py < 77 else 0
-    return round(clamp((base + plume + strand + halo) / 255) * 255)
+    return math.floor(clamp((base + plume + strand + halo) / 255) * 255 + .5)
 
 
 def chunk(tag, data):
@@ -61,7 +61,7 @@ def png(rows):
         for row in rows)
     return (b'\x89PNG\r\n\x1a\n' +
             chunk(b'IHDR', struct.pack('>IIBBBBB', W, H, 8, 6, 0, 0, 0)) +
-            chunk(b'IDAT', zlib.compress(image_data, 9)) +
+            chunk(b'IDAT', zlib.compress(image_data, 0)) +
             chunk(b'IEND', b'')
 
 
