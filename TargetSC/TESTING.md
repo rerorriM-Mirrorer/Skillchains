@@ -1,5 +1,26 @@
 # TargetSC TESTING.md — start here
 
+## Skillchains Animation1 compatibility note — 2026-10-18
+
+The development branch `development/skillchains-resonance-animation2`
+changes only Skillchains' HUD animation and icon alignment. TargetSC
+0.1.0 Lua, native DLL, ring geometry, bridge protocol, Magic Burst
+observation and deadlines are **unchanged**. Its paired package
+`Skillchains-TargetSC-Animation1-test` ships both complete addons.
+If TargetSC is already correctly installed, only Skillchains files
+need copying/reloading. Replacing any loaded native DLL still
+requires closing FFXI first.
+
+The local `//sc anim preview` command does not publish new world
+events. `//tsc sync` still requests the current Skillchains snapshot
+from the existing bridge and must not replay an old impact or reset
+any window clocks. The detailed user-proposed ground/sky ring and
+spinning property-disc redesign is **deferred** to TargetSC's own
+development conversation. Existing 0.1.0 in-game checks remain
+outstanding; do not regard these HUD tests as their completion.
+
+---
+
 ## Current integration package — Grid1 (2026-10-18)
 
 The `development/targetsc-resonance-grid` branch supplies a complete
