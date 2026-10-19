@@ -203,7 +203,7 @@ function M.new(prefix)
         -- A genuine color fade, not an instantaneous weapon-skill replacement.
         return smooth((age-1)/1)
     end
-    function self:render(s,opt,bar,palette)
+    function self:render(s,opt,bar,palette,display_palette)
         if not s or not bar then self:hide();return end
         self.frame=self.frame+1
         opt=opt or {}
