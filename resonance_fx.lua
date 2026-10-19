@@ -247,7 +247,8 @@ function M.new(prefix)
         local flare_h=max(11,20*scale)
         -- The new edge sprites end at their bright rounded foot. Anchor
         -- their last raster row on the fill's last raster row at ANY height.
-        local fill_bottom=y+h-1
+        -- Fill primitive occupies y+1 through y+h-2 (inclusive).
+        local fill_bottom=y+h-2
         local function base_y(height) return fill_bottom-height+1 end
         local flare_y=base_y(flare_h)
         local edge_inset=max(3,5*scale)
