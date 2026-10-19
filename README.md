@@ -28,6 +28,60 @@ Future synchronized "struck bell" animation and a composite SC/MB HUD
 underbar are designed—but **not implemented**—in
 [TargetSC/docs/SHARED_RESONANCE_PLAN.md](TargetSC/docs/SHARED_RESONANCE_PLAN.md).
 
+## Skillchains Animation1 test — latest development (2026-10-18)
+
+Branch: `development/skillchains-resonance-animation2`; source based on the
+previous Grid1/TargetSC companion branch. **Neither master nor TargetSC's
+runtime/DLL is modified.** This is an experimental Skillchains-only animation
+pass; the World/TargetSC rings and discs requested for a separate TargetSC
+conversation are **not implemented here**. Magic Burst shimmer/underbar changes
+and level-four-specific tuning are also deferred.
+
+Install: use the paired `Skillchains-TargetSC-Animation1-test` GitHub Actions
+artifact, containing complete `Skillchains/` and `TargetSC/` folders. If
+you already have TargetSC 0.1.0 installed, you may replace **only**
+Skillchains Lua/asset files and then `//lua reload Skillchains`; keep
+`Skillchains/data/`. Close every FFXI client **before** you replace the
+TargetSC DLL; it is binary-identical in this batch. Do not install
+GitHub's generic repository source ZIP.
+
+### Animation controls
+
+| Command | Effect |
+| --- | --- |
+| `//sc anim` | Report animation state, intensity and countdown-opacity wave |
+| `//sc anim on/off` | Enable/disable transient glow, flares and entrance effects |
+| `//sc anim intensity 1.5` | Scale visibility 0–2 (default 1.0) |
+| `//sc anim fade on/off` | Optional soft oscillating countdown-opacity fade; off by default |
+| `//sc anim preview opener` | HUD-only preview of opening triple-beat white→property strike |
+| `//sc anim preview level1/level2/level3/level4` | HUD-only chained-result sample; no actual spell/weapon skill |
+| `//sc anim preview off` | End the local preview |
+
+The opener stages occupy the **actual pre-window delay** (typically about 3s)
+rather than inventing time. A left-to-right white sweep and leading flare,
+fading white wash and white pulse, followed by a property-colored pulse and
+fading labels reveal the underlying SC fill. Its **displayed timer now
+holds at full value until the real continuation window opens**. Server
+deadlines and TargetSC events are unchanged.
+
+On a confirmed skillchain, an initial white expansion/shimmer brightens the
+border. A level-1 border adopts the resulting property shade; level-2 is
+white; level-3 receives a persistent faint white halo; level-4 has a
+provisional gold outline and stronger flicker (tuning deferred until live
+level-four gameplay). Left/right colored flares and moving flares follow the
+actual shortening bar. Animation effects use a fixed primitive pool and do
+not create a new sprite every rendered frame.
+
+Learning-mode property icons now match the ability text size, with more
+space between multiple icons. Every row shares an icon **starting column**
+placed after the longest currently available ability name; screen clamping
+prevents off-edge positioning. The SC bar caption icon is smaller and lowered
+toward its label's baseline, respecting the saved bar anchor and name offset.
+
+**Not tested in FFXI yet.** Previous Grid1 free drag/Ctrl drag, scaling,
+modes, TargetSC bridge and native renderer remain in place; their previous
+live-test requests remain applicable.
+
 ## Optional TargetSC companion (targetsc.1)
 
 On the isolated `targetsc-companion-v0.1` branch, Skillchains can publish its
