@@ -18,6 +18,23 @@ as PE32/i386. Lua and simulated event/lifecycle tests passed. **It has not been
 loaded in Windower or tested in FFXI.** No screenshot or render is presented as a
 live result.
 
+## Paired Skillchains Animation2 test (2026-10-19)
+
+The latest testing branch `development/skillchains-resonance-animation3`
+only updates Skillchains HUD appearance, including smaller
+properly scaled property icons, simultaneous stroke/text
+fading, single white opener expansion, gradual skillchain
+color changes and EnemyBar2-derived soft-alpha flares.
+TargetSC 0.1.0's DLL, Lua, rings and bridge protocol
+are unchanged. The two-folder test package is named
+`Skillchains-TargetSC-Animation2-test`; future
+ring/disc redesign belongs in TargetSC's separate
+development conversation. Existing native and gameplay
+tests remain pending. If TargetSC is already installed,
+only Skillchains Lua/assets require replacement and
+`//lua reload Skillchains` is sufficient. Otherwise
+close FFXI before replacing a DLL.
+
 ## Related Skillchains HUD animation test — 2026-10-18
 
 The paired `Skillchains-TargetSC-Animation1-test` package
