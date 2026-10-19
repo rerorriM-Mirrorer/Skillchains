@@ -18,15 +18,16 @@ function M.new(prefix)
     local self={ids={},sprites={},prefix=prefix or 'sc_resonance_fx_'}
     -- A solid white bar really grows from zero during the first strike.
     -- The light around it uses alpha-textured sprites, never square halos.
-    for _,name in ipairs({'wash'}) do
+    for _,name in ipairs({'wash','wash_cap_l','wash_cap_r'}) do
         local id=self.prefix..name
         windower.prim.create(id)
         windower.prim.set_color(id,0,255,255,255)
         windower.prim.set_visibility(id,false)
         self.ids[name]=id
     end
-    for _,name in ipairs({'edge','left','right','moving','border_glow'}) do
-        local file=name=='border_glow' and 'ghost_glow.png' or 'ghost_flare.png'
+    for _,name in ipairs({'edge','left','right','moving','border_glow','border_lower'}) do
+        local file=(name=='border_glow' or name=='border_lower')
+            and 'ghost_glow.png' or 'ghost_flare.png'
         self.sprites[name]=images.new('',{
             pos={x=0,y=0},visible=false,draggable=false,
             size={width=1,height=1},
@@ -48,6 +49,23 @@ function M.new(prefix)
         windower.prim.set_position(id,floor(x+.5),floor(y+.5))
         windower.prim.set_size(id,max(1,floor(w+.5)),max(1,floor(h+.5)))
         windower.prim.set_visibility(id,true)
+    end
+    -- Uses the same inset end-cap silhouette as the SC gauge: 1px shorter
+    -- left/right tips so the white opening bar is never a sharp rectangle.
+    local function white_caps(x,y,w,h,a)
+        wash(x+1,y,max(1,w-2),h,a,white)
+        for _,cap in ipairs({'wash_cap_l','wash_cap_r'}) do
+            local id=self.ids[cap]
+            if w<2 or a<=0 then
+                windower.prim.set_visibility(id,false)
+            else
+                local px=cap=='wash_cap_l' and x or x+w-1
+                windower.prim.set_color(id,floor(clamp(a,0,255)+.5),255,255,255)
+                windower.prim.set_position(id,floor(px+.5),floor(y+1+.5))
+                windower.prim.set_size(id,1,max(1,floor(h-2+.5)))
+                windower.prim.set_visibility(id,true)
+            end
+        end
     end
     local function sprite(name,x,y,w,h,a,c)
         local p=self.sprites[name]
@@ -75,8 +93,9 @@ function M.new(prefix)
         if not s or (opt or {}).enabled==false then return 1 end
         local age,delay=age_and_delay(s)
         if s.step==1 and age<delay then
-            -- Enter during the SECOND beat; complete by the second beat's end.
-            return smooth(3*age/delay-1)
+            -- Enter during the FIRST beat, reaching full strength as the
+            -- white opener finishes expanding.
+            return smooth(3*age/delay)
         end
         if (s.step or 0)>1 and age<.3 then return .55+.45*smooth(age/.3) end
         return 1
@@ -113,7 +132,13 @@ function M.new(prefix)
     function self:open_brightness(s)
         if not s or (s.sc_wait or 0)>0 then return .46 end
         local elapsed=max(0,(s.now or 0)-(s.sc_open or s.now or 0))
-        return .46+.54*smooth(elapsed/.23)
+        return .46+.54*smooth(elapsed/.35)
+    end
+    function self:chain_brightness(s)
+        if not s or (s.step or 0)<=1 then return 1 end
+        local age,delay=age_and_delay(s)
+        -- Brighten through the actual wait; don't jump at window opening.
+        return .46+.54*smooth(age/delay)
     end
     function self:palette_blend(s)
         if not s or (s.step or 0)<=1 then return 1 end
@@ -164,11 +189,20 @@ function M.new(prefix)
         local scale=max(.5,tonumber(bar.scale) or 1)
         local flare_w=max(8,14*scale)
         local flare_h=max(11,20*scale)
+        -- Soft ghost-flare image is brightest at its foot. Its lower edge
+        -- meets the SC fill's bottom, while tips extend above the upper rail.
+        local flare_y=y+h-1-flare_h
         if level>=3 then
-            local alpha=(level==3 and 110 or 160)*gi
+            -- Two narrow soft rails, NOT a bright sheet over the empty track.
+            -- Keep the interior dark even at large glow and fade settings.
+            local alpha=(level==3 and 85 or 115)*gi
             if level>=4 then alpha=alpha*(.60+.40*sin(age*23)^2) end
-            sprite('border_glow',x-3*scale,y-8*scale,w+6*scale,h+16*scale,
-                alpha,level>=4 and gold or white)
+            local halo_color=level>=4 and gold or white
+            local halo_height=max(5,7*scale)
+            sprite('border_glow',x-2*scale,y-halo_height/2,
+                w+4*scale,halo_height,alpha,halo_color)
+            sprite('border_lower',x-2*scale,y+h-halo_height/2,
+                w+4*scale,halo_height,alpha,halo_color)
         end
         if s.expire_age then return end
         if s.step==1 then
@@ -177,11 +211,11 @@ function M.new(prefix)
                 local t=smooth(beat)
                 local end_x=max(1,w*t)
                 -- No SC background/frame underneath this first beat.
-                wash(x,y,end_x,h,255*intensity,white)
-                sprite('edge',x+end_x-flare_w/2,y+(h-flare_h)/2,
+                white_caps(x,y,end_x,h,255*intensity)
+                sprite('edge',x+end_x-flare_w/2,flare_y,
                     flare_w,flare_h,220*fi,white)
             elseif beat<2 then
-                wash(x,y,w,h,255*intensity*(1-smooth(beat-1)),white)
+                white_caps(x,y,w,h,255*intensity*(1-smooth(beat-1)))
             end
             return -- no second or third opener pulses
         end
@@ -189,15 +223,15 @@ function M.new(prefix)
             local a=age<.3 and 235 or 235*(1-smooth((age-.3)/.3))
             wash(x+1,y+1,max(1,fill-2),max(1,h-2),a*intensity,white)
             if age<.3 then
-                sprite('edge',x+fill-flare_w/2,y+(h-flare_h)/2,flare_w,
+                sprite('edge',x+fill-flare_w/2,flare_y,flare_w,
                     flare_h,210*fi*(1-age/.3),white)
             end
         end
         if fill<=2 then return end
         local flicker=.87+.13*sin((s.now or 0)*26)^2
-        sprite('left',x-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
+        sprite('left',x-flare_w/2,flare_y,flare_w,flare_h,
             185*fi*flicker,c1)
-        sprite('right',x+fill-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
+        sprite('right',x+fill-flare_w/2,flare_y,flare_w,flare_h,
             185*fi*flicker,c2)
         -- All follow flares run in the THREE-SECOND WAIT, not during SC decay.
         if age>=delay then
@@ -205,8 +239,10 @@ function M.new(prefix)
             -- no unapproved continuous traveling flare.
             if level>=4 then
                 local a=80*gi*(.5+.5*sin(age*28)^2)
-                sprite('border_glow',x-4*scale,y-8*scale,
-                    w+8*scale,h+16*scale,a,gold)
+                sprite('border_glow',x-2*scale,y-max(5,7*scale)/2,
+                    w+4*scale,max(5,7*scale),a,gold)
+                sprite('border_lower',x-2*scale,y+h-max(5,7*scale)/2,
+                    w+4*scale,max(5,7*scale),a,gold)
             end
             return
         end
@@ -215,17 +251,16 @@ function M.new(prefix)
             -- calibration after actual Radiance/Umbra become available.
             local t=3*age/delay
             local a=210*fi*(1-smooth(t-floor(t)))
-            sprite('moving',x+w/2-flare_w/2,y+(h-flare_h)/2,flare_w,
+            sprite('moving',x+w/2-flare_w/2,flare_y,flare_w,
                 flare_h,a,white)
             return
         end
-        local passes=max(1,min(3,level))
-        local progress=passes*age/delay
-        local pass=floor(progress)
-        local t=clamp(progress-pass,0,1)
-        if pass>=passes then return end
+        -- Initial white hit flare is enough for L1; L2 and L3 get just
+        -- one additional traversal across the whole pre-window.
+        if level<2 then return end
+        local t=clamp(age/delay,0,1)
         local pos=x+1+t*max(1,fill-2)
-        sprite('moving',pos-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
+        sprite('moving',pos-flare_w/2,flare_y,flare_w,flare_h,
             225*fi,mix(c1,c2,t))
     end
     function self:destroy()
