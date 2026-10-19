@@ -37,7 +37,7 @@ local function make_icon(path,size)
         pos={x=0,y=0},visible=false,draggable=false,
         size={width=size,height=size},
         color={alpha=240,red=255,green=255,blue=255},
-        texture={path=path,fit=true}
+        texture={path=path,fit=false} -- otherwise native PNG size overrides UI sizing
     })
 end
 function M.new(color_for_result)
@@ -69,8 +69,8 @@ function M.new(color_for_result)
         bottom=clamp(bottom,25,math.max(25,height-12))
         local rh=math.max(12,math.floor(18*scale+.5))
         local font=math.max(7,math.floor(11*scale+.5))
-        local glyphsize=font -- match actual text size, not row height
-        local gap=math.max(2,math.floor(4*scale+.5))
+        local glyphsize=math.max(5,math.floor(font*.78+.5)) -- visual glyph smaller than letters
+        local gap=math.max(3,math.floor(4*scale+.5))
         local all=flatten(groups)
         if #all==0 then all[1]={name='No compatible learned actions',properties={}} end
         -- One fixed icon COLUMN starts just after the widest learned name.
@@ -134,6 +134,9 @@ function M.new(color_for_result)
                 row.last_x,row.last_y=x,yy
             end
             row.label:alpha(alpha)
+            row.label:stroke_alpha(math.floor(235*clamp(opacity or 1,0,1)+.5))
+            -- Both foreground and outline fade; otherwise stroke looks black
+            -- even while the foreground is transparent.
             row.label:show()
             local start=column_x
             for j=1,n do
