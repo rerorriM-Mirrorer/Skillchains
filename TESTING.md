@@ -40,7 +40,8 @@ The FFXI screenshots apply to **Animation5**, not Animation6.
   previous bar remains visible beneath the leading white wash.
 - Keep the original three center pulses from level-four treatment
   across successful levels 1–4. Color the center pulse from the
-  **middle stop(s) of the actual result palette** (including Radiance)
+  **middle stop(s) of the currently displayed/tweened fill palette**
+  (including transitional previous property and Radiance)
   instead of a decorative level-four gold override. Glow rails
   and original 23/28 rad/s flicker remain separate.
 - Fix potential unnecessary rendering work: stop hiding and
