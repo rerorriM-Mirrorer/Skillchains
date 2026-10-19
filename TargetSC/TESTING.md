@@ -1,5 +1,31 @@
 # TargetSC TESTING.md — start here
 
+## Test3 published and first preview feedback — 2026-10-19
+
+User explicitly authorized publishing and described the Test3 preview as beautiful.
+Actual battle-condition and multibox testing remain pending. Floor rings can be
+partially hidden by uneven terrain; use `//tsc ground height 0.10`, or try `0.15`.
+This existing saved command raises the floor anchor and the sky's landing point
+together, preserving separation and vibration. The `.04` resettable snapshot
+baseline remains unchanged; no new runtime patch is required.
+
+The connected GitHub account published the same three source trees on
+`development/targetsc-resonance-test3`. Command-line credentials were unavailable,
+so the API created new commit identities; every blob and tree hash matched the
+local tested source. Original IDs are retained in commit messages and here:
+
+| Original local commit | Published equivalent |
+| --- | --- |
+| `aaf233f` | `8b9c58c` |
+| `0d40912` | `2590450` |
+| `c99741c` | `9389252` |
+
+The earlier blocked/local-only publication entries below describe the initial
+delivery and are superseded by this record. GitHub Actions run 39280803606 was
+triggered for published source `9389252`; its status must be checked separately
+before claiming a CI pass. This entry changes documentation only. The package's
+BUILD_INFO.json records its exact current source commit and unchanged DLL hash.
+
 ## 0.3.0 Test3 — struck ground bell, elemental sectors and complete Umbra demo (2026-10-19)
 
 **Author:** A. **Branch:** `development/targetsc-resonance-test3`.
