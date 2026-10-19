@@ -107,9 +107,9 @@ function M.new(prefix)
             return fraction
         end
         local age=age_and_delay(s)
-        if age<.3 then
+        if age<1 then
             local previous=clamp(s.from_fraction or .45,0,1)
-            return previous+(1-previous)*smooth(age/.3)
+            return previous+(1-previous)*smooth(age)
         end
         return fraction
     end
@@ -123,9 +123,9 @@ function M.new(prefix)
     -- The bar is intentionally absent behind the white opener's first beat.
     -- The white overlay itself is the bar at that moment.
     function self:bar_reveal(s,opt)
-        if not s or (opt or {}).enabled==false or s.step~=1 then return 1 end
-        local age,delay=age_and_delay(s)
-        return smooth(3*age/delay-1)
+        if not s or (opt or {}).enabled==false then return 1 end
+        local age=age_and_delay(s)
+        return smooth(age-1)
     end
     -- Start pre-window with ONLY the primary weapon skill property palette.
     -- After the real window begins, retain the same palette, just brighter.
@@ -176,10 +176,8 @@ function M.new(prefix)
         end
         -- The opener never whitens its actual SC border; only its detached
         -- expanding white overlay flashes, and the dark frame emerges after.
-        if s.step==1 then
-            border=dark
-            border_alpha=border_alpha*self:bar_reveal(s,opt)
-        end
+        if s.step==1 then border=dark end
+        border_alpha=border_alpha*self:bar_reveal(s,opt)
         if not enabled then border=level>0 and border or dark end
         for _,id in ipairs({frame.frame,frame.cap_l,frame.cap_r}) do
             windower.prim.set_color(id,floor(clamp(border_alpha,0,255)+.5),
