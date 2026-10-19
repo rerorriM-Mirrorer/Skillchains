@@ -2,6 +2,101 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Current testing batch — 2026-10-18 / Skillchains Animation1 (LIVE PENDING)
+
+**Branch:** `development/skillchains-resonance-animation2` in
+`rerorriM-Mirrorer/Skillchains`, based on Grid1 commit
+`3f3be78e3b977701488e8e9610134d312b59b9a0`.
+**Version:** `2.20.08.25-resonance.7-animation.1`.
+**Runtime scope:** `Skillchains.lua`, `learning_ui.lua`,
+`resonance_ui.lua`, new `resonance_fx.lua`; tests, package builder
+and documentation updated. **TargetSC runtime DLL/Lua/bridge protocol
+are unchanged.** `master` and original testing branches remain intact.
+Author A. No in-game acceptance yet.
+
+**User observations motivating this batch:** ability font looked good
+but the property icons were oversized, overlapping, too far right.
+SC-caption glyph needed to sit lower/closer to text. Requested strong
+three-beat opening strike and progressive level-1/2/3/4 chain effects;
+strictly SC-only implementation now, world-space TargetSC animation and
+Magic Burst phase to be developed in their own future batches.
+
+**Implementation:** Learning property glyphs use text size, 4px scaled
+gaps, fixed leading icon column after longest eligible ability, and
+screenshot-width containment. Pooled SC caption icons shrink and sit
+2 scaled pixels lower. Separate `resonance_fx.lua` owns 11 pooled
+Windower primitives (wash, edge, pulses, paired flares, travelers,
+border glow), independent of combat packets. Opening phases are
+proportional to each action's actual delay (three nominal 1-second beats).
+Pre-window SC countdown stays at maximum until the reported opening
+time, then follows absolute deadline. Brief white extension and flares
+for a successful chain with persistent level-based border. Optional
+`//sc anim intensity 0–2` and `//sc anim fade on|off`; local HUD-only
+`//sc anim preview opener|level1|level2|level3|level4|off`.
+No new art, DLL, element guesses, input hooks, or game commands.
+
+**Checks:** GitHub Actions runs Lua 5.1 parser on all addon/test files;
+`tools/test_learning_ui.lua` checks glyph font match, spacing, fixed
+column, caption attachment, independent Ctrl-drag, viewports 960x540
+and 1280x720, extreme 0.5/2.5 scales, pooled effect lifecycle, three
+opener beats, pre-window timer hold, success fill and flares, opacity
+control. Existing TargetSC producer/consumer, ring simulation,
+command/lifecycle and missing-DLL tests are preserved. Updated
+Skillchains regression verifies existing combat property/deadline,
+MB and TargetSC source behavior against the pinned baseline while
+**explicitly allowing the requested presentation change** in the
+pre-window countdown. Package builder validates both installable
+folders, hashes, docs, icons and unchanged Windows DLL.
+All checks are synthetic/static. Not a Windower rendering or FFXI test.
+
+### Live test requests — currently outstanding
+
+1. **Backup:** Preserve Skillchains/data and TargetSC/data. Install
+   full paired test package, OR update Skillchains only when compatible
+   TargetSC 0.1.0 already installed. Close FFXI if replacing any DLL.
+   Load Skillchains first, TargetSC second (or `//tsc sync`).
+   `//sc status` should include `resonance.7-animation.1`.
+2. **Learn glyphs:** Confirm smaller text-height icons, spacing between
+   two/multiple properties, fixed column after longest displayed ability
+   (not too far right), no collisions/clipping at 960x540 and 1280x720.
+   Reconfirm independent Ctrl+drag and saved positions.
+3. **Bar caption:** Confirm property icons now lie lower and just beside
+   the ability/property label even with `//sc names offset 0 -11` and
+   at scales 0.5/1/2.5.
+4. **Opener preview:** `//sc anim preview opener`; verify the initial
+   ~1s white left-to-right sweep and edge, next white fade and pulse,
+   final property-colored pulse and fading names/icons; no timer
+   shrink before the opening delay. Test an actual opener and no-chain
+   expiration; note that a pre-window delay other than 3 seconds will
+   proportionally compress/stretch these visual beats.
+5. **Chain preview:** `//sc anim preview level1`, `level2`,
+   `level3` at each scale; compare actual resulting chains.
+   Check white expansion/flash, level-specific persistent outline,
+   paired property flares and traveling flares; ensure no false
+   chain reset on retarget, no visual tearing and no frame spikes.
+   Level4 is a provisional visual preview, not validated gameplay.
+6. **Tuning:** `//sc anim intensity 0`, `1`, `2`;
+   `//sc anim off/on`; `//sc anim fade on/off`.
+   Report readability of timer and effects, including multiple clients.
+   Verify combat events and `//tsc sync` remain correct.
+7. **Deferred:** TargetSC ring/disc redesign and all new MB
+   shimmer/underbar changes; user explicitly allocated those to
+   separate iterations. Do not confuse still-running previous MB
+   display with the upcoming unified underbar.
+
+**Current verification:** Lua parsing and simulated regression PASS.
+Native/FFXI live testing NOT RUN.
+
+**Separate existing layout questions:** At extreme scales font
+baselines and independently rounded gradient segments may differ by
+one pixel; the Grid1 position anchor fix does not silently redesign
+those. Learn column now follows longest currently available action,
+so it can reposition when the eligible action list changes. Long
+names on very narrow client viewports are truncated deliberately,
+and this needs actual in-game font-metric validation.
+
+---
+
 ## Current testing batch — 2026-10-18 / Grid1 Ctrl+drag (not game-tested)
 
 **Source:** `rerorriM-Mirrorer/Skillchains` branch
