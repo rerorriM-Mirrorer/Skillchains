@@ -80,7 +80,9 @@ local function palette(state, sc_info, burst)
                 end
             end
         end
-        if burst then break end
+        -- Only the first weapon skill property drives an opener's color.
+        -- If that property itself has multiple elements, keep its gradient.
+        if burst or state and state.step==1 then break end
     end
     return #stops > 0 and stops or {fallback}
 end
@@ -166,7 +168,6 @@ function ui.new(settings, sc_info)
         end
         return rounded
     end
-    self.fx=resonance_fx.new('sc_resonance_fx_')
     local prefix = 'sc_resonance_'
     for _,kind in ipairs({'sc','mb'}) do
         self.names[kind] = {
@@ -191,6 +192,10 @@ function ui.new(settings, sc_info)
             bar.slices[i]=id
         end
     end
+
+    -- Effects are created AFTER the SC bar prims so their softened sprites
+    -- can bloom over the gauge. Their alpha textures contain no hard boxes.
+    self.fx=resonance_fx.new('sc_resonance_fx_')
 
     -- EnemyBar2 target names use Arial, bold, italic, and a dark stroke.
     -- The smaller label is attached to the bar, not the draggable learning panel.
@@ -229,7 +234,7 @@ function ui.new(settings, sc_info)
                     pos={x=x,y=y},visible=false,draggable=false,
                     size={width=icon_size,height=icon_size},
                     color={alpha=240,red=255,green=255,blue=255},
-                    texture={path=path,fit=true}
+                    texture={path=path,fit=false}
                 })}
                 slots[i]=slot
             elseif slot.path~=path then
@@ -351,7 +356,8 @@ function ui.new(settings, sc_info)
 
         -- Update the gradient at the new absolute-time fraction. Do not
         -- tween between distinct weapon skills; only each expiry runs smoothly.
-        local alpha=(waiting and 105 or 230)*clamp(self.bar_opacity or 1,0,1)
+        local alpha=(waiting and 105 or 230*clamp(self.bar_brightness or 1,0,1))*
+            clamp(self.bar_opacity or 1,0,1)
         for i=1,segments do
             local id=bar.slices[i]
             local start=math.floor((i-1)*fill/segments)
@@ -567,19 +573,36 @@ function ui.new(settings, sc_info)
             local total=math.max(.1,state.sc_total or 8)
             local effects=opt.animation or {enabled=true,intensity=1,fade=false}
             local fraction=self.fx:bar_fraction(state,effects)
-            local bar_color=palette(state,self.sc_info,false)
-            self.bar_opacity=self.fx:opacity(state,effects)
+            local result_color=palette(state,self.sc_info,false)
+            local bar_color=result_color
+            -- From a successful chain's first white flash, cross-fade the
+            -- entire gradient from the previous property to the new result.
+            local tween=self.fx:palette_blend(state)
+            if state.from_active and tween<1 then
+                local prior=palette({active=state.from_active,step=1},
+                    self.sc_info,false)
+                bar_color={}
+                for i=1,segments do
+                    bar_color[i]=interpolate({
+                        interpolate(prior,(i-.5)/segments),
+                        interpolate(result_color,(i-.5)/segments)},tween)
+                end
+            end
+            self.bar_brightness=state.step==1 and
+                self.fx:open_brightness(state) or 1
+            self.bar_opacity=self.fx:opacity(state,effects)*
+                self.fx:bar_reveal(state,effects)
             self.bar_shake=self.fx:shake(state,effects)
             local shake=self.bar_shake
             local bar_height=self:draw_bar('sc',y,fraction,state.sc_wait>0,
                 bar_color)
-            self.bar_shake,self.bar_opacity=0,1
+            self.bar_shake,self.bar_opacity,self.bar_brightness=0,1,1
             local fill=math.floor(clamp(fraction,0,1)*(opt.bar.width-2)+.5)
             self.fx:render(state,effects,{
                 x=math.floor(opt.bar.x+shake+.5),y=y,
                 width=math.floor(opt.bar.width+.5),
                 height=math.max(3,math.floor(5*opt.scale+.5))+2,
-                fill=fill,frame=self.names.sc},bar_color)
+                fill=fill,frame=self.names.sc,scale=opt.scale},result_color)
             y=y+bar_height
             local reveal=self.fx:label_alpha(state,effects)
             if opt.mode~='minimal' and opt.names~='off' then
@@ -606,6 +629,7 @@ function ui.new(settings, sc_info)
                 self.properties:pos(math.floor(opt.bar.x+inset+name_offset.x+icon_width+.5),
                     caption_y)
                 self.properties:alpha(math.floor(245*reveal+.5))
+                self.properties:stroke_alpha(math.floor(235*reveal+.5))
                 self.properties:show()
                 -- Positive Y needs extra clearance for the optional MB bar;
                 -- negative Y does not collapse the normal safe spacing.
@@ -659,7 +683,9 @@ function ui.new(settings, sc_info)
                 if sc_alive then values[#values+1]=('SC %.1fs'):format(state.sc_left) end
                 if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
                 self:set_panel_text(table.concat(values,'  /  '))
-                self.panel:alpha(math.floor(245*(self.fx:label_alpha(state,opt.animation or {}))+.5))
+                local fade=self.fx:label_alpha(state,opt.animation or {})
+                self.panel:alpha(math.floor(245*fade+.5))
+                self.panel:stroke_alpha(math.floor(210*fade+.5))
                 self:position_panel()
                 self.panel:show()
             elseif not self.editing then
