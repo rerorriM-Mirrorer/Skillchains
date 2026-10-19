@@ -1,26 +1,45 @@
--- Reusable, deterministic HUD resonance effects. Source clocks belong to
--- Skillchains.lua. This file never interprets combat packets. Author: A.
+-- Skillchains HUD-only effects: the server's action clocks own all timers.
+-- EnemyBar2's procedural soft-alpha ghost_flare/glow textures are reused here.
+-- This module does not listen to combat packets or control TargetSC. Author: A.
+local images=require('images')
 local M={}
-local sin,cos,exp,floor,max,min,pi=math.sin,math.cos,math.exp,math.floor,math.max,math.min,math.pi
-local function clamp(n,a,b) return max(a,min(b,n)) end
+local sin,exp,floor,min,max,pi=math.sin,math.exp,math.floor,math.min,math.max,math.pi
+local function clamp(x,a,b) return max(a,min(b,x)) end
 local function smooth(t) t=clamp(t,0,1);return t*t*(3-2*t) end
+local function mix(a,b,t)
+    t=clamp(t,0,1)
+    return {floor(a[1]*(1-t)+b[1]*t+.5),floor(a[2]*(1-t)+b[2]*t+.5),
+        floor(a[3]*(1-t)+b[3]*t+.5)}
+end
 local white={255,255,255}
 local gold={249,207,103}
+local dark={9,10,21}
 function M.new(prefix)
-    local self={ids={},prefix=prefix or 'sc_resonance_fx_'}
-    for _,name in ipairs({'wash','edge','pulse','pulse_halo','left','right',
-        'left_halo','right_halo','moving','moving_halo','border_glow'}) do
+    local self={ids={},sprites={},prefix=prefix or 'sc_resonance_fx_'}
+    -- A solid white bar really grows from zero during the first strike.
+    -- The light around it uses alpha-textured sprites, never square halos.
+    for _,name in ipairs({'wash'}) do
         local id=self.prefix..name
         windower.prim.create(id)
         windower.prim.set_color(id,0,255,255,255)
         windower.prim.set_visibility(id,false)
         self.ids[name]=id
     end
+    for _,name in ipairs({'edge','left','right','moving','border_glow'}) do
+        local file=name=='border_glow' and 'ghost_glow.png' or 'ghost_flare.png'
+        self.sprites[name]=images.new('',{
+            pos={x=0,y=0},visible=false,draggable=false,
+            size={width=1,height=1},
+            color={alpha=0,red=255,green=255,blue=255},
+            texture={path=windower.addon_path..'images/resonance/'..file,fit=false}
+        })
+    end
     function self:hide()
         for _,id in pairs(self.ids) do windower.prim.set_visibility(id,false) end
+        for _,p in pairs(self.sprites) do p:hide() end
     end
-    local function draw(name,x,y,w,h,a,c)
-        local id=self.ids[name]
+    local function wash(x,y,w,h,a,c)
+        local id=self.ids.wash
         if a<=0 or w<=0 or h<=0 then
             windower.prim.set_visibility(id,false)
             return
@@ -30,143 +49,183 @@ function M.new(prefix)
         windower.prim.set_size(id,max(1,floor(w+.5)),max(1,floor(h+.5)))
         windower.prim.set_visibility(id,true)
     end
-    function self:shake(state,opt)
-        if not state or state.step<=1 or not opt.enabled then return 0 end
-        local age=max(0,(state.now or 0)-(state.created or state.now or 0))
-        if age>.35 then return 0 end
-        return floor(3*(opt.intensity or 1)*sin(75*age)*exp(-12*age)+.5)
+    local function sprite(name,x,y,w,h,a,c)
+        local p=self.sprites[name]
+        if a<=0 or w<=0 or h<=0 then p:hide();return end
+        p:pos(floor(x+.5),floor(y+.5))
+        p:size(max(1,floor(w+.5)),max(1,floor(h+.5)))
+        p:color(c[1],c[2],c[3])
+        p:alpha(floor(clamp(a,0,255)+.5))
+        p:show()
     end
-    function self:label_alpha(state,opt)
-        if not state or not opt.enabled then return 1 end
-        local age=max(0,(state.now or 0)-(state.created or state.now or 0))
-        local duration=max(.1,(state.sc_open or 0)-(state.created or 0))
-        if state.step==1 and age<duration then
-            local phase=3*age/duration
-            return smooth(phase-2)
+    function self:shake(s,opt)
+        if not s or (s.step or 0)<=1 or (opt or {}).enabled==false then return 0 end
+        local age=max(0,(s.now or 0)-(s.created or s.now or 0))
+        local amp=tonumber((opt or {}).intensity) or 1
+        if age>.35 then return 0 end
+        return floor(3*amp*sin(75*age)*exp(-12*age)+.5)
+    end
+    local function age_and_delay(s)
+        local created=s.created or s.now or 0
+        local age=max(0,(s.now or 0)-created)
+        local delay=max(.1,(s.sc_open or created)-created)
+        return age,delay
+    end
+    function self:label_alpha(s,opt)
+        if not s or (opt or {}).enabled==false then return 1 end
+        local age,delay=age_and_delay(s)
+        if s.step==1 and age<delay then
+            -- Enter during the SECOND beat; complete by the second beat's end.
+            return smooth(3*age/delay-1)
         end
-        if state.step>1 and age<.3 then return .55+.45*smooth(age/.3) end
+        if (s.step or 0)>1 and age<.3 then return .55+.45*smooth(age/.3) end
         return 1
     end
-    function self:bar_fraction(state,opt)
-        local fraction=clamp((state.sc_left or 0)/max(.01,state.sc_total or 8),0,1)
-        if (state.sc_wait or 0)>0 then fraction=1 end
-        if not opt.enabled or state.step<=1 then return fraction end
-        local age=max(0,(state.now or 0)-(state.created or state.now or 0))
+    function self:bar_fraction(s,opt)
+        local fraction=clamp((s.sc_left or 0)/max(.01,s.sc_total or 8),0,1)
+        if (s.sc_wait or 0)>0 then fraction=1 end
+        if not s or (opt or {}).enabled==false or (s.step or 0)<=1 then
+            return fraction
+        end
+        local age=age_and_delay(s)
         if age<.3 then
-            local previous=clamp(state.from_fraction or .45,0,1)
+            local previous=clamp(s.from_fraction or .45,0,1)
             return previous+(1-previous)*smooth(age/.3)
         end
         return fraction
     end
-    function self:opacity(state,opt)
-        if not state then return 1 end
-        if state.expire_age then return 1-smooth(state.expire_age/.35) end
-        if not opt.enabled or not opt.fade or (state.sc_wait or 0)>0 then return 1 end
-        local proportion=clamp((state.sc_left or 0)/max(.01,state.sc_total or 8),0,1)
-        return (.30+.70*proportion)*(.82+.18*sin((state.now or 0)*pi*2.4)^2)
+    function self:opacity(s,opt)
+        if not s then return 1 end
+        if s.expire_age then return 1-smooth(s.expire_age/.35) end
+        if (opt or {}).enabled==false or not (opt or {}).fade or (s.sc_wait or 0)>0 then return 1 end
+        local proportion=clamp((s.sc_left or 0)/max(.01,s.sc_total or 8),0,1)
+        return (.30+.70*proportion)*(.82+.18*sin((s.now or 0)*pi*2.4)^2)
     end
-    function self:render(state,opt,bar,palette)
+    -- The bar is intentionally absent behind the white opener's first beat.
+    -- The white overlay itself is the bar at that moment.
+    function self:bar_reveal(s,opt)
+        if not s or (opt or {}).enabled==false or s.step~=1 then return 1 end
+        local age,delay=age_and_delay(s)
+        return smooth(3*age/delay-1)
+    end
+    -- Start pre-window with ONLY the primary weapon skill property palette.
+    -- After the real window begins, retain the same palette, just brighter.
+    function self:open_brightness(s)
+        if not s or (s.sc_wait or 0)>0 then return .46 end
+        local elapsed=max(0,(s.now or 0)-(s.sc_open or s.now or 0))
+        return .46+.54*smooth(elapsed/.23)
+    end
+    function self:palette_blend(s)
+        if not s or (s.step or 0)<=1 then return 1 end
+        local age=age_and_delay(s)
+        -- A genuine color fade, not an instantaneous weapon-skill replacement.
+        return smooth((age-.18)/.55)
+    end
+    function self:render(s,opt,bar,palette)
         self:hide()
-        if not state or not bar then return end
+        if not s or not bar then return end
         opt=opt or {}
         local intensity=clamp(tonumber(opt.intensity) or 1,0,2)
         local enabled=opt.enabled~=false and intensity>0
         local x,y,w,h=bar.x,bar.y,bar.width,bar.height
         local fill=clamp(bar.fill or w,0,w)
-        local age=max(0,(state.now or 0)-(state.created or state.now or 0))
-        local level=tonumber(state.level) or 0
+        local age,delay=age_and_delay(s)
+        local level=tonumber(s.level) or 0
         local c1=(palette and palette[1]) or white
         local c2=(palette and palette[#palette]) or c1
         local frame=bar.frame
-        local border=white
+        local border=dark
         local border_alpha=180
-        if level==1 then border=c1;border_alpha=222
-        elseif level==2 then border=white;border_alpha=240
+        if level==1 then border=c1;border_alpha=230
+        elseif level==2 then border=white;border_alpha=244
         elseif level==3 then border=white;border_alpha=255
         elseif level>=4 then border=gold;border_alpha=255 end
         if enabled and level>0 and age<.6 then
-            border=white
+            border=mix(white,border,smooth((age-.3)/.3))
             border_alpha=255
         end
-        if state.expire_age then
-            border_alpha=math.floor(border_alpha*(1-smooth(state.expire_age/.35))+.5)
+        if s.expire_age then
+            border_alpha=border_alpha*(1-smooth(s.expire_age/.35))
         end
-        if not enabled then
-            border=level==1 and c1 or (level>=4 and gold or
-                (level>1 and white or {9,10,21}))
-            border_alpha=level>0 and 222 or 180
-        end
+        -- The opener never whitens its actual SC border; only its detached
+        -- expanding white overlay flashes, and the dark frame emerges after.
+        if s.step==1 then border=dark end
+        if not enabled then border=level>0 and border or dark end
         for _,id in ipairs({frame.frame,frame.cap_l,frame.cap_r}) do
-            windower.prim.set_color(id,border_alpha,border[1],border[2],border[3])
+            windower.prim.set_color(id,floor(clamp(border_alpha,0,255)+.5),
+                border[1],border[2],border[3])
         end
         if not enabled then return end
-        local i=intensity
+        local scale=max(.5,tonumber(bar.scale) or 1)
+        local flare_w=max(8,14*scale)
+        local flare_h=max(11,20*scale)
         if level>=3 then
-            local glow_alpha=(level==3 and 75 or 120)*i
-            if level>=4 then glow_alpha=glow_alpha*(.7+.3*sin(age*21)^2) end
-            draw('border_glow',x-2,y-2,w+4,h+4,glow_alpha,
-                level>=4 and gold or white)
+            local alpha=(level==3 and 110 or 160)*intensity
+            if level>=4 then alpha=alpha*(.60+.40*sin(age*23)^2) end
+            sprite('border_glow',x-3*scale,y-8*scale,w+6*scale,h+16*scale,
+                alpha,level>=4 and gold or white)
         end
-        if state.expire_age then
-            local a=100*(1-smooth(state.expire_age/.35))*i
-            draw('wash',x+1,y+1,fill,h-2,a,c1)
-            return
-        end
-        if state.step==1 then
-            -- Fit the three perceived beats to the actual pre-window delay.
-            -- No visual stage can extend the server-reported continuation clock.
-            local duration=max(.10,(state.sc_open or 0)-(state.created or 0))
-            local phase=3*age/duration
-            if phase<1 then
-                local t=smooth(phase)
-                local end_x=w*t
-                draw('wash',x+1,y+1,end_x,h-2,(130+125*sin(t*pi*.7))*i,white)
-                draw('edge',x+end_x-2,y-3,max(2,4*i),h+6,210*i,white)
-            elseif phase<2 then
-                draw('wash',x+1,y+1,w-2,h-2,255*i*(1-smooth(phase-1)),white)
-                local p=smooth(phase-1)
-                draw('pulse_halo',x+w*p-8,y-1,16,h+2,110*i*(1-p*.5),white)
-                draw('pulse',x+w*p-2,y,4,h,235*i*(1-p*.6),white)
-            elseif phase<3 then
-                local p=smooth(phase-2)
-                draw('pulse_halo',x+w*p-8,y-1,16,h+2,100*i,c1)
-                draw('pulse',x+w*p-2,y,4,h,220*i,c1)
+        if s.expire_age then return end
+        if s.step==1 then
+            local beat=3*age/delay
+            if beat<1 then
+                local t=smooth(beat)
+                local end_x=max(1,w*t)
+                -- No SC background/frame underneath this first beat.
+                wash(x,y,end_x,h,255*intensity,white)
+                sprite('edge',x+end_x-flare_w/2,y+(h-flare_h)/2,
+                    flare_w,flare_h,220*intensity,white)
+            elseif beat<2 then
+                wash(x,y,w,h,255*intensity*(1-smooth(beat-1)),white)
             end
-            return
+            return -- no second or third opener pulses
         end
-        -- A successful SC is another strike. The whitening and vibration are
-        -- transient; the level-sensitive border remains until expiry.
         if age<.6 then
-            local shine=age<.3 and 230 or 230*(1-smooth((age-.3)/.3))
-            draw('wash',x+1,y+1,max(1,fill-2),h-2,shine*i,white)
+            local a=age<.3 and 235 or 235*(1-smooth((age-.3)/.3))
+            wash(x+1,y+1,max(1,fill-2),max(1,h-2),a*intensity,white)
             if age<.3 then
-                local lead=x+fill
-                draw('edge',lead-2,y-3,4,h+6,245*i*(1-age/.3),white)
+                sprite('edge',x+fill-flare_w/2,y+(h-flare_h)/2,flare_w,
+                    flare_h,210*intensity*(1-age/.3),white)
             end
         end
-        if fill<2 then return end
-        local open_elapsed=max(0,(state.now or 0)-(state.sc_open or state.now or 0))
-        local flicker=.83+.17*sin((state.now or 0)*28)^2
-        local left_x=x+1
-        local right_x=x+max(1,fill)-1
-        draw('left_halo',left_x-3,y-3,7,h+6,110*i*flicker,c1)
-        draw('right_halo',right_x-3,y-3,7,h+6,110*i*flicker,c2)
-        draw('left',left_x,y-2,2,h+4,235*i*flicker,c1)
-        draw('right',right_x,y-2,2,h+4,235*i*flicker,c2)
-        if (state.sc_wait or 0)>0 then return end
-        local passes=level>=4 and floor(open_elapsed)+1 or
-            level==3 and 3 or level==2 and 2 or 1
-        local pass=floor(open_elapsed)
-        if pass>=passes or level<4 and pass>=max(1,level) then return end
-        local t=clamp(open_elapsed-pass,0,1)
-        local flare_x=x+1+t*max(1,fill-2)
-        local gradient={c1[1]*(1-t)+c2[1]*t,c1[2]*(1-t)+c2[2]*t,
-            c1[3]*(1-t)+c2[3]*t}
-        draw('moving_halo',flare_x-6,y-2,12,h+4,125*i,gradient)
-        draw('moving',flare_x-1,y-3,3,h+6,250*i,gradient)
+        if fill<=2 then return end
+        local flicker=.87+.13*sin((s.now or 0)*26)^2
+        sprite('left',x-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
+            185*intensity*flicker,c1)
+        sprite('right',x+fill-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
+            185*intensity*flicker,c2)
+        -- All follow flares run in the THREE-SECOND WAIT, not during SC decay.
+        if age>=delay then
+            -- Future level-four choice: three pulses then a brighter flicker,
+            -- no unapproved continuous traveling flare.
+            if level>=4 then
+                local a=80*intensity*(.5+.5*sin(age*28)^2)
+                sprite('border_glow',x-4*scale,y-8*scale,
+                    w+8*scale,h+16*scale,a,gold)
+            end
+            return
+        end
+        if level>=4 then
+            -- Preview-only provisional three-beat pulse, reserved for live
+            -- calibration after actual Radiance/Umbra become available.
+            local t=3*age/delay
+            local a=210*intensity*(1-smooth(t-floor(t)))
+            sprite('moving',x+w/2-flare_w/2,y+(h-flare_h)/2,flare_w,
+                flare_h,a,white)
+            return
+        end
+        local passes=max(1,min(3,level))
+        local progress=passes*age/delay
+        local pass=floor(progress)
+        local t=clamp(progress-pass,0,1)
+        if pass>=passes then return end
+        local pos=x+1+t*max(1,fill-2)
+        sprite('moving',pos-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
+            225*intensity,mix(c1,c2,t))
     end
     function self:destroy()
         for _,id in pairs(self.ids) do windower.prim.delete(id) end
+        for _,p in pairs(self.sprites) do p:destroy() end
     end
     return self
 end
