@@ -1,5 +1,21 @@
 # TargetSC TESTING.md — start here
 
+## Skillchains Animation6 visual-only compatibility (2026-10-19)
+
+The independent Skillchains `development/skillchains-resonance-animation7`
+branch pairs newly generated rounded flare textures and a more
+efficient HUD painter with the **unchanged TargetSC 0.1.0** native
+library, Lua driver and bridge. It neither publishes new combat
+events nor extends/simulates the authoritative SC or MB deadlines.
+The paired full installation archive includes both addon folders
+and cumulative tests. With TargetSC already installed, update
+Skillchains files and PNGs only, retaining `data/`, then
+`//lua reload Skillchains`. If replacing the native DLL, close
+FFXI first. Actual TargetSC ring/MB live verification is still
+outstanding; only static/simulated compatibility was checked.
+
+---
+
 ## Skillchains Animation4 paired compatibility
 
 The paired Skillchains Animation4 test updates only Skillchains HUD
