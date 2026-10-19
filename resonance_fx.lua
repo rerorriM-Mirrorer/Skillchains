@@ -1,5 +1,5 @@
 -- Skillchains HUD-only effects: the server's action clocks own all timers.
--- EnemyBar2's ghost_glow soft-alpha rails gain rounded ghost-glow cap PNGs.
+-- Analytic three-piece capsule halo follows the real narrow perimeter frame.
 -- This module does not listen to combat packets or control TargetSC. Author: A.
 local images=require('images')
 local M={}
@@ -27,13 +27,11 @@ function M.new(prefix)
         self.ids[name]=id
         self.prim_state[name]={shown=false}
     end
-    -- Only the continuous border system needs sprite assets now.
-    -- Vertical/center light-leak flares were deliberately retired.
-    for _,name in ipairs({'border_glow','border_lower',
-        'glow_cap_l','glow_cap_r'}) do
-        local file=(name=='glow_cap_l' and 'ghost_glow_cap_l.png')
-            or (name=='glow_cap_r' and 'ghost_glow_cap_r.png')
-            or 'ghost_glow.png'
+    -- One analytic contour, sampled into three PNGs: half-caps and rail.
+    for _,name in ipairs({'border_glow','glow_cap_l','glow_cap_r'}) do
+        local file=(name=='glow_cap_l' and 'capsule_halo_l.png')
+            or (name=='glow_cap_r' and 'capsule_halo_r.png')
+            or 'capsule_halo_rail.png'
         self.sprites[name]=images.new('',{
             pos={x=0,y=0},visible=false,draggable=false,
             size={width=1,height=1},
@@ -223,30 +221,34 @@ function M.new(prefix)
         palette=palette or {white}
         local c1=palette[1] or white
         local progress=opener and 0 or self:transition_progress(s,transition_options)
-        local l4mode=glow_options.l4 or 'whitegold'
+        local l4mode=glow_options.l4 or 'gold'
         local level4_color=(l4mode=='gold' and gold)
             or (l4mode=='white' and white)
             or {255,239,194}
+        local c2=palette[#palette] or c1
         local border=dark
         local border_alpha=180
-        if level==1 then border=c1;border_alpha=230
-        elseif level==2 then border=white;border_alpha=244
-        elseif level==3 then border=white;border_alpha=255
-        elseif level>=4 then border=level4_color;border_alpha=255 end
+        if level==1 then border=c1;border_alpha=220
+        elseif level==2 then border=mix(c1,c2,.5);border_alpha=190
+        elseif level==3 then border=white;border_alpha=200
+        elseif level>=4 then border=level4_color;border_alpha=220 end
         if opener then
+            -- Preserve the already gameplay-approved white opener.
             border=dark
         else
-            -- Full-strength white rail while the pre-window remains white.
-            -- The border joins the fill's property fade, no color pop.
-            border=mix(white,border,progress)
-            border_alpha=210+(border_alpha-210)*progress
+            -- Color the REAL perimeter while the body is still white.
+            -- The .30s body fade remains centered on decay start.
+            local ramp=smooth((age-.75)/max(.30,delay-1.0))
+            border=mix(white,border,ramp)
+            border_alpha=210+(border_alpha-210)*ramp
         end
         if s.expire_age then
             border_alpha=border_alpha*(1-smooth(s.expire_age/.35))
         end
         border_alpha=border_alpha*self:bar_reveal(s,opt)
         local alpha=floor(clamp(border_alpha,0,255)+.5)
-        for _,id in ipairs({bar.frame.frame,bar.frame.cap_l,bar.frame.cap_r}) do
+        for _,id in ipairs({bar.frame.frame,bar.frame.frame_bottom,
+            bar.frame.cap_l,bar.frame.cap_r}) do
             windower.prim.set_color(id,alpha,border[1],border[2],border[3])
         end
         if not enabled then self:finish();return end
@@ -269,61 +271,60 @@ function M.new(prefix)
         end
         white_caps(x,y,fill_extent,h,white_alpha*intensity)
 
-        -- Only one visual language for power: soft glow strips following the
-        -- upper/lower border AND mirrored half-capsule glow textures at ends.
-        -- White-gold L4 color and stronger cap options are separate from
-        -- tier selection. No sprite flame/vertical flare/center pulse.
+        -- Tight capsule perimeter halo: left arc | twin-strip rail |
+        -- mirrored right arc. No overlapping vertical glow blobs.
         local levels=glow_options.levels or '34'
         if levels~='off' and level>=1 and level<=4
             and levels:find(tostring(level),1,true) then
             local upper_tier=level>=3
             local rail=max(0,tonumber(glow_options[upper_tier and 'rail34'
-                or 'rail12']) or (upper_tier and .60 or .30))
+                or 'rail12']) or (upper_tier and .75 or .30))
             local cap=max(0,tonumber(glow_options[upper_tier and 'cap34'
-                or 'cap12']) or (upper_tier and .75 or .35))
-            local base=upper_tier and (level>=4 and 72 or 68) or 72
-            local level_strength=max(0,tonumber(glow_options['level'..level]) or 1)
-            local electric=level>=4 and (.60+.40*sin(age*23)^2) or 1
-            if level>=4 and age>=delay then
-                electric=electric*(.78+.22*sin(age*28)^2)
-            end
-            local style=transition_options.style or 'energized'
-            -- Before activation the glow is dormant; it charges as white
-            -- gives way to color. In uniform style the glow simply fades in.
-            local charge
-            if opener then
-                charge=1
-            elseif style=='energized' then
-                -- A brief electrical wake-up as the white wash lifts.
-                -- Once the transition is complete only L4 retains its
-                -- continuous high-frequency border flicker.
-                charge=.10+.90*smooth(progress/.85)
-                if progress>0 and progress<1 then
-                    charge=charge*(.82+.18*sin(age*31)^2)
+                or 'cap12']) or (upper_tier and .85 or .35))
+            local level_strength=max(0,tonumber(glow_options['level'..level])
+                or (level==3 and .7 or level==2 and .65 or 1))
+            local base=level>=4 and 72 or level==3 and 68 or 65
+            -- L3: slower white shimmer. L4: stronger 23/28-rad/s
+            -- flicker throughout the PRE-window and subsequent decay.
+            local electric=1
+            if level==3 then
+                electric=.68+.32*sin(age*11)^2
+            elseif level>=4 then
+                electric=.37+.63*sin(age*23)^2
+                if age>=delay then
+                    electric=electric*(.72+.28*sin(age*28)^2)
                 end
-            else
-                charge=progress
+            end
+            local pre=level>=4 and
+                max(0,tonumber(glow_options.pre4) or .85) or
+                (level==3 and max(0,tonumber(glow_options.pre3) or .38)
+                or max(0,tonumber(glow_options.pre12) or .18))
+            local charge=pre+(1-pre)*progress
+            if opener then charge=0 end -- opener already looks right
+            local style=transition_options.style or 'energized'
+            if style=='energized' and progress>0 and progress<1 then
+                charge=charge*(.82+.18*sin(age*31)^2)
             end
             local glow_color=level>=4 and level4_color
-                or (level==3 and white or c1)
+                or (level==3 and white or border)
             local rail_alpha=base*gi*level_strength*rail*electric*charge
             local cap_alpha=base*gi*level_strength*cap*electric*charge
             local scale=max(.5,tonumber(bar.scale) or 1)
-            local inset=max(2,math.floor(5*scale+.5))
-            local rail_height=max(5,math.floor(7*scale+.5))
-            local cap_w=max(7,math.floor(14*scale+.5))
-            local cap_h=max(12,math.floor(h+14*scale+.5))
-            local cap_y=y+math.floor((h-cap_h)/2+.5)
-            -- Both PNGs are centered around the real frame's centerline.
-            -- Horizontal halo ends *inside* bar.x and bar.x+w.
-            sprite('border_glow',x+inset,y-rail_height/2,
-                max(1,w-2*inset),rail_height,rail_alpha,glow_color)
-            sprite('border_lower',x+inset,y+h-rail_height/2,
-                max(1,w-2*inset),rail_height,rail_alpha,glow_color)
-            sprite('glow_cap_l',x,cap_y,cap_w,cap_h,
-                cap_alpha,glow_color)
-            sprite('glow_cap_r',x+w-cap_w,cap_y,cap_w,cap_h,
-                cap_alpha,glow_color)
+            local padding=max(2,floor(3*scale+.5))
+            local join=max(5,floor(10*scale+.5))
+            local width_cap=join+padding
+            local height_halo=h+2*padding
+            local yy=y-padding
+            -- No overlaps: every sprite samples the same border silhouette.
+            -- Cap endpoints meet the straight rail tangentially.
+            if w>2*join then
+                sprite('glow_cap_l',x-padding,yy,width_cap,height_halo,
+                    cap_alpha,glow_color)
+                sprite('border_glow',x+join,yy,w-2*join,height_halo,
+                    rail_alpha,glow_color)
+                sprite('glow_cap_r',x+w-join,yy,width_cap,height_halo,
+                    cap_alpha,glow_color)
+            end
         end
         self:finish()
     end
