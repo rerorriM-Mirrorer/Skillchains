@@ -328,7 +328,7 @@ function ui.new(settings, sc_info)
         local bar=self.names[kind]
         bar.hidden=false
         local opts=self.options
-        local x=math.floor(opts.bar.x+.5)
+        local x=math.floor(opts.bar.x+(self.bar_shake or 0)+.5)
         local width=math.max(24,math.floor(opts.bar.width+.5))
         local height=math.max(3,math.floor(5*opts.scale+.5))
         local fill=math.floor(clamp(fraction,0,1)*(width-2)+.5)
@@ -345,6 +345,7 @@ function ui.new(settings, sc_info)
         windower.prim.set_visibility(bar.cap_r,true)
 
         windower.prim.set_position(bar.base,x+1,y+1)
+        windower.prim.set_color(bar.base,math.floor(115*clamp(self.bar_opacity or 1,0,1)+.5),18,21,39)
         windower.prim.set_size(bar.base,width-2,height)
         windower.prim.set_visibility(bar.base,true)
 
@@ -568,12 +569,14 @@ function ui.new(settings, sc_info)
             local fraction=self.fx:bar_fraction(state,effects)
             local bar_color=palette(state,self.sc_info,false)
             self.bar_opacity=self.fx:opacity(state,effects)
+            self.bar_shake=self.fx:shake(state,effects)
+            local shake=self.bar_shake
             local bar_height=self:draw_bar('sc',y,fraction,state.sc_wait>0,
                 bar_color)
-            self.bar_opacity=1
+            self.bar_shake,self.bar_opacity=0,1
             local fill=math.floor(clamp(fraction,0,1)*(opt.bar.width-2)+.5)
             self.fx:render(state,effects,{
-                x=math.floor(opt.bar.x+.5),y=y,
+                x=math.floor(opt.bar.x+shake+.5),y=y,
                 width=math.floor(opt.bar.width+.5),
                 height=math.max(3,math.floor(5*opt.scale+.5))+2,
                 fill=fill,frame=self.names.sc},bar_color)
