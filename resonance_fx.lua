@@ -142,7 +142,7 @@ function M.new(prefix)
             end
         end
         if fill<2 then return end
-        local open_elapsed=max(0,(state.now or 0)-(state.sc_open or state.now))
+        local open_elapsed=max(0,(state.now or 0)-(state.sc_open or state.now or 0))
         local flicker=.83+.17*sin((state.now or 0)*28)^2
         local left_x=x+1
         local right_x=x+max(1,fill)-1
