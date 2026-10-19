@@ -1,0 +1,110 @@
+-- Simulate real Skillchains addon-command registration in Lua 5.1.
+-- FFXI rendering, TargetSC native DLL and game packets are NOT exercised.
+string.ucfirst=function(s)return s:sub(1,1):upper()..s:sub(2)end
+local function harness()
+    local clock,events,renders=100,{},{},{}
+    local raw_deadlines={}
+    local env=setmetatable({_addon={},res={spells={[144]={element=0}},jobs={}}},{__index=_G})
+    env.os=setmetatable({clock=function() return clock end},{__index=os})
+    local function set(values)
+        local result={contains=function(self,v)return self[v]~=nil end}
+        for _,v in ipairs(values) do result[v]=true end
+        return result
+    end
+    env.S=set
+    env.L=function(values)return setmetatable(values,{__add=function(a,b)
+        local result={} for _,v in ipairs(a)do result[#result+1]=v end for _,v in ipairs(b)do result[#result+1]=v end
+        return env.L(result)
+    end})end
+    local function copy(t)
+        if type(t)~='table' then return t end
+        local result={} for k,v in pairs(t)do result[k]=copy(v)end return result
+    end
+    local saves=0
+    env.config={load=function(d)return copy(d)end,
+        save=function() saves=saves+1 end,reload=function()end}
+    local player={main_job='WAR',id=1,status=0}
+    local target={id=71,index=12,hpp=100}
+    local messages={}
+    env.windower={register_event=function(name,fn)events[name]=fn end,
+        send_command=function()end,add_to_chat=function(_,msg)messages[#messages+1]=msg end,
+        ffxi={get_info=function()return {logged_in=true}end,
+            get_player=function()return player end,get_mob_by_target=function()return target end,
+            get_abilities=function()return {weapon_skills={},job_abilities={}}end,
+            get_items=function()return {}end}}
+    env.require=function(name)
+        if name=='resonance_ui' then return {new=function()return {
+            render=function(_,frame)renders[#renders+1]=copy(frame or {hidden=true})end,
+            hide=function()end,destroy=function()end}end} end
+        if name=='targetsc_bridge' then return assert(setfenv(assert(loadfile('targetsc_bridge.lua')),env))() end
+        if name=='skills' then return assert(loadfile('skills.lua'))() end
+        return {}
+    end
+    env.ActionPacket={open_listener=function()end,new=function(act)
+        local a={get_message_id=function()return act.message end,get_add_effect=function()return act.effect end,
+            get_spell=function()return 0,act.resource,act.spell,false,act.conclusion end}
+        local t={id=act.target or 71,get_actions=function()return function()return a end end}
+        return {get_category_string=function()return act.kind end,get_id=function()return 1 end,
+            get_targets=function()return function()return t end end}
+    end}
+    setfenv(assert(loadfile('Skillchains.lua')),env)()
+    return events['addon command'],env,messages,function()return saves end
+end
+
+local command,env,messages,saves=harness()
+local opt=env.settings.Resonance
+local function run(cmd,...)
+    command(cmd,...)
+    return messages[#messages] or ''
+end
+assert(opt.glow.levels=='34' and opt.glow.rail34==.60 and opt.glow.cap34==.75)
+assert(opt.transition.duration==.30 and opt.transition.style=='energized')
+assert(run('glow','levels','1234'):find('default 34',1,true))
+assert(opt.glow.levels=='1234')
+run('glow','levels','42')
+assert(opt.glow.levels=='24','Canonicalize and sort level mask')
+run('glow','levels','off') assert(opt.glow.levels=='off')
+run('glow','levels','34')
+local before=saves()
+assert(run('glow','rail12','3.125'):find('default 0.300',1,true))
+assert(opt.glow.rail12==3.125 and saves()==before+1)
+assert(run('glow','cap34','100'):find('default 0.750',1,true))
+assert(opt.glow.cap34==100,'Unbounded positive cap multiplier')
+run('glow','rail34','0.6')
+run('glow','preset','balanced')
+assert(opt.glow.cap34==opt.glow.rail34 and
+    opt.glow.cap12==opt.glow.rail12)
+run('glow','preset','capforward')
+assert(opt.glow.cap34==opt.glow.rail34*1.25 and
+    opt.glow.cap12==opt.glow.rail12*1.25)
+run('glow','level1','0.4')
+run('glow','level2','1.8')
+run('glow','level3','3')
+run('glow','level4','0')
+run('glow','scale','8.7')
+assert(opt.glow.level1==.4 and opt.glow.level2==1.8 and
+    opt.glow.level3==3 and opt.glow.level4==0 and
+    opt.glow.scale==8.7)
+local saved=opt.glow.scale
+run('glow','scale','-1') assert(opt.glow.scale==saved)
+run('glow','scale','1e999') assert(opt.glow.scale==saved)
+run('glow','scale','nan') assert(opt.glow.scale==saved)
+local mask=opt.glow.levels
+run('glow','levels','135') assert(opt.glow.levels==mask)
+run('glow','l4','gold') assert(opt.glow.l4=='gold')
+run('glow','l4','white') assert(opt.glow.l4=='white')
+run('glow','l4','whitegold') assert(opt.glow.l4=='whitegold')
+assert(run('transition','.3'):find('default .300s',1,true))
+run('transition','0') assert(opt.transition.duration==0)
+run('transition','3.7') assert(opt.transition.duration==3.7)
+run('transition','-1') assert(opt.transition.duration==3.7)
+run('transition','style','uniform') assert(opt.transition.style=='uniform')
+run('transition','style','energized') assert(opt.transition.style=='energized')
+assert(run('anim','glow','9.5'):find('default 2.00',1,true))
+assert(opt.animation.glow==9.5)
+run('anim','intensity','4') assert(opt.animation.intensity==4)
+run('anim','flare','4') assert(opt.animation.flare==4)
+assert(run('glow'):find('Glow levels',1,true))
+assert(run('transition'):find('Transition',1,true))
+assert(saves()>10,'Settings changes should save')
+print('PASS visual commands: cap presets, per-tier and per-level glow, level mask, style, L4 color, unbounded strengths, validation, default reports')
