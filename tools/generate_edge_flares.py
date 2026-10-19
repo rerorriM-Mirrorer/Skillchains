@@ -62,7 +62,7 @@ def png(rows):
     return (b'\x89PNG\r\n\x1a\n' +
             chunk(b'IHDR', struct.pack('>IIBBBBB', W, H, 8, 6, 0, 0, 0)) +
             chunk(b'IDAT', zlib.compress(image_data, 0)) +
-            chunk(b'IEND', b'')
+            chunk(b'IEND', b''))
 
 
 def assets():
