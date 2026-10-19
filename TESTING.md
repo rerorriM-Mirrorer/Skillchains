@@ -2,6 +2,34 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Animation4 unified pre-window preview — 2026-10-19 (LIVE PENDING)
+
+User confirms Animation3 learning icons now look better. Screenshots
+show flare sprites and L3/L4 glow projecting outside rounded bar ends.
+User requests a common opener/chain three-beat sequence: 1s white
+expansion, 1s white wash and edge-flare fade into dim result, and
+property-colored brightness/edge flares ramping during the final .3s
+before actual decay. No level-2/3 traveling follow-ups; all four
+levels get one centered pre-decay pulse. L4's existing 23-rad/s
+flicker and 28-rad/s decay glow pulse retained. Requested initial
+controls: intensity 2, flare 2, glow 2. Transparent dark empty track,
+saved settings, TargetSC bridge, and absolute deadlines preserved.
+
+Implementation branch `development/skillchains-resonance-animation5`.
+Glow rail textures inset by 3*scale UI pixels from either end;
+edge flare centers inset into fill. Animation clock derives from
+created/sc_open and is not changed by preview. White bar is rounded
+and displayed during first two seconds; original bar revealed as
+white dissolves. Actual bar re-expands over one second. Source
+window countdown starts at the same original time.
+
+**Outstanding:** Real Windower FFXI preview and chain validation,
+especially overlap of white/colored flares at transition, intensity
+2 clipping, small-client scaling, and visual hitch. Existing
+simulation tests do not substitute for in-game testing.
+
+---
+
 ## Animation3 live hotfix — 2026-10-19
 
 **User-reported Windower error:** On `//sc anim preview opener`,
