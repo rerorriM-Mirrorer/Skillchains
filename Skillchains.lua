@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.6-targetsc.1-grid.1'
+_addon.version = '2.20.08.25-resonance.7-animation.1'
 
 require('luau')
 require('pack')
@@ -49,6 +49,7 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- client; //sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
     mode='learn', display='sc', names='full', scale=1, grid=10,
+    animation={enabled=true,intensity=1.0,fade=false},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=0,y=-11},
     bar={x=466,y=696,width=310},
@@ -292,6 +293,24 @@ function colorize(t)
 end
 
 local next_frame = os.clock()
+-- Visual preview never publishes any TargetSC events or acts on FFXI.
+local animation_preview=nil
+local function preview_state(now)
+    if not animation_preview then return nil end
+    local p=animation_preview
+    if now>p.ends then animation_preview=nil;return nil end
+    local total=math.max(.1,p.times-p.delay)
+    return {
+        now=now,created=p.created,sc_open=p.delay,
+        active=p.active,step=p.step,level=p.level,closed=p.closed,
+        sc_wait=math.max(0,p.delay-now),
+        sc_left=math.max(0,p.times-math.max(now,p.delay)),
+        sc_total=total,mb_left=p.step>1 and math.max(0,p.created+10-now) or 0,
+        mb_total=10,groups={},
+        from_fraction=.34,
+        expire_age=p.step==1 and now>p.times and now-p.times or nil
+    }
+end
 
 windower.register_event('prerender', function()
     local now=os.clock()
@@ -308,15 +327,23 @@ windower.register_event('prerender', function()
         end
     end
     if not ensure_player() then overlay:render(nil) return end
+    local simulated=preview_state(now)
+    if simulated then overlay:render(simulated);return end
     local target=windower.ffxi.get_mob_by_target('t','bt')
     local reson=target and resonating[target.id]
     if not target or target.hpp<=0 or not reson then
         overlay:render(nil)
         return
     end
-    local sc_left=math.max(0,reson.times-now)
+    -- The opening weapon skill's animation is a WAIT for the real SC window.
+    -- The displayed bar remains at 100% during that wait; do not spend its
+    -- continuation countdown before the ability's reported delay elapses.
+    local sc_wait=math.max(0,reson.delay-now)
+    local sc_left=math.max(0,reson.times-math.max(now,reson.delay))
     local mb_left=math.max(0,(reson.mb_window or 0)-now)
-    if sc_left<=0 and mb_left<=0 then
+    local expire_age=reson.step==1 and now>reson.times and now-reson.times or nil
+    if sc_left<=0 and mb_left<=0 and
+        not (expire_age and expire_age<.35) then
         overlay:render(nil)
         return
     end
@@ -325,7 +352,9 @@ windower.register_event('prerender', function()
     end
     overlay:render({
         active=reson.active,step=reson.step,closed=reson.closed,
-        sc_left=sc_left,sc_wait=math.max(0,reson.delay-now),
+        level=reson.result_level or 0,now=now,created=reson.created,
+        sc_open=reson.delay,from_fraction=reson.from_fraction,
+        sc_left=sc_left,sc_wait=sc_wait,expire_age=expire_age,
         sc_total=math.max(.1,reson.times-reson.delay),
         mb_left=mb_left,mb_total=10,groups=reson.groups,
     })
@@ -358,7 +387,12 @@ categories = S{
 
 function apply_properties(target, resource, action_id, properties, delay, step, closed, bound, result_level)
     local clock = os.clock()
+    local previous=resonating[target]
+    local from_fraction=previous and math.max(0,math.min(1,
+        (previous.times-math.max(clock,previous.delay))/
+        math.max(.1,previous.times-previous.delay))) or .4
     resonating[target] = {
+        created=clock,from_fraction=from_fraction,
         res=resource,
         id=action_id,
         active=properties,
@@ -542,6 +576,56 @@ windower.register_event('addon command', function(cmd, ...)
         overlay:scale(number)
         config.save(settings)
         message(('Scale set to %.2f.'):format(opts.scale))
+    elseif cmd=='anim' or cmd=='animation' then
+        opts.animation=opts.animation or {enabled=true,intensity=1,fade=false}
+        local a=opts.animation
+        if option=='on' or option=='off' then
+            a.enabled=(option=='on')
+            config.save(settings)
+            message('Resonance animations '..(a.enabled and 'ON' or 'OFF')..'.')
+        elseif option=='intensity' then
+            local value=tonumber(args[2])
+            if not value or value<0 or value>2 then
+                message('Use //sc anim intensity <0-2> (default 1).')
+                return
+            end
+            a.intensity=value
+            config.save(settings)
+            message(('Animation intensity %.2f.'):format(value))
+        elseif option=='fade' then
+            local value=args[2] and args[2]:lower()
+            if value~='on' and value~='off' then
+                message('Use //sc anim fade on|off.')
+                return
+            end
+            a.fade=(value=='on')
+            config.save(settings)
+            message('Countdown opacity wave '..(a.fade and 'ON' or 'OFF')..'.')
+        elseif option=='preview' then
+            local kind=args[2] and args[2]:lower() or 'opener'
+            local examples={opener={1,0,{'Liquefaction','Detonation'}},
+                level1={2,1,{'Liquefaction'}},level2={2,2,{'Fusion'}},
+                level3={2,3,{'Light'}},level4={2,4,{'Radiance'}}}
+            if kind=='off' then
+                animation_preview=nil;overlay:hide()
+                message('Animation preview off.')
+            elseif examples[kind] then
+                local example=examples[kind]
+                local clock=os.clock()
+                animation_preview={
+                    created=clock,delay=clock+3,times=clock+3+(8-example[1]),
+                    ends=clock+3+(8-example[1])+.35,
+                    step=example[1],level=example[2],active=example[3],
+                    closed=example[2]>=4
+                }
+                message('Local HUD preview: '..kind..'. No combat or TargetSC event sent.')
+            else
+                message('Use //sc anim preview opener|level1|level2|level3|level4|off.')
+            end
+        else
+            message(('Animations %s, intensity %.2f, opacity wave %s; //sc anim preview opener|level1|level2|level3|level4|off'):format(
+                a.enabled and 'on' or 'off',a.intensity or 1,a.fade and 'on' or 'off'))
+        end
     elseif cmd=='grid' then
         local grid=tonumber(option)
         if option==nil then
@@ -567,6 +651,7 @@ windower.register_event('addon command', function(cmd, ...)
     elseif cmd=='default' then
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.grid=10
+        opts.animation={enabled=true,intensity=1,fade=false}
         opts.name_offset.x,opts.name_offset.y=0,-11
         opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
         opts.list.x,opts.list.y=465,300
@@ -593,12 +678,14 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message(cmd..' suggestions '..(on and 'disabled' or 'enabled')..' for '..info.job..'.')
     elseif cmd=='status' then
-        message(('v%s | %s | %s | names %s | scale %.2f | width %d | grid %d | edit %s'):format(
+        message(('v%s | %s | %s | names %s | scale %.2f | width %d | grid %d | anim %s %.2f | edit %s'):format(
             _addon.version,opts.display,opts.mode,opts.names or 'full',
             opts.scale,opts.bar.width,opts.grid or 10,
+            (opts.animation or {}).enabled~=false and 'on' or 'off',
+            (opts.animation or {}).intensity or 1,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; anim [on|off|intensity <0-2>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
