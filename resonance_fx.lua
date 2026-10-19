@@ -88,6 +88,9 @@ function M.new(prefix)
             border=white
             border_alpha=255
         end
+        if state.expire_age then
+            border_alpha=math.floor(border_alpha*(1-smooth(state.expire_age/.35))+.5)
+        end
         if not enabled then
             border=level==1 and c1 or (level>=4 and gold or
                 (level>1 and white or {9,10,21}))
