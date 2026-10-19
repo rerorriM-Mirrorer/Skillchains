@@ -5,6 +5,69 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
 
+## Animation7 — continuous glow caps and tunable electricity (2026-10-19)
+
+The personal development branch `development/skillchains-resonance-animation8`
+simplifies the resonating bars while preserving the source-clock HUD
+and TargetSC compatibility. A successful chain gets one clean,
+left-to-right white refill with the former fill/dark track underneath.
+White **stays** through most of the three-second pre-window; over
+the 0.30s window centered on countdown start, the entire bar
+smoothly becomes its skillchain property color and the glow border
+reawakens. There are no vertical edge or center flare sprites.
+The opener retains the user-approved white expansion -> dim
+opener color -> bright active behavior.
+
+The level-3/4 electric border now consists of two soft ghost-glow
+rails and **two matching rounded, mirrored endcap PNGs**
+(`ghost_glow_cap_l.png` and `ghost_glow_cap_r.png`). Level four
+defaults to a pale white-gold shimmer. Levels 1/2 can enable
+the same system independently without changing global glow levels.
+
+Try the following while viewing `//sc anim preview level4`:
+
+```text
+//sc glow
+//sc glow levels 34
+//sc glow levels 1234
+//sc glow rail12 0.30
+//sc glow cap12 0.35
+//sc glow rail34 0.60
+//sc glow cap34 0.75
+//sc glow level1 0.5
+//sc glow level2 1
+//sc glow level3 1
+//sc glow level4 1
+//sc glow scale 1
+//sc glow preset balanced
+//sc glow preset capforward
+//sc glow l4 whitegold
+//sc glow l4 gold
+//sc glow l4 white
+//sc transition 0.30
+//sc transition style energized
+//sc transition style uniform
+```
+
+Defaults: levels `34`; rail strengths 0.30 (1/2), 0.60 (3/4);
+cap strengths 0.35 (1/2), 0.75 (3/4); level multipliers 1,
+global scale 1, transition 0.30s energized, L4 white-gold.
+`capforward` makes caps 1.25× as bright as their rails;
+`balanced` matches them. Every numeric change reports its
+default, and nonnegative finite values have no artificial
+maximum (actual alpha saturates at 255). The existing
+`//sc anim glow` and `//sc anim intensity` remain independent
+global multipliers. `//sc anim flare` still saves its old value
+but retired flare sprites no longer draw.
+
+Existing character settings are not overwritten; `//sc default`
+restores new defaults. `//sc anim preview opener|level1|level2|
+level3|level4` is local-only and never sends fake TargetSC
+events. Full deployment copies the Skillchains Lua files and
+the **new three runtime texture PNGs**; preserve `data/`.
+No TargetSC native/DLL or bridge changes. See TESTING.md
+for live verification; **only static/synthetic checks are claimed**.
+
 ## Animation6 testing — rounded light leaks
 
 The `development/skillchains-resonance-animation7` branch updates
