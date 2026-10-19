@@ -620,7 +620,7 @@ function ui.new(settings, sc_info)
             end
             self.bar_brightness=state.step==1 and
                 self.fx:open_brightness(state) or
-                self.fx:chain_brightness(state)
+                self.fx:chain_brightness(state,opt.transition)
             local reveal=self.fx:bar_reveal(state,effects)
             self.bar_opacity=self.fx:opacity(state,effects)*reveal
             self.base_opacity=reveal
@@ -636,7 +636,7 @@ function ui.new(settings, sc_info)
                 width=math.floor(opt.bar.width+.5),
                 height=math.max(3,math.floor(5*opt.scale+.5))+2,
                 fill=fill,frame=self.names.sc,scale=opt.scale},
-                result_color,bar_color)
+                result_color,bar_color,opt.glow,opt.transition)
             y=y+bar_height
             local reveal=self.fx:label_alpha(state,effects)
             if opt.mode~='minimal' and opt.names~='off' then
