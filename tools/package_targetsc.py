@@ -11,9 +11,9 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-TargetSC-Grid1-Full'
+NAME = 'Skillchains-TargetSC-Animation1-Full'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
-            'targetsc_bridge.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua')
+            'targetsc_bridge.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
 BASELINE = 'e095657a2e7ecc5a49d05e96c1b78523a4860af5'
 
 
@@ -37,7 +37,7 @@ def main():
     assert not git('status', '--porcelain', '--untracked-files=normal'), 'Commit work before packaging'
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains + TargetSC Grid1', 'author': 'A.',
+    info = {'batch': 'Skillchains Animation1 / TargetSC unchanged', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'bridge_commit': '43943483518847f317228d0f0fc3ba472d642685',
