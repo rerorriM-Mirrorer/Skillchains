@@ -1,9 +1,63 @@
-# Skillchains — Resonance UI testing build resonance.6
+# Skillchains — Resonance HUD Animation8 test build
 
 A standalone FFXI Windower 4 addon based on Ivaar's original Skillchains, updated by posimagi.
 This test branch adds a restrained, FFXI-inspired visual layer without modifying EnemyBar2 or XIVCrossbar.
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
+
+## Animation8 — real capsule perimeter and stronger electric border
+
+New `development/skillchains-resonance-animation9` **test** branch
+fixes the high-tier background problem: previously the "border" was
+a whole opaque white/gold rectangle **under** the semi-transparent
+track. Now only its top/bottom/rounded ends draw, leaving a genuine
+dark, translucent interior at every level. Three tintable glow
+sprites — `capsule_halo_l.png`, `capsule_halo_rail.png`, and
+`capsule_halo_r.png` — sample exactly the same source outline.
+They meet end-to-end, with no overlapping cap blobs and a dark
+interior. `tools/generate_capsule_halo.py` reproduces the art.
+
+The opener retains the animation you liked. Successful chains
+retain the white refill, three-second hold and 0.30s white→property
+overlap at the actual start of decay. Level 1's border develops its
+result color while the bar stays white; L2's perimeter favors
+property color to protect its gradient; L3 has a slower, pale
+11-rad/s shimmer; L4 restores fast 23/28-rad/s gold electricity,
+including throughout the white pre-window. Empty learning groups
+draw no box or placeholder.
+
+**Current recommended base and controls:**
+
+```text
+//sc glow reset                 -- resets ONLY glow, not positions
+//sc glow rail34 0.75           -- user-confirmed attractive L4 reference
+//sc glow cap34 0.85
+//sc glow pre3 0.38             -- level 3 activity during white hold
+//sc glow pre4 0.85             -- level 4 stays electric during white hold
+//sc glow pre4 0                -- compare no prewindow flicker
+//sc glow l4 gold               -- whitegold and white remain optional
+//sc glow levels 1234           -- optionally include lower levels
+//sc glow preset balanced      -- equal cap and rail strength
+//sc glow preset capforward
+//sc track                      -- shows active RGB and alpha
+//sc track alpha 155            -- default; 0=fully transparent
+//sc track rgb 6 8 17           -- dark neutral-blue default
+//sc track reset                -- resets ONLY track, not positions
+//sc anim preview opener
+//sc anim preview level4
+```
+
+New defaults: glow levels 34; rail12=.30 cap12=.35;
+rail34=.75 cap34=.85; level1=1 level2=.65 level3=.70 level4=1;
+pre12=.18 pre3=.38 pre4=.85; glow scale=1; L4=gold;
+track RGB(6,8,17), alpha155. All glow numeric multipliers remain
+unbounded nonnegative; alpha itself saturates at 255. Existing
+per-character settings are retained: use `//sc glow reset` and
+`//sc track reset` to try the new defaults without moving anything.
+TargetSC native/bridge is unchanged. Keep your `Skillchains/data/`
+folder when updating; run `//lua reload Skillchains`.
+The new renderer has **only passed synthetic/static tests**, not
+FFXI live tests. See TESTING.md for detailed test cases.
 
 ## Animation7 — continuous glow caps and tunable electricity (2026-10-19)
 
@@ -411,6 +465,11 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-19 — Animation8: dark true-perimeter SC bar and seamless capsule halo
+- Removed the old full-height white/gold frame behind translucent track; separated 1px upper/lower rails plus corner ends. The bar interiors are now truly dark, regardless of chain level.
+- New shared-contour 3-part capsule halo with L4's pre-window electrical activity, L3 slower shimmer, property-tinted borders, and preserved successful-chain/opening white animations.
+- Save track alpha/RGB and pre-window level strengths separately; independent reset commands preserve position. Hide empty learning panels. TargetSC unchanged; FFXI testing pending.
 
 ### 2026-10-18 — Grid1: Ctrl+drag positioning
 - Introduce a shared UI-pixel grid anchored to screen (0,0) with floor
