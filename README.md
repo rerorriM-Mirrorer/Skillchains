@@ -5,6 +5,50 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
 
+## Current Skillchains Animation3 test — 2026-10-19
+
+The `development/skillchains-resonance-animation4` testing branch
+contains **Skillchains-only** changes. TargetSC's native DLL,
+target-bound rings, synchronization events and Magic Burst detection
+are unchanged. Use the paired `Skillchains-TargetSC-Animation3-test`
+artifact, which contains both full installable addon folders and
+cumulative `WORKFLOW.md` / `TESTING.md` inside each.
+
+- **Learn icon column:** measured from actual bold-italic labels, with
+  stroke/italic width allowance and a minimum 8px safety gap.
+  Overlong names truncate ahead of the icons, even on small clients;
+  current compact icon size is retained.
+- **Opener:** rounded white expanding bar; caption and learning
+  labels/icons fade in within the **first** beat. One leading white
+  flare only. Underlying bar remains dark and translucent until
+  revealed. SC continuation countdown remains source-clocked.
+- **Confirmed chain:** raised side/end flares whose feet sit at the
+  bottom of the fill; level 1 has no extra traveling flare; levels
+  2/3 get one follow-up during the entire pre-window. Level 4
+  keeps its provisional pulsing. Dim→bright fade is continuous.
+- **Readability:** empty track keeps its original dark translucent
+  alpha, even with optional `//sc anim fade on`; level 3/4
+  halos now follow *both border rails* rather than washing out
+  the bar's empty interior.
+- **Independent icon adjustments:** `//sc names offset 5 -9`
+  moves the entire caption as before. New
+  `//sc icons offset 0 2` moves its property icons alone
+  another two UI pixels down. `//sc icons offset` without
+  coordinates reports the saved offset. Normal default SC
+  icon baseline is already three scaled pixels lower.
+- Newly initialized options favor the user-tested combination
+  `intensity 1`, `flare 2`, `glow 1`, `fade off` and
+  name offset (5,-9). Existing saved character settings are
+  **not reset**. `//sc default` intentionally resets all options
+  to the updated defaults.
+
+**Live FFXI testing pending.** Earlier Animation2 visuals were
+user-tested, but this refinement has passed Lua 5.1 and synthetic
+regression tests only. The existing TargetSC DLL is compatible:
+with it already installed you can update **Skillchains** files
+and `//lua reload Skillchains` without closing FFXI. Always
+close FFXI before replacing the DLL itself.
+
 ## Development update — Grid1 (2026-10-18)
 
 The experimental `development/targetsc-resonance-grid` branch includes the
