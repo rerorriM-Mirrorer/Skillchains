@@ -314,11 +314,12 @@ function M.new(prefix)
             local flicker=level>=4 and (.60+.40*sin(age*23)^2) or 1
             -- The property color at the fill's center may differ from
             -- either gradient end. Do not substitute gold at level four.
-            local mid=(#palette+1)/2
+            local colors=display_palette or palette
+            local mid=(#colors+1)/2
             local lower=max(1,floor(mid))
-            local upper=min(#palette,lower+1)
-            local middle=mix(palette[lower] or c1,
-                palette[upper] or c2,mid-lower)
+            local upper=min(#colors,lower+1)
+            local middle=mix(colors[lower] or c1,
+                colors[upper] or c2,mid-lower)
             sprite('moving',x+w/2-flare_w/2,flare_y,flare_w,flare_h,
                 210*fi*pulse*flicker,middle)
         end
