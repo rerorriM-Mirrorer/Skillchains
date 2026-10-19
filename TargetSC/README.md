@@ -18,6 +18,14 @@ as PE32/i386. Lua and simulated event/lifecycle tests passed. **It has not been
 loaded in Windower or tested in FFXI.** No screenshot or render is presented as a
 live result.
 
+## Skillchains Animation6 paired package
+
+The new Animation6 package contains Skillchains-only rounded end
+flaring and renderer optimizations, with TargetSC 0.1.0 unchanged.
+All TargetSC native/DLL files, world rings, SC/MB clocks and bridge
+protocol remain compatible. See both `TESTING.md` files. Close
+FFXI only if replacing TargetSC's loaded DLL.
+
 ## Skillchains Animation3 paired test — 2026-10-19
 
 This paired package contains Skillchains' updated rounded opener,
