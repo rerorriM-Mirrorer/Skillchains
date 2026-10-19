@@ -2,6 +2,21 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Animation3 live hotfix — 2026-10-19
+
+**User-reported Windower error:** On `//sc anim preview opener`,
+`learning_ui.lua:92: bad argument #2 to 'tonumber' (base out of range)`.
+Cause: `tonumber(row.label:extents())` forwards the second result
+of the multi-return `texts:extents()` API to Lua 5.1 `tonumber`
+as its optional numeric base. The mock test originally returned two
+values, but did not exercise this exact conversion failure in the
+same runtime. Both width reads (measurement and ellipsis loop)
+now capture the first return value in a local variable before
+calling `tonumber(width)`. No geometry, fade, timing, TargetSC
+or existing configuration semantics changed. **User live retest pending.**
+
+---
+
 ## Current testing batch — 2026-10-19 / Animation3 readability + alignment (LIVE PENDING)
 
 **Branch:** `development/skillchains-resonance-animation4`, branched
