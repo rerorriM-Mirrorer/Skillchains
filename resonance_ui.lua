@@ -342,6 +342,27 @@ function ui.new(settings, sc_info)
         local height=math.max(3,math.floor(5*opts.scale+.5))
         local fill=math.floor(clamp(fraction,0,1)*(width-2)+.5)
 
+        -- During the first opener beat the underlying bar is fully hidden
+        -- behind the free-standing white expansion. Do not pointlessly
+        -- update all 24 gradient segments ~30 times per second. This also
+        -- avoids hidden-primitive visibility churn on multi-client setups.
+        local fully_hidden=kind=='sc' and
+            (self.bar_opacity or 1)<=0 and (self.base_opacity or 1)<=0
+        if fully_hidden then
+            if not bar.visual_hidden then
+                for _,id in ipairs({bar.frame,bar.cap_l,bar.cap_r,bar.base,
+                    bar.fill_l,bar.fill_r}) do
+                    windower.prim.set_visibility(id,false)
+                end
+                for _,id in ipairs(bar.slices) do
+                    windower.prim.set_visibility(id,false)
+                end
+            end
+            bar.visual_hidden=true
+            return height+2
+        end
+        bar.visual_hidden=false
+
         -- Dark rounded outline: a central rectangle with 1px-inset endcaps.
         windower.prim.set_position(bar.frame,x+1,y)
         windower.prim.set_size(bar.frame,width-2,height+2)
