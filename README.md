@@ -5,6 +5,16 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
 
+## Animation4 unified pre-window preview
+
+The `development/skillchains-resonance-animation5` branch tests
+the common three-beat white expansion → white fade → colored
+pre-decay flare transition for all chain levels. Level-2/3 traveling
+flares removed; level-4 flicker preserved. Edge flares and glow
+rails are inset horizontally to fit rounded bar ends. User-preferred
+initial intensity/flare/glow settings are 2/2/2; saved settings
+remain untouched. TargetSC 0.1.0 is unchanged. See TESTING.md.
+
 ## Current Skillchains Animation3 test — 2026-10-19
 
 The `development/skillchains-resonance-animation4` testing branch
