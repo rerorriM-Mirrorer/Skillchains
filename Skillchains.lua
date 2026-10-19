@@ -616,7 +616,9 @@ windower.register_event('addon command', function(cmd, ...)
                     created=clock,delay=clock+3,times=clock+3+(8-example[1]),
                     ends=clock+3+(8-example[1])+.35,
                     step=example[1],level=example[2],active=example[3],
-                    closed=example[2]>=4
+                    -- Preview deliberately shows the provisional level-4
+                    -- border on a mock bar. Real Radiance/Umbra remain closed.
+                    closed=false
                 }
                 message('Local HUD preview: '..kind..'. No combat or TargetSC event sent.')
             else
