@@ -3,7 +3,8 @@
 assert(arg[1],'Pass Skillchains.lua from commit e095657 as the first argument')
 string.ucfirst=function(s)return s:sub(1,1):upper()..s:sub(2)end
 local function harness(path)
-    local clock,events,renders=100,{},{}
+    local clock,events,renders=100,{},{},{}
+    local raw_deadlines={}
     local env=setmetatable({_addon={},res={spells={[144]={element=0}},jobs={}}},{__index=_G})
     env.os=setmetatable({clock=function() return clock end},{__index=os})
     local function set(values)
@@ -49,9 +50,11 @@ local function harness(path)
     local function advance(t)clock=t events.prerender()end
     local function action(t,params)clock=t params.param=params.param or 1 env.action_handler(params)end
     action(100,{kind='weaponskill_finish',resource='weapon_skills',spell=6,message=185})
+    raw_deadlines[1]=copy(env.resonating[71])
     advance(100.1) advance(102) advance(104)
     action(104,{kind='weaponskill_finish',resource='weapon_skills',spell=1,message=185,
         conclusion=true,effect={animation='fusion',message_id=288}})
+    raw_deadlines[2]=copy(env.resonating[71])
     advance(104.1) advance(107.5)
     local deadlines=copy(env.resonating[71])
     -- Real action_handler path: a confirmed Fire burst on the tracked target.
@@ -60,17 +63,41 @@ local function harness(path)
     assert(env.resonating[71].times==deadlines.times and env.resonating[71].mb_window==deadlines.mb_window)
     advance(113.5) advance(114.1) advance(116)
     env.apply_properties(71,'weapon_skills',1,{'Light'},3,6,true)
+    raw_deadlines[3]=copy(env.resonating[71])
     advance(117) advance(120) advance(124) advance(127)
     events['zone change']() advance(128)
     events.logout() advance(129)
-    return renders
+    return renders,raw_deadlines
 end
-local before,after=harness(arg[1]),harness('Skillchains.lua')
+local before,baseline_raw=harness(arg[1])
+local after,new_raw=harness('Skillchains.lua')
 local function equal(a,b,path)
     assert(type(a)==type(b),path..' type changed')
     if type(a)~='table' then assert(a==b,path..' value changed: '..tostring(a)..' vs '..tostring(b)) return end
     for k,v in pairs(a)do equal(v,b[k],path..'.'..tostring(k))end
     for k in pairs(b)do assert(a[k]~=nil,path..' added '..tostring(k))end
 end
-equal(before,after,'bar snapshots')
-print('PASS actual Skillchains baseline comparison: opener, chain timers, confirmed MB, MB-only tail, closed chain, expiry, zone/logout; '..#after..' identical bar snapshots')
+assert(#before==#after,'Existing state render count changed unexpectedly')
+local stable={'res','id','active','delay','times','mb_window','step','closed','bound','result_level'}
+for i=1,#baseline_raw do
+    for _,key in ipairs(stable) do
+        equal(baseline_raw[i][key],new_raw[i][key],'combat['..i..'].'..key)
+    end
+end
+for i=1,#after do
+    local old,new=before[i],after[i]
+    equal(old.active,new.active,'render['..i..'].active')
+    equal(old.step,new.step,'render['..i..'].step')
+    equal(old.closed,new.closed,'render['..i..'].closed')
+    equal(old.sc_wait,new.sc_wait,'render['..i..'].sc_wait')
+    equal(old.sc_total,new.sc_total,'render['..i..'].sc_total')
+    equal(old.mb_left,new.mb_left,'render['..i..'].mb_left')
+    equal(old.mb_total,new.mb_total,'render['..i..'].mb_total')
+    equal(old.groups,new.groups,'render['..i..'].groups')
+    if old.sc_wait==0 then equal(old.sc_left,new.sc_left,'open SC countdown') end
+    if old.sc_wait and old.sc_wait>0 then
+        assert(new.sc_left==new.sc_total,
+            'A waiting window must not visually count down before opening')
+    end
+end
+print('PASS combat deadlines and bridge state unchanged: opener, chains, confirmed MB, MB-only tail, zone/logout; '..#after..' snapshots, expected UI waiting-timer change')
