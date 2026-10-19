@@ -246,60 +246,51 @@ assert(not overlay.panel.visible and overlay.learning.displayed==2)
 overlay:render(nil)
 assert(overlay.learning.displayed==0)
 -- Source-clock animation presentation; no game packets are simulated here.
+-- Source-clock animation presentation; no FFXI packets are simulated.
 local opener={
     now=100.15,created=100,sc_open=103,step=1,level=0,
-    active={'Liquefaction','Detonation'},sc_wait=2.85,sc_left=7,sc_total=7,
-    mb_left=0,mb_total=10,groups=groups,closed=false
+    active={'Liquefaction','Detonation'},sc_wait=2.85,
+    sc_left=7,sc_total=7,mb_left=0,mb_total=10,
+    groups=groups,closed=false
 }
-opt.animation={enabled=true,intensity=1,fade=false}
+opt.animation={enabled=true,intensity=1,glow=1,flare=2,fade=false}
+opt.glow={levels='34',rail12=.3,cap12=.35,rail34=.6,cap34=.75,
+    level1=1,level2=1,level3=1,level4=1,scale=1,l4='whitegold'}
+opt.transition={duration=.30,style='energized'}
+assert(overlay.fx.sprites.glow_cap_l.path_value:match('ghost_glow_cap_l.png$'))
+assert(overlay.fx.sprites.glow_cap_r.path_value:match('ghost_glow_cap_r.png$'))
+assert(overlay.fx.sprites.border_glow.path_value:match('ghost_glow.png$'))
+assert(overlay.fx.sprites.moving==nil and overlay.fx.sprites.edge==nil,
+    'Vertical and center flare sprites are retired')
 overlay:render(opener)
 assert(prims.sc_resonance_fx_wash.visible,
-    'New opener should show white strike wash')
-assert(overlay.fx:bar_fraction(opener,opt.animation)==1,
-    'Countdown may not shrink during opener delay')
+    'Opener retains smoothly expanding white primitive')
 assert(prims.sc_resonance_sc_frame.alpha==0 and
     not prims.sc_resonance_sc_base.visible,
-    'Underlying SC gauge is not repainted during first white beat')
+    'First opener beat hides actual SC gauge and gradient work')
+assert(overlay.fx:bar_fraction(opener,opt.animation)==1,
+    'SC window cannot decay during opener wait')
 assert(prims.sc_resonance_fx_wash_cap_l.visible and
     prims.sc_resonance_fx_wash_cap_r.visible,
-    'Expanding white bar has rounded left and right end caps')
-assert(prims.sc_resonance_fx_wash_cap_l.h<
-    prims.sc_resonance_fx_wash.h,
-    'Rounded white caps sit inset vertically from the bar')
-local fx_edge=overlay.fx.sprites.edge
-local bottom=opt.bar.y+math.max(3,math.floor(5*opt.scale+.5))+1
-assert(fx_edge.visible and fx_edge.y+fx_edge.height==bottom,
-    'Rounded base touches fill bottom, with no dangling body below')
-local old_show=fx_edge.show_calls
-local old_hide=fx_edge.hide_calls or 0
-overlay:render(opener)
-assert(fx_edge.show_calls==old_show and (fx_edge.hide_calls or 0)==old_hide,
-    'Unchanged frame does not hide/show the same sprite')
-assert(overlay.properties.opacity>0 and overlay.properties.opacity<245 and
-    overlay.properties.outline_opacity>0 and
-    overlay.learning.rows[1].label.outline_opacity>0,
-    'Property text, icons and BOTH stroke and foreground start fading in first beat')
+    'White bar uses the same rounded endcap silhouette')
+assert(overlay.properties.opacity>0 and overlay.properties.opacity<245,
+    'Opener caption starts fading in during first beat')
 opener.now=101.5;opener.sc_wait=1.5
 overlay:render(opener)
 assert(overlay.properties.opacity==245 and
-    overlay.properties.outline_opacity==235 and
-    overlay.learning.rows[1].label.opacity==245,
-    'Labels reach full opacity by the end of first opener second')
-assert(prims.sc_resonance_fx_wash.visible,
-    'Rounded white overlay fades out during second beat')
-assert(not overlay.fx.sprites.moving.visible,
-    'No extra pulses travel during an opener')
+    prims.sc_resonance_fx_wash.visible and
+    prims.sc_resonance_fx_wash.alpha<255,
+    'Opener fades white into dim property on second beat')
+assert(prims.sc_resonance_sc_base.visible,
+    'Real dark bar appears behind fading white opener')
 opener.now=102.5;opener.sc_wait=.5
 overlay:render(opener)
-assert(overlay.properties.opacity==245 and
-    overlay.learning.rows[1].label.opacity==245,
-    'Property labels remain fully visible after first beat')
-assert(not prims.sc_resonance_fx_wash.visible,
-    'White wash is gone in the third beat')
+assert(not prims.sc_resonance_fx_wash.visible)
 opener.now=103.5;opener.sc_wait=0;opener.sc_left=6.5
 overlay:render(opener)
 assert(overlay.fx:bar_fraction(opener,opt.animation)<1,
-    'Continuation counts down after actual SC window opening')
+    'Continuation begins only when real opener window opens')
+
 local chain={
     now=110,created=110,sc_open=113,step=2,level=2,active={'Fusion'},
     sc_wait=3,sc_left=6,sc_total=6,mb_left=10,mb_total=10,
@@ -308,96 +299,150 @@ local chain={
 }
 overlay:render(chain)
 assert(overlay.fx:bar_fraction(chain,opt.animation)==.27,
-    'Successful chain grows from observed prior fill instead of restarting arbitrarily')
-chain.now=110.15
+    'Successful chain keeps previous fill fraction at beginning')
+assert(prims.sc_resonance_sc_base.visible,
+    'Successful chain does not hide previous dark track')
+chain.now=110.5;chain.sc_wait=2.5
+overlay:render(chain)
 local middle=overlay.fx:bar_fraction(chain,opt.animation)
-assert(middle>.27 and middle<1,'White success flare expands fill for 0.3s')
-chain.now=110.35
-overlay:render(chain)
-assert(overlay.fx:bar_fraction(chain,opt.animation)<1)
-assert(overlay.fx.sprites.left.visible and not overlay.fx.sprites.right.visible,
-    'White pre-window has white edge flare before property edge flares')
-assert(overlay.fx.sprites.moving.visible,
-    'Original level-4 center pulse restored for level 2')
+assert(middle>.27 and middle<1,'Successful underlay expands from previous fraction')
 assert(prims.sc_resonance_fx_wash.x==opt.bar.x+1 and
-    prims.sc_resonance_sc_base.visible,
-    'Successful chain starts white overlay at LEFT while prior track stays visible')
-for i=1,3 do
-    assert(overlay.fx.sprites.moving.rgb[i]==
-        prims.sc_resonance_sc_12.color[i],
-        'Early center flare color matches ACTUAL previous fill while transitioning')
-end
-assert(overlay.fx.sprites.left.y+
-    overlay.fx.sprites.left.height<=opt.bar.y+
-    math.max(3,math.floor(5*opt.scale+.5))+1,
-    'Flare foot is level with the bottom of the SC fill')
-local trans_a=overlay.fx:palette_blend(chain)
-assert(trans_a==0,'Property transition stays dim during first white expansion')
-chain.now=111.3;chain.sc_wait=1.7
+    prims.sc_resonance_fx_wash.w>20,
+    'White refill grows from left edge, not previous fill endpoint')
+assert(not overlay.fx.sprites.border_glow.visible and
+    not overlay.fx.sprites.glow_cap_r.visible,
+    'Level 2 glow is disabled by default, even when white refill active')
+assert(overlay.fx.sprites.moving==nil,
+    'No center flares on any successful level')
+chain.now=112.2;chain.sc_wait=.8
 overlay:render(chain)
-assert(overlay.fx.sprites.moving.visible)
-local first_pass=overlay.fx.sprites.moving.x
-chain.now=111.6;chain.sc_wait=1.4
+assert(prims.sc_resonance_fx_wash.visible and
+    prims.sc_resonance_fx_wash.alpha==255,
+    'Successful chain stays pure white after expansion')
+assert(overlay.fx:transition_progress(chain,opt.transition)==0,
+    '0.3 second fade must not start early')
+chain.now=112.925;chain.sc_wait=.075
 overlay:render(chain)
-assert(overlay.fx.sprites.moving.visible and
-    overlay.fx.sprites.moving.x==first_pass,
-    'Level-2 center pulse remains stationary while it flickers')
-chain.now=113.1;chain.sc_wait=0;chain.sc_left=5.9
+local first_alpha=prims.sc_resonance_fx_wash.alpha
+assert(first_alpha>0 and first_alpha<255,
+    'White begins giving way to property shortly BEFORE decay')
+chain.now=113;chain.sc_wait=0;chain.sc_left=6
 overlay:render(chain)
-assert(not overlay.fx.sprites.moving.visible,
-    'Traveling flares stop when actual continuation starts')
-assert(overlay.fx.sprites.right.visible,
-    'Property-colored edge flare follows the bar after countdown starts')
--- Mutation safety: optional opacity wave never alters absolute deadline.
-local prior=chain.sc_left
+local overlap=overlay.fx:transition_progress(chain,opt.transition)
+assert(overlap>.45 and overlap<.55,
+    'White-to-property fade is centered on exact countdown boundary')
+assert(prims.sc_resonance_fx_wash.visible and
+    prims.sc_resonance_fx_wash.alpha<first_alpha,
+    'White alpha keeps fading as decay starts')
+chain.now=113.15;chain.sc_left=5.85
+overlay:render(chain)
+assert(overlay.fx:transition_progress(chain,opt.transition)==1 and
+    not prims.sc_resonance_fx_wash.visible,
+    'White disappears at countdown +0.15s without changing deadline')
+assert(overlay.fx:bar_fraction(chain,opt.animation)<1)
+assert(prims.sc_resonance_sc_base.alpha==115,
+    'Dark empty track remains constant')
+local deadline=chain.sc_left
 opt.animation.fade=true
 overlay:render(chain)
-assert(chain.sc_left==prior and overlay.fx:opacity(chain,opt.animation)<1)
-assert(prims.sc_resonance_sc_base.alpha==115,
-    'Even with fade ON, the empty dark bar must retain its original alpha')
-assert(overlay.fx.sprites.border_glow.visible==false,
-    'Level-2 has no intrusive full-width glow')
-opt.animation.enabled=false
-overlay:render(chain)
-assert(not prims.sc_resonance_fx_wash.visible and
-    not overlay.fx.sprites.left.visible)
-opt.animation.enabled=true
-local lvl1={now=201,created=200,sc_open=203,step=2,level=1,
-    active={'Liquefaction'},sc_wait=2,sc_left=6,sc_total=6,
-    from_fraction=.5,closed=false,groups=groups}
-overlay:render(lvl1)
-assert(overlay.fx.sprites.moving.visible,
-    'Level 1 shares the original three-beat center pulse')
-local lvl3={now=301,created=300,sc_open=303,step=2,level=3,
-    active={'Light'},sc_wait=2,sc_left=6,sc_total=6,
-    from_fraction=.5,closed=false,groups=groups}
-overlay:render(lvl3)
-assert(overlay.fx.sprites.moving.visible and
-    overlay.fx.sprites.border_glow.visible and
-    overlay.fx.sprites.border_lower.visible,
-    'Level 3 has one follow-up and separate top and bottom halo rails')
-local first3=overlay.fx.sprites.moving.x
-lvl3.now=301.6;lvl3.sc_wait=1.4
-overlay:render(lvl3)
-assert(overlay.fx.sprites.moving.visible and
-    overlay.fx.sprites.moving.x==first3,
-    'Level 3 center pulse stays stationary')
-local lvl4={now=401,created=400,sc_open=403,step=2,level=4,
-    active={'Radiance'},sc_wait=2,sc_left=6,sc_total=6,
-    from_fraction=.5,closed=false,groups=groups}
-overlay:render(lvl4)
-assert(overlay.fx.sprites.moving.rgb[1]==242 and
-    overlay.fx.sprites.moving.rgb[2]==232 and
-    overlay.fx.sprites.moving.rgb[3]==201,
-    'Central Radiance pulse uses fill-center hue, not decorative gold')
-local flare_bottom=overlay.fx.sprites.edge.y+overlay.fx.sprites.edge.height
-lvl4.now=401.65;lvl4.sc_wait=1.35
-overlay:render(lvl4)
-assert(overlay.fx.sprites.edge.y+overlay.fx.sprites.edge.height==flare_bottom,
-    'Changing flare height preserves exact lower anchor')
-overlay:render(nil)
-assert(not overlay.fx.sprites.moving.visible)
-overlay:destroy()
-print('resonance FX simulation passed: opacity/stroke fades, native-sized PNG fix, single opener sweep, palette fade, timed soft flares, cleanup')
-print('resonance_ui integration simulation passed: bars, captions, icons, drag guide, cleanup')
+assert(chain.sc_left==deadline and prims.sc_resonance_sc_base.alpha==115,
+    'Optional countdown opacity wave does not alter deadlines or empty track')
+opt.animation.fade=false
 
+-- The caps and rails share the same modulation; caps are 25% stronger
+-- by default, with the level 4 white-gold color.
+local lvl4={
+    now=403.3,created=400,sc_open=403,step=2,level=4,
+    active={'Radiance'},sc_wait=0,sc_left=5.7,sc_total=6,
+    from_fraction=.5,closed=false,groups=groups
+}
+overlay:render(lvl4)
+local left=overlay.fx.sprites.glow_cap_l
+local right=overlay.fx.sprites.glow_cap_r
+local top=overlay.fx.sprites.border_glow
+local bottom=overlay.fx.sprites.border_lower
+assert(left.visible and right.visible and top.visible and bottom.visible,
+    'Four continuous glow components form the level-4 electric capsule')
+assert(left.x==opt.bar.x and right.x+right.width==opt.bar.x+opt.bar.width,
+    'New glow endcaps stay INSIDE bar bounds and meet each rail')
+assert(left.opacity>top.opacity and right.opacity==left.opacity,
+    'Default cap-forward mode makes endcaps moderately stronger')
+assert(left.rgb[1]==255 and left.rgb[2]==239 and left.rgb[3]==194,
+    'Default level 4 glow is white-gold')
+local electric_a=top.opacity
+lvl4.now=403.37;lvl4.sc_left=5.63
+overlay:render(lvl4)
+assert(top.opacity~=electric_a,
+    '23/28 rad/s oscillation still animates border electricity')
+local show_count=right.show_calls
+local hide_count=right.hide_calls or 0
+overlay:render(lvl4)
+assert(right.show_calls==show_count and
+    (right.hide_calls or 0)==hide_count,
+    'Cached sprites avoid unnecessary hide/show on identical frames')
+
+opt.glow.cap34=opt.glow.rail34
+overlay:render(lvl4)
+assert(right.opacity==top.opacity,
+    'Balanced option equalizes cap and rail brightness')
+opt.glow.l4='gold'
+overlay:render(lvl4)
+assert(left.rgb[1]==249 and left.rgb[2]==207 and left.rgb[3]==103,
+    'Optional gold L4 palette remains available')
+opt.glow.l4='white'
+overlay:render(lvl4)
+assert(left.rgb[1]==255 and left.rgb[2]==255 and left.rgb[3]==255,
+    'Optional white L4 palette remains available')
+opt.glow.l4='whitegold'
+opt.glow.cap34=.75
+opt.glow.levels='off'
+overlay:render(lvl4)
+assert(not left.visible and not top.visible,
+    'Master level mask off removes glow without affecting SC bar')
+opt.glow.levels='1234'
+opt.glow.level1=.6
+local lvl1={
+    now=203.4,created=200,sc_open=203,step=2,level=1,
+    active={'Liquefaction'},sc_wait=0,sc_left=5.6,sc_total=6,
+    from_fraction=.5,closed=false,groups=groups
+}
+overlay:render(lvl1)
+assert(left.visible and top.visible and top.opacity>0,
+    'Glow is optionally enabled for level 1')
+local low_alpha=top.opacity
+opt.glow.level1=2
+overlay:render(lvl1)
+assert(top.opacity>low_alpha,
+    'Per-level strength is adjustable independent of tier groups')
+opt.glow.levels='34'
+local lvl3={
+    now=303.4,created=300,sc_open=303,step=2,level=3,
+    active={'Light'},sc_wait=0,sc_left=5.6,sc_total=6,
+    from_fraction=.5,closed=false,groups=groups
+}
+opt.transition.style='uniform'
+overlay:render(lvl3)
+assert(left.visible and top.visible,'Level 3 retains continuous white glow')
+opt.transition.style='energized'
+local transient={
+    now=302.96,created=300,sc_open=303,step=2,level=3,
+    active={'Light'},sc_wait=.04,sc_left=6,sc_total=6,
+    from_fraction=.5,closed=false,groups=groups
+}
+overlay:render(transient)
+local energized_alpha=top.opacity
+opt.transition.style='uniform'
+overlay:render(transient)
+assert(top.opacity~=energized_alpha,
+    'Uniform fade and energized border coming-online remain distinct options')
+opt.transition.style='energized'
+opt.animation.enabled=false
+overlay:render(lvl3)
+assert(not left.visible and not top.visible,
+    'Turning animation off hides optional glow cleanly')
+opt.animation.enabled=true
+overlay:render(nil)
+assert(not left.visible and not prims.sc_resonance_fx_wash.visible)
+overlay:destroy()
+print('resonance FX simulation passed: white refill, 0.30s overlap, glow cap geometry, levels, options, flicker, pooling')
+print('resonance_ui integration simulation passed: bars, captions, icons, drag guide, cleanup')
