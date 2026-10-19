@@ -138,9 +138,10 @@ overlay.handle:pos(286,112)
 overlay:render(state)
 assert(opt.bar.x==280 and opt.bar.y==140,'Left Ctrl snaps bar anchor from screen origin')
 assert(prims.sc_resonance_sc_frame.x==281,'SC frame follows the same parent anchor')
-assert(overlay.properties.x==opt.bar.x+math.floor(3*opt.scale+.5)+
-    2*(math.max(10,math.floor(12*opt.scale+.5))+math.max(1,math.floor(2*opt.scale+.5)))+2,
-    'SC caption continues to follow bar anchor through icon offsets')
+assert(overlay.properties.x==
+    overlay.caption_icons.sc[2].image.x+
+    overlay.caption_icons.sc[2].image.width+1,
+    'SC caption follows compact property icon column with a 1px gap')
 local gx,gy=overlay.panel:pos()
 overlay.panel:pos(gx+37,gy-18)
 overlay:render(state)
