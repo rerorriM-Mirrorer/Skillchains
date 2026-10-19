@@ -56,9 +56,9 @@ def chunk(tag, data):
 
 
 def encode_png(rows):
-    pixels = b''.join(b'\\x00'+b''.join(bytes((255,255,255,a))
+    pixels = b''.join(b'\x00'+b''.join(bytes((255,255,255,a))
                     for a in row) for row in rows)
-    return (b'\\x89PNG\\r\\n\\x1a\\n' +
+    return (b'\x89PNG\r\n\x1a\n' +
             chunk(b'IHDR',struct.pack('>IIBBBBB',SIZE,SIZE,8,6,0,0,0)) +
             chunk(b'IDAT',zlib.compress(pixels,0)) +
             chunk(b'IEND',b''))
