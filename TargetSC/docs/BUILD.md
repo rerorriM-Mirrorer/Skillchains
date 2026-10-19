@@ -1,3 +1,94 @@
+# Building and verifying TargetSC 0.3.0 / Test3
+
+Author: A. The DLL is PE32/i386. Host compilation, Lua simulations and portable
+CPU geometry tests do not demonstrate Windows loading, D3D or FFXI rendering.
+SceneHook ABI/header 2, native display tracking and scene lifecycle are preserved.
+
+## x86 build
+
+```sh
+i686-w64-mingw32-g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror \
+  -shared -static -static-libgcc -static-libstdc++ -Wl,--no-insert-timestamp \
+  -o TargetSC/libs/_TargetSC.dll TargetSC/src/TargetSC.cpp \
+  TargetSC/src/exports.def -ld3d8
+i686-w64-mingw32-strip --strip-unneeded TargetSC/libs/_TargetSC.dll
+i686-w64-mingw32-objdump -p TargetSC/libs/_TargetSC.dll
+```
+
+The development host uses the installed GCC 13.2 `-win32` executable variant.
+Expected: sole `luaopen__TargetSC` export, i386/PE32, only KERNEL32.dll and
+msvcrt.dll imports; LuaCore.dll exports resolve dynamically. No texture loader,
+D3DX or extra runtime DLL. Close every client before replacing the DLL.
+CMake remains available; its Visual Studio route has not been verified.
+
+## Native API 0.3.0
+
+```lua
+native.version() -- '0.3.0'
+native.start()
+native.begin(entity_index, entity_id)
+native.ring(radius, height, world_width, argb, minimum_pixels,
+            sector_count, argb2, argb3, argb4, rotation_radians)
+native.disc(radius, height, rotation_radians, fill_argb, glyph_mode,
+            outline_argb, sector_count, argb2, argb3, argb4)
+native.commit()
+native.clear()
+native.status()
+native.stop()
+```
+
+`sector_count` is 1–4; unused colors may repeat the first. Each sector uses the
+same circle centerline, joints, rotation and depth. It changes color exactly at
+its boundary, without blending separate arc endpoints. Disc sectors and glyph
+rotate together. Glyph mode: 0 plain fill, 1 fill plus glyph lines, 2 glyph lines
+only. Fill and outline ARGB are independent; no hidden solid glyph background.
+The glyph contains circle rim, full border-reaching cross, pointed star and
+central square from normalized procedural line geometry.
+
+Ring pixel widening retains projected centerline z/rhw and bounded joins.
+Scene depth test/no depth writes and full stateblock restore remain. Maximum
+work: 32 ring bands, 8 discs, 18,240 vertices (~356 KiB), one triangle-list draw
+call, no per-frame heap allocation in native rendering. Source coordinates are
+resolved each scene frame; Lua identity/health gates and 250ms stale-frame
+watchdog are retained. Other SceneHook ABI 2 addons need no rebuild solely for
+TargetSC's own API update. Test2 Lua/DLL intentionally fail the Test3 version
+guard: install the complete matching folder.
+
+## Reproduce host verification
+
+```sh
+for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua TargetSC/*.lua TargetSC/tests/*.lua; do luac5.1 -p "$f"; done
+lua5.1 tools/test_learning_ui.lua
+lua5.1 tools/test_visual_commands.lua
+lua5.1 TargetSC/tests/test_motion.lua
+lua5.1 TargetSC/tests/test_transport.lua
+lua5.1 TargetSC/tests/test_resonance.lua
+lua5.1 TargetSC/tests/test_addon.lua
+lua5.1 TargetSC/tests/test_missing.lua
+lua5.1 TargetSC/tests/test_missing.lua mismatch
+git show e095657a2e7ecc5a49d05e96c1b78523a4860af5:Skillchains.lua > /tmp/sc-baseline.lua
+lua5.1 TargetSC/tests/test_skillchains_regression.lua /tmp/sc-baseline.lua
+g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-stroke TargetSC/tests/test_stroke.cpp
+/tmp/tsc-stroke
+g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-property TargetSC/tests/test_property.cpp
+/tmp/tsc-property
+python3 tools/generate_capsule_halo.py --check
+python3 tools/test_capsule_halo.py
+python3 tools/package_targetsc.py
+```
+
+Package only a clean committed checkout. The builder enforces Animation8 HUD/
+combat/asset identity, permits exactly the two command-dispatch publisher fixes,
+and validates PE32, manifests, hashes, PNGs, archive structure and CRC. It records
+the exact source commit and native DLL hash. `docs/verification/test3-*` contains
+local records. GitHub Actions is configured but a local pass is not an Actions
+run, and a local package is not proof of publishing. Gameplay/SceneHook handoff/
+device reset and multibox frame pacing remain live tests.
+
+---
+
+## Historical Test2 build instructions (superseded)
+
 # Building and verifying TargetSC 0.2.0 / Test2
 
 Author: A. The new DLL is PE32/i386. Compilation, binary inspection and portable

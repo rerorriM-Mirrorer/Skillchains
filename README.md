@@ -5,6 +5,19 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
 
+## TargetSC 0.3.0 Test3 pairing
+
+`development/targetsc-resonance-test3` preserves Animation8's HUD, assets,
+resolver and deadlines while developing the companion ground-bell motion,
+segmented opener colors, L1–L4 ring hierarchy, faithful procedural glyphs and
+spin-to-stop discs. The optional bridge's two commands are corrected from
+`lua i` to `lua c`; **install both complete addon folders**. Close FFXI before
+replacing TargetSC's matching 0.3.0 DLL and preserve both data folders.
+`//tsc preset default` restores the latest Lionstag snapshot;
+`//tsc preview demo` runs the full no-burst progression to Umbra.
+See [TargetSC/TESTING.md](TargetSC/TESTING.md) for the current test guide.
+Host checks are distinct from the pending Test3 gameplay test.
+
 ## TargetSC 0.2.0 test pairing
 
 The `development/targetsc-resonance-test2` branch pairs this unchanged
@@ -475,6 +488,13 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-19 — TargetSC 0.3.0 Test3 pairing (A)
+
+- Preserve Animation8 HUD, images, resolver and clocks; correct optional bridge
+  delivery to addon-command receivers. See TargetSC's cumulative guide for the
+  new bell motion, glyphs, colors, presets and full Umbra preview. Live pending.
+
 
 ### 2026-10-19 — TargetSC Test2 paired delivery (A.)
 - Preserve user-approved Animation8 presentation and source timing unchanged.

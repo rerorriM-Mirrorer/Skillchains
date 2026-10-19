@@ -1,3 +1,37 @@
+# Shared resonance plan — Test3 reconciliation (2026-10-19, A)
+
+Animation8 `e3a8b63` remains the accepted 2D preview reference. Preserve its
+runtime, images, resolver and deadlines; only fix optional publisher command
+dispatch from lua i to lua c. TargetSC Test3 is an independent test of the
+following language, using the same authoritative source-created/open/close/MB
+boundaries. No MB redesign or preparing-white/L2 HUD changes belong here.
+
+| Phase | Current TargetSC Test3 design |
+| --- | --- |
+| Opener appearance | Ground rings wobble in place; initial white expansion alongside immediately revealing property layers; no fall or later small pulses |
+| Opening possibilities | Main outer property, secondary/tertiary smaller concentric properties; full palette sectors per property |
+| Window opens | Sky rises and begins source-timed descent; matching world-space strike for floor/sky, independent settled ground hum |
+| Successful result | White consolidation/recharge; L1 one ring, L2 two elemental vertical strands, L3 three vertical Light/Darkness strands, L4 four concentric rings |
+| Ground design | Circle, rim-reaching cross, pointed star, central square; separate fill/outline alpha; smaller/higher alternative property discs |
+| Countdown | Sky strike damps; ground hum keeps separate settled amplitude while its frequency slows; disc rotation integrates its slowing speed to a stop |
+| Natural or terminal end | Existing ring geometry settles/fades in place; no invented continuation on a closed result |
+| Independent MB lifetime | Keep the existing separate reminder halo and confirmed-burst response; revisit style later |
+
+Snapshot defaults: Lionstag's latest values (sine/.09/.3/3, intensity1, scale2,
+opacity.3, brightness4, glow1, disc opacity.3) with explicit resettable presets.
+The amplitude unit intentionally changes from estimated-height fraction to
+world distance. Shape dimensions remain model-relative. Discs-on/off comparison
+presets keep the initial white expansion independently switchable.
+
+Acceptance remains iterative in FFXI. The complete demo has an opener plus four
+successful links at 0/9/17/24/30s, source-style shrinking windows, ultimate Umbra
+with Anguta/qualifying Aeonic Aftermath, and no injected bursts. Static host and
+native cross-build checks are distinct from live visual/timing/performance.
+
+---
+
+## Historical Test2 reconciliation (superseded by the above)
+
 # Shared resonance plan — reconciled 2026-10-19 (A.)
 
 ## Current reference and scope

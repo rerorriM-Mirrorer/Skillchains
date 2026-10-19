@@ -2,6 +2,30 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## TargetSC 0.3.0 Test3 paired delivery (2026-10-19)
+
+Branch `development/targetsc-resonance-test3`, Test2 base `5d23e29`, bridge fix
+`aaf233f`. Full current install/test guide is in TargetSC/TESTING.md. Both folders
+must be installed: TargetSC Lua/native API are now 0.3.0, and Skillchains' two
+publisher commands now use `lua c`. This is the only change to its production
+runtime; Animation8 HUD, assets, resolver and source deadlines are byte-identical
+and guarded by the package builder.
+
+Test3 adds world-space matched strikes, a separate slowing ground hum, no opener
+fall, full opener colors, the requested concentric/stacked L1–L4 hierarchy,
+faithful procedural circle/cross/star/central-square glyphs, independent fill/
+outline and awakening controls, spin-to-stop discs, in-place expiration, snapshot
+baseline presets and a no-burst four-link Umbra demo. Its five hits occur at
+0/9/17/24/30 seconds. The independent MB reminder halo is deliberately retained.
+
+Latest Lionstag snapshot `settings(20261019-131605).xml` supplies resettable
+numeric defaults. Amplitude .3 now uses world units rather than model-height
+fraction. No user settings/log bytes enter the package. Test2 preview feedback
+is preserved separately from Test3's live-pending motion/renderer/connection.
+Automated host checks cover Lua, native compilation/portable geometry, actual
+handler transport, source deadline regression, original HUD and full packaging.
+No Test3 FFXI/D3D execution or GitHub Actions success is claimed by local checks.
+
 ## TargetSC Test3 development — transport repair (2026-10-19)
 
 `development/targetsc-resonance-test3` starts from Test2 `5d23e29`.

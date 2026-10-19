@@ -15,6 +15,28 @@ This is still a host simulation, not a Windower/FFXI runtime check.
 Reference: https://docs.windower.net/commands/addon/ (lua command / lua invoke).
 Protocol v1 fields and all source combat deadlines remain unchanged.
 
+## Test3 presentation compatibility
+
+Native API 0.3.0 adds segmented color sectors and independent glyph outline
+alpha without changing protocol v1 or SceneHook ABI 2. The Animation8 HUD,
+resolver, images and source clocks remain unchanged; only the two publisher
+command dispatch strings differ. A new source state still uses the original
+created/sc_open/sc_close/mb_close, resolved result_level and target identity.
+
+Appearance and opening share one world-space strike envelope. The ground adds
+an independent settled hum whose frequency slows analytically; sky vibration
+uses only the strike. Disc angles integrate their speed rather than multiplying
+age by a falling speed (which could reverse motion). Ground hum/spin slowdown
+uses actual window duration; closed results use only a visual terminal fade and
+never invent a continuation. Natural expiration freezes and fades the existing
+positions. The original MB-only reminder and confirmed burst queue remain.
+Snapshots keep source age and cannot restart deadlines or impact effects.
+
+`preview demo` owns private synthetic states, using the original source's
+3s delay and (8-step) continuation formula. All four links arrive one second
+before the preceding close. Tests verify combinations with the actual current
+resolver. No preview publishes events, performs an action or changes the HUD.
+
 ## 2026-10-19 / TargetSC 0.2.0 presentation compatibility
 
 The complete event bridge and Skillchains runtime are byte-identical to the

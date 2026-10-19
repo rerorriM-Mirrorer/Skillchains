@@ -1,5 +1,144 @@
 # TargetSC — elemental resonance
 
+## 0.3.0 Test3 — ground bell, elemental geometry and a working bridge
+
+Read **TESTING.md first**. Author: **A**. Development branch:
+`development/targetsc-resonance-test3`, based on Test2 `5d23e29`.
+Lua reports `0.3.0-test3`; its matching native DLL reports `0.3.0`.
+The Animation8 HUD, images, resolver and SC/MB deadlines are unchanged. Both
+bridge directions now use `lua c` to deliver addon commands rather than invoke
+functions. **Install both addon folders even if already using Animation8.**
+
+Close every FFXI client before replacing the DLL. Back up both folders, merge
+complete `TargetSC/` and `Skillchains/`, and preserve both `data/` directories.
+Existing saved values are retained; the following explicit preset restores
+Lionstag's latest submitted settings and all new Test3 visual defaults:
+
+```text
+//lua load Skillchains
+//lua load TargetSC
+//tsc preset default
+//tsc sync
+//tsc status
+//sc targetsc
+```
+
+Use reload instead of load when appropriate after installation. Expected:
+source Skillchains v1, synced=true; publisher subscribed=true, failures=0.
+Preview works with a living enemy selected even without the source addon.
+
+### First comparisons
+
+```text
+//tsc preview opener Fragmentation,Scission,Impaction
+//tsc preview chain Fragmentation 2
+//tsc preview demo
+```
+
+Run previews separately. `demo` (aliases `umbra` / `full`) runs five simulated
+weaponskills with four successful links, no burst events:
+
+| Hit time | Weaponskill | Result |
+| --- | --- | --- |
+| 0s | Fast Blade | Scission opener |
+| 9s | Gust Slash | Detonation, L1 |
+| 17s | Nightmare Scythe | Gravitation, L2 |
+| 24s | Rudra's Storm | Darkness, L3 |
+| 30s | Entropy, Anguta + qualifying Aeonic Aftermath | Umbra, L4 |
+
+Each extension lands exactly one second before the preceding source-style
+continuation deadline. This is a cooperative example, not a single-job TP or
+weaponswap plan. Umbra is terminal: charge to 33s, rings fade in place, then the
+separate MB reminder halo remains until 40s. No spell or MB event is injected.
+The actual current Skillchains property resolver validates the combinations.
+
+The other explicit scenarios remain `preview opener`, `pre`, `chain`, `window`,
+`expire`, `closed`, `level1`–`level4`, and `off`. Properties with commas need no
+spaces. Opener/pre accept up to three properties. `window` and `expire` can
+intentionally show an experimental L4 continuation; live L4 remains closed.
+
+### Ring language
+
+| State | Geometry per ground/sky set |
+| --- | --- |
+| Opener | Main property outside; secondary/tertiary properties concentric inside it; each retains its full color palette |
+| Level 1 result | One elemental ring |
+| Level 2 result | Two vertically stacked rings, one for each element |
+| Level 3 result | Three vertically stacked Light/Darkness-colored rings |
+| Level 4 result | Four concentric white/gold or black/purple rings |
+
+An opener appears in place and wobbles; there is no downward fall. At the real
+window boundary its sky rings rise, then steadily approach the ground. Both
+appearance and opening use the same strike amplitude/damping. Ground rings
+settle into a smaller sustained hum; sky rings retain only the damped strike.
+Hum frequency slows to zero over the window, while its settled amplitude stays
+separate. Each higher result reenergizes the hum. Model size still sets radius
+and sky height, but **does not multiply strike/hum displacement**.
+
+Natural expiration freezes the existing ring positions and fades them there,
+without an expiration flash. A closed result similarly fades its existing
+pair without showing a continuation countdown. The separate central MB halo is
+intentionally retained as a reminder for the future MB design. Confirmed bursts
+still use the existing independent element shimmer/ripple and do not retime SC/MB.
+
+### Snapshot baseline and tuning
+
+`preset default` / `preset discson` restore sine, period .09, amplitude .3,
+damping 3, intensity 1, scale 2, height 1, opacity .3, brightness 4, glow 1,
+width 2px, disc opacity .3, and discs enabled. `preset discsoff` restores the
+same baseline with persistent discs disabled, leaving the initial white flash.
+All visual settings, including height, reset; enabled/debug do not. Presets
+save to the current profile. Vivid/gentle/legacy comparisons remain available.
+
+**Amplitude .3 now means .3 world units before intensity, rather than .3 times
+estimated model height.** This intentionally removes target-size dependence;
+the numeric snapshot value is preserved, not its former size-dependent travel.
+All following controls save automatically. Change one while replaying a preview.
+
+| Command | Meaning and range |
+| --- | --- |
+| `//tsc strike amplitude .3` | Shared strike displacement in world units, 0–1; `flutter` remains an alias |
+| `//tsc strike period .09` | Half-cycle seconds, .05–.5; full sine cycle is twice this |
+| `//tsc strike damping 3` | Strike decay/sec for both events, 0–8; zero keeps the strike unattenuated |
+| `//tsc hum amplitude .018` | Settled ground displacement in world units, 0–.3 |
+| `//tsc hum period .12` | Starting half-cycle, .05–1; before level gain |
+| `//tsc hum gain .35` | Added amplitude/frequency gain per result level above L1, 0–2 |
+| `//tsc hum slowdown 1` | Frequency-decay power, .1–4; larger slows earlier, all reach zero at expiry |
+| `//tsc ground height .04` | Floor-ring anchor in world units, 0–1 |
+| `//tsc fade duration .8` | Existing-ring fade seconds, .1–1; does not extend a gameplay window |
+| `//tsc discs on` / `off` | Persistent property layers; a bare command toggles |
+| `//tsc discs opacity .3` | Elemental fill alpha, 0–1, independent of white glyph lines |
+| `//tsc discs outline .45` | White glyph-line alpha, 0–1, independent of fill |
+| `//tsc discs style glyph` / `outline` / `fill` | Colored glyph, transparent outline-only, or colored fill-only |
+| `//tsc discs height .008` | Baseline glyph height in world units, 0–.5; shares ground vibration |
+| `//tsc discs speed 1` | Starting-spin multiplier, 0–4; .5 halves it; zero keeps discs still |
+| `//tsc discs slowdown 1` | Spin-decay power, .1–4; larger slows earlier; always stops at window close |
+| `//tsc awakening on` / `off` | Initial white expansion independent of persistent discs; bare toggles |
+| `//tsc awakening opacity .3` | Initial white-flash alpha, 0–1 |
+
+Disc starting rotations are unchanged: opener .5 turns/sec; L1 1; L2 2; L3 4;
+L4 stationary. Angles are analytic integrals of the slowing speed, so they do
+not jump or reverse near expiry. Property layers reveal alongside the initial
+white expansion. The unfilled circle/cross/star/central-square ground glyph
+remains; primary property overlaps it, alternatives are smaller and above it.
+The later little white/colored pulses have been removed. This is a procedural
+interpretation of the inspected icons, not a pixel-identical texture copy.
+
+Existing controls remain: `motion sine|flutter|legacy`, `layout grounded|symmetric|center`,
+`opacity 0–1`, `brightness 0–4`, `glow 0–3`, `width 1–8`, `intensity 0–4`,
+`scale .25–3`, `height .25–3`. Sine is smooth; flutter deliberately holds discrete
+positions. Symmetric converges toward model center; center also limits inward
+vibration to the current half-span. Legacy retains the original motion and
+does not use the new glyph/hum controls. Lua submissions remain capped at 30Hz.
+Use `status`, `help`, `debug on|off`, `sync`, `on|off`, `restart`, and `unload`.
+
+Test3 has passed host simulations, portable geometry tests and a 32-bit Windows
+cross-build. **Its native loading, visual feel and actual gameplay remain FFXI tests.**
+
+---
+
+## Historical Test2 reference (superseded by Test3 above)
+
 ## 0.2.0 Test2 — ground-first charge, flutter and visible cores
 
 **Read TESTING.md first.** This batch develops TargetSC only. Paired Skillchains
@@ -372,6 +511,20 @@ commits and full notices. Existing Skillchains credits and license are retained
 inside its own folder.
 
 ## Changelog
+
+### 2026-10-19 — 0.3.0 Test3 (A)
+
+- Fix bidirectional command delivery; test real addon handlers in both load orders.
+- Same world-space strike for appearance/opening, independent sustained slowing
+  ground hum, no opener fall, source-timed in-place natural/terminal fades.
+- Full opener palettes and requested concentric/stacked L1–L4 hierarchy.
+- Joined native color sectors; circle/full-cross/star/central-square outlines,
+  separate fill/line alpha, smaller/higher secondary layers, spin-to-stop.
+- Independent awakening switch, snapshot-default/discs comparison presets,
+  coherent tuning handlers and complete no-burst four-link Umbra demo.
+- Animation8 HUD/assets/combat preserved; complete paired package and x86 source.
+- Local automated verification only; Test3 FFXI/live performance pending.
+
 
 ### 2026-10-19 — 0.2.0 Test2 (A.)
 

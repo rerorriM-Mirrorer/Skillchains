@@ -56,8 +56,8 @@ local function run(source_first)
                 wrapped.new=function()local m=r.new();consumers[#consumers+1]=m;return m end
                 return wrapped
             end
-            if module=='resonance_preview'then return require(module)end
-            if module=='_TargetSC'then return {version=function()return '0.2.0'end,start=function()return'running'end,
+            if module=='resonance_preview'or module=='resonance_controls'then return require(module)end
+            if module=='_TargetSC'then return {version=function()return '0.3.0'end,start=function()return'running'end,
                 stop=function()end,clear=function()end,begin=function()end,ring=function()end,
                 disc=function()end,commit=function()end,status=function()return'simulated'end}end
             return {}
@@ -70,6 +70,18 @@ local function run(source_first)
     else tsc=environment('targetsc');sc=environment('skillchains')end
     local model=consumers[#consumers]
     assert(model.connected and model.synced,'both real handlers must complete the handshake')
+    local preview=require('resonance_preview')
+    local sequence=preview.umbra_sequence
+    local skills=require('skills').weapon_skills
+    assert(skills[sequence[1].weapon].skillchain[1]==sequence[1].property)
+    sc.info.player=1;sc.info.aeonic='Anguta'
+    for step=2,#sequence do
+        local row=sequence[step]
+        local props=sc.aeonic_prop(skills[row.weapon],1)
+        local level,result,ultimate=sc.check_props({sequence[step-1].property},props)
+        assert(level==row.level and (ultimate or result)==row.property,
+            'demo combination disagrees with actual Skillchains resolver at '..row.name)
+    end
     sc.apply_properties(71,'weapon_skills',32,{'Scission'},3,1);drain()
     local first=model.states[71]
     assert(first and first.sc_open==103 and first.sc_close==110 and first.mb_close==0)

@@ -1,5 +1,146 @@
 # TargetSC TESTING.md — start here
 
+## 0.3.0 Test3 — struck ground bell, elemental sectors and complete Umbra demo (2026-10-19)
+
+**Author:** A. **Branch:** `development/targetsc-resonance-test3`.
+**Base:** Test2 `5d23e29c5800254bc4aeb853e190c481e4433411`.
+**Bridge correction:** `aaf233f`. The package BUILD_INFO.json identifies the
+exact final source commit, renderer DLL hash, protocol and HUD reference.
+Lua `0.3.0-test3`, native API `0.3.0`, bridge v1, unchanged SceneHook ABI 2.
+All new automated results below are host checks, not FFXI/native runtime tests.
+
+### User observations and design decisions carried forward
+
+User tested Test2 previews in FFXI, liked the direction and sine vibration, and
+used Fragmentation as the comparison baseline. Observations: discs should be
+closer to ground and slower; .2–.3 disc opacity preserves element readability;
+strong strike wobble should settle into quieter countdown motion. A property
+can itself contain multiple elements, including on an opener. Test2 discarded
+all but the first opener palette color, and its star lacked the full cross and
+central square. The opener fall and subsequent small ground pulses were
+unwanted. Existing MB-lifetime ghost halo stays deliberately for future design.
+
+Latest user snapshot: `settings(20261019-131605).xml`, Lionstag profile merged
+with global.
+Motion=sine, period=.09, amplitude=.3, damping=3, intensity=1, scale=2,
+opacity=.3, brightness=4, glow=1, disc_opacity=.3; global height=1, width=2,
+layout=grounded, discs=true. These exact numeric visual values are hardcoded
+as Test3 defaults. Saved values are preserved until `preset default` is used.
+**Amplitude has intentionally changed from model-height fraction to world
+units.** Its numeric value is retained; the former target-dependent travel is
+not. Strike and hum now stay consistent across model heights and user scales.
+
+User log `Lionstag_2026.10.19.log` contains old-version preset failures
+and later sync diagnostics. The bridge's `lua i` commands invoked functions
+rather than reaching either real `addon command` receiver. Both directions,
+ready and unsubscribe now use `lua c`. The old simulations shared the wrong
+spelling; this build adds actual handler routing with distinct dispatch rules.
+Raw character XML/combat logs are not distributed in the testing package.
+
+### Install the complete paired package
+
+Archive: `TargetSC-0.3.0-Test3-Animation8-Full.zip`; only `TargetSC/` and
+`Skillchains/` installable folders, each with README, WORKFLOW, TESTING and
+BUILD_INFO. Native source, portable tests, licenses and verification records
+are included. No user data/settings or extra workflow copies at the ZIP root.
+
+1. Close **every FFXI client** before replacing `_TargetSC.dll`. Back up both
+   addon folders and preserve both `data/` directories.
+2. Merge **both complete folders**, even if already using Animation8: its
+   `targetsc_bridge.lua` needs the two dispatch corrections. TargetSC's new Lua
+   rejects the old DLL; do not mix files from different versions.
+3. Load Skillchains then TargetSC. Run `//tsc preset default`, `//tsc sync`,
+   `//sc targetsc`, `//tsc status`. Expect TargetSC Lua 0.3.0-test3/native 0.3.0,
+   source Skillchains v1, synced=true, subscribed=true and send failures=0.
+   Native device may initially be pending before scene callbacks run.
+4. Select a living enemy and run previews separately. `//tsc preview off`
+   returns to actual source state; no preview sends game actions or HUD events.
+
+### Main in-game comparisons — all still pending for Test3
+
+1. **Connection first:** real opener/chain, both load orders, reload Skillchains
+   while TargetSC runs, then `sync`. A healthy idle source must answer even
+   with no active SC. Confirm events increment only on transitions, with no
+   per-frame command spam. Verify original deadlines survive snapshot/reload.
+2. **Default motion:** `//tsc preview opener Fragmentation`. Appears in place,
+   without falling. No sky during the 3s pre-window. Same initial strike at
+   appearance/opening, then sky rises and descends while the ground settles
+   into a small hum. Compare small, large, tall and floating models. Strike
+   displacement must not scale with estimated height, scale or height commands.
+3. **Independent bell tuning:** compare `strike damping 0`, `3`, `8`; `hum
+   amplitude 0` vs `.018`; `hum period .12` vs `.2`; `hum slowdown 1` vs `2`.
+   Sky strike should settle while ground hum persists and slows. Hum settled
+   amplitude is separate from slowing speed; level gain strengthens/restarts
+   it after successive successful chains. `flutter` is an alias for `strike`.
+4. **Requested hierarchy:** opener `Fragmentation,Scission,Impaction` gives
+   main outer ring plus two smaller concentric alternatives, each in its full
+   palette. L1 one ring; L2 two vertical elemental strands; L3 three vertical
+   Light/Darkness strands; L4 four concentric rings. Each ground/sky set uses
+   that count. Two-color opener arcs must meet without a visible geometry gap.
+5. **Ground design:** `discs on`, `discs style glyph`, `discs opacity .3`,
+   `discs outline .45`. Compare `style outline` and `style fill`. Circle, full
+   border-reaching cross, pointed star and central square should read. Primary
+   layer overlaps the unfilled glyph; secondary/tertiary layers are smaller
+   and slightly above it. `discs height .008` is a world-space baseline. Fill
+   opacity zero must leave the independently adjustable outline visible.
+6. **Spin and awakening:** starting speeds remain .5/1/2/4 turns/sec for opener/
+   L1/L2/L3; L4 is still white or black. Rotation continuously slows to a full
+   stop as the sky reaches the floor and discs fade. Try `discs speed .5` and
+   `discs slowdown 2`. With `discs off`, the single initial white expansion
+   remains; `awakening off` removes it. No later small pulses should appear.
+7. **Expiration and MB reminder:** `preview expire Fusion 2`, `preview closed
+   Umbra 4`. Normal expiry fades existing positions without a white flash or
+   replacement geometry. Closed results settle/fade their existing four-ring
+   pair without a continuation countdown. The separate MB ghost halo stays
+   until its independent source deadline. No new MB ripple style is introduced.
+8. **Complete demo:** `//tsc preview demo` (or `umbra` / `full`) runs Fast Blade
+   0s → Gust Slash 9s → Nightmare Scythe 17s → Rudra's Storm 24s → Entropy 30s.
+   Results: Scission opener → Detonation L1 → Gravitation L2 → Darkness L3 →
+   Umbra L4. Entropy assumes Anguta + qualifying Aeonic Aftermath. This is a
+   cooperative example. Every hit is one second before the prior source-style
+   deadline. Final charge ends 33s, rings fade, MB reminder ends 40s. **No
+   confirmed burst events are injected.** Milestones are reported in chat.
+9. **Resettable comparison:** `preset discsoff`, `preview demo`, then `preset
+   discson`, replay. `preset default` restores the numeric snapshot plus the
+   new Test3 controls, including height. Enabled/debug remain unchanged.
+10. Repeat identity reuse, target switch, death/despawn, zoning, cutscene,
+    off/on, restart/unload, SceneHook owner handoff, device reset and 4–6-client
+    frame pacing from Test1 below. Native device/scene lifecycle code and
+    identity gates are preserved, but these remain live regression checks.
+
+### Automated coverage and practical limits
+
+- Lua 5.1 parse of all delivered runtime/tests; actual TargetSC command/lifecycle
+  simulation now validates expanded native submission arguments and saved
+  presets, invalid tuning input and all new visual handlers.
+- Real Skillchains + TargetSC handler simulation: both load orders, ready,
+  subscribe, exact source ages/deadlines, snapshots, source reload, unsubscribe,
+  off/on, zone reset and no polling. Full demo combinations are checked against
+  current `skills.lua`, `aeonic_prop` and `check_props`; no duplicate resolver.
+- Motion sweep: 8 properties × 3 motions × 3 layouts × 1051 frames; bounded
+  32 bands/8 discs. Request-level checks cover matched strike envelopes,
+  model-independent displacement, constant settled hum amplitude, slowing
+  frequency, complete opener palettes, concentric/stacked level hierarchy,
+  independent fill/outline/awakening, spin integrals, in-place fades and MB tail.
+- Existing Animation8 HUD/learning/visual controls and original source-deadline
+  regressions are rerun. Skillchains.lua, skills, UI modules, FX modules and all
+  images remain byte-identical to `e3a8b63`. Publisher changes are restricted to
+  the two `lua i TargetSC` → `lua c TargetSC` strings by the package builder.
+- Native: x86 C++17 cross-build with warnings treated as errors; portable stroke
+  and property geometry tests (full cross/star/square/sector coverage). New
+  sectors use a shared joined centerline. Depth testing, no depth writes,
+  stateblock restore, SceneHook header, stale-frame watchdog and bounded one-call
+  geometry submission remain. Maximum vertex storage is 18,240 vertices.
+- `docs/verification/test3-*` records exact completed checks. DLL loading, D3D
+  rendering, actual timing/appearance and multibox performance are **not run on
+  this host**. Test2 preview feedback is not Test3 gameplay approval.
+- GitHub publishing status is reported separately at delivery. A local commit
+  and curated package do not establish that the development branch was pushed
+  or that GitHub Actions ran. Do not promote this build to master before live
+  evaluation. Later MB presentation changes remain deferred.
+
+---
+
 ## Test3 development — live bridge repair (2026-10-19)
 
 Branch `development/targetsc-resonance-test3`, based on Test2 `5d23e29`.

@@ -173,10 +173,12 @@ function M.new()
         local out={}
         local s=self.states[id]
         if not s then return out end
-        if now>max(s.sc_close+.25,s.mb_close) then self.states[id]=nil self.bursts[id]=nil return out end
+        local fade=opts.fade_duration or motion.defaults.fade_duration
+        local boundary=s.closed and s.sc_open or s.sc_close
+        if now>max(boundary+fade,s.mb_close) then self.states[id]=nil self.bursts[id]=nil return out end
         if (opts.motion or motion.defaults.motion)~='legacy' then
             if s.previous and now-s.created>=.3 then s.previous=nil end
-            return motion.frame(self,s,now,radius,height,opts,{palette=palette,argb=M.argb})
+            return motion.frame(self,s,now,radius,height,opts,{palette=palette,argb=M.argb,level=M.level})
         end
         if s.previous and now-s.created<.12 then
             local old=s.previous
