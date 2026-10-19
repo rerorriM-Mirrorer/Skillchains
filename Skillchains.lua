@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.1'
+_addon.version = '2.20.08.25-resonance.7-animation.2'
 
 require('luau')
 require('pack')
@@ -302,7 +302,7 @@ local function preview_state(now)
     local total=math.max(.1,p.times-p.delay)
     return {
         now=now,created=p.created,sc_open=p.delay,
-        active=p.active,step=p.step,level=p.level,closed=p.closed,
+        active=p.active,from_active={'Liquefaction'},step=p.step,level=p.level,closed=p.closed,
         sc_wait=math.max(0,p.delay-now),
         sc_left=math.max(0,p.times-math.max(now,p.delay)),
         sc_total=total,mb_left=p.step>1 and math.max(0,p.created+10-now) or 0,
@@ -354,6 +354,7 @@ windower.register_event('prerender', function()
         active=reson.active,step=reson.step,closed=reson.closed,
         level=reson.result_level or 0,now=now,created=reson.created,
         sc_open=reson.delay,from_fraction=reson.from_fraction,
+        from_active=reson.from_active,
         sc_left=sc_left,sc_wait=sc_wait,expire_age=expire_age,
         sc_total=math.max(.1,reson.times-reson.delay),
         mb_left=mb_left,mb_total=10,groups=reson.groups,
@@ -393,6 +394,7 @@ function apply_properties(target, resource, action_id, properties, delay, step, 
         math.max(.1,previous.times-previous.delay))) or .4
     resonating[target] = {
         created=clock,from_fraction=from_fraction,
+        from_active=previous and previous.active or nil,
         res=resource,
         id=action_id,
         active=properties,
