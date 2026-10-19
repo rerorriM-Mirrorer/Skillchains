@@ -24,12 +24,13 @@ jobs:
         run: python3 tools/generate_glow_caps.py --check
       - name: Validate runtime Lua 5.1
         run: |
-          for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua TargetSC/TargetSC.lua TargetSC/resonance.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
+          for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua TargetSC/TargetSC.lua TargetSC/resonance.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
             luac5.1 -p "$f"
           done
       - name: Simulate Skillchains and TargetSC
         run: |
           lua5.1 tools/test_learning_ui.lua
+          lua5.1 tools/test_visual_commands.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
           lua5.1 TargetSC/tests/test_missing.lua
