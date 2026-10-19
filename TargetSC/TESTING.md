@@ -1,5 +1,23 @@
 # TargetSC TESTING.md — start here
 
+## Paired Skillchains Animation7 compatibility (2026-10-19)
+
+The testing package for Skillchains branch
+`development/skillchains-resonance-animation8` adds the new
+ghost-glow endcap textures, level-based glow/transition controls,
+and removes vertical flare sprites from **Skillchains' HUD only**.
+This does not affect TargetSC 0.1.0 native DLL, Lua, world-space
+rings, Magic Burst observation, targeting, event bridge, or
+authoritative SC/MB deadline timers. Static/simulated publisher,
+consumer and lifecycle tests are run as before. **No new live
+FFXI TargetSC testing is claimed.**
+
+A machine already running TargetSC 0.1.0 should install updated
+Skillchains files/assets only and reload Skillchains. Always close
+FFXI before replacing TargetSC's DLL.
+
+---
+
 ## Skillchains Animation6 visual-only compatibility (2026-10-19)
 
 The independent Skillchains `development/skillchains-resonance-animation7`
