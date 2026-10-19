@@ -134,13 +134,15 @@ local state={
 overlay:render(state)
 assert(overlay.learning.displayed==2)
 assert(prims.sc_resonance_fx_wash~=nil,'Pooled resonance strike graphics initialized')
-assert(overlay.fx.sprites.left and overlay.fx.sprites.left.fit==false,
-    'Pooled, size-respecting soft-alpha chain flares initialized')
-assert(overlay.fx.sprites.left.path_value:match('edge_flare_left.png$') and
-    overlay.fx.sprites.edge.path_value:match('edge_flare_right.png$'),
-    'Round-foot mirrored sprites are loaded for each endpoint')
-assert(overlay.fx.sprites.moving.path_value:match('ghost_flare.png$'),
-    'Three-beat center pulse still uses the original ghost texture')
+assert(overlay.fx.sprites.glow_cap_l and
+    overlay.fx.sprites.glow_cap_l.fit==false and
+    overlay.fx.sprites.glow_cap_l.path_value:match('ghost_glow_cap_l.png$'),
+    'Rounded ghost cap replaces vertical flare sprites')
+assert(overlay.fx.sprites.glow_cap_r and
+    overlay.fx.sprites.glow_cap_r.path_value:match('ghost_glow_cap_r.png$'),
+    'Mirrored endcap uses a second real ghost-glow asset')
+assert(not overlay.fx.sprites.left and not overlay.fx.sprites.moving,
+    'Retired edge and center flare sprites are no longer allocated')
 assert(overlay.properties.visible and overlay.mb_caption.visible)
 assert(overlay.caption_icons.sc[1].image.visible)
 assert(overlay.caption_icons.sc[2].image.visible)
