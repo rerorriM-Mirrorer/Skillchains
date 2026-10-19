@@ -2,6 +2,24 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## TargetSC 0.2.0 Test2 pairing and Animation8 preview acceptance (2026-10-19)
+
+User has now tested Animation8 previews in FFXI and finds them substantially
+better; accepted as the current working reference, with gameplay still needed.
+Future HUD observations: slightly strengthen L2 element separation and subtly
+flicker the preparing-white pre-window. Neither is implemented in this batch.
+
+New isolated branch `development/targetsc-resonance-test2` starts from
+`e3a8b632e29eeebdbd4455da470810a9574a7ddd`. **Every Skillchains runtime Lua file,
+bridge and image asset is byte-identical to that Animation8 baseline.** Only
+TargetSC animation/native/preview code and development/package records change.
+TargetSC/TESTING.md carries the full current test guide and preserves history.
+The native API update requires replacing TargetSC's DLL with FFXI closed.
+Automated/static checks are distinct from the user's prior live preview
+observations; new TargetSC 0.2.0 has not been tested in FFXI.
+
+---
+
 ## Animation8 — genuine perimeter, seamless capsule halo and restored level-four electricity (2026-10-19; LIVE PENDING)
 
 **Branch:** `development/skillchains-resonance-animation9`, forked from

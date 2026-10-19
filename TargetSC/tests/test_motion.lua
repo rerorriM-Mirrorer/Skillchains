@@ -19,6 +19,8 @@ local f=frame(101.5)
 assert(#f.discs>=2,'white/property pulses and ground disc exist in reveal phase')
 assert(f.discs[#f.discs].glyph==1)
 local plain=copy(opts);plain.discs=false;assert(#frame(102,plain).discs==0,'explicit discs off survives defaults')
+local invisible_discs=copy(opts);invisible_discs.disc_opacity=0
+assert(#frame(100.4,invisible_discs).discs==0 and #frame(102,invisible_discs).discs==0,'disc opacity zero hides charge/pulse/glyph layers')
 -- Compare the same absolute window clocks under each motion/layout option.
 for _,layout in ipairs({'grounded','symmetric','center'})do
     local o=copy(opts);o.layout=layout

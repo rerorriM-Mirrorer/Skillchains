@@ -1,0 +1,5 @@
+PE32/i386 DLL; API 0.2.0
+DLL Name: KERNEL32.dll
+DLL Name: msvcrt.dll
+[   0] luaopen__TargetSC
+SHA256 6e7a7a2e9d27a55257f96f89cca24fefef8f7c077b0249b1b6487fb652549c2c

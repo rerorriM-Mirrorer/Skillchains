@@ -11,7 +11,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-TargetSC-Animation8-Full'
+NAME = 'TargetSC-0.2.0-Test2-Animation8-Full'
+HUD_BASELINE = 'e3a8b632e29eeebdbd4455da470810a9574a7ddd'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
 BASELINE = 'e095657a2e7ecc5a49d05e96c1b78523a4860af5'
@@ -36,13 +37,22 @@ def verify_dll(path):
 def main():
     assert not git('status', '--porcelain', '--untracked-files=normal'), 'Commit work before packaging'
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
+    # User-accepted Animation8 is a byte-for-byte payload contract, including
+    # its bridge/assets. Documentation can record the new pairing separately.
+    guarded = ('Skillchains.lua','targetsc_bridge.lua','skills.lua','resonance_ui.lua',
+               'learning_ui.lua','resonance_fx.lua','images')
+    assert not git('diff',HUD_BASELINE,'--',*guarded), 'Animation8 runtime/assets changed'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains Animation8 / TargetSC unchanged', 'author': 'A.',
+    info = {'batch': 'TargetSC 0.2.0 Test2 / Skillchains Animation8 preserved', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
+            'hud_reference_commit': HUD_BASELINE,
+            'skillchains_preview_user_confirmed': True,
+            'targetsc_test1_render_user_confirmed': True,
+            'targetsc_test2_in_game_tested': False,
             'bridge_commit': '43943483518847f317228d0f0fc3ba472d642685',
-            'native_commit': '2dfd6b2f92e7f400cc1ffcbefe2f7823c9efd7a2',
-            'motion_commit': '3c445d5adabc0ce7aa4e57f4f116618dbad154fc',
+            'native_commit': 'cb634e94e1fc76c82c50b16591e3f59303a076de',
+            'motion_commit': 'bd873b365a23251b364baf89448c7ca1daf3996a',
             'native_dll_sha256': dll_hash, 'native_machine': 'PE32/i386',
             'compilation': 'MinGW-w64 GCC 13.2 x86, warnings treated as errors',
             'in_game_tested': False}

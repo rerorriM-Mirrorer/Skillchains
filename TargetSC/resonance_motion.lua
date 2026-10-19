@@ -110,6 +110,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         out[#out+1]={radius=r,offset=h,width=0,pixels=pixels,color=context.argb(c,a),role='core'}
     end
     local function disc(r,h,angle,c,a,glyph)
+        a=a*option(opts,'disc_opacity')/.32
         if not option(opts,'discs') or a<=.002 or r<.01 then return end
         if #out.discs>=8 then return end
         out.discs[#out.discs+1]={radius=r,offset=h,rotation=angle,color=context.argb(c,a),glyph=glyph and 1 or 0}
@@ -134,7 +135,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         ring(radius,height*.49,colors[#colors],opacity*.30*life,px)
         if option(opts,'discs') and s.level>=4 then
             local solid=(s.properties[1]=='Umbra' or s.properties[1]=='Darkness') and {0,0,0} or white
-            disc(radius*.78,height*.055,0,solid,option(opts,'disc_opacity')*life,false)
+            disc(radius*.78,height*.055,0,solid,.32*opacity*life,false)
         end
     else
         local strands=not opener and age<.16 and 1 or #colors
@@ -157,7 +158,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             ring(radius_j,bottom,color,alpha)
             if top then ring(radius_j,top,color,alpha) end
         end
-        local disc_alpha=option(opts,'disc_opacity')*opacity
+        local disc_alpha=.32*opacity
         if opener and phase=='pre' then
             -- Explicit source-relative thirds: white awakening, property reveal,
             -- then colored preparation pulse. A non-3s source delay scales them.

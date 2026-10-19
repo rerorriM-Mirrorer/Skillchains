@@ -1,5 +1,126 @@
 # TargetSC TESTING.md — start here
 
+## 0.2.0 Test2 — ground-first resonance, phase previews and visible strokes (2026-10-19)
+
+**Author:** A. **Branch:** `development/targetsc-resonance-test2`.
+**Base:** Animation8 `e3a8b632e29eeebdbd4455da470810a9574a7ddd` on
+`development/skillchains-resonance-animation9`.
+**TargetSC versions:** Lua `0.2.0-test2`, native API `0.2.0`; SceneHook ABI 2.
+**Native commit:** `cb634e94e1fc76c82c50b16591e3f59303a076de`.
+**Motion/preview commit:** `bd873b365a23251b364baf89448c7ca1daf3996a`.
+The package BUILD_INFO.json records the exact final delivery commit/hash.
+
+### User-confirmed observations carried forward
+
+2026-10-18: TargetSC 0.1.0 rendered successfully in FFXI. Rings were faint even
+at opacity/intensity 1; scale 2 fit ground/sky more appropriately, including
+floating models. Intensity 2's opening wobble was liked; Fragmentation 2 looked
+particularly good and concentric strands were legible. This confirms actual
+rendering/partial preview behavior, not all timing, lifecycle or multibox tests.
+
+2026-10-19: User tested **Skillchains Animation8 previews in FFXI**, found them
+substantially improved and accepted them as the current working reference.
+Gameplay and TargetSC may refine them later. L2 gradient strengthening and
+subtle preparing-white flicker are future HUD observations; **no HUD changes
+are made here**. Earlier historical delivery statements below remain intact.
+
+### New testing payload and installation
+
+Complete `TargetSC-0.2.0-Test2-Animation8-Full.zip`, containing only two
+installable folders: TargetSC 0.2.0 and the byte-identical Animation8 Skillchains
+runtime/assets/bridge. Both carry README, WORKFLOW, TESTING and BUILD_INFO.
+Native source, licenses, portable stroke test and recorded checks accompany
+TargetSC. No user data/settings are shipped.
+
+**Close all FFXI clients before replacing the DLL.** Back up TargetSC/Skillchains
+and preserve data. Replace the complete TargetSC addon together; new Lua
+requires native 0.2.0. If already on Animation8, Skillchains need not be changed.
+Load/reload Skillchains first, then TargetSC. Run `//tsc preset vivid` to try
+new defaults rather than retaining saved Test1 values; it preserves height and
+debug. Expect `//tsc status` to report Lua 0.2.0-test2/native 0.2.0, bridge v1.
+
+### First live comparison — do this before extending effects
+
+1. `//tsc preset vivid`; `//tsc discs off`; `//tsc preview pre Liquefaction`.
+   White/concentric **ground** rings should charge/flutter; no sky or shrinking
+   separation should appear before this preview stops at 3s.
+2. `//tsc preview opener Liquefaction,Impaction`. Ground charge 0–3s, then sky
+   entry/rise and continuation 3–10s. Watch feet/head anchoring on moving models.
+   Ground and sky should flutter oppositely with larger early jumps, smaller
+   late jumps; separation must not count down during charge.
+3. Compare `//tsc motion flutter`, `sine`, `legacy` and rerun opener/chain.
+   Compare layouts `grounded`, `symmetric`, `center`. Set
+   `//tsc flutter period .1` vs `.2`; amplitude `.15` vs `.28`, damping `.5`
+   vs `1.5`. Held offsets should jump without interpolation. A full back/forth
+   is twice the hold period; L3 slows it by 1.5, L4 speeds it by .7.
+4. `//tsc preview chain Fragmentation 2`; then `Light 3`, `Darkness 3`,
+   `Radiance 4`, `Umbra 4`. Successful charge holds a white core until the
+   0.30s color transition around the opening boundary. L2 strands must remain
+   distinguishable; L3 has slower light/purple shimmer; L4 has strong gold/purple
+   perimeter flicker even during white charge. L4 chains are closed: after
+   charge only their independent MB tail is eligible.
+5. Width/readability: `//tsc width 1`, `2`, `3` at different distances and
+   resolutions. Cores stay narrow and transparent inside. Compare
+   `//tsc glow 0`, `.8`, `1.5` and `//tsc brightness .7`, `1`, `1.5`.
+   Correctly occluded/clipped arcs remain hidden. Look for joins/spikes or
+   uneven width at grazing camera angles. D3D viewport pixels are used.
+6. `//tsc discs on`; `//tsc preview opener Liquefaction,Impaction,Detonation`.
+   White awakening disc should reveal three larger/lower circle/star property
+   glyphs, a white ground pulse and then a primary-color pulse. Try disc
+   opacity `.15` vs `.32`. Confirm opener rotation every 2s, L1 1s, L2 .5s,
+   L3 .25s and still white/black L4. Discs are procedural, not exact game art.
+7. `//tsc preview window Fusion 2` starts at countdown; `expire Fusion 2`
+   demonstrates final convergence/exit and MB tail. `closed Radiance 4`
+   demonstrates no continuation. The full `demo` is now 15s, explicitly
+   reporting opener 0, first opening 3, chain 5, new opening 8, burst 9,
+   continuation end 14 and MB end 15. These previews never affect HUD/game.
+8. Return to live state with `//tsc preview off`, then compare actual opener,
+   extension, incompatible WS and MB against Animation8. Source delays may
+   differ from 3s; all charge stages scale to the actual source interval.
+   Confirm no reset/replay on sync or target switch and no false continuation
+   on a closed chain. Confirm old geometry disappears on an incompatible WS.
+
+MB geometry/origin redesign is **deferred** as requested. Existing central
+spell-element shimmer/ripple and separate MB expiry remain supported. Exact
+icon textures, paired-ring burst ripples and per-model dimension databases
+remain future work.
+
+### Completed automated verification / remaining live checks
+
+- Lua 5.1 parsing and existing HUD/visual command, bridge, missing/mismatched
+  native and TargetSC lifecycle simulations; production bridge unchanged.
+- Revised motion sweep: 8 properties × 3 motions × 3 layouts × 1051 frames;
+  bounded finite geometry/colors, at most 32 bands/8 discs. Phase-specific
+  previews, no pre-window countdown, distinct L2 colors, ground-first sky
+  gating, discontinuous flutter vs continuous sine, disc toggle/spin and
+  closed/MB-only state verified through CPU simulation.
+- Snapshot continuity, incompatible-opener cleanup and confirmed burst
+  SC/MB-deadline invariance verified; historical source snapshot regression
+  retains original absolute combat deadlines.
+- Portable native stroke math: 2304 ellipse/width cases with finite bounded
+  joins, 1/2/8px floors and degenerate points. **Not D3D/DLL execution.**
+- New 32-bit Windows DLL cross-compiled with GCC 13.2, C++17, -O2,
+  -Wall/-Wextra/-Wpedantic/-Werror, statically linked runtimes. PE32/i386,
+  sole luaopen__TargetSC export, system-only imports. SceneHook header unchanged.
+- Full package validates both folders, committed source, full manifests/CRC,
+  14 property icons, 3 capsule-halo textures and exact Animation8 runtime/asset
+  identity. This batch does not alter Skillchains data/config/code defaults.
+- Records: `docs/verification/test2-*`. **No new native loader, D3D, SceneHook
+  or FFXI runtime test has been performed here.**
+
+Still live-pending: visual/phase feel, real model movement/floating/large/small
+sizing, depth and stroke joins, glyph visibility/rotation, extension timing,
+target loss/reuse, death/despawn, zoning, cutscene, source/addon reload,
+SceneHook owner handoff with TargetRing/TargetLines, device reset and 4–6-client
+frame pacing. Keep this testing branch separate from known-good main.
+
+For evidence: `//tsc debug on`, run one short scenario, `//tsc status`, return
+`TargetSC/data/TargetSC-debug.log` and complete status text with model/phase,
+resolution, client count and the settings you preferred.
+
+---
+
+
 ## Paired Skillchains Animation8 compatibility — 2026-10-19
 
 `development/skillchains-resonance-animation9` replaces HUD-only
@@ -281,7 +402,9 @@ records, **not in-game logs or screenshots**.
   licensing and traceable pushed commits. Primary priority is paired motion.
 - References inspected directly: TargetRing at e45fdf7 and TargetLines at
   548b0e2. Full references/licenses are in THIRD_PARTY_NOTICES.md.
-- No TargetSC live observations or user test logs have yet been received.
+- ~~No TargetSC live observations or user test logs have yet been received.~~
+  Superseded 2026-10-19: user confirmed Test1 rendering/preview behavior; see
+  the new Test2 record above. Detailed gameplay/lifecycle validation remains pending.
 
 Preserve this cumulative record. Corrections use strikethrough, reason and
 replacement rather than deleting history.

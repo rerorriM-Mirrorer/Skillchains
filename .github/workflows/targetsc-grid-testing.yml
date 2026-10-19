@@ -1,9 +1,9 @@
-name: Skillchains animation batch 8 + TargetSC integration
+name: TargetSC 0.2.0 Test2 + preserved Animation8
 
 on:
   push:
     branches:
-      - development/skillchains-resonance-animation9
+      - development/targetsc-resonance-test2
   workflow_dispatch:
 
 permissions:
@@ -16,23 +16,30 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install Lua 5.1
+      - name: Install Lua 5.1 and MinGW-w64
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq lua5.1
+          sudo apt-get install -y -qq lua5.1 g++-mingw-w64-i686
+      - name: Build native x86 source and test portable stroke math
+        run: |
+          i686-w64-mingw32-g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror -shared -static -static-libgcc -static-libstdc++ -Wl,--no-insert-timestamp -o /tmp/_TargetSC.dll TargetSC/src/TargetSC.cpp TargetSC/src/exports.def -ld3d8
+          i686-w64-mingw32-objdump -p /tmp/_TargetSC.dll
+          g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-stroke TargetSC/tests/test_stroke.cpp
+          /tmp/tsc-stroke
       - name: Verify deterministic three-part capsule-border halo PNGs
         run: python3 tools/generate_capsule_halo.py --check
       - name: Verify capsule geometry, seams, and dark interior
         run: python3 tools/test_capsule_halo.py
       - name: Validate runtime Lua 5.1
         run: |
-          for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua TargetSC/TargetSC.lua TargetSC/resonance.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
+          for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua TargetSC/*.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
             luac5.1 -p "$f"
           done
       - name: Simulate Skillchains and TargetSC
         run: |
           lua5.1 tools/test_learning_ui.lua
           lua5.1 tools/test_visual_commands.lua
+          lua5.1 TargetSC/tests/test_motion.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
           lua5.1 TargetSC/tests/test_missing.lua
@@ -44,7 +51,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-TargetSC-Animation8-test
+          name: TargetSC-0.2.0-Test2-Animation8-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30

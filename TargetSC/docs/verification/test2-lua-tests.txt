@@ -1,0 +1,64 @@
+Lua 5.1 parse
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p learning_ui.lua resonance_ui.lua Skillchains.lua resonance_fx.lua targetsc_bridge.lua skills.lua TargetSC/resonance.lua TargetSC/resonance_preview.lua TargetSC/TargetSC.lua TargetSC/resonance_motion.lua TargetSC/tests/test_missing.lua TargetSC/tests/test_skillchains_regression.lua TargetSC/tests/test_addon.lua TargetSC/tests/test_motion.lua TargetSC/tests/test_resonance.lua
+exit=0
+
+preserved HUD simulation
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 tools/test_learning_ui.lua
+learning_ui simulation passed: ordering, property images, alignment, anchor, pooling and clipping
+resonance FX simulation passed: white refill, 0.30s overlap, glow cap geometry, levels, options, flicker, pooling
+resonance_ui integration simulation passed: bars, captions, icons, drag guide, cleanup
+exit=0
+
+preserved HUD command simulation
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 tools/test_visual_commands.lua
+PASS visual commands: cap presets, prewindow electricity, per-level glow, track RGB/alpha, selective resets and validation
+exit=0
+
+preserved capsule art
+$ python tools/generate_capsule_halo.py --check
+verified: capsule_halo_l.png
+verified: capsule_halo_rail.png
+verified: capsule_halo_r.png
+exit=0
+
+preserved art geometry
+$ python tools/test_capsule_halo.py
+PASS capsule PNGs: pixel-exact mirror, no halo seams, dark interior, two narrow rails
+exit=0
+
+new motion/phase sweep
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_motion.lua
+PASS revised motion/phase previews: ground-first opening, source-bound convergence, held jumps vs sine, L1-L4, colors, discs, independent MB lifetime
+PASS revised geometry sweep: 8 properties x 3 motions x 3 layouts x 1051 frames, bounded 32 bands/8 discs
+exit=0
+
+retained bridge/legacy geometry
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_resonance.lua
+PASS publisher/consumer integration: deadlines, transitions, AoE MB, closed chains, lifecycle, snapshots, client isolation
+PASS animation sweep: 7 palettes x 1121 frames, finite/bounded geometry, model scale clamps
+exit=0
+
+new driver/lifecycle
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_addon.lua
+PASS actual addon lifecycle/commands: preview timeline, native submissions, identity gate, cutscene, zone, off/on, settings, help, restart/unload
+exit=0
+
+missing native
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_missing.lua
+PASS missing native/source handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic
+exit=0
+
+mismatched native
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_missing.lua mismatch
+PASS mismatched native handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic
+exit=0
+
+historical combat deadline regression
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_skillchains_regression.lua ../skillchains-baseline.lua
+PASS combat deadlines and bridge state unchanged: opener, chains, confirmed MB, MB-only tail, zone/logout; 14 snapshots, expected UI waiting-timer change
+exit=0
+
+Final disc-opacity control check:
+PASS revised motion/phase previews: ground-first opening, source-bound convergence, held jumps vs sine, L1-L4, colors, discs, independent MB lifetime
+PASS revised geometry sweep: 8 properties x 3 motions x 3 layouts x 1051 frames, bounded 32 bands/8 discs
+exit=0

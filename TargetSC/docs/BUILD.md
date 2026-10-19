@@ -1,72 +1,104 @@
-# Building and verifying TargetSC 0.1.0
+# Building and verifying TargetSC 0.2.0 / Test2
 
-The supplied module is a newly compiled Windows PE32/i386 DLL, not a renamed
-reference binary. It has **not** been run inside FFXI/Windower.
+Author: A. The new DLL is PE32/i386. Compilation, binary inspection and portable
+stroke-math tests do **not** demonstrate native loading or live FFXI rendering.
+SceneHook ABI 2 is unchanged and byte-identical to the Test1 references.
 
-## MinGW-w64 x86 (recommended / verified cross-compile route)
+## MinGW-w64 x86 (verified cross-compile route)
 
-From this repository's root using GCC 13.2 MinGW-w64 i686:
+From the repository root using GCC 13.2 MinGW-w64 i686:
 
 ```sh
 i686-w64-mingw32-g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror \
-  -shared -static -static-libgcc -static-libstdc++ \
+  -shared -static -static-libgcc -static-libstdc++ -Wl,--no-insert-timestamp \
   -o TargetSC/libs/_TargetSC.dll TargetSC/src/TargetSC.cpp \
   TargetSC/src/exports.def -ld3d8
 i686-w64-mingw32-strip --strip-unneeded TargetSC/libs/_TargetSC.dll
 i686-w64-mingw32-objdump -p TargetSC/libs/_TargetSC.dll
 ```
 
-The development host used the compiler's `-win32` executable variant. MinGW32
-under MSYS2 can use `g++`/`strip` within its 32-bit shell. Link statically to
-avoid a runtime dependency on separately installed MinGW DLLs. This module
-resolves Lua 5.1 exports from LuaCore.dll at runtime; no Lua SDK/import library
-is required. Direct3D8 headers/import libraries come with MinGW-w64.
+Linker image-base selection and strip timestamps can vary by output path/time;
+BUILD_INFO records the delivered binary hash rather than promising identical
+bytes across rebuild locations.
 
-Expected module export: exactly **luaopen__TargetSC**. Expected machine:
-**IMAGE_FILE_MACHINE_I386**, optional header PE32. The supplied build imports
-only **KERNEL32.dll** and **msvcrt.dll**. Never ship a 64-bit build.
+The development host uses the `-win32` executable variant. Expected sole export:
+`luaopen__TargetSC`; expected machine I386/PE32; imports only KERNEL32.dll and
+msvcrt.dll. The runtime resolves LuaCore.dll exports dynamically. No Lua SDK,
+D3DX, texture loader or third-party runtime DLL is needed. Never install an
+x64 build. Close every FFXI client before replacing the native DLL.
 
-## CMake / Visual Studio alternative (source provided; not compiled here)
-
-With a 32-bit Windows toolchain and Direct3D8 SDK headers/libraries available:
+CMake source is included (Visual Studio route unverified, as in Test1):
 
 ```text
 cmake -S TargetSC/src -B TargetSC/build -A Win32
 cmake --build TargetSC/build --config Release
 ```
 
-Depending on generator, the DLL may be under `TargetSC/libs/Release/`; copy it
-to `TargetSC/libs/_TargetSC.dll`. CMake checks pointer width. The GCC discovery
-wrappers have a standard COM-call fallback for MSVC; that route is **unverified**.
+A multi-configuration generator may emit `libs/Release/_TargetSC.dll`; its
+install location must be `TargetSC/libs/_TargetSC.dll`.
 
-## Reproduce checks and package
+## Native API 0.2.0
 
-From repository root (Lua 5.1 and Python 3):
+```lua
+native.version()                         -- "0.2.0"
+native.start()
+native.begin(entity_index, entity_id)     -- clears inactive complete snapshot
+native.disc(radius, height, radians, argb, glyph_0_or_1)
+native.ring(radius, height, world_width, argb, minimum_viewport_pixels)
+native.commit()                          -- atomic lock-protected publication
+native.clear()
+native.status()
+native.stop()                            -- drains/unregisters callback
+```
+
+Frames are capped at 32 ring bands (including glows) and 8 discs. There is one
+triangle-list submission, no per-frame heap allocation and about 0.35 MiB of
+module-owned reusable vertex capacity. The native thread resolves the display
+position every scene frame; Lua identity/health gating and the 250ms stale
+frame watchdog remain unchanged. Disc fill, projected white border and rotating
+four-point star are geometry; exact game property icon art is not reproduced.
+
+Stroke centers are projected with current view/projection/viewport state. A
+bounded miter offsets each projected centerline point by at least half the
+configured pixel width. Both sides keep its projected depth and reciprocal w.
+Near-plane/hidden/degenerate parts are culled; rings are not drawn through
+walls. D3D8 state-block restore includes textures/shaders/stream 0. Depth writes
+stay disabled. Glyph rotation is in the horizontal world plane.
+
+Old Lua rejects native API 0.2.0; new Lua rejects the old DLL with useful status.
+Update the complete TargetSC folder together. Other SceneHook ABI 2 addons do
+not require recompilation merely because TargetSC's own API version changed.
+
+## Reproduce automated checks
+
+From the repository root:
 
 ```sh
-luac5.1 -p Skillchains.lua targetsc_bridge.lua skills.lua resonance_ui.lua learning_ui.lua
-luac5.1 -p TargetSC/TargetSC.lua TargetSC/resonance.lua
-lua5.1 tools/test_learning_ui.lua
+luac5.1 -p TargetSC/*.lua TargetSC/tests/*.lua
+lua5.1 TargetSC/tests/test_motion.lua
 lua5.1 TargetSC/tests/test_resonance.lua
 lua5.1 TargetSC/tests/test_addon.lua
 lua5.1 TargetSC/tests/test_missing.lua
-git show e095657a2e7ecc5a49d05e96c1b78523a4860af5:Skillchains.lua > /tmp/skillchains-baseline.lua
-lua5.1 TargetSC/tests/test_skillchains_regression.lua /tmp/skillchains-baseline.lua
+lua5.1 TargetSC/tests/test_missing.lua mismatch
+g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-stroke TargetSC/tests/test_stroke.cpp
+/tmp/tsc-stroke
+lua5.1 tools/test_learning_ui.lua
+lua5.1 tools/test_visual_commands.lua
+python3 tools/generate_capsule_halo.py --check
+python3 tools/test_capsule_halo.py
+git show e095657a2e7ecc5a49d05e96c1b78523a4860af5:Skillchains.lua > /tmp/sc-baseline.lua
+lua5.1 TargetSC/tests/test_skillchains_regression.lua /tmp/sc-baseline.lua
 python3 tools/package_targetsc.py
 ```
 
-Package verification checks the DLL header, full file manifest/CRC, required
-native/source/license files, all 14 PNGs and exclusion of user data. The two
-installable folders each carry README, WORKFLOW, TESTING and generated build
-information. The ZIP's file order starts with each TESTING.md.
+The new motion sweep covers 8 properties × 3 motions × 3 layouts × 1051 frames.
+The stroke test executes 2304 projected ellipse/width combinations, checks
+bounded joins, subpixel widening and degenerate points. These are portable CPU
+math tests, **not native-DLL invocation, D3D execution or live game tests**.
 
-Reference source commits and the exact SceneHook header SHA-256 are in
-`THIRD_PARTY_NOTICES.md`. Regenerating the binary changes its hash if compiler,
-linker or PE metadata changes; package BUILD_INFO records the delivered bytes.
+The package builder checks that Skillchains runtime/bridge/assets are identical
+to e3a8b63, curates the two complete addon folders, validates PNGs, PE32 DLL,
+archive CRC and SHA manifests, and records the exact delivered commit and DLL
+hash in BUILD_INFO.json. Only committed files are packaged; user data excluded.
 
-## Native runtime checks still required
-
-Lua C API binding, COM device discovery with the user's D3D wrapper, depth-buffer
-behavior, SceneHook coexistence/owner handoff, device reset, animated/floating
-model anchoring and 4–6-client FPS have not been validated on this Linux host.
-No emulated native invocation or screenshot is claimed as an in-game test.
+Records are in `docs/verification/test2-*`; original Test1 records are preserved.

@@ -5,6 +5,16 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
 
+## TargetSC 0.2.0 test pairing
+
+The `development/targetsc-resonance-test2` branch pairs this unchanged
+Animation8 HUD/runtime with TargetSC's ground-first charge, flutter comparison,
+phase previews, pixel-width cores and procedural property discs. See
+[TargetSC/TESTING.md](TargetSC/TESTING.md) before installation. The bridge and
+all Skillchains runtime/assets remain identical to e3a8b63; HUD gradient and
+white-preparation refinements are future observations only. Close FFXI before
+replacing the new TargetSC DLL; preserve both data folders.
+
 ## Animation8 — real capsule perimeter and stronger electric border
 
 New `development/skillchains-resonance-animation9` **test** branch
@@ -465,6 +475,11 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-19 — TargetSC Test2 paired delivery (A.)
+- Preserve user-approved Animation8 presentation and source timing unchanged.
+- Pair the new TargetSC-only test renderer/controls with the full known runtime;
+  record prior user preview acceptance separately from new live-pending work.
 
 ### 2026-10-19 — Animation8: dark true-perimeter SC bar and seamless capsule halo
 - Removed the old full-height white/gold frame behind translucent track; separated 1px upper/lower rails plus corner ends. The bar interiors are now truly dark, regardless of chain level.
