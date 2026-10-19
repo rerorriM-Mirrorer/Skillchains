@@ -77,7 +77,11 @@ with each setting change.
 
 **Automated verification, not live FFXI validation:** Lua 5.1 syntax
 checks, deterministic mirrored PNG byte tests, learning icon and
-bar integration simulation; assert white opener unchanged, full
+bar integration simulation; a dedicated `tools/test_visual_commands.lua`
+executes actual Skillchains command handlers against a simulated Windower
+runtime, exercising cap presets, masks, numeric validation/unbounded
+multipliers, L4 tints, transition styles, saved settings and default
+reports; assert white opener unchanged, full
 white successful refill from x-origin, previous fraction retained,
 0.30s deadline-centered overlap, no center/side flare allocations,
 empty background alpha unchanged, cap and rail inside bounds and
