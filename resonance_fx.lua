@@ -1,5 +1,5 @@
 -- Skillchains HUD-only effects: the server's action clocks own all timers.
--- EnemyBar2's procedural soft-alpha ghost_flare/glow textures are reused here.
+-- EnemyBar2's ghost_glow soft-alpha rails gain rounded ghost-glow cap PNGs.
 -- This module does not listen to combat packets or control TargetSC. Author: A.
 local images=require('images')
 local M={}
@@ -27,18 +27,13 @@ function M.new(prefix)
         self.ids[name]=id
         self.prim_state[name]={shown=false}
     end
-    for _,name in ipairs({'edge','left','right','moving','border_glow',
-        'border_lower','glow_cap_l','glow_cap_r'}) do
-        local file
-        if name=='border_glow' or name=='border_lower' then
-            file='ghost_glow.png'
-        elseif name=='moving' then
-            file='ghost_flare.png' -- preserve original L4 center pulses
-        elseif name=='left' or name=='glow_cap_l' then
-            file='edge_flare_left.png'
-        else
-            file='edge_flare_right.png'
-        end
+    -- Only the continuous border system needs sprite assets now.
+    -- Vertical/center light-leak flares were deliberately retired.
+    for _,name in ipairs({'border_glow','border_lower',
+        'glow_cap_l','glow_cap_r'}) do
+        local file=(name=='glow_cap_l' and 'ghost_glow_cap_l.png')
+            or (name=='glow_cap_r' and 'ghost_glow_cap_r.png')
+            or 'ghost_glow.png'
         self.sprites[name]=images.new('',{
             pos={x=0,y=0},visible=false,draggable=false,
             size={width=1,height=1},
@@ -191,11 +186,18 @@ function M.new(prefix)
         local elapsed=max(0,(s.now or 0)-(s.sc_open or s.now or 0))
         return .46+.54*smooth(elapsed/.35)
     end
-    function self:chain_brightness(s)
+    function self:transition_progress(s,options)
         if not s or (s.step or 0)<=1 then return 1 end
         local age,delay=age_and_delay(s)
-        -- Brighten through the actual wait; don't jump at window opening.
-        return .46+.54*smooth((age-(delay-.55))/.55)
+        local duration=tonumber((options or {}).duration) or .30
+        if duration<=0 then return age>=delay and 1 or 0 end
+        -- Straddles the *real* pre-window->decay deadline, without changing
+        -- either Skillchains/TargetSC timestamp or the countdown length.
+        return smooth((age-(delay-duration/2))/duration)
+    end
+    function self:chain_brightness(s,options)
+        if not s or (s.step or 0)<=1 then return 1 end
+        return .46+.54*self:transition_progress(s,options)
     end
     function self:palette_blend(s)
         if not s or (s.step or 0)<=1 then return 1 end
@@ -203,146 +205,118 @@ function M.new(prefix)
         -- A genuine color fade, not an instantaneous weapon-skill replacement.
         return smooth((age-1)/1)
     end
-    function self:render(s,opt,bar,palette,display_palette)
+    function self:render(s,opt,bar,palette,display_palette,glow_options,transition_options)
         if not s or not bar then self:hide();return end
         self.frame=self.frame+1
         opt=opt or {}
-        local intensity=clamp(tonumber(opt.intensity) or 1,0,2)
+        glow_options=glow_options or {}
+        transition_options=transition_options or {}
+        local intensity=max(0,tonumber(opt.intensity) or 1)
         local enabled=opt.enabled~=false and intensity>0
-        local fi=intensity*clamp(tonumber(opt.flare) or 1,0,2)
-        local gi=intensity*clamp(tonumber(opt.glow) or 1,0,2)
+        local global_glow=max(0,tonumber(opt.glow) or 1)
+        local glow_scale=max(0,tonumber(glow_options.scale) or 1)
+        local gi=intensity*global_glow*glow_scale
         local x,y,w,h=bar.x,bar.y,bar.width,bar.height
-        local fill=clamp(bar.fill or w,0,w)
         local age,delay=age_and_delay(s)
         local level=tonumber(s.level) or 0
+        local opener=(s.step or 0)<=1
         palette=palette or {white}
         local c1=palette[1] or white
-        local c2=palette[#palette] or c1
-        local frame=bar.frame
+        local progress=opener and 0 or self:transition_progress(s,transition_options)
+        local l4mode=glow_options.l4 or 'whitegold'
+        local level4_color=(l4mode=='gold' and gold)
+            or (l4mode=='white' and white)
+            or {255,239,194}
         local border=dark
         local border_alpha=180
         if level==1 then border=c1;border_alpha=230
         elseif level==2 then border=white;border_alpha=244
         elseif level==3 then border=white;border_alpha=255
-        elseif level>=4 then border=gold;border_alpha=255 end
-        if enabled and level>0 and age<.6 then
-            border=mix(white,border,smooth((age-.3)/.3))
-            border_alpha=255
+        elseif level>=4 then border=level4_color;border_alpha=255 end
+        if opener then
+            border=dark
+        else
+            -- Full-strength white rail while the pre-window remains white.
+            -- The border joins the fill's property fade, no color pop.
+            border=mix(white,border,progress)
+            border_alpha=210+(border_alpha-210)*progress
         end
         if s.expire_age then
             border_alpha=border_alpha*(1-smooth(s.expire_age/.35))
         end
-        -- The opener never whitens its actual SC border; only its detached
-        -- expanding white overlay flashes, and the dark frame emerges after.
-        if s.step==1 then border=dark end
         border_alpha=border_alpha*self:bar_reveal(s,opt)
-        if not enabled then border=level>0 and border or dark end
-        for _,id in ipairs({frame.frame,frame.cap_l,frame.cap_r}) do
-            windower.prim.set_color(id,floor(clamp(border_alpha,0,255)+.5),
-                border[1],border[2],border[3])
+        local alpha=floor(clamp(border_alpha,0,255)+.5)
+        for _,id in ipairs({bar.frame.frame,bar.frame.cap_l,bar.frame.cap_r}) do
+            windower.prim.set_color(id,alpha,border[1],border[2],border[3])
         end
         if not enabled then self:finish();return end
-        local scale=max(.5,tonumber(bar.scale) or 1)
-        local flare_w=max(8,14*scale)
-        local flare_h=max(11,20*scale)
-        -- The new edge sprites end at their bright rounded foot. Anchor
-        -- their last raster row on the fill's last raster row at ANY height.
-        -- Fill primitive occupies y+1 through y+h-2 (inclusive).
-        local fill_bottom=y+h-2
-        local function base_y(height) return fill_bottom-height+1 end
-        local flare_y=base_y(flare_h)
-        local edge_inset=max(3,5*scale)
-        local left_edge=x+edge_inset
-        local right_edge=x+max(edge_inset,fill-edge_inset)
-        if level>=3 then
-            -- Two narrow soft rails, NOT a bright sheet over the empty track.
-            -- Keep the interior dark even at large glow and fade settings.
-            local alpha=(level==3 and 85 or 115)*gi
-            if level>=4 then alpha=alpha*(.60+.40*sin(age*23)^2) end
-            local halo_color=level>=4 and gold or white
-            local halo_height=max(5,7*scale)
-            sprite('border_glow',x+edge_inset,y-halo_height/2,
-                max(1,w-2*edge_inset),halo_height,alpha,halo_color)
-            sprite('border_lower',x+edge_inset,y+h-halo_height/2,
-                max(1,w-2*edge_inset),halo_height,alpha,halo_color)
-            -- Soft endcaps finish the shortened glow rails without extending
-            -- outside the rounded gauge silhouette.
-            local cap=max(3,7*scale)
-            local cap_height=max(9,14*scale)
-            sprite('glow_cap_l',x+1,base_y(cap_height),
-                cap,cap_height,alpha*.85,halo_color)
-            sprite('glow_cap_r',x+w-cap-1,base_y(cap_height),
-                cap,cap_height,alpha*.85,halo_color)
+
+        -- Successful chains: one WHITE expansion from far left, then remain
+        -- white throughout the pre-window. It transitions over the real
+        -- countdown boundary, half before and half after, in .30s by default.
+        -- Opening WS retains its proven: white first beat -> dim second beat.
+        local white_alpha
+        if opener then
+            white_alpha=age<1 and 255 or
+                (age<2 and 255*(1-smooth(age-1)) or 0)
+        else
+            white_alpha=255*(1-progress)
         end
-        if s.expire_age then self:finish();return end
-        -- Opener begins from nothing; a successful SC retains its previous
-        -- fill and dark track underneath the white re-expansion.
-        local opener=(s.step or 0)<=1
-        local white_alpha=age<1 and 255 or
-            (age<2 and 255*(1-smooth(age-1)) or 0)
-        local white_edge_alpha=age<1 and 210*smooth(age/.20) or
-            (age<2 and 210*(1-smooth(age-1)) or 0)
-        -- The white effect ALWAYS grows from 0. For successful chains
-        -- draw_bar independently grows its underlying property fill from
-        -- the prior fraction (without hiding the track or previous state).
         local fill_extent=age<1 and w*smooth(age) or w
-        if age<2 then
-            -- Like the opener, the WHITE sweep starts at the left rail and
-            -- covers the entire bar through the growing right edge. For
-            -- successful chains the prior fill and track stay underneath.
-            white_caps(x,y,fill_extent,h,white_alpha*intensity)
-            local end_x=x+max(edge_inset,fill_extent-edge_inset)
-            -- Animate HEIGHT, not vertical position: keep the bright foot
-            -- fixed to the same lower fill row as the plume grows upward.
-            local beat=age<1 and smooth(age) or 1-smooth(age-1)
-            local flare_pulse=.63+.37*sin(beat*pi)
-            local pulse_h=max(5,floor(flare_h*flare_pulse+.5))
-            local pulse_y=base_y(pulse_h)
-            sprite('edge',end_x-flare_w,pulse_y,flare_w,pulse_h,
-                white_edge_alpha*fi,white)
-            if not opener then
-                sprite('left',left_edge,pulse_y,flare_w,pulse_h,
-                    white_edge_alpha*fi,white)
+        if not opener and age>=delay then
+            -- No lingering full-width white block over the shrinking fill.
+            fill_extent=min(w,max(0,(bar.fill or w)+2))
+        end
+        white_caps(x,y,fill_extent,h,white_alpha*intensity)
+
+        -- Only one visual language for power: soft glow strips following the
+        -- upper/lower border AND mirrored half-capsule glow textures at ends.
+        -- White-gold L4 color and stronger cap options are separate from
+        -- tier selection. No sprite flame/vertical flare/center pulse.
+        local levels=glow_options.levels or '34'
+        if levels~='off' and level>=1 and level<=4
+            and levels:find(tostring(level),1,true) then
+            local upper_tier=level>=3
+            local rail=max(0,tonumber(glow_options[upper_tier and 'rail34'
+                or 'rail12']) or (upper_tier and .60 or .30))
+            local cap=max(0,tonumber(glow_options[upper_tier and 'cap34'
+                or 'cap12']) or (upper_tier and .75 or .35))
+            local base=upper_tier and (level>=4 and 72 or 68) or 72
+            local electric=level>=4 and (.60+.40*sin(age*23)^2) or 1
+            if level>=4 and age>=delay then
+                electric=electric*(.78+.22*sin(age*28)^2)
             end
-        end
-        if not opener and age<delay then
-            -- Restore the original L4 three-beat center pulses for ALL
-            -- confirmed chain levels, not one last-second blink.
-            local progress=3*age/delay
-            local t=progress-floor(progress)
-            local pulse=1-smooth(t)
-            local flicker=level>=4 and (.60+.40*sin(age*23)^2) or 1
-            -- The property color at the fill's center may differ from
-            -- either gradient end. Do not substitute gold at level four.
-            local colors=display_palette or palette
-            local mid=(#colors+1)/2
-            local lower=max(1,floor(mid))
-            local upper=min(#colors,lower+1)
-            local middle=mix(colors[lower] or c1,
-                colors[upper] or c2,mid-lower)
-            sprite('moving',x+w/2-flare_w/2,flare_y,flare_w,flare_h,
-                210*fi*pulse*flicker,middle)
-        end
-        -- Bring in property-colored edge flares while the white dissipates.
-        -- Their arrival precedes the final brightness ramp, avoiding a pop.
-        local active=smooth((age-(delay-.70))/.55)
-        if age>=delay then active=1 end
-        local flicker=.87+.13*sin((s.now or 0)*26)^2
-        if fill>2 and active>0 then
-            if not opener then
-                sprite('left',left_edge,flare_y,flare_w,flare_h,
-                    185*fi*active*flicker,c1)
+            local style=transition_options.style or 'energized'
+            -- Before activation the glow is dormant; it charges as white
+            -- gives way to color. In uniform style the glow simply fades in.
+            local charge
+            if opener then
+                charge=1
+            elseif style=='energized' then
+                charge=.10+.90*smooth(progress/.85)
+            else
+                charge=progress
             end
-            sprite('right',right_edge-flare_w,flare_y,flare_w,flare_h,
-                185*fi*active*flicker,c2)
-        end
-        if level>=4 and age>=delay then
-            local a=80*gi*(.5+.5*sin(age*28)^2)
-            local halo_height=max(5,7*scale)
-            sprite('border_glow',x+edge_inset,y-halo_height/2,
-                max(1,w-2*edge_inset),halo_height,a,gold)
-            sprite('border_lower',x+edge_inset,y+h-halo_height/2,
-                max(1,w-2*edge_inset),halo_height,a,gold)
+            local glow_color=level>=4 and level4_color
+                or (level==3 and white or c1)
+            local rail_alpha=base*gi*rail*electric*charge
+            local cap_alpha=base*gi*cap*electric*charge
+            local scale=max(.5,tonumber(bar.scale) or 1)
+            local inset=max(2,math.floor(5*scale+.5))
+            local rail_height=max(5,math.floor(7*scale+.5))
+            local cap_w=max(7,math.floor(14*scale+.5))
+            local cap_h=max(12,math.floor(h+14*scale+.5))
+            local cap_y=y+math.floor((h-cap_h)/2+.5)
+            -- Both PNGs are centered around the real frame's centerline.
+            -- Horizontal halo ends *inside* bar.x and bar.x+w.
+            sprite('border_glow',x+inset,y-rail_height/2,
+                max(1,w-2*inset),rail_height,rail_alpha,glow_color)
+            sprite('border_lower',x+inset,y+h-rail_height/2,
+                max(1,w-2*inset),rail_height,rail_alpha,glow_color)
+            sprite('glow_cap_l',x,cap_y,cap_w,cap_h,
+                cap_alpha,glow_color)
+            sprite('glow_cap_r',x+w-cap_w,cap_y,cap_w,cap_h,
+                cap_alpha,glow_color)
         end
         self:finish()
     end
