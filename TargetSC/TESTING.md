@@ -1,5 +1,21 @@
 # TargetSC TESTING.md — start here
 
+## Test3 development — live bridge repair (2026-10-19)
+
+Branch `development/targetsc-resonance-test3`, based on Test2 `5d23e29`.
+Both bridge directions now deliver `lua c` addon commands, including ready and
+unsubscribe. `lua i` invoked a global function and never reached the receivers.
+The user's `Lionstag_2026.10.19.log` confirms the failure: subscribed=false,
+zero received events. Earlier publisher/consumer tests accepted the same wrong
+spelling; their transport claim is superseded, not proof of in-game delivery.
+
+Completed host simulation: new real-addon transport test passes both load
+orders, state publication, source timestamps, snapshot age, source reload,
+unsubscribe/off/on and zone reset. Existing receiver and addon simulations pass.
+Live sync remains pending. Animation8 HUD and combat logic are unchanged; the
+bridge file is intentionally changed by the two dispatch corrections.
+The full Test3 motion/renderer guide will precede this development entry.
+
 ## 0.2.0 Test2 — ground-first resonance, phase previews and visible strokes (2026-10-19)
 
 **Author:** A. **Branch:** `development/targetsc-resonance-test2`.

@@ -1,5 +1,20 @@
 # Skillchains → TargetSC interface v1
 
+## Test3 transport correction (2026-10-19)
+
+All subscription, event, readiness and unsubscribe commands now use
+`lua c <addon> ...` to reach the actual `addon command` receivers. The previous
+`lua i` spelling invoked a global function instead. User log
+`Lionstag_2026.10.19.log` reported subscribed=false and zero received events.
+The previous transport simulation accepted the same incorrect spelling and
+therefore did not establish live delivery. `tests/test_transport.lua` now loads
+both real addon handlers in isolated environments and distinguishes dispatch
+from invocation; both load orders, reload, unsubscribe and snapshots pass.
+This is still a host simulation, not a Windower/FFXI runtime check.
+
+Reference: https://docs.windower.net/commands/addon/ (lua command / lua invoke).
+Protocol v1 fields and all source combat deadlines remain unchanged.
+
 ## 2026-10-19 / TargetSC 0.2.0 presentation compatibility
 
 The complete event bridge and Skillchains runtime are byte-identical to the
@@ -25,12 +40,13 @@ local states and never publish through this channel or affect the HUD.
 Owner: Skillchains `targetsc_bridge.lua`; receiver: TargetSC `resonance.lua`.
 All transport stays inside one Windower process. Each addon has its own Lua
 state, so plain Lua tables/globals are not assumed shared. The documented
-Windower `lua i <addon> ...` command dispatches messages at transitions only.
+Windower ~~`lua i <addon> ...`~~ **`lua c <addon> ...`** command dispatches
+messages at transitions only (Test3 correction; `lua i` invokes a function).
 No custom undocumented Windower event API is assumed.
 
 ## Subscription and lifecycle
 
-TargetSC requests `lua i Skillchains targetsc subscribe`. The publisher emits
+TargetSC requests `lua c Skillchains targetsc subscribe`. The publisher emits
 `online`, all nonexpired states as snapshots, then `synced`. It publishes a
 single `state` for each new opener/extension, `burst` for confirmed MB actions,
 `expire` during its existing cleanup, `reset` for zone/logout and `offline` on
@@ -47,7 +63,7 @@ uses the original absolute deadlines and cannot replay the strike.
 ## Envelope
 
 ```text
-lua i TargetSC _event 1 <session> <sequence> <kind> <source_clock> [fields...]
+lua c TargetSC _event 1 <session> <sequence> <kind> <source_clock> [fields...]
 ```
 
 Session: numeric time/clock token, replaced on source reload. Sequence increments

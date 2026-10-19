@@ -34,7 +34,7 @@ package.preload.config=function()return {load=function(d)return d end,save=funct
 package.preload._TargetSC=function()return native end
 assert(loadfile('TargetSC/TargetSC.lua'))()
 events.load()
-assert(native.starts==1 and commands[#commands]=='lua i Skillchains targetsc subscribe')
+assert(native.starts==1 and commands[#commands]=='lua c Skillchains targetsc subscribe')
 local command=events['addon command']
 command('preview','demo','Liquefaction')
 for _,t in ipairs({.5,2.5,3.05,5.5,9.05,14.4,15.3})do now=t events.prerender() end

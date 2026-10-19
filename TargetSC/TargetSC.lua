@@ -61,7 +61,7 @@ end
 local function subscribe()
     if not settings.enabled then return end
     requested_at=os.clock() source_wait_notice=false
-    windower.send_command('lua i Skillchains targetsc subscribe')
+    windower.send_command('lua c Skillchains targetsc subscribe')
     debug('requested Skillchains bridge v1 snapshot')
 end
 local function selected_mob()
@@ -169,7 +169,7 @@ windower.register_event('addon command',function(command,...)
     elseif command=='off' then
         settings.enabled=false config.save(settings) preview=nil clear()
         if native then native.stop() renderer_started=false end
-        windower.send_command('lua i Skillchains targetsc unsubscribe')
+        windower.send_command('lua c Skillchains targetsc unsubscribe')
         model:clear() model.connected=false say('Disabled.')
     elseif command=='preview' then
         if args[1] and args[1]:lower()=='off' then preview=nil clear() say('Preview stopped.')
@@ -257,6 +257,6 @@ windower.register_event('zone change','logout',function()
     preview=nil selected_id=nil model:clear() clear() debug('world state cleared')
 end)
 windower.register_event('unload',function()
-    windower.send_command('lua i Skillchains targetsc unsubscribe')
+    windower.send_command('lua c Skillchains targetsc unsubscribe')
     clear() if native then native.stop() end
 end)

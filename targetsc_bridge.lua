@@ -20,7 +20,7 @@ function M.new(definitions, resources, send, clock)
         for _,value in ipairs({...}) do parts[#parts+1]=tostring(value) end
         -- All fields are addon-generated numeric/enumerated tokens. Never
         -- forward user text or evaluate a received message as Lua.
-        local ok = pcall(send, 'lua i TargetSC _event '..table.concat(parts,' '))
+        local ok = pcall(send, 'lua c TargetSC _event '..table.concat(parts,' '))
         if not ok then self.failures=self.failures+1 end
     end
     function self:state(id, state, snapshot)
@@ -68,7 +68,7 @@ function M.new(definitions, resources, send, clock)
     function self:announce()
         -- One lifecycle notification. A loaded TargetSC requests a snapshot;
         -- an absent companion never changes Skillchains combat/UI behavior.
-        pcall(send,'lua i TargetSC _ready')
+        pcall(send,'lua c TargetSC _ready')
     end
     function self:bursts(act)
         if not self.subscribed then return end

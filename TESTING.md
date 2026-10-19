@@ -2,6 +2,17 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## TargetSC Test3 development — transport repair (2026-10-19)
+
+`development/targetsc-resonance-test3` starts from Test2 `5d23e29`.
+Corrected the optional publisher's two commands and TargetSC's three subscriber
+commands from function invocation (`lua i`) to addon-command delivery (`lua c`).
+The real-addon dispatch simulation passes both load orders, source reload,
+snapshot age/deadlines, unsubscribe and zone reset. Prior transport simulations
+accepted the wrong spelling; they did not validate Windower delivery. Live
+handshake is still pending. Skillchains.lua, HUD code/assets and timers remain
+unchanged. See TargetSC/TESTING.md for the evolving full test record.
+
 ## TargetSC 0.2.0 Test2 pairing and Animation8 preview acceptance (2026-10-19)
 
 User has now tested Animation8 previews in FFXI and finds them substantially

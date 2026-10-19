@@ -12,9 +12,9 @@ local consumer=R.new()
 local wire={}
 local bridge=Bridge.new(definitions,{spells={[1]={element=0},[2]={element=1}}},function(command)
     assert(not command:find(';',1,true))
-    assert(command:match('^lua i TargetSC _event '))
+    assert(command:match('^lua c TargetSC _event '))
     local args={}
-    for token in command:gsub('^lua i TargetSC _event ',''):gmatch('%S+') do args[#args+1]=token end
+    for token in command:gsub('^lua c TargetSC _event ',''):gmatch('%S+') do args[#args+1]=token end
     wire[#wire+1]=args
     local ok,why=consumer:receive(args,now)
     assert(ok,why)
