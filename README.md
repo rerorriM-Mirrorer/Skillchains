@@ -5,6 +5,27 @@ This test branch adds a restrained, FFXI-inspired visual layer without modifying
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
 
+## Animation6 testing — rounded light leaks
+
+The `development/skillchains-resonance-animation7` branch updates
+only the Skillchains HUD. Its two new tintable mirrored PNGs
+(`images/resonance/edge_flare_left.png`, `edge_flare_right.png`)
+replace the vertical fill-end sprites. Their rounded feet track the
+fill's bottom while the plume extends upward. Confirmed skillchains
+keep the existing bar/track visible beneath a white sweep that grows
+from the far left, and center pulses use the actual midpoint
+property color. Frame-to-frame FX hide/show cycles are removed and
+hidden opener gradient primitives are skipped to investigate the
+reported hitch.
+
+Existing `//sc anim preview opener|level1|level2|level3|level4`
+and `//sc anim intensity|flare|glow <0-2>` controls remain.
+Saved settings are retained; TargetSC native/bridge behavior is
+unchanged. To verify or regenerate the authored PNGs from source,
+run `python3 tools/generate_edge_flares.py --check` or omit
+`--check` to regenerate. **Only synthetic tests so far**;
+please report in-game clipping, continuity and frame pacing.
+
 ## Animation4 unified pre-window preview
 
 The `development/skillchains-resonance-animation5` branch tests
