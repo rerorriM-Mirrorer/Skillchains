@@ -89,7 +89,8 @@ function M.new(color_for_result)
                 row.label:size(font)
                 row.label:stroke_width(stroke)
                 row.label:text(item.name or '')
-                row.measured_width=(function() local width=row.label:extents(); return tonumber(width) or 0 end)()
+                local width=row.label:extents()
+                row.measured_width=tonumber(width) or 0
                 row.measure_name=item.name or ''
                 row.measure_font=font
                 row.last_name=nil -- The row may need ellipsis with the new column.
@@ -138,7 +139,8 @@ function M.new(color_for_result)
                 local label=item.name or ''
                 row.label:text(label)
                 while #label>4 do
-                    local measured=(function() local width=row.label:extents(); return tonumber(width) or 0 end)()
+                    local width=row.label:extents()
+                    local measured=tonumber(width) or 0
                     local conservative=#label*font*.82
                     if math.max(measured,conservative)+2*stroke<=label_max then break end
                     label=label:sub(1,-2)
