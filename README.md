@@ -28,6 +28,57 @@ Future synchronized "struck bell" animation and a composite SC/MB HUD
 underbar are designed—but **not implemented**—in
 [TargetSC/docs/SHARED_RESONANCE_PLAN.md](TargetSC/docs/SHARED_RESONANCE_PLAN.md).
 
+## Skillchains Animation2 — live feedback refinements (2026-10-19)
+
+**Development branch:** `development/skillchains-resonance-animation3`;
+version `resonance.7-animation.2`. This is a **new testing build**, not
+an in-game-validated release. The existing TargetSC 0.1.0 DLL, its Lua
+renderer, world-space rings and bridge protocol are unchanged.
+
+- Learning icons were oversized even after shrinking the requested sprite
+  dimensions because Windower `images` texture `fit=true` can keep the
+  original PNG's size. The new build uses **`fit=false`** and smaller
+  0.78×font-size icons with space between them. The fixed property column
+  still follows the longest current ability name. SC caption icons also
+  use `fit=false`.
+- Windower text and stroke have **separate alpha channels**. Both now fade
+  together on the SC caption and Learn suggestions; previously the dark
+  outlines remained visible while the letters were transparent.
+- The opener now has **only one expanding white bar and soft leading flare**
+  in its first beat. The actual SC track, dark border and fill stay hidden
+  behind it. The white bar fades over the second beat as the dim, **primary
+  weapon-skill property only** appears. If that primary property has multiple
+  elements, it retains its own gradient. Names, timers and learning actions
+  fade in throughout the **second** beat, not the third. At the *real*
+  continuation-window opening, that same fill brightens as its already-
+  corrected countdown begins.
+- Successful chains keep the brief white impact/expansion and frame
+  brightening, but the property fill **blends over approximately 0.55s**
+  from the previous resonance to the new result instead of switching
+  instantly. Level 1 makes one soft flare traverse the full three-second
+  pre-window; level 2 makes two (about 1.5s each); level 3 makes three
+  (about 1s each). Travel ends when the continuation window opens.
+  Level 4 keeps an explicitly **provisional** three-pulse / flicker
+  treatment, deferred until available in actual gameplay.
+- The soft flare and halo sprites are the original procedural
+  `ghost_flare.png` / `ghost_glow.png` from our EnemyBar2 work,
+  now included locally under `Skillchains/images/resonance/`. No
+  EnemyBar2 runtime dependency. Solid rectangular light glows were
+  replaced by tapered alpha-gradient textures; the solid white
+  opener bar remains intentionally rectangular.
+- New persisted tuning: `//sc anim flare 0-2` and
+  `//sc anim glow 0-2`. Existing `//sc anim intensity 0-2`,
+  `//sc anim fade on|off`, `//sc anim preview opener|level1|level2|
+  level3|level4` and Ctrl+drag remain.
+
+Use the paired `Skillchains-TargetSC-Animation2-test` artifact
+from [the branch's testing workflow](https://github.com/rerorriM-Mirrorer/Skillchains/actions/workflows/targetsc-grid-testing.yml).
+It contains both complete addon folders, `WORKFLOW.md`, `TESTING.md`,
+and all PNG assets. **Do not replace a DLL while FFXI is running.** If
+TargetSC 0.1.0 is already installed, replace only the Skillchains files
+while preserving character `data/`, then `//lua reload Skillchains`.
+Live screenshot and timing approval for this new batch are pending.
+
 ## Skillchains Animation1 test — latest development (2026-10-18)
 
 Branch: `development/skillchains-resonance-animation2`; source based on the
