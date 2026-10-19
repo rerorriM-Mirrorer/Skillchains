@@ -322,6 +322,11 @@ assert(overlay.fx.sprites.moving.visible,
 assert(prims.sc_resonance_fx_wash.x==opt.bar.x+1 and
     prims.sc_resonance_sc_base.visible,
     'Successful chain starts white overlay at LEFT while prior track stays visible')
+for i=1,3 do
+    assert(overlay.fx.sprites.moving.rgb[i]==
+        prims.sc_resonance_sc_12.color[i],
+        'Early center flare color matches ACTUAL previous fill while transitioning')
+end
 assert(overlay.fx.sprites.left.y+
     overlay.fx.sprites.left.height<=opt.bar.y+
     math.max(3,math.floor(5*opt.scale+.5))+1,
