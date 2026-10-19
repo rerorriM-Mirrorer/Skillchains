@@ -209,8 +209,8 @@ overlay:render(nil)
 assert(overlay.learning.displayed==0)
 -- Source-clock animation presentation; no game packets are simulated here.
 local opener={
-    now=100,created=100,sc_open=103,step=1,level=0,
-    active={'Liquefaction','Detonation'},sc_wait=3,sc_left=7,sc_total=7,
+    now=100.15,created=100,sc_open=103,step=1,level=0,
+    active={'Liquefaction','Detonation'},sc_wait=2.85,sc_left=7,sc_total=7,
     mb_left=0,mb_total=10,groups=groups,closed=false
 }
 opt.animation={enabled=true,intensity=1,fade=false}
