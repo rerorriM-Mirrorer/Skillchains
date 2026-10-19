@@ -2,6 +2,101 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Current testing batch — 2026-10-19 / Animation2 refinements (LIVE PENDING)
+
+**Repository / branch:** `rerorriM-Mirrorer/Skillchains`,
+`development/skillchains-resonance-animation3`. Branched from
+`development/skillchains-resonance-animation2` at
+`176b0898db1365af1ea29560afbeddc7f08f4279`.
+**Version:** `2.20.08.25-resonance.7-animation.2`.
+**Scope:** Skillchains HUD renderer, HUD effects, learning icons,
+tests and package documentation. **TargetSC DLL/Lua/3D motion and
+bridge event protocol untouched**; `master` and previous testing
+branches untouched. No FFXI gameplay verification of this build.
+
+**Live user feedback (screenshot provided):** Learning-panel property
+icons remained much larger than text despite prior size adjustments.
+Icon column's distance to longest name was improved. Ability text
+appearance itself was praised, but labels turned dark during the
+fade. SC bar countdown was confirmed behaving much better.
+Opener's dark/white outline and extra pulses were unwanted; user
+requested a single expanding, free-standing white bar and flare,
+fading into a dim primary-only property. Pre-window label fade should
+start in second beat. Skillchain result colors should blend instead
+of switching, and traveling flares should occur **before** the
+continuation opens, with N=level passes across that delay.
+Previous rectangular flares/glows should resemble EnemyBar2's
+soft tapered alpha sprites. Level-four behavior remains undecided.
+
+**Findings:**
+- `images.new(... texture.fit=true)` was kept from the original icon
+  helper and can size to the PNG's native dimensions. Smaller numeric
+  `image:size()` alone did not ensure smaller visible icons. Changed
+  Learn and SC caption texture fitting to `false` and reduced Learn
+  icon design size to 78% of current text font size with scaled gaps.
+- `texts:alpha()` does NOT change `texts:stroke_alpha()`, hence
+  visible black outlines during text fade. Update both for learning
+  action labels, property label/timer, and compact caption when fading.
+- EnemyBar2's original procedural `assets/ffxi/ghost_flare.png` and
+  `ghost_glow.png` were copied byte-for-byte to
+  `Skillchains/images/resonance/`. They are runtime-tintable soft-
+  alpha gradients; no DAT extraction or additional input hooks.
+
+**New visual behavior:** One solid white opener overlay expands
+left→right across the first phase; the real SC bar/outline is hidden
+until reveal. White overlay fades in the second phase, with text,
+stroke and icon opacity appearing smoothly in that same second.
+No additional opener pulses. Primary property alone is the opener
+palette; a multi-element *single primary property* can still make
+a gradient. Same dim palette brightens after the actual SC window
+opens. Successful-chain gradient is interpolated from the prior
+active property to new result over a short initial interval.
+Paired side flares and N prewindow traversals (1, 2, 3 for
+level 1,2,3 respectively) use the reusable soft-alpha EnemyBar2
+textures. Level 4 preview tentatively pulses three times and
+flickers, no user-validated live level-4 effect.
+Controls `//sc anim intensity|flare|glow <0-2>` are persistent;
+opener countdown still does not decrease until the real delay expires.
+
+**Verification:** CI parses all Lua as Lua 5.1; runs the actual
+Skillchains HUD renderer against simulated Win­dower text, image and
+primitive APIs; asserts fit=false, smaller icons, common icon
+start column, stroke/foreground fading together, initial white
+wash with invisible real border, zero extra opener pulses,
+second-beat label reveal, color-blend progression, two
+prewindow flare passes, cessation of travel when SC opens,
+and legacy drag/viewport/scale/cleanup behavior. TargetSC
+publisher/consumer, native-addon Lua lifecycle simulations,
+missing native tests, and the Skillchains authoritative deadline
+comparison remain in CI. Full two-addon ZIP construction checks
+all PNG signatures and SHA-256 manifests with original DLL.
+No actual 3D rendering/FFXI test was performed.
+
+**Test in-game:** Use HUD-only
+`//sc anim preview opener`, `level1`, `level2`, `level3`;
+verify icon sizes at scale 0.5/1/2.5 and small 960x540
+client, absence of initial dark outlines, primary-only
+opener fill, gradual successful-chain color blend and the
+changed prewindow flare rates. Try `//sc anim flare .5`,
+`//sc anim glow 1.5` and overall `//sc anim intensity 2`.
+Trigger real openers/skillchains to confirm visual phases
+scale with the reported delay, continued good countdown,
+no UI stutter across four clients, Ctrl+drag persistence
+and no change to `//tsc sync`. Confirm former TargetSC
+0.1.0 rings remain unchanged. Preserve `data/` when
+installing; close clients if replacing the native DLL.
+
+**Outstanding visual investigations:** Native Windower font
+metrics can differ from Lua synthetic extents. If text still
+appears too dark, collect a screenshot at the transition.
+The original bar's fractional gradient segments may show
+minor 1px rounding at unusual scales, independent of this
+fix. Fade timing needs real weapon-skill delays for
+sub-3-second windows. MB and TargetSC spatial redesign
+are specifically deferred.
+
+---
+
 ## Current testing batch — 2026-10-18 / Skillchains Animation1 (LIVE PENDING)
 
 **Branch:** `development/skillchains-resonance-animation2` in
