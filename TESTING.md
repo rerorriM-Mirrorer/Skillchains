@@ -2,6 +2,102 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Current testing batch — 2026-10-19 / Animation3 readability + alignment (LIVE PENDING)
+
+**Branch:** `development/skillchains-resonance-animation4`, branched
+from Animation2 commit `27f4927fa68fa845b30ab20d475f2ec2daa563c4`.
+**Skillchains version:** `2.20.08.25-resonance.7-animation.3`.
+**Scope:** HUD-only `learning_ui.lua`, `resonance_fx.lua`,
+`resonance_ui.lua`, `Skillchains.lua`, Lua simulation tests, package
+workflow and docs. TargetSC 0.1.0 native DLL, Lua animation, source
+bridge, combat observation and SC/MB absolute deadlines unchanged.
+Older test branches and master remain untouched.
+
+**User's confirmed FFXI Animation2 feedback:** Opener looks good and
+countdown correction is working. Desired rounded white opener endcaps,
+text/icons fading during its *first* second, raised EnemyBar2-style
+flares whose feet align with SC fill bottom, more transparent dark
+track at levels 3/4 (especially with optional `anim fade on`), and
+strongly reduced repeated traveling flares. Level-4 pulsing liked.
+Preferred currently `anim fade off`, `glow 1`, `intensity 1`,
+`flare 2`, bar caption `//sc names offset 5 -9`, and SC caption
+icon an extra 2–3 pixels lower. Learning icons now look correctly
+sized but can overlap bold-italic ability text: the fixed column is
+too close, despite previous attempts to match measured text widths.
+
+**Implementation:**
+- Measure the **actual pooled bold-italic labels**, not an invisible
+  differently rasterized probe. Cache per-row font measurements, add
+  conservative visible-width estimate and stroke clearance, followed
+  by at least 8px of additional breathing room. Compute one shared
+  icon starting column; truncate overflowing labels before that column.
+  Preserve smaller `fit=false` PNGs, scale rules and 960×540 layout.
+- Add one-pixel inset white opening endcaps matching the SC bar's
+  rounded silhouette. Text, icons and their dark outline begin fading
+  during the **first** actual pre-window beat, completing within it.
+  Preserve the single white expansion flare (no second/third opener
+  pulses) and actual SC continuation countdown behavior.
+- Successful chain: initial white strike and side flares unchanged.
+  Remove extra moving flare entirely for level 1; use **one** follow-up
+  pass throughout the entire pre-window for levels 2 and 3. Keep
+  level-four's provisional three pulses and later flicker. Align all
+  EnemyBar2-derived soft flare sprite **feet with the bottom of the
+  SC fill**; their tips naturally rise above the top frame.
+- Return bar's empty track to its constant translucent dark opacity
+  even if fill oscillation/fade is enabled; only the opener reveal may
+  fade it. Use two narrow soft texture strips above/below the SC bar
+  rails for L3/L4 glow rather than one bright overlaid rectangle
+  obscuring the empty track. Limit glow to its existing intensity
+  controls.
+- Opener fill continues dim until active; ramps up smoothly upon
+  actual SC window opening. Successful SC brightness now eases from
+  dimmer to brighter throughout the pre-window instead of switching
+  on the next frame. Previous-property → result gradient interpolation
+  remains intact.
+- Existing `//sc names offset <x> <y>` still moves SC text and icons.
+  New saved `//sc icons offset <x> <y>` moves SC icons independently.
+  Built-in SC icon baseline lowered an additional 3 scaled pixels.
+  New configuration defaults are names (5,-9), flare 2, glow 1,
+  intensity 1, and fade off; existing saved settings are preserved.
+
+**Checks:** GitHub Actions Lua 5.1 parser and simulated
+`tools/test_learning_ui.lua` verify long/multi-property text
+ellipsis before icon column, cached positioning, separate icon
+offset, Ctrl/grid drag, scaled layouts, rounded white cap geometry,
+first-beat text and stroke fade, independent dark trough opacity,
+one level-2/3 flare traversal, no level-1 follow flare, feet aligned
+with fill, top/bottom rail halo, pooled visual cleanup. Existing
+TargetSC publisher/consumer, animations, native Lua lifecycle,
+missing-DLL and actual Skillchains source-deadline comparison
+regressions continue. Package validates Windows DLL, two copied
+EnemyBar2 procedural sprites, 14 property PNGs, docs and manifests.
+All are **static/simulated checks**. **Not tested live in FFXI.**
+
+**Next FFXI test checklist:** Back up both addons and data. If updating
+Skillchains alone, copy all files/assets inside `Skillchains/`,
+preserve `data/`, and `//lua reload Skillchains`; only close the game
+if replacing TargetSC's DLL. `//sc status` should report
+`resonance.7-animation.3`. Preview opener, L1, L2, L3 and provisional
+L4 at 0.5, 1, 2.5 scales; check white rounded endcap expansion,
+early smooth caption/learning entry, stable dark track, both
+rail glows, steady decreasing countdown and flare timing. Try
+`//sc names offset 5 -9` then `//sc icons offset 0 0`,
+`//sc icons offset 0 2`, returning to 0 0 to compare. Test long
+ability names, dual/multi-property icons in Learn at small
+960×540 and larger resolutions. `//sc anim fade on` must
+change the fill but not brighten or erase the empty track;
+`//sc anim flare 2` should retain the pleasing contact.
+Verify TargetSC `//tsc sync`, source timers, switching targets,
+multibox costs and existing Ctrl+drag. Collect screenshots
+and note observed FFXI font/raster differences.
+
+**Known limitations:** Real Windower text extents may differ from the
+synthetic measurement. Level-four appearance is a *preview*;
+no actual Radiance/Umbra in-game validation. TargetSC ring/disc
+redesign and MB underbar shimmer remain separate future changes.
+
+---
+
 ## Current testing batch — 2026-10-19 / Animation2 refinements (LIVE PENDING)
 
 **Repository / branch:** `rerorriM-Mirrorer/Skillchains`,
