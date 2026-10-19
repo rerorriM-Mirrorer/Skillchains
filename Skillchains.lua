@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.7'
+_addon.version = '2.20.08.25-resonance.7-animation.8'
 
 require('luau')
 require('pack')
@@ -53,9 +53,11 @@ default.Resonance = {
     -- Rails + rounded ends share color/flicker. Tier mask defaults to L3/4.
     -- Strengths are multipliers, with no artificial upper bound. Actual
     -- Windower alpha ultimately saturates at 255.
-    glow={levels='34',rail12=.30,cap12=.35,rail34=.60,cap34=.75,
-          level1=1,level2=1,level3=1,level4=1,
-          scale=1,l4='whitegold'},
+    glow={levels='34',rail12=.30,cap12=.35,rail34=.75,cap34=.85,
+          level1=1,level2=.65,level3=.70,level4=1,
+          pre12=.18,pre3=.38,pre4=.85,scale=1,l4='gold'},
+    -- RGB controls the hue; alpha sets how much game scenery shows through.
+    track={alpha=155,color={6,8,17}},
     transition={duration=.30,style='energized'},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=5,y=-9},
@@ -655,6 +657,7 @@ windower.register_event('addon command', function(cmd, ...)
             message('Glow levels '..g.levels..' (default '..defs.levels..').')
         elseif option=='rail12' or option=='rail34' or
             option=='cap12' or option=='cap34' or option=='scale' or
+            option=='pre12' or option=='pre3' or option=='pre4' or
             option=='level1' or option=='level2' or
             option=='level3' or option=='level4' then
             glow_setting(opts,option,args[2])
@@ -674,16 +677,60 @@ windower.register_event('addon command', function(cmd, ...)
                 message('Use //sc glow preset balanced|capforward (default capforward).')
                 return
             end
-            local factor=preset=='balanced' and 1 or 1.25
-            g.cap12=g.rail12*factor
-            g.cap34=g.rail34*factor
+            -- Ratio follows the currently favored .75 rail / .85 cap
+            -- rather than exaggerating the round tip with extra bloom.
+            g.cap12=g.rail12*(preset=='balanced' and 1 or defs.cap12/defs.rail12)
+            g.cap34=g.rail34*(preset=='balanced' and 1 or defs.cap34/defs.rail34)
             config.save(settings)
-            message(('Glow %s: cap12 %.3f, cap34 %.3f; rail12 %.3f, rail34 %.3f. Default preset capforward.'):format(
+            message(('Glow %s: cap12 %.3f, cap34 %.3f; rail12 %.3f, rail34 %.3f. Default capforward.'):format(
                 preset,g.cap12,g.cap34,g.rail12,g.rail34))
+        elseif option=='reset' then
+            opts.glow={}
+            for key,val in pairs(defs) do opts.glow[key]=val end
+            config.save(settings)
+            message('Glow restored to Animation8 defaults (positions unchanged).')
         else
-            message(('Glow levels %s (default 34), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f, scale %.2f, L4 %s.'):format(
-                g.levels,g.rail12,g.cap12,g.rail34,g.cap34,g.scale,g.l4))
-            message('Use //sc glow levels 34|1234|off; rail12|cap12|rail34|cap34|level1-4|scale <number>; preset balanced|capforward; l4 whitegold|gold|white.')
+            message(('Glow levels %s (default 34), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f; pre3 %.2f pre4 %.2f; scale %.2f L4 %s.'):format(
+                g.levels,g.rail12,g.cap12,g.rail34,g.cap34,
+                g.pre3,g.pre4,g.scale,g.l4))
+            message('Use //sc glow levels 34|1234|off; rail12|cap12|rail34|cap34|level1-4|pre12|pre3|pre4|scale <number>; preset balanced|capforward; l4 gold|whitegold|white; reset.')
+        end
+    elseif cmd=='track' then
+        opts.track=opts.track or {}
+        local t=opts.track
+        local defs=default.Resonance.track
+        t.alpha=t.alpha==nil and defs.alpha or t.alpha
+        t.color=t.color or {defs.color[1],defs.color[2],defs.color[3]}
+        if option=='alpha' then
+            local alpha=finite_nonnegative(args[2])
+            if not alpha or alpha>255 then
+                message(('Track alpha %d/255 (default %d). Use //sc track alpha <0-255>.'):format(t.alpha,defs.alpha))
+                return
+            end
+            t.alpha=math.floor(alpha+.5)
+            config.save(settings)
+            message(('Track alpha %d/255 (default %d; 0 is fully transparent).'):format(t.alpha,defs.alpha))
+        elseif option=='rgb' then
+            local rgb={}
+            for i=1,3 do
+                local v=finite_nonnegative(args[i+1])
+                if not v or v>255 then
+                    message('Use //sc track rgb <0-255> <0-255> <0-255> (default 6 8 17).')
+                    return
+                end
+                rgb[i]=math.floor(v+.5)
+            end
+            t.color=rgb
+            config.save(settings)
+            message(('Track RGB %d %d %d (default 6 8 17).'):format(rgb[1],rgb[2],rgb[3]))
+        elseif option=='reset' then
+            opts.track={alpha=defs.alpha,color={defs.color[1],defs.color[2],defs.color[3]}}
+            config.save(settings)
+            message('Track alpha/RGB restored to default 155 / 6 8 17.')
+        else
+            message(('Track alpha %d/255, RGB %d %d %d (defaults 155 / 6 8 17).'):format(
+                t.alpha,t.color[1],t.color[2],t.color[3]))
+            message('Use //sc track alpha <0-255> | rgb <r> <g> <b> | reset.')
         end
     elseif cmd=='transition' then
         opts.transition=opts.transition or {}
@@ -795,9 +842,10 @@ windower.register_event('addon command', function(cmd, ...)
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.grid=10
         opts.animation={enabled=true,intensity=2,flare=2,glow=2,fade=false}
-        opts.glow={levels='34',rail12=.30,cap12=.35,rail34=.60,cap34=.75,
-                   level1=1,level2=1,level3=1,level4=1,
-                   scale=1,l4='whitegold'}
+        opts.glow={levels='34',rail12=.30,cap12=.35,rail34=.75,cap34=.85,
+                   level1=1,level2=.65,level3=.70,level4=1,
+                   pre12=.18,pre3=.38,pre4=.85,scale=1,l4='gold'}
+        opts.track={alpha=155,color={6,8,17}}
         opts.transition={duration=.30,style='energized'}
         opts.name_offset.x,opts.name_offset.y=5,-9
         opts.icon_offset=opts.icon_offset or {x=0,y=0}
