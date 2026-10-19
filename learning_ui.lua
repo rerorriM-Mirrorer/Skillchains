@@ -71,7 +71,9 @@ function M.new(color_for_result)
         local glyphsize=math.max(5,math.floor(font*.78+.5)) -- visual glyph smaller than letters
         local gap=math.max(3,math.floor(4*scale+.5))
         local all=flatten(groups)
-        if #all==0 then all[1]={name='No compatible learned actions',properties={}} end
+        -- An empty prediction is not an error message. Hide all pooled
+        -- rows so the unobtrusive panel stays fully absent until useful.
+        if #all==0 then self:hide();return end
         -- One fixed icon COLUMN starts just after the widest learned name.
         -- Recompute from unscaled text metrics each time the list changes;
         -- reserve room for every property in dual/multi-property abilities.
