@@ -244,9 +244,11 @@ function M.new(prefix)
         local scale=max(.5,tonumber(bar.scale) or 1)
         local flare_w=max(8,14*scale)
         local flare_h=max(11,20*scale)
-        -- Soft ghost-flare image is brightest at its foot. Its lower edge
-        -- meets the SC fill's bottom, while tips extend above the upper rail.
-        local flare_y=y+h-flare_h-max(2,2*scale)
+        -- The new edge sprites end at their bright rounded foot. Anchor
+        -- their last raster row on the fill's last raster row at ANY height.
+        local fill_bottom=y+h-1
+        local function base_y(height) return fill_bottom-height+1 end
+        local flare_y=base_y(flare_h)
         local edge_inset=max(3,5*scale)
         local left_edge=x+edge_inset
         local right_edge=x+max(edge_inset,fill-edge_inset)
@@ -264,10 +266,11 @@ function M.new(prefix)
             -- Soft endcaps finish the shortened glow rails without extending
             -- outside the rounded gauge silhouette.
             local cap=max(3,7*scale)
-            sprite('glow_cap_l',x,y+h/2-cap/2,cap,h/2+cap/2,
-                alpha*.85,halo_color)
-            sprite('glow_cap_r',x+w-cap,y+h/2-cap/2,cap,h/2+cap/2,
-                alpha*.85,halo_color)
+            local cap_height=max(9,14*scale)
+            sprite('glow_cap_l',x+1,base_y(cap_height),
+                cap,cap_height,alpha*.85,halo_color)
+            sprite('glow_cap_r',x+w-cap-1,base_y(cap_height),
+                cap,cap_height,alpha*.85,halo_color)
         end
         if s.expire_age then self:finish();return end
         -- Opener begins from nothing; a successful SC retains its previous
@@ -277,30 +280,26 @@ function M.new(prefix)
             (age<2 and 255*(1-smooth(age-1)) or 0)
         local white_edge_alpha=age<1 and 210 or
             (age<2 and 210*(1-smooth(age-1)) or 0)
+        local previous=clamp(s.from_fraction or .45,0,1)
         local fill_extent=age<1 and
             (opener and w*smooth(age) or
-             (clamp(s.from_fraction or .45,0,1)*w+
-             (1-clamp(s.from_fraction or .45,0,1))*w*smooth(age))) or w
+             (previous*w+(1-previous)*w*smooth(age))) or w
         if age<2 then
-            -- For successful chains the existing fill is the foundation:
-            -- the white overlay only covers the *newly grown* segment.
-            local start_x=opener and 0 or
-                clamp(s.from_fraction or .45,0,1)*w
-            local white_width=max(0,fill_extent-start_x)
-            if opener then
-                white_caps(x,y,fill_extent,h,white_alpha*intensity)
-            else
-                white_caps(x+start_x,y,white_width,h,white_alpha*intensity)
-            end
+            -- Like the opener, the WHITE sweep starts at the left rail and
+            -- covers the entire bar through the growing right edge. For
+            -- successful chains the prior fill and track stay underneath.
+            white_caps(x,y,fill_extent,h,white_alpha*intensity)
             local end_x=x+max(edge_inset,fill_extent-edge_inset)
-            -- White flare grows/shrinks with the opener pulse, then fades.
+            -- Animate HEIGHT, not vertical position: keep the bright foot
+            -- fixed to the same lower fill row as the plume grows upward.
             local beat=age<1 and smooth(age) or 1-smooth(age-1)
-            local flare_pulse=.68+.32*sin(beat*pi)
-            sprite('edge',end_x-flare_w/2,flare_y,flare_w*flare_pulse,
-                flare_h*flare_pulse,white_edge_alpha*fi,white)
+            local flare_pulse=.63+.37*sin(beat*pi)
+            local pulse_h=max(5,floor(flare_h*flare_pulse+.5))
+            local pulse_y=base_y(pulse_h)
+            sprite('edge',end_x-flare_w,pulse_y,flare_w,pulse_h,
+                white_edge_alpha*fi,white)
             if not opener then
-                sprite('left',left_edge-flare_w/2,flare_y,
-                    flare_w*flare_pulse,flare_h*flare_pulse,
+                sprite('left',left_edge,pulse_y,flare_w,pulse_h,
                     white_edge_alpha*fi,white)
             end
         end
@@ -311,8 +310,15 @@ function M.new(prefix)
             local t=progress-floor(progress)
             local pulse=1-smooth(t)
             local flicker=level>=4 and (.60+.40*sin(age*23)^2) or 1
+            -- The property color at the fill's center may differ from
+            -- either gradient end. Do not substitute gold at level four.
+            local mid=(#palette+1)/2
+            local lower=max(1,floor(mid))
+            local upper=min(#palette,lower+1)
+            local middle=mix(palette[lower] or c1,
+                palette[upper] or c2,mid-lower)
             sprite('moving',x+w/2-flare_w/2,flare_y,flare_w,flare_h,
-                210*fi*pulse*flicker,level>=4 and gold or c1)
+                210*fi*pulse*flicker,middle)
         end
         -- Bring in property-colored edge flares while the white dissipates.
         -- Their arrival precedes the final brightness ramp, avoiding a pop.
@@ -320,9 +326,9 @@ function M.new(prefix)
         if age>=delay then active=1 end
         local flicker=.87+.13*sin((s.now or 0)*26)^2
         if fill>2 and active>0 then
-            sprite('left',left_edge-flare_w/2,flare_y,flare_w,flare_h,
+            sprite('left',left_edge,flare_y,flare_w,flare_h,
                 185*fi*active*flicker,c1)
-            sprite('right',right_edge-flare_w/2,flare_y,flare_w,flare_h,
+            sprite('right',right_edge-flare_w,flare_y,flare_w,flare_h,
                 185*fi*active*flicker,c2)
         end
         if level>=4 and age>=delay then
