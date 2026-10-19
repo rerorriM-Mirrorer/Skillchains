@@ -25,7 +25,7 @@ function M.new(prefix)
         windower.prim.set_visibility(id,false)
         self.ids[name]=id
     end
-    for _,name in ipairs({'edge','left','right','moving','border_glow','border_lower'}) do
+    for _,name in ipairs({'edge','left','right','moving','border_glow','border_lower','glow_cap_l','glow_cap_r'}) do
         local file=(name=='border_glow' or name=='border_lower')
             and 'ghost_glow.png' or 'ghost_flare.png'
         self.sprites[name]=images.new('',{
@@ -124,6 +124,7 @@ function M.new(prefix)
     -- The white overlay itself is the bar at that moment.
     function self:bar_reveal(s,opt)
         if not s or (opt or {}).enabled==false then return 1 end
+        if s.step~=1 then return 1 end -- previous SC fill/track stay visible
         local age=age_and_delay(s)
         return smooth(age-1)
     end
@@ -138,7 +139,7 @@ function M.new(prefix)
         if not s or (s.step or 0)<=1 then return 1 end
         local age,delay=age_and_delay(s)
         -- Brighten through the actual wait; don't jump at window opening.
-        return .46+.54*smooth((age-(delay-.30))/.30)
+        return .46+.54*smooth((age-(delay-.55))/.55)
     end
     function self:palette_blend(s)
         if not s or (s.step or 0)<=1 then return 1 end
@@ -189,8 +190,8 @@ function M.new(prefix)
         local flare_h=max(11,20*scale)
         -- Soft ghost-flare image is brightest at its foot. Its lower edge
         -- meets the SC fill's bottom, while tips extend above the upper rail.
-        local flare_y=y+h-1-flare_h
-        local edge_inset=max(2,3*scale)
+        local flare_y=y+h-flare_h-max(2,2*scale)
+        local edge_inset=max(3,5*scale)
         local left_edge=x+edge_inset
         local right_edge=x+max(edge_inset,fill-edge_inset)
         if level>=3 then
@@ -204,35 +205,63 @@ function M.new(prefix)
                 max(1,w-2*edge_inset),halo_height,alpha,halo_color)
             sprite('border_lower',x+edge_inset,y+h-halo_height/2,
                 max(1,w-2*edge_inset),halo_height,alpha,halo_color)
+            -- Soft endcaps finish the shortened glow rails without extending
+            -- outside the rounded gauge silhouette.
+            local cap=max(3,7*scale)
+            sprite('glow_cap_l',x,y+h/2-cap/2,cap,h/2+cap/2,
+                alpha*.85,halo_color)
+            sprite('glow_cap_r',x+w-cap,y+h/2-cap/2,cap,h/2+cap/2,
+                alpha*.85,halo_color)
         end
         if s.expire_age then return end
-        -- All skillchain tiers share one three-beat pre-window sequence.
-        -- 0-1s: expand white bar. 1-2s: white dissolves to dim property.
-        -- Final .3s: property brightens and colored edge flares emerge.
+        -- Opener begins from nothing; a successful SC retains its previous
+        -- fill and dark track underneath the white re-expansion.
+        local opener=(s.step or 0)<=1
         local white_alpha=age<1 and 255 or
             (age<2 and 255*(1-smooth(age-1)) or 0)
         local white_edge_alpha=age<1 and 210 or
             (age<2 and 210*(1-smooth(age-1)) or 0)
-        local fill_extent=age<1 and w*smooth(age) or w
+        local fill_extent=age<1 and
+            (opener and w*smooth(age) or
+             (clamp(s.from_fraction or .45,0,1)*w+
+             (1-clamp(s.from_fraction or .45,0,1))*w*smooth(age))) or w
         if age<2 then
-            white_caps(x,y,fill_extent,h,white_alpha*intensity)
-            local right=x+max(edge_inset,fill_extent-edge_inset)
-            sprite('edge',right-flare_w/2,flare_y,flare_w,flare_h,
-                white_edge_alpha*fi,white)
-            -- A second white flare accompanies the expanding left edge.
-            sprite('left',left_edge-flare_w/2,flare_y,flare_w,flare_h,
-                white_edge_alpha*fi,white)
+            -- For successful chains the existing fill is the foundation:
+            -- the white overlay only covers the *newly grown* segment.
+            local start_x=opener and 0 or
+                clamp(s.from_fraction or .45,0,1)*w
+            local white_width=max(0,fill_extent-start_x)
+            if opener then
+                white_caps(x,y,fill_extent,h,white_alpha*intensity)
+            else
+                white_caps(x+start_x,y,white_width,h,white_alpha*intensity)
+            end
+            local end_x=x+max(edge_inset,fill_extent-edge_inset)
+            -- White flare grows/shrinks with the opener pulse, then fades.
+            local beat=age<1 and smooth(age) or 1-smooth(age-1)
+            local flare_pulse=.68+.32*sin(beat*pi)
+            sprite('edge',end_x-flare_w/2,flare_y,flare_w*flare_pulse,
+                flare_h*flare_pulse,white_edge_alpha*fi,white)
+            if not opener then
+                sprite('left',left_edge-flare_w/2,flare_y,
+                    flare_w*flare_pulse,flare_h*flare_pulse,
+                    white_edge_alpha*fi,white)
+            end
         end
-        if age<delay then
-            -- A single centered pulse precedes decay on every tier.
-            -- Retain L4's faster electrical shimmer as a modulation.
-            local pulse=smooth((age-(delay-.30))/.30)
+        if not opener and age<delay then
+            -- Restore the original L4 three-beat center pulses for ALL
+            -- confirmed chain levels, not one last-second blink.
+            local progress=3*age/delay
+            local t=progress-floor(progress)
+            local pulse=1-smooth(t)
             local flicker=level>=4 and (.60+.40*sin(age*23)^2) or 1
             sprite('moving',x+w/2-flare_w/2,flare_y,flare_w,flare_h,
-                190*fi*pulse*flicker,level>=4 and gold or c1)
+                210*fi*pulse*flicker,level>=4 and gold or c1)
         end
-        local active=smooth((age-(delay-.30))/.30)
-        if age>=delay then active=1 end
+        -- Bring in property-colored edge flares while the white dissipates.
+        -- Their arrival precedes the final brightness ramp, avoiding a pop.
+        local active=opener and 0 or smooth((age-(delay-.70))/.55)
+        if age>=delay and not opener then active=1 end
         local flicker=.87+.13*sin((s.now or 0)*26)^2
         if fill>2 and active>0 then
             sprite('left',left_edge-flare_w/2,flare_y,flare_w,flare_h,
