@@ -13,8 +13,8 @@ only the Skillchains HUD. Its two new tintable mirrored PNGs
 replace the vertical fill-end sprites. Their rounded feet track the
 fill's bottom while the plume extends upward. Confirmed skillchains
 keep the existing bar/track visible beneath a white sweep that grows
-from the far left, and center pulses use the actual midpoint
-property color. Frame-to-frame FX hide/show cycles are removed and
+from the far left, and center pulses use the midpoint color of the **currently
+displayed fill**, including its property transition. Frame-to-frame FX hide/show cycles are removed and
 hidden opener gradient primitives are skipped to investigate the
 reported hitch.
 
