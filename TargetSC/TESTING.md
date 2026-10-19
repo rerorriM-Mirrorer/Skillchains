@@ -1,5 +1,25 @@
 # TargetSC TESTING.md — start here
 
+## Skillchains Animation3 paired package — 2026-10-19
+
+The `development/skillchains-resonance-animation4` branch contains
+the newest Skillchains-only opener/flare/glow/learn-column iteration,
+packaged with the *unchanged* TargetSC companion. The TargetSC Lua,
+native DLL, event bridge, 3D rings and MB behavior are not modified.
+The Skillchains change holds the same absolute continuation/burst
+deadlines and source state, so TargetSC's synchronization contract is
+unchanged. Source-only simulated regressions passed; **no new
+in-game TargetSC validation** has occurred. The user's separate
+ring/disc and Magic Burst directions remain outstanding.
+
+When installing, leave TargetSC in place if already up to date and
+replace Skillchains Lua/assets only, preserving data and reloading
+Skillchains. If replacing TargetSC's DLL, close FFXI first.
+After addon reload, `//tsc sync` requests the current authoritative
+Skillchains state without replaying a strike.
+
+---
+
 ## Skillchains Animation2 compatibility — 2026-10-19
 
 The independent Skillchains refinement branch
