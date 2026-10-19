@@ -260,8 +260,9 @@ function M.new(prefix)
         end
         -- Bring in property-colored edge flares while the white dissipates.
         -- Their arrival precedes the final brightness ramp, avoiding a pop.
-        local active=opener and 0 or smooth((age-(delay-.70))/.55)
-        if age>=delay and not opener then active=1 end
+        local active=opener and smooth((age-(delay-.70))/.55)
+            or smooth((age-(delay-.70))/.55)
+        if age>=delay then active=1 end
         local flicker=.87+.13*sin((s.now or 0)*26)^2
         if fill>2 and active>0 then
             sprite('left',left_edge-flare_w/2,flare_y,flare_w,flare_h,
