@@ -1,5 +1,24 @@
 # TargetSC TESTING.md — start here
 
+## Paired Skillchains Animation8 compatibility — 2026-10-19
+
+`development/skillchains-resonance-animation9` replaces HUD-only
+border rendering with actual thin top/bottom perimeter primitives
+instead of a full white/gold rectangle behind the dark track.
+Three PNG halo sections follow one capsule outline; no overlap.
+The separate 2D color/charge behaviors (L3 slow flutter, L4 fast
+pre-window electricity) will inform a **future** TargetSC 3D
+design pass once FFXI testing confirms the 2D result. This test
+does **not** modify TargetSC 0.1.0 native DLL, Lua, rings,
+burst logic, protocol or source clocks. CI tests compare original
+and modified Skillchains' absolute deadlines and TargetSC publisher/
+consumer state. **No new live in-game TargetSC testing is claimed.**
+
+Only copy changed Skillchains files/assets if TargetSC is already
+installed. Never replace `_TargetSC.dll` while FFXI is running.
+
+---
+
 ## Paired Skillchains Animation7 compatibility (2026-10-19)
 
 The testing package for Skillchains branch
