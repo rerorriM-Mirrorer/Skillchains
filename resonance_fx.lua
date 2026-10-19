@@ -15,66 +15,122 @@ local white={255,255,255}
 local gold={249,207,103}
 local dark={9,10,21}
 function M.new(prefix)
-    local self={ids={},sprites={},prefix=prefix or 'sc_resonance_fx_'}
-    -- A solid white bar really grows from zero during the first strike.
-    -- The light around it uses alpha-textured sprites, never square halos.
+    local self={ids={},sprites={},sprite_state={},prim_state={},
+        frame=0,prefix=prefix or 'sc_resonance_fx_'}
+    -- Reuse the pooled assets. The new end sprites have a rounded glowing
+    -- base whose bottom edge is exactly the fill's lower raster edge.
     for _,name in ipairs({'wash','wash_cap_l','wash_cap_r'}) do
         local id=self.prefix..name
         windower.prim.create(id)
         windower.prim.set_color(id,0,255,255,255)
         windower.prim.set_visibility(id,false)
         self.ids[name]=id
+        self.prim_state[name]={shown=false}
     end
-    for _,name in ipairs({'edge','left','right','moving','border_glow','border_lower','glow_cap_l','glow_cap_r'}) do
-        local file=(name=='border_glow' or name=='border_lower')
-            and 'ghost_glow.png' or 'ghost_flare.png'
+    for _,name in ipairs({'edge','left','right','moving','border_glow',
+        'border_lower','glow_cap_l','glow_cap_r'}) do
+        local file
+        if name=='border_glow' or name=='border_lower' then
+            file='ghost_glow.png'
+        elseif name=='moving' then
+            file='ghost_flare.png' -- preserve original L4 center pulses
+        elseif name=='left' or name=='glow_cap_l' then
+            file='edge_flare_left.png'
+        else
+            file='edge_flare_right.png'
+        end
         self.sprites[name]=images.new('',{
             pos={x=0,y=0},visible=false,draggable=false,
             size={width=1,height=1},
             color={alpha=0,red=255,green=255,blue=255},
             texture={path=windower.addon_path..'images/resonance/'..file,fit=false}
         })
+        self.sprite_state[name]={shown=false}
     end
+    -- Mark/sweep instead of hide/show on every animation frame. Windower's
+    -- visibility and texture operations are comparatively expensive across
+    -- four clients; unchanged geometry/color is also left untouched.
     function self:hide()
-        for _,id in pairs(self.ids) do windower.prim.set_visibility(id,false) end
-        for _,p in pairs(self.sprites) do p:hide() end
-    end
-    local function wash(x,y,w,h,a,c)
-        local id=self.ids.wash
-        if a<=0 or w<=0 or h<=0 then
-            windower.prim.set_visibility(id,false)
-            return
-        end
-        windower.prim.set_color(id,floor(clamp(a,0,255)+.5),c[1],c[2],c[3])
-        windower.prim.set_position(id,floor(x+.5),floor(y+.5))
-        windower.prim.set_size(id,max(1,floor(w+.5)),max(1,floor(h+.5)))
-        windower.prim.set_visibility(id,true)
-    end
-    -- Uses the same inset end-cap silhouette as the SC gauge: 1px shorter
-    -- left/right tips so the white opening bar is never a sharp rectangle.
-    local function white_caps(x,y,w,h,a)
-        wash(x+1,y,max(1,w-2),h,a,white)
-        for _,cap in ipairs({'wash_cap_l','wash_cap_r'}) do
-            local id=self.ids[cap]
-            if w<2 or a<=0 then
+        for name,id in pairs(self.ids) do
+            local st=self.prim_state[name]
+            if st.shown then
                 windower.prim.set_visibility(id,false)
-            else
-                local px=cap=='wash_cap_l' and x or x+w-1
-                windower.prim.set_color(id,floor(clamp(a,0,255)+.5),255,255,255)
-                windower.prim.set_position(id,floor(px+.5),floor(y+1+.5))
-                windower.prim.set_size(id,1,max(1,floor(h-2+.5)))
-                windower.prim.set_visibility(id,true)
+                st.shown=false
+            end
+        end
+        for name,p in pairs(self.sprites) do
+            local st=self.sprite_state[name]
+            if st.shown then p:hide();st.shown=false end
+        end
+    end
+    function self:finish()
+        for name,id in pairs(self.ids) do
+            local st=self.prim_state[name]
+            if st.shown and st.frame~=self.frame then
+                windower.prim.set_visibility(id,false)
+                st.shown=false
+            end
+        end
+        for name,p in pairs(self.sprites) do
+            local st=self.sprite_state[name]
+            if st.shown and st.frame~=self.frame then
+                p:hide()
+                st.shown=false
             end
         end
     end
+    local function primitive(name,x,y,w,h,a,c)
+        if a<=0 or w<=0 or h<=0 then return end
+        local st=self.prim_state[name]
+        local id=self.ids[name]
+        x,y,w,h=floor(x+.5),floor(y+.5),max(1,floor(w+.5)),max(1,floor(h+.5))
+        a=floor(clamp(a,0,255)+.5)
+        if x~=st.x or y~=st.y then
+            windower.prim.set_position(id,x,y);st.x,st.y=x,y
+        end
+        if w~=st.w or h~=st.h then
+            windower.prim.set_size(id,w,h);st.w,st.h=w,h
+        end
+        if a~=st.a or st.r~=c[1] or st.g~=c[2] or st.b~=c[3] then
+            windower.prim.set_color(id,a,c[1],c[2],c[3])
+            st.a,st.r,st.g,st.b=a,c[1],c[2],c[3]
+        end
+        if not st.shown then
+            windower.prim.set_visibility(id,true)
+            st.shown=true
+        end
+        st.frame=self.frame
+    end
+    -- Bar outline and opening wash use the same two-pixel-rounded ends.
+    -- A zero-length sweep draws *nothing*, avoiding the initial 1px flash.
+    local function white_caps(x,y,w,h,a)
+        if w<=0 or a<=0 then return end
+        if w<=2 then
+            primitive('wash',x,y,w,h,a,white)
+            return
+        end
+        primitive('wash',x+1,y,w-2,h,a,white)
+        primitive('wash_cap_l',x,y+1,1,max(1,h-2),a,white)
+        primitive('wash_cap_r',x+w-1,y+1,1,max(1,h-2),a,white)
+    end
     local function sprite(name,x,y,w,h,a,c)
+        if a<=0 or w<=0 or h<=0 then return end
         local p=self.sprites[name]
-        if a<=0 or w<=0 or h<=0 then p:hide();return end
-        p:pos(floor(x+.5),floor(y+.5))
-        p:size(max(1,floor(w+.5)),max(1,floor(h+.5)))
-        p:color(c[1],c[2],c[3])
-        p:alpha(floor(clamp(a,0,255)+.5))
-        p:show()
+        local st=self.sprite_state[name]
+        x,y,w,h=floor(x+.5),floor(y+.5),max(1,floor(w+.5)),max(1,floor(h+.5))
+        a=floor(clamp(a,0,255)+.5)
+        if x~=st.x or y~=st.y then
+            p:pos(x,y);st.x,st.y=x,y
+        end
+        if w~=st.w or h~=st.h then
+            p:size(w,h);st.w,st.h=w,h
+        end
+        if c[1]~=st.r or c[2]~=st.g or c[3]~=st.b then
+            p:color(c[1],c[2],c[3]);st.r,st.g,st.b=c[1],c[2],c[3]
+        end
+        if a~=st.a then p:alpha(a);st.a=a end
+        if not st.shown then p:show();st.shown=true end
+        st.frame=self.frame
     end
     function self:shake(s,opt)
         if not s or (s.step or 0)<=1 or (opt or {}).enabled==false then return 0 end
@@ -148,8 +204,8 @@ function M.new(prefix)
         return smooth((age-1)/1)
     end
     function self:render(s,opt,bar,palette)
-        self:hide()
-        if not s or not bar then return end
+        if not s or not bar then self:hide();return end
+        self.frame=self.frame+1
         opt=opt or {}
         local intensity=clamp(tonumber(opt.intensity) or 1,0,2)
         local enabled=opt.enabled~=false and intensity>0
@@ -184,7 +240,7 @@ function M.new(prefix)
             windower.prim.set_color(id,floor(clamp(border_alpha,0,255)+.5),
                 border[1],border[2],border[3])
         end
-        if not enabled then return end
+        if not enabled then self:finish();return end
         local scale=max(.5,tonumber(bar.scale) or 1)
         local flare_w=max(8,14*scale)
         local flare_h=max(11,20*scale)
@@ -213,7 +269,7 @@ function M.new(prefix)
             sprite('glow_cap_r',x+w-cap,y+h/2-cap/2,cap,h/2+cap/2,
                 alpha*.85,halo_color)
         end
-        if s.expire_age then return end
+        if s.expire_age then self:finish();return end
         -- Opener begins from nothing; a successful SC retains its previous
         -- fill and dark track underneath the white re-expansion.
         local opener=(s.step or 0)<=1
@@ -277,6 +333,7 @@ function M.new(prefix)
             sprite('border_lower',x+edge_inset,y+h-halo_height/2,
                 max(1,w-2*edge_inset),halo_height,a,gold)
         end
+        self:finish()
     end
     function self:destroy()
         for _,id in pairs(self.ids) do windower.prim.delete(id) end
