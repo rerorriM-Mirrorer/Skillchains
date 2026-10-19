@@ -1,12 +1,15 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.1.0'
+_addon.version='0.2.0-test2'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
 local config=require('config')
 local resonance=require('resonance')
-local settings=config.load({enabled=true,debug=false,opacity=.65,scale=1,intensity=.65,height=1})
+local previews=require('resonance_preview')
+local defaults={enabled=true,debug=false}
+for key,value in pairs(resonance.defaults)do defaults[key]=value end
+local settings=config.load(defaults)
 local model=resonance.new()
 local native,renderer_error,renderer_started
 local preview,selected_id,next_frame,last_tracking_error=nil,nil,0,nil
@@ -18,11 +21,11 @@ local ok,result=pcall(require,'_TargetSC')
 if ok and type(result)=='table' and type(result.version)=='function' then
     local version_ok,version=pcall(result.version)
     local api_ok=true
-    for _,name in ipairs({'start','stop','clear','begin','ring','commit','status'}) do
+    for _,name in ipairs({'start','stop','clear','begin','ring','disc','commit','status'}) do
         if type(result[name])~='function' then api_ok=false end
     end
-    if version_ok and version=='0.1.0' and api_ok then native=result
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.1.0, received '..tostring(version) end
+    if version_ok and version=='0.2.0' and api_ok then native=result
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.2.0, received '..tostring(version) end
 else renderer_error=tostring(result) end
 
 local function say(text) windower.add_to_chat(207,'TargetSC: '..text) end
@@ -80,11 +83,20 @@ local function help()
     local lines={
         {'on|off','Enable or disable resonance drawing.'},
         {'status','Report source, timing, tracking and native renderer state.'},
-        {'preview [property] [level]','Preview opener, collapse/reopen and burst on a living enemy.'},
+        {'preview [opener|pre|chain|window|expire|closed|demo] [property] [level]','Run one explicit local scenario.'},
+        {'preview opener Liquefaction,Impaction','Compare multiple opening properties.'},
+        {'motion flutter|sine|legacy','Select discrete, smooth or original motion.'},
+        {'layout grounded|symmetric|center','Choose how the pair moves.'},
+        {'flutter period|amplitude|damping <number>','Tune flutter: seconds, model-height fraction, decay/sec.'},
+        {'width <1-8>','Minimum screen-pixel core width (default 2).'},
+        {'brightness <0-4>','Core alpha multiplier (default 1).'},
+        {'glow <0-3>','Surrounding light without thickening the core.'},
+        {'discs on|off|opacity <0-1>','Control procedural ground property glyphs.'},
+        {'preset vivid|gentle|legacy','Try a complete visual preset; preserves height/debug.'},
         {'preview off','End preview and return to live state.'},
-        {'opacity <0-1>','Set translucent ring opacity (default 0.65).'},
+        {'opacity <0-1>','Set translucent ring opacity (default 1).'},
         {'scale <0.25-3>','Scale the model-relative rings.'},
-        {'intensity <0-2>','Set vibration and flash strength.'},
+        {'intensity <0-4>','Set vibration and flash strength.'},
         {'height <0.25-3>','Adjust the model-height estimate.'},
         {'debug on|off','Record state events in data/TargetSC-debug.log.'},
         {'sync','Request an authoritative snapshot after missing events.'},
@@ -92,7 +104,7 @@ local function help()
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
     }
-    windower.add_to_chat(0,('TargetSC 0.1.0 — elemental resonance'):color(167))
+    windower.add_to_chat(0,('TargetSC 0.2.0 — elemental resonance'):color(167))
     for _,line in ipairs(lines) do
         windower.add_to_chat(0,('//tsc '):color(200)..line[1]:color(207)..(' -> '):color(200)..line[2]:color(0))
     end
@@ -100,54 +112,37 @@ end
 local function status()
     local now=os.clock()
     say(('v%s; enabled=%s preview=%s source=%s synced=%s events=%d gaps=%d rejected=%d debug=%s'):format(
-        _addon.version,tostring(settings.enabled),preview and 'on' or 'off',model.connected and 'Skillchains v1' or 'waiting/absent',
+        _addon.version,tostring(settings.enabled),preview and (preview.kind..'/'..tostring(preview.phase or 'pre')) or 'off',model.connected and 'Skillchains v1' or 'waiting/absent',
         tostring(model.synced),model.events,model.gaps,model.rejected,tostring(settings.debug)))
     say(('opacity=%.2f scale=%.2f intensity=%.2f height=%.2f; target=%s; last tracking=%s; clock delta=%.3fs; unknown burst elements=%d'):format(
         settings.opacity,settings.scale,settings.intensity,settings.height,tostring(selected_id or 'none'),tostring(last_tracking_error or 'ok'),model.clock_warning,model.unknown_bursts))
-    local state=model.states[selected_id]
+    say(('motion=%s layout=%s period=%.3fs amplitude=%.3f damping=%.2f/s; width>=%.1fpx brightness=%.2f glow=%.2f discs=%s opacity=%.2f'):format(
+        settings.motion,settings.layout,settings.period,settings.amplitude,settings.damping,settings.width,
+        settings.brightness,settings.glow,tostring(settings.discs),settings.disc_opacity))
+    local state=(preview and preview.model or model).states[selected_id]
     if state then say(('target revision=%d properties=%s; continuation=%.3fs (wait %.3fs); MB=%.3fs; closed=%s'):format(
-        state.revision,table.concat(state.properties,'/'),math.max(0,state.sc_close-now),math.max(0,state.sc_open-now),
+        state.revision,table.concat(state.properties,'/'),state.closed and 0 or math.max(0,state.sc_close-math.max(now,state.sc_open)),math.max(0,state.sc_open-now),
         math.max(0,state.mb_close-now),tostring(state.closed))) end
     say(native and native.status() or 'Native module unavailable: '..tostring(renderer_error))
     if not model.connected then say('Load the compatible Skillchains folder, then //tsc sync. Preview remains available.') end
 end
-local function begin_preview(property,level)
+local function begin_preview(args)
     local mob=selected_mob()
     if not mob then say('Select a living enemy for preview.') return end
     if not settings.enabled then say('Use //tsc on first.') return end
     if not start_renderer() then return end
-    local p=resonance.property(property)
-    level=level and tonumber(level) or (p and resonance.level(p))
-    if not p or not level or level%1~=0 or level<1 or level>4 then
-        say('Use //tsc preview [Liquefaction|Fusion|Light|Darkness|Radiance|Umbra|other property] [1-4].') return
-    end
+    local spec,err=previews.parse(args,resonance)
+    if not spec then say(err..' See //tsc help.') return end
     local now=os.clock()
-    local pm=resonance.new()
-    pm.states[mob.id]={id=mob.id,revision=1,created=now,sc_open=now+.75,sc_close=now+8,
-        mb_close=0,step=1,level=level,properties={p},elements=resonance.elements(p)}
-    preview={id=mob.id,at=now,model=pm,property=p,level=level,phase=1}
+    preview=previews.new(spec,mob.id,now,resonance)
     selected_id=mob.id
-    say('Preview '..p..' level '..level..': strike now, chain at 3s, burst at 6s, continuation ends at 10s, MB ends at 13s.')
-    debug('preview begin target='..mob.id..' property='..p..' level='..level)
+    say('Preview '..table.concat(spec.properties,'/')..' level '..spec.level..'; '..preview.description)
+    debug('preview begin target='..mob.id..' '..preview.description)
 end
 local function advance_preview(now)
-    local age=now-preview.at
-    if preview.phase==1 and age>=3 then
-        local old=preview.model.states[preview.id]
-        preview.model.states[preview.id]={id=preview.id,revision=2,created=preview.at+3,
-            sc_open=preview.at+4,sc_close=preview.at+10,mb_close=preview.at+13,
-            step=2,level=preview.level,properties={preview.property},elements=resonance.elements(preview.property),previous=old}
-        preview.phase=2 debug('preview confirmed chain')
-    end
-    if preview.phase==2 and age>=6 then
-        local e=resonance.elements(preview.property)[1]
-        -- Feed the real burst path using an explicit synthetic publisher frame.
-        local pm=preview.model
-        pm.connected=true pm.session='preview' pm.sequence=0
-        pm:receive({'1','preview','1','burst',tostring(preview.at+6),tostring(preview.id),e,'0','spells'},now)
-        preview.phase=3 debug('preview confirmed magic burst')
-    end
-    if age>=13.25 then preview=nil debug('preview complete') end
+    local prior=preview.phase
+    if preview:advance(now) then preview=nil;debug('preview complete')
+    elseif prior~=preview.phase then debug('preview phase '..tostring(preview.phase)) end
 end
 local function numeric_setting(key,value,low,high)
     local n=tonumber(value)
@@ -178,7 +173,7 @@ windower.register_event('addon command',function(command,...)
         model:clear() model.connected=false say('Disabled.')
     elseif command=='preview' then
         if args[1] and args[1]:lower()=='off' then preview=nil clear() say('Preview stopped.')
-        else begin_preview(args[1],args[2]) end
+        else begin_preview(args) end
     elseif command=='debug' then
         local option=(args[1] or ''):lower()
         if option~='on' and option~='off' then say('Use //tsc debug on|off.') return end
@@ -191,7 +186,33 @@ windower.register_event('addon command',function(command,...)
         say('Debug '..option..'. Log: TargetSC/data/TargetSC-debug.log')
     elseif command=='opacity' then numeric_setting(command,args[1],0,1)
     elseif command=='scale' or command=='height' then numeric_setting(command,args[1],.25,3)
-    elseif command=='intensity' then numeric_setting(command,args[1],0,2)
+    elseif command=='intensity' then numeric_setting(command,args[1],0,4)
+    elseif command=='width' then numeric_setting(command,args[1],1,8)
+    elseif command=='brightness' then numeric_setting(command,args[1],0,4)
+    elseif command=='glow' then numeric_setting(command,args[1],0,3)
+    elseif command=='motion' or command=='layout' then
+        local values=command=='motion' and {flutter=true,sine=true,legacy=true} or {grounded=true,symmetric=true,center=true}
+        local value=(args[1] or ''):lower()
+        if not values[value] then say('See //tsc help for '..command..' choices.') return end
+        settings[command]=value;config.save(settings);say(command..' = '..value)
+    elseif command=='flutter' then
+        local key=(args[1] or ''):lower()
+        if key=='period' then numeric_setting(key,args[2],.05,.5)
+        elseif key=='amplitude' then numeric_setting(key,args[2],0,1)
+        elseif key=='damping' then numeric_setting(key,args[2],0,8)
+        else say('Use //tsc flutter period|amplitude|damping <number>.') end
+    elseif command=='discs' then
+        local value=(args[1] or ''):lower()
+        if value=='opacity' then numeric_setting('disc_opacity',args[2],0,1)
+        elseif value=='on' or value=='off' then settings.discs=value=='on';config.save(settings);say('Discs '..value..'.')
+        else say('Use //tsc discs on|off|opacity <0-1>.') end
+    elseif command=='preset' then
+        local value=(args[1] or ''):lower()
+        if value~='vivid' and value~='gentle' and value~='legacy' then say('Use //tsc preset vivid|gentle|legacy.') return end
+        for key,v in pairs(resonance.defaults)do if key~='height' then settings[key]=v end end
+        if value=='gentle' then settings.opacity=.7;settings.intensity=1;settings.amplitude=.16;settings.glow=.4
+        elseif value=='legacy' then settings.motion='legacy';settings.discs=false;settings.scale=1;settings.opacity=.65;settings.intensity=.65;settings.width=1 end
+        config.save(settings);say('Visual preset '..value..'. Height and debug preserved.')
     elseif command=='restart' or command=='unload' then
         say(command=='restart' and 'Restarting.' or 'Unloading.')
         clear() if native then native.stop() renderer_started=false end
@@ -225,7 +246,8 @@ windower.register_event('prerender',function()
     local radius,height=resonance.dimensions(mob,settings)
     local frame=(preview and preview.model or model):frame(id,now,radius,height,settings)
     native.begin(mob.index,mob.id)
-    for _,ring in ipairs(frame) do native.ring(ring.radius,ring.offset,ring.width,ring.color) end
+    for _,disc in ipairs(frame.discs or {})do native.disc(disc.radius,disc.offset,disc.rotation,disc.color,disc.glyph) end
+    for _,ring in ipairs(frame) do native.ring(ring.radius,ring.offset,ring.width,ring.color,ring.pixels or settings.width) end
     native.commit()
 end)
 windower.register_event('load',function()

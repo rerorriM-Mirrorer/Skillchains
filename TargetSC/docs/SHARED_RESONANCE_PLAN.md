@@ -1,3 +1,64 @@
+# Shared resonance plan — reconciled 2026-10-19 (A.)
+
+## Current reference and scope
+
+Skillchains Animation8 at **e3a8b632e29eeebdbd4455da470810a9574a7ddd**,
+`development/skillchains-resonance-animation9`, version
+`2.20.08.25-resonance.7-animation.8`, is the user-accepted preview reference.
+The opener, genuinely transparent interior, narrow perimeter, seamless capsule
+halo, slow L3 shimmer and strong pre-window L4 gold flicker are working well.
+Gameplay remains the next calibration source; preview approval is not a claim
+of fully accepted live timing. L2 gradient contrast and subtle preparing-white
+flicker are observations to retain, **not HUD edits in this TargetSC batch**.
+
+The earlier plan below predates Animation8. Its 0.2s center-out HUD opener,
+brightness-only high-tier plan and proposed composite MB underbar must not
+replace the successful current HUD. Retain them as historical design notes.
+
+## One authoritative timeline, separate presentations
+
+| Source phase | Preserved Animation8 HUD | TargetSC 0.2.0 test |
+| --- | --- | --- |
+| Opener impact/charge | White grow/reveal into primary property | White expanding ground disc and falling/concentric ground rings; property glyph reveal |
+| Opener sc_open | Begin true countdown | Spawn sky, quick rise and damped flutter, then converge toward ground/center |
+| Confirmed successful chain | White refill during charge | White consolidation/recharge; sky restores from previous separation |
+| Result sc_open boundary | 0.30s white-to-result transition | Same boundary-centered 0.30s ring color change; no timer shift |
+| L3/L4 charge and decay | Restrained slow white / strong fast gold perimeter | Related slow/fast ring modulation, stronger visible cores and minimal surrounding light |
+| Continuation expiry | SC expires; independent MB remains | Rings meet/flash/fade; MB-only visual persists when eligible |
+| Confirmed burst | Existing HUD behavior unchanged | Existing central shimmer/ripple unchanged for this iteration |
+
+TargetSC computes phases from source-created/sc_open/sc_close/mb_close.
+Pre-window visual thirds scale with the actual source delay; they do not add
+another 3-second combat wait. Explicit local previews use chosen synthetic
+source states and never publish through the bridge or alter gameplay.
+
+## Experimental choices
+
+Default test: scale 2, grounded layout, discrete alternate positions held .15s,
+amplitude .28 model heights × intensity 2, exponential damping .85/sec. Sine
+and legacy motion remain comparison modes; symmetric/center layouts remain
+experimental. The sky's envelope converges continuously; **flutter offsets
+jump without interpolation**. L3 slows the alternation and L4 speeds it up.
+
+A narrow 2px screen core with independent opacity/brightness/glow improves
+visibility. The 1px floor is configurable upward and independent of model scale.
+Projection retains world perspective, correct depth and clipped/occluded arcs.
+Property discs are bounded procedural circle/star glyphs, not exact icon art.
+Further elemental assets can replace/enrich them once movement is accepted.
+
+Keep protocol v1 and all Skillchains runtime code/assets unchanged. Discs and
+pixel strokes require TargetSC native API 0.2.0 but **do not** change SceneHook
+ABI 2 or require other addons to be rebuilt. Preserve identity checks, scene
+state restoration, unload handoff and native stale-frame watchdog.
+
+Next acceptance gate: user tests individual phases on real models, compares
+motion/layout presets and adjusts width/brightness before extending MBs or
+adding target-specific dimensions. No fake native runtime testing is claimed.
+
+---
+
+## Historical Grid1 proposal (preserved)
+
 # Shared resonance presentation — coordinated Skillchains + TargetSC plan
 
 Status: design proposal, not implemented by the Grid1 change. Author: A.

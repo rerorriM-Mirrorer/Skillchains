@@ -1,5 +1,27 @@
 # Skillchains → TargetSC interface v1
 
+## 2026-10-19 / TargetSC 0.2.0 presentation compatibility
+
+The complete event bridge and Skillchains runtime are byte-identical to the
+Animation8 reference e3a8b63. Test2 adds only renderer/presentation capabilities;
+native API 0.2.0 does not change this wire protocol or SceneHook ABI 2.
+
+New opener stages are fractions of `sc_open-created`, not an independently
+assumed three-second wait. Successful ring color transition spans 0.30s centered
+on `sc_open`, matching the preserved Animation8 HUD. Flutter sample times are
+anchored to source `created` during charge and `sc_open` during countdown.
+Disc rotation derives from source age; disc fade derives from remaining SC
+fraction. No frame increments, receipt-time resets or second combat timer.
+
+A fresh step=1 replacement clears predecessor/MB effect geometry. A successful
+step retains its predecessor briefly for sky recharge; snapshots retain the
+source-created age, skip impact flash and never restart movement. Real MBs use
+the existing queue/element/deadline checks with unchanged central ripple origin;
+paired-ring ripple redesign is deferred. Explicit phase previews create private
+local states and never publish through this channel or affect the HUD.
+
+---
+
 Owner: Skillchains `targetsc_bridge.lua`; receiver: TargetSC `resonance.lua`.
 All transport stays inside one Windower process. Each addon has its own Lua
 state, so plain Lua tables/globals are not assumed shared. The documented

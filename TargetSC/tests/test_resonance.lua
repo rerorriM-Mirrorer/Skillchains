@@ -3,7 +3,7 @@ package.path='./?.lua;./TargetSC/?.lua;'..package.path
 local Bridge=require('targetsc_bridge')
 local R=require('resonance')
 local now=100
-local opts={opacity=.65,scale=1,height=1,intensity=.65}
+local opts={opacity=.65,scale=1,height=1,intensity=.65,motion='legacy'}
 local definitions={Liquefaction={'Fire',lvl=1},Fusion={'Fire','Light',lvl=2},
     Distortion={'Ice','Water',lvl=2},Light={'Fire','Wind','Lightning','Light',lvl=3},
     Darkness={'Earth','Ice','Water','Dark',lvl=3},Radiance={'Fire','Wind','Lightning','Light',lvl=4},

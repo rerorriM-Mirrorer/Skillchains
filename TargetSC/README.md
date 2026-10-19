@@ -1,5 +1,128 @@
 # TargetSC — elemental resonance
 
+## 0.2.0 Test2 — ground-first charge, flutter and visible cores
+
+**Read TESTING.md first.** This batch develops TargetSC only. Paired Skillchains
+remains Animation8 (`e3a8b63`, `resonance.7-animation.8`), including its source
+state, bridge, HUD code and all assets. Author: **A.** New branch:
+`development/targetsc-resonance-test2`.
+
+The new native DLL reports **0.2.0**; Lua reports **0.2.0-test2**. Close **all
+FFXI clients** before replacing `TargetSC/libs/_TargetSC.dll`, then merge the
+complete `TargetSC/` folder and preserve `data/`. The full testing ZIP also
+contains the complete, unchanged Animation8 Skillchains runtime. If already
+running Animation8, updating only TargetSC is sufficient.
+
+### First comparison
+
+```text
+//lua load Skillchains
+//lua load TargetSC
+//tsc preset vivid
+//tsc preview opener Liquefaction,Impaction
+//tsc preview chain Fragmentation 2
+```
+
+Use reload instead of load for already loaded addons after installing. The
+**vivid preset** deliberately pushes this test to scale 2, opacity 1, intensity
+2, 2px cores, brightness 1, glow .8 and disc opacity .32. Saved settings are
+otherwise preserved. `preset gentle` gives a quieter starting point; neither
+preset resets height or debug. `preset legacy` selects original motion and
+turns discs off. This is for comparison, not a claim that the new native stroke
+is identical to the old world-width raster.
+
+### Phase-specific local previews
+
+Select a living enemy. These scenarios do not send game actions or source
+bridge events. `//sc anim preview ...` remains a separate HUD-only preview.
+
+| Command | Scenario |
+| --- | --- |
+| `//tsc preview opener [property[,property...]]` | Ground charge 0–3s; sky enters/countdown 3–10s; no MB |
+| `//tsc preview pre [property]` | Ground-only charge, stopping at 3s before countdown |
+| `//tsc preview chain [property] [1-4]` | Successful white recharge 0–3s; countdown 3–9s; MB to 10s (L4 is closed) |
+| `//tsc preview window [property] [level]` | Countdown begins immediately, no staged hit or pre-window |
+| `//tsc preview expire [property] [level]` | Last second of continuation, then independent MB tail |
+| `//tsc preview closed [property] [level]` | Closed result, charge settles into MB-only state; no SC opportunity |
+| `//tsc preview demo [property] [level]` | Opener at 0, source-like opening at 3, chain at 5, new opening at 8, burst at 9, SC ends 14, MB ends 15 |
+| `//tsc preview level1` through `level4` | Successful chain examples (Liquefaction/Fusion/Light/Radiance) |
+| `//tsc preview off` | Return to live state |
+
+`//tsc preview Fragmentation 2` still works and now aliases the **single chain**
+scenario; chat explicitly reports its phases. No-argument preview is opener.
+Only opener/pre/demo allow up to three comma-separated opening properties.
+The full demo's L4 result is closed, so it has no post-chain SC countdown.
+Window/expire are deliberately open-window experiments even for a chosen L4
+palette. Live closed-chain semantics remain authoritative.
+
+### Motion and readability controls
+
+| Command | Meaning / range |
+| --- | --- |
+| `//tsc motion flutter` | Held alternate positions; no tween between flutter samples (default) |
+| `//tsc motion sine` | Smooth oscillation on the new phase timeline |
+| `//tsc motion legacy` | Original immediate paired opening and decaying 13Hz wobble |
+| `//tsc layout grounded` | Lower ring near feet; sky approaches it; opposed flutter (default) |
+| `//tsc layout symmetric` | Pair converges toward model center |
+| `//tsc layout center` | Flutter toward the center and back toward the current separated positions |
+| `//tsc flutter period 0.15` | Seconds held per alternate position, .05–.5; a full back/forth takes twice this |
+| `//tsc flutter amplitude 0.28` | Fraction of model height before intensity/damping, 0–1 |
+| `//tsc flutter damping 0.85` | Exponential amplitude decay per second after opening, 0–8 |
+| `//tsc intensity 2` | Vibration and transient response multiplier, 0–4 |
+| `//tsc width 2` | Screen-pixel minimum core thickness, 1–8, independent of model scale/distance |
+| `//tsc brightness 1` | Core alpha multiplier, 0–4; opacity eventually saturates at 1 |
+| `//tsc opacity 1` | Overall alpha, 0–1 |
+| `//tsc glow 0.8` | Surrounding luminous width/alpha, 0–3; 0 removes halo bands |
+| `//tsc discs on` / `off` | Procedural circle/star glyph layer |
+| `//tsc discs opacity 0.32` | Ground disc fill alpha, 0–1 |
+| `//tsc scale 2` / `height 1` | Existing model sizing controls, .25–3 |
+| `//tsc status` / `debug on` | Phase/settings, source health and native diagnostics |
+
+The native stroke projects the 3D centerline first and widens it with bounded
+screen-space joins. It preserves projected depth/rhw, uses the scene depth
+test, writes no depth and keeps the complete state-block restore. Visible,
+unclipped arcs have at least the requested screen thickness; hidden/near-plane
+or degenerate arcs are still culled. No wall-through drawing is introduced.
+
+### What to look for
+
+An opener starts with concentric ground strands, a white expansion and fall,
+then reveals its property colors and ground glyphs. Source pre-window thirds
+map to the white awakening, property reveal/white pulse, and colored pulse.
+At the source `sc_open` deadline the sky appears, rises quickly, and converges
+through exactly the source continuation lifetime. Countdown does not run in
+the pre-window. Opposed flutter is strongest around opening and shrinks with
+both exponential damping and remaining separation. L3 uses a slower flutter
+and 11-rad/s light modulation; L4 uses faster flutter and 23/28-rad/s gold or
+purple perimeter flicker, including its white charge.
+
+Successful chains briefly consolidate strands/discs, recharge the paired
+resonance white and restore sky separation. Their core color transition spans
+0.30s centered on `sc_open`, matching Animation8's white recharge. New openers
+replace all earlier geometry and pending burst visuals on that enemy.
+
+The discs are **procedural circle/four-point-star glyphs**, inspired by the
+property icons; they do not load or reproduce the icons' exact artwork. They
+spin every 2s for openers, 1s for L1 chains, .5s for L2, .25s for L3, and remain
+still white/black for L4. Secondary/tertiary discs are larger/lower. Disc alpha
+follows the source continuation fraction; a closed L4 can retain its still
+MB-only disc until the independent source MB deadline. Turn discs off to
+compare ring movement alone. Custom elemental assets and model databases
+remain future work.
+
+MB shimmer/ripple origin is retained from Test1 in this batch. Confirmed
+bursts remain independent and cannot reset SC/MB deadlines; paired-ring MB
+ripples will be revisited after motion/readability testing.
+
+Static Lua/native geometry tests and x86 compilation are distinct from live
+FFXI tests. The original rings have user-confirmed live rendering at scale 2;
+**this new 0.2.0 animation/native revision has not been tested in FFXI**.
+
+---
+
+
+## Historical Test1 reference (retained)
+
 Windower 4 companion to the personal Skillchains fork. Author: **A.**
 Version **0.1.0 / testing batch 1**. New work is on `targetsc-companion-v0.1`
 in the Skillchains repository; neither master nor the personal resonance branch
@@ -96,7 +219,7 @@ The shared struck-bell and composite MB-underbar design is recorded in
 [`docs/SHARED_RESONANCE_PLAN.md`](docs/SHARED_RESONANCE_PLAN.md).
 Those animations have **not** been implemented here.
 
-## Install
+## Historical 0.1.0 installation/reference
 
 1. Close the FFXI clients before replacing native DLL files. Back up existing
    `Windower/addons/Skillchains/` and its `data/` folder.
@@ -126,7 +249,7 @@ The native module and Skillchains are independent: unloading TargetSC leaves
 Skillchains' existing UI active. Unloading Skillchains clears live TargetSC
 state; reloading it announces availability and requests a fresh snapshot.
 
-## Commands
+## Historical 0.1.0 commands
 
 | Command | Effect |
 | --- | --- |
@@ -249,6 +372,16 @@ commits and full notices. Existing Skillchains credits and license are retained
 inside its own folder.
 
 ## Changelog
+
+### 2026-10-19 — 0.2.0 Test2 (A.)
+
+- Ground-first source-relative charge, delayed sky entry, explicit phase previews,
+  configurable held-position flutter/sine/legacy and three pair layouts.
+- Projected minimum-pixel cores, independent brightness/glow controls, vivid
+  comparison preset and bounded procedural property discs.
+- Animation8 HUD and bridge remain byte-identical; MB redesign deferred.
+- Automated Lua/native geometry checks and Windows cross-build; live pending.
+
 
 ### 2026-10-18 — 0.1.0 / testing batch 1 (A.)
 

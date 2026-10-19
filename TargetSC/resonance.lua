@@ -1,5 +1,8 @@
 -- Pure state/animation model. No Windower or combat packet dependency. Author: A.
 local M={}
+local motion=require('resonance_motion')
+M.defaults=motion.defaults
+M.phase=motion.phase
 local min,max,exp,sin,pi=math.min,math.max,math.exp,math.sin,math.pi
 local function clamp(x,a,b) return max(a,min(b,x)) end
 local function smooth(x) x=clamp(x,0,1) return x*x*(3-2*x) end
@@ -140,10 +143,12 @@ function M.new()
             if #properties==0 or #properties>8 or #elements==0 or #elements>8 then return false,'invalid properties/elements' end
             local old=self.states[id]
             local state={id=id,revision=rev,created=created,sc_open=open,sc_close=close,mb_close=mb,
-                step=step,level=level,closed=closed=='1',properties=properties,elements=elements}
+                step=step,level=level,closed=closed=='1',properties=properties,elements=elements,
+                suppress_impact=args[17]=='1'}
             if old and args[17]=='0' and step>1 then
                 state.previous=old state.previous.previous=nil
             end
+            if step==1 and args[17]=='0' then self.bursts[id]=nil end
             self.states[id]=state
         elseif kind=='burst' then
             local id,element=tonumber(args[6]),args[7]
@@ -169,6 +174,10 @@ function M.new()
         local s=self.states[id]
         if not s then return out end
         if now>max(s.sc_close+.25,s.mb_close) then self.states[id]=nil self.bursts[id]=nil return out end
+        if (opts.motion or motion.defaults.motion)~='legacy' then
+            if s.previous and now-s.created>=.3 then s.previous=nil end
+            return motion.frame(self,s,now,radius,height,opts,{palette=palette,argb=M.argb})
+        end
         if s.previous and now-s.created<.12 then
             local old=s.previous
             local _,sep=base_motion(old,s.created)
