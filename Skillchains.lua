@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.2'
+_addon.version = '2.20.08.25-resonance.7-animation.3'
 
 require('luau')
 require('pack')
@@ -49,9 +49,11 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- client; //sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
     mode='learn', display='sc', names='full', scale=1, grid=10,
-    animation={enabled=true,intensity=1.0,flare=1.0,glow=1.0,fade=false},
+    animation={enabled=true,intensity=1.0,flare=2.0,glow=1.0,fade=false},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
-    name_offset={x=0,y=-11},
+    name_offset={x=5,y=-9},
+    -- Additional positioning applies only to SC property icons.
+    icon_offset={x=0,y=0},
     bar={x=466,y=696,width=310},
     list={x=465,y=300},
 }
@@ -541,6 +543,24 @@ windower.register_event('addon command', function(cmd, ...)
             message('Property labels: '..(opts.names or 'full')..
                 '. Use full, short, off, or offset <x> <y>.')
         end
+    elseif cmd=='icons' then
+        if option=='offset' then
+            opts.icon_offset=opts.icon_offset or {x=0,y=0}
+            local offset=opts.icon_offset
+            local x,y=tonumber(args[2]),tonumber(args[3])
+            if not x or not y then
+                message(('SC icon offset: %d, %d. Use //sc icons offset <x> <y>.'):format(
+                    offset.x or 0,offset.y or 0))
+                return
+            end
+            offset.x=math.floor(math.max(-200,math.min(200,x))+.5)
+            offset.y=math.floor(math.max(-100,math.min(100,y))+.5)
+            config.save(settings)
+            message(('SC icon offset set to %d, %d pixels.'):format(
+                offset.x,offset.y))
+        else
+            message('Use //sc icons offset <x> <y>. //sc names offset moves both caption text and icons.')
+        end
     elseif cmd=='center' then
         overlay:center()
         config.save(settings)
@@ -579,7 +599,7 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message(('Scale set to %.2f.'):format(opts.scale))
     elseif cmd=='anim' or cmd=='animation' then
-        opts.animation=opts.animation or {enabled=true,intensity=1,flare=1,glow=1,fade=false}
+        opts.animation=opts.animation or {enabled=true,intensity=1,flare=2,glow=1,fade=false}
         local a=opts.animation
         if option=='on' or option=='off' then
             a.enabled=(option=='on')
@@ -656,8 +676,10 @@ windower.register_event('addon command', function(cmd, ...)
     elseif cmd=='default' then
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.grid=10
-        opts.animation={enabled=true,intensity=1,flare=1,glow=1,fade=false}
-        opts.name_offset.x,opts.name_offset.y=0,-11
+        opts.animation={enabled=true,intensity=1,flare=2,glow=1,fade=false}
+        opts.name_offset.x,opts.name_offset.y=5,-9
+        opts.icon_offset=opts.icon_offset or {x=0,y=0}
+        opts.icon_offset.x,opts.icon_offset.y=0,0
         opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
         opts.list.x,opts.list.y=465,300
         overlay:scale(1)
@@ -690,7 +712,7 @@ windower.register_event('addon command', function(cmd, ...)
             (opts.animation or {}).intensity or 1,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; anim [on|off|intensity <0-2>|flare <0-2>|glow <0-2>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; anim [on|off|intensity <0-2>|flare <0-2>|glow <0-2>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
