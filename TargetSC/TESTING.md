@@ -1,5 +1,22 @@
 # TargetSC TESTING.md — start here
 
+## Skillchains Animation2 compatibility — 2026-10-19
+
+The independent Skillchains refinement branch
+`development/skillchains-resonance-animation3` packages the
+updated Skillchains HUD with TargetSC 0.1.0 unchanged.
+The native renderer, TargetSC Lua state model, bridge
+protocol, world rings, and MB handling have **no new
+changes**. New HUD-only original EnemyBar2 procedural
+soft-alpha flare and glow textures are under
+`Skillchains/images/resonance/`; no new native
+dependencies. The existing `//tsc sync` recovery
+operation still requests authoritative active deadlines
+without replaying historical strikes. Do not treat
+Skillchains HUD synthetic tests as TargetSC live validation.
+
+---
+
 ## Skillchains Animation1 compatibility note — 2026-10-18
 
 The development branch `development/skillchains-resonance-animation2`
