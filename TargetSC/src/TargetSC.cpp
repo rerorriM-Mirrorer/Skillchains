@@ -1,4 +1,4 @@
-// TargetSC 0.1.0 — Author: A.
+// TargetSC 0.2.0 — Author: A.
 // Device discovery, projection and model following adapted from Broguypal's
 // TargetRing (BSD-3-Clause); see licenses/ and THIRD_PARTY_NOTICES.md.
 // SceneHook.h is deliberately byte-identical to both reference addons.
@@ -7,6 +7,7 @@
 #include <tlhelp32.h>
 #include <d3d8.h>
 #include "SceneHook/SceneHook.h"
+#include "StrokeGeometry.h"
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -57,7 +58,8 @@ struct DrawVertex {
     DWORD color;
 };
 
-constexpr int kMaxRings=24;
+constexpr int kMaxRings=32;
+constexpr int kMaxDiscs=8;
 constexpr int ring_slices_=64;
 constexpr DWORD kMaxIndex=0x900;
 constexpr std::uintptr_t kDisplayHeading=0x048;
@@ -68,8 +70,10 @@ constexpr std::uintptr_t kDisplayPosition=0x034;
 constexpr std::uintptr_t kEntityTargetType=0x0EE;
 constexpr unsigned char kTargetTypeObject=3;
 int g_object_mode=0;
-struct Ring {float radius=0, offset=0, width=0; DWORD color=0;};
-struct Frame {DWORD index=0, id=0, tick=0; int count=0; Ring rings[kMaxRings]{};};
+struct Ring {float radius=0, offset=0, width=0; DWORD color=0; float pixels=0;};
+struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;bool glyph=false;};
+struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0;
+    Ring rings[kMaxRings]{};Disc discs[kMaxDiscs]{};};
 SRWLOCK g_frame_lock=SRWLOCK_INIT;
 Frame g_pending{}, g_frame{};
 volatile LONG g_frames=0, g_draws=0, g_tracking_failures=0, g_state_failures=0;
@@ -693,11 +697,77 @@ bool project(Position const& p,D3DVIEWPORT8 const& v, DrawVertex& out,DWORD colo
          v.MinZ+(cz/w)*(v.MaxZ-v.MinZ),1/w,color};
     return true;
 }
+// Bounded storage reused by the render thread: no per-frame allocations.
+constexpr int kMaxVertices=(kMaxRings+kMaxDiscs)*ring_slices_*6+kMaxDiscs*(ring_slices_*3+24);
+DrawVertex g_vertices[kMaxVertices]{};
+unsigned g_vertex_count=0;
+void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
+    if(g_vertex_count+3>kMaxVertices)return;
+    g_vertices[g_vertex_count++]=a;g_vertices[g_vertex_count++]=b;g_vertices[g_vertex_count++]=c;
+}
+void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewport) {
+    DrawVertex points[ring_slices_]{};bool valid[ring_slices_]{};
+    float widths[ring_slices_]{};
+    for(int i=0;i<ring_slices_;++i) {
+        const float x=ring_cos_[i],y=ring_sin_[i];
+        Position p{base.east+ring.radius*x,base.north+ring.radius*y,base.height-ring.offset};
+        valid[i]=project(p,viewport,points[i],ring.color);
+        DrawVertex inner{},outer{};
+        Position a{base.east+(ring.radius-ring.width*.5f)*x,base.north+(ring.radius-ring.width*.5f)*y,p.height};
+        Position b{base.east+(ring.radius+ring.width*.5f)*x,base.north+(ring.radius+ring.width*.5f)*y,p.height};
+        const float natural=(project(a,viewport,inner,ring.color)&&project(b,viewport,outer,ring.color))
+            ? std::hypot(outer.x-inner.x,outer.y-inner.y):0.f;
+        widths[i]=targetsc::visible_width(natural,ring.pixels);
+    }
+    DrawVertex inside[ring_slices_]{},outside[ring_slices_]{};
+    for(int i=0;i<ring_slices_;++i) {
+        if(!valid[i])continue;
+        int prev=(i+ring_slices_-1)%ring_slices_,next=(i+1)%ring_slices_;
+        auto const& p=points[i];
+        auto const& a=valid[prev]?points[prev]:p;
+        auto const& b=valid[next]?points[next]:p;
+        const auto d=targetsc::stroke_offset({a.x,a.y},{p.x,p.y},{b.x,b.y},widths[i]*.5f);
+        // Keep centerline projected depth/rhw on both sides of the thin stroke.
+        // Screen-space widening must never put a vertex on the near plane.
+        inside[i]=p;outside[i]=p;inside[i].x-=d.x;inside[i].y-=d.y;
+        outside[i].x+=d.x;outside[i].y+=d.y;
+    }
+    for(int i=0;i<ring_slices_;++i) {
+        const int n=(i+1)%ring_slices_;
+        if(!valid[i]||!valid[n])continue;
+        triangle(inside[i],outside[i],inside[n]);triangle(inside[n],outside[i],outside[n]);
+    }
+}
+void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewport) {
+    const Position center{base.east,base.north,base.height-disc.offset};
+    DrawVertex hub{};if(!project(center,viewport,hub,disc.color))return;
+    // Translucent colored fill is deliberate ground glyph geometry, not a
+    // filled backdrop beneath the rings. No texture/D3DX dependency is added.
+    DrawVertex edge[ring_slices_]{};bool valid[ring_slices_]{};
+    for(int i=0;i<ring_slices_;++i) {
+        Position p{center.east+disc.radius*ring_cos_[i],center.north+disc.radius*ring_sin_[i],center.height};
+        valid[i]=project(p,viewport,edge[i],disc.color);
+    }
+    for(int i=0;i<ring_slices_;++i){int n=(i+1)%ring_slices_;if(valid[i]&&valid[n])triangle(hub,edge[i],edge[n]);}
+    if(!disc.glyph)return;
+    const DWORD alpha=(disc.color>>24)&255;
+    const DWORD white=(std::min<DWORD>(255,alpha*3)<<24)|0x00ffffff;
+    Ring rim{disc.radius,disc.offset,0,white,1.f};emit_ring(base,rim,viewport);
+    // Four-pointed star/cross, rotated in the actual horizontal world plane.
+    DrawVertex star[8]{};bool stars_ok=true;DrawVertex sh=hub;sh.color=white;
+    for(int i=0;i<8;++i) {
+        const float angle=disc.rotation+i*6.28318530718f/8;
+        const float r=disc.radius*((i&1)? .16f:.84f);
+        Position p{center.east+std::cos(angle)*r,center.north+std::sin(angle)*r,center.height};
+        if(!project(p,viewport,star[i],white))stars_ok=false;
+    }
+    if(stars_ok)for(int i=0;i<8;++i)triangle(sh,star[i],star[(i+1)%8]);
+}
 void draw_all_rings() {
     Frame f{};
     AcquireSRWLockShared(&g_frame_lock); f=g_frame; ReleaseSRWLockShared(&g_frame_lock);
     // A stopped/erroring Lua state cannot leave a permanent frozen resonance.
-    if (!f.count || GetTickCount()-f.tick>250 || !d3d_device_) return;
+    if ((!f.count && !f.disc_count) || GetTickCount()-f.tick>250 || !d3d_device_) return;
     Position base{};
     if (!live_position(f.index,base,nullptr)) {InterlockedIncrement(&g_tracking_failures); return;}
     auto* dev=static_cast<IDirect3DDevice8*>(d3d_device_);
@@ -729,25 +799,12 @@ void draw_all_rings() {
     ts(0,D3DTSS_ALPHAOP,D3DTOP_SELECTARG1);ts(0,D3DTSS_ALPHAARG1,D3DTA_DIFFUSE);
     ts(1,D3DTSS_COLOROP,D3DTOP_DISABLE);ts(1,D3DTSS_ALPHAOP,D3DTOP_DISABLE);
     if(ok) {
-        // Bounded stack buffer; one draw call per frame at the 24-ring limit.
-        DrawVertex vertices[kMaxRings*ring_slices_*6]; unsigned count=0;
-        for(int j=0;j<f.count;++j) {
-            auto const& ring=f.rings[j];
-            // FFXI's positive vertical coordinate points downward.
-            const float h=base.height-ring.offset;
-            for(int i=0;i<ring_slices_;++i) {
-                DrawVertex q[4]; bool valid=true;
-                for(int k=0;k<4;++k) {
-                    const int angle=i+(k>=2);const float r=ring.radius+((k&1)?1:-1)*ring.width*.5f;
-                    Position p{base.east+r*ring_cos_[angle],base.north+r*ring_sin_[angle],h};
-                    if(!project(p,viewport,q[k],ring.color))valid=false;
-                }
-                if(!valid)continue;
-                vertices[count++]=q[0];vertices[count++]=q[1];vertices[count++]=q[2];
-                vertices[count++]=q[2];vertices[count++]=q[1];vertices[count++]=q[3];
-            }
-        }
-        if(count && SUCCEEDED(dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST,count/3,vertices,sizeof(DrawVertex))))
+        g_vertex_count=0;
+        // Draw larger/lower glyphs first (Lua orders them), then ring glows and
+        // cores. One bounded native submission per visible frame.
+        for(int i=0;i<f.disc_count;++i)emit_disc(base,f.discs[i],viewport);
+        for(int i=0;i<f.count;++i)emit_ring(base,f.rings[i],viewport);
+        if(g_vertex_count && SUCCEEDED(dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST,g_vertex_count/3,g_vertices,sizeof(DrawVertex))))
             InterlockedIncrement(&g_draws);
     } else InterlockedIncrement(&g_state_failures);
     if(FAILED(dev->ApplyStateBlock(token)))InterlockedIncrement(&g_state_failures);
@@ -811,21 +868,31 @@ int __cdecl lua_ring(lua_State* L) {
     if(g_pending.count>=kMaxRings || !g_pending.index || g_lua.gettop(L)<4)return 0;
     const double r=g_lua.tonumber(L,1),h=g_lua.tonumber(L,2),w=g_lua.tonumber(L,3),c=g_lua.tonumber(L,4);
     if(!std::isfinite(r)||!std::isfinite(h)||!std::isfinite(w)||!std::isfinite(c)
-        ||r<.01||r>100||std::fabs(h)>100||w<=0||w>5||c<0||c>4294967295.0)return 0;
-    g_pending.rings[g_pending.count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(w),static_cast<DWORD>(c)};
+        ||r<.01||r>100||std::fabs(h)>1000||w<0||w>5||c<0||c>4294967295.0)return 0;
+    const double pixels=g_lua.gettop(L)>=5?g_lua.tonumber(L,5):0;
+    if(!std::isfinite(pixels)||pixels<0||pixels>64)return 0;
+    g_pending.rings[g_pending.count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(w),static_cast<DWORD>(c),static_cast<float>(pixels)};
+    return 0;
+}
+int __cdecl lua_disc(lua_State* L) {
+    if(!g_pending.index||g_pending.disc_count>=kMaxDiscs||g_lua.gettop(L)<5)return 0;
+    const double r=g_lua.tonumber(L,1),h=g_lua.tonumber(L,2),a=g_lua.tonumber(L,3),c=g_lua.tonumber(L,4),g=g_lua.tonumber(L,5);
+    if(!std::isfinite(r)||!std::isfinite(h)||!std::isfinite(a)||!std::isfinite(c)||!std::isfinite(g)
+        ||r<.01||r>100||std::fabs(h)>1000||std::fabs(a)>1000000||c<0||c>4294967295.0)return 0;
+    g_pending.discs[g_pending.disc_count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(a),static_cast<DWORD>(c),g!=0};
     return 0;
 }
 int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.1.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.2.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.1.0 %s; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.2.0 %s; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
-        g_tracking_failures,g_state_failures,f.count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
+        g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;
 }
 bool bind_lua() {
@@ -866,10 +933,10 @@ bool bind_lua() {
 } // namespace
 extern "C" __declspec(dllexport) int __cdecl luaopen__TargetSC(lua_State* L) {
     if(!bind_lua())return 0;
-    build_tables();clear_frame();g_lua.createtable(L,0,8);
+    build_tables();clear_frame();g_lua.createtable(L,0,9);
     struct Entry {char const* name;lua_CFunction fn;};
     const Entry entries[]={{"start",lua_start},{"stop",lua_stop},{"clear",lua_clear},{"begin",lua_begin},
-        {"ring",lua_ring},{"commit",lua_commit},{"status",lua_status},{"version",lua_version}};
+        {"ring",lua_ring},{"disc",lua_disc},{"commit",lua_commit},{"status",lua_status},{"version",lua_version}};
     for(auto const& e:entries){g_lua.pushcclosure(L,e.fn,0);g_lua.setfield(L,-2,e.name);}
     return 1;
 }
