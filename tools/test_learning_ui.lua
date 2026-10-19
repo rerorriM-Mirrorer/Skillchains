@@ -14,6 +14,7 @@ package.preload.texts=function()
         function obj:extents() return #self._text*self._size*.60,self._size end
         function obj:size(v) if v then self._size=v end return self._size end
         function obj:stroke_width() end
+        function obj:alpha(v) if v then self.opacity=v end return self.opacity or 245 end
         function obj:color(r,g,b) self.rgb={r,g,b} end
         function obj:pos(x,y)
             if x==nil then return self.x,self.y end
@@ -31,6 +32,7 @@ package.preload.images=function()
         created_images=created_images+1
         local obj={path_value=settings.texture.path}
         function obj:path(v) if v then self.path_value=v end return self.path_value end
+        function obj:alpha(v) if v then self.opacity=v end return self.opacity or 240 end
         function obj:size(w,h) self.width,self.height=w,h end
         function obj:pos(x,y) self.x,self.y=x,y end
         function obj:show() self.visible=true end
@@ -53,10 +55,16 @@ r:render(groups,80,420,1)
 assert(r.displayed==2 and r:height()==36)
 assert(r.rows[1].label._text=='Savage Blade')
 assert(r.rows[1].label.visible and r.rows[2].label.visible)
+assert(r.rows[1].label._text=='Savage Blade')
 assert(r.rows[1].label.rgb[1]==242)
-assert(r.rows[1].icons[2].image.x+r.rows[1].icons[2].image.width==
-    r.rows[2].icons[1].image.x+r.rows[2].icons[1].image.width,
-    'Rightmost property icons should share the same right edge')
+assert(r.rows[1].icons[1].image.x==r.rows[2].icons[1].image.x,
+    'All property icons should begin in one compact fixed column')
+assert(r.rows[1].icons[1].image.width==11 and
+    r.rows[1].icons[1].image.x+r.rows[1].icons[1].image.width<
+        r.rows[1].icons[2].image.x,
+    'Icons match font size and have visible spacing between properties')
+assert(r.icon_column_x < 80+300,
+    'Icon column follows actual longest ability name, not distant fixed edge')
 assert(r.rows[1].icons[1].image.path_value:match('fragmentation.png$'))
 assert(r.rows[1].icons[2].image.path_value:match('scission.png$'))
 local before_l,before_i=created_labels,created_images
@@ -102,6 +110,8 @@ local state={
 }
 overlay:render(state)
 assert(overlay.learning.displayed==2)
+assert(prims.sc_resonance_fx_wash~=nil,'Pooled resonance strike graphics initialized')
+assert(prims.sc_resonance_fx_left~=nil,'Pooled chain side flares initialized')
 assert(overlay.properties.visible and overlay.mb_caption.visible)
 assert(overlay.caption_icons.sc[1].image.visible)
 assert(overlay.caption_icons.sc[2].image.visible)
@@ -197,6 +207,61 @@ overlay:render(state)
 assert(not overlay.panel.visible and overlay.learning.displayed==2)
 overlay:render(nil)
 assert(overlay.learning.displayed==0)
+-- Source-clock animation presentation; no game packets are simulated here.
+local opener={
+    now=100,created=100,sc_open=103,step=1,level=0,
+    active={'Liquefaction','Detonation'},sc_wait=3,sc_left=7,sc_total=7,
+    mb_left=0,mb_total=10,groups=groups,closed=false
+}
+opt.animation={enabled=true,intensity=1,fade=false}
+overlay:render(opener)
+assert(prims.sc_resonance_fx_wash.visible,
+    'New opener should show white strike wash')
+assert(overlay.fx:bar_fraction(opener,opt.animation)==1,
+    'Countdown may not shrink during opener delay')
+opener.now=102.5;opener.sc_wait=.5
+overlay:render(opener)
+assert(overlay.properties.opacity>0 and overlay.properties.opacity<245,
+    'SC name and timer fade in during final pre-window beat')
+assert(overlay.learning.rows[1].label.opacity>0 and
+    overlay.learning.rows[1].label.opacity<245)
+opener.now=103.5;opener.sc_wait=0;opener.sc_left=6.5
+overlay:render(opener)
+assert(overlay.fx:bar_fraction(opener,opt.animation)<1,
+    'Continuation counts down after actual SC window opening')
+local chain={
+    now=110,created=110,sc_open=113,step=2,level=2,active={'Fusion'},
+    sc_wait=3,sc_left=6,sc_total=6,mb_left=10,mb_total=10,
+    groups=groups,closed=false,from_fraction=.27
+}
+overlay:render(chain)
+assert(overlay.fx:bar_fraction(chain,opt.animation)==.27,
+    'Successful chain grows from observed prior fill instead of restarting arbitrarily')
+chain.now=110.15
+local middle=overlay.fx:bar_fraction(chain,opt.animation)
+assert(middle>.27 and middle<1,'White success flare expands fill for 0.3s')
+chain.now=110.35
+overlay:render(chain)
+assert(overlay.fx:bar_fraction(chain,opt.animation)==1)
+chain.now=113.1;chain.sc_wait=0;chain.sc_left=5.9
+overlay:render(chain)
+assert(prims.sc_resonance_fx_left.visible and prims.sc_resonance_fx_right.visible,
+    'Confirmed chain emits paired side flares')
+assert(prims.sc_resonance_fx_moving.visible,
+    'Level 2 sends an elemental traveling flare across decaying fill')
+-- Mutation safety: optional opacity wave never alters absolute deadline.
+local prior=chain.sc_left
+opt.animation.fade=true
+overlay:render(chain)
+assert(chain.sc_left==prior and overlay.fx:opacity(chain,opt.animation)<1)
+opt.animation.enabled=false
+overlay:render(chain)
+assert(not prims.sc_resonance_fx_wash.visible and
+    not prims.sc_resonance_fx_left.visible)
+opt.animation.enabled=true
+overlay:render(nil)
+assert(not prims.sc_resonance_fx_moving.visible)
 overlay:destroy()
+print('resonance FX simulation passed: opener beats, labels, chain flare, tuning, cleanup')
 print('resonance_ui integration simulation passed: bars, captions, icons, drag guide, cleanup')
 
