@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.3'
+_addon.version = '2.20.08.25-resonance.7-animation.4'
 
 require('luau')
 require('pack')
@@ -49,7 +49,7 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- client; //sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
     mode='learn', display='sc', names='full', scale=1, grid=10,
-    animation={enabled=true,intensity=1.0,flare=2.0,glow=1.0,fade=false},
+    animation={enabled=true,intensity=2.0,flare=2.0,glow=2.0,fade=false},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=5,y=-9},
     -- Additional positioning applies only to SC property icons.
@@ -599,7 +599,7 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message(('Scale set to %.2f.'):format(opts.scale))
     elseif cmd=='anim' or cmd=='animation' then
-        opts.animation=opts.animation or {enabled=true,intensity=1,flare=2,glow=1,fade=false}
+        opts.animation=opts.animation or {enabled=true,intensity=2,flare=2,glow=2,fade=false}
         local a=opts.animation
         if option=='on' or option=='off' then
             a.enabled=(option=='on')
@@ -676,7 +676,7 @@ windower.register_event('addon command', function(cmd, ...)
     elseif cmd=='default' then
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.grid=10
-        opts.animation={enabled=true,intensity=1,flare=2,glow=1,fade=false}
+        opts.animation={enabled=true,intensity=2,flare=2,glow=2,fade=false}
         opts.name_offset.x,opts.name_offset.y=5,-9
         opts.icon_offset=opts.icon_offset or {x=0,y=0}
         opts.icon_offset.x,opts.icon_offset.y=0,0
