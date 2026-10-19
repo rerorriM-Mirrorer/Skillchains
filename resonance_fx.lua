@@ -138,13 +138,13 @@ function M.new(prefix)
         if not s or (s.step or 0)<=1 then return 1 end
         local age,delay=age_and_delay(s)
         -- Brighten through the actual wait; don't jump at window opening.
-        return .46+.54*smooth(age/delay)
+        return .46+.54*smooth((age-(delay-.30))/.30)
     end
     function self:palette_blend(s)
         if not s or (s.step or 0)<=1 then return 1 end
         local age=age_and_delay(s)
         -- A genuine color fade, not an instantaneous weapon-skill replacement.
-        return smooth((age-.18)/.55)
+        return smooth((age-1)/1)
     end
     function self:render(s,opt,bar,palette)
         self:hide()
@@ -192,6 +192,9 @@ function M.new(prefix)
         -- Soft ghost-flare image is brightest at its foot. Its lower edge
         -- meets the SC fill's bottom, while tips extend above the upper rail.
         local flare_y=y+h-1-flare_h
+        local edge_inset=max(2,3*scale)
+        local left_edge=x+edge_inset
+        local right_edge=x+max(edge_inset,fill-edge_inset)
         if level>=3 then
             -- Two narrow soft rails, NOT a bright sheet over the empty track.
             -- Keep the interior dark even at large glow and fade settings.
@@ -199,69 +202,54 @@ function M.new(prefix)
             if level>=4 then alpha=alpha*(.60+.40*sin(age*23)^2) end
             local halo_color=level>=4 and gold or white
             local halo_height=max(5,7*scale)
-            sprite('border_glow',x-2*scale,y-halo_height/2,
-                w+4*scale,halo_height,alpha,halo_color)
-            sprite('border_lower',x-2*scale,y+h-halo_height/2,
-                w+4*scale,halo_height,alpha,halo_color)
+            sprite('border_glow',x+edge_inset,y-halo_height/2,
+                max(1,w-2*edge_inset),halo_height,alpha,halo_color)
+            sprite('border_lower',x+edge_inset,y+h-halo_height/2,
+                max(1,w-2*edge_inset),halo_height,alpha,halo_color)
         end
         if s.expire_age then return end
-        if s.step==1 then
-            local beat=3*age/delay
-            if beat<1 then
-                local t=smooth(beat)
-                local end_x=max(1,w*t)
-                -- No SC background/frame underneath this first beat.
-                white_caps(x,y,end_x,h,255*intensity)
-                sprite('edge',x+end_x-flare_w/2,flare_y,
-                    flare_w,flare_h,220*fi,white)
-            elseif beat<2 then
-                white_caps(x,y,w,h,255*intensity*(1-smooth(beat-1)))
-            end
-            return -- no second or third opener pulses
+        -- All skillchain tiers share one three-beat pre-window sequence.
+        -- 0-1s: expand white bar. 1-2s: white dissolves to dim property.
+        -- Final .3s: property brightens and colored edge flares emerge.
+        local white_alpha=age<1 and 255 or
+            (age<2 and 255*(1-smooth(age-1)) or 0)
+        local white_edge_alpha=age<1 and 210 or
+            (age<2 and 210*(1-smooth(age-1)) or 0)
+        local fill_extent=age<1 and w*smooth(age) or w
+        if age<2 then
+            white_caps(x,y,fill_extent,h,white_alpha*intensity)
+            local right=x+max(edge_inset,fill_extent-edge_inset)
+            sprite('edge',right-flare_w/2,flare_y,flare_w,flare_h,
+                white_edge_alpha*fi,white)
+            -- A second white flare accompanies the expanding left edge.
+            sprite('left',left_edge-flare_w/2,flare_y,flare_w,flare_h,
+                white_edge_alpha*fi,white)
         end
-        if age<.6 then
-            local a=age<.3 and 235 or 235*(1-smooth((age-.3)/.3))
-            wash(x+1,y+1,max(1,fill-2),max(1,h-2),a*intensity,white)
-            if age<.3 then
-                sprite('edge',x+fill-flare_w/2,flare_y,flare_w,
-                    flare_h,210*fi*(1-age/.3),white)
-            end
+        if age<delay then
+            -- A single centered pulse precedes decay on every tier.
+            -- Retain L4's faster electrical shimmer as a modulation.
+            local pulse=smooth((age-(delay-.30))/.30)
+            local flicker=level>=4 and (.60+.40*sin(age*23)^2) or 1
+            sprite('moving',x+w/2-flare_w/2,flare_y,flare_w,flare_h,
+                190*fi*pulse*flicker,level>=4 and gold or c1)
         end
-        if fill<=2 then return end
+        local active=smooth((age-(delay-.30))/.30)
+        if age>=delay then active=1 end
         local flicker=.87+.13*sin((s.now or 0)*26)^2
-        sprite('left',x-flare_w/2,flare_y,flare_w,flare_h,
-            185*fi*flicker,c1)
-        sprite('right',x+fill-flare_w/2,flare_y,flare_w,flare_h,
-            185*fi*flicker,c2)
-        -- All follow flares run in the THREE-SECOND WAIT, not during SC decay.
-        if age>=delay then
-            -- Future level-four choice: three pulses then a brighter flicker,
-            -- no unapproved continuous traveling flare.
-            if level>=4 then
-                local a=80*gi*(.5+.5*sin(age*28)^2)
-                sprite('border_glow',x-2*scale,y-max(5,7*scale)/2,
-                    w+4*scale,max(5,7*scale),a,gold)
-                sprite('border_lower',x-2*scale,y+h-max(5,7*scale)/2,
-                    w+4*scale,max(5,7*scale),a,gold)
-            end
-            return
+        if fill>2 and active>0 then
+            sprite('left',left_edge-flare_w/2,flare_y,flare_w,flare_h,
+                185*fi*active*flicker,c1)
+            sprite('right',right_edge-flare_w/2,flare_y,flare_w,flare_h,
+                185*fi*active*flicker,c2)
         end
-        if level>=4 then
-            -- Preview-only provisional three-beat pulse, reserved for live
-            -- calibration after actual Radiance/Umbra become available.
-            local t=3*age/delay
-            local a=210*fi*(1-smooth(t-floor(t)))
-            sprite('moving',x+w/2-flare_w/2,flare_y,flare_w,
-                flare_h,a,white)
-            return
+        if level>=4 and age>=delay then
+            local a=80*gi*(.5+.5*sin(age*28)^2)
+            local halo_height=max(5,7*scale)
+            sprite('border_glow',x+edge_inset,y-halo_height/2,
+                max(1,w-2*edge_inset),halo_height,a,gold)
+            sprite('border_lower',x+edge_inset,y+h-halo_height/2,
+                max(1,w-2*edge_inset),halo_height,a,gold)
         end
-        -- Initial white hit flare is enough for L1; L2 and L3 get just
-        -- one additional traversal across the whole pre-window.
-        if level<2 then return end
-        local t=clamp(age/delay,0,1)
-        local pos=x+1+t*max(1,fill-2)
-        sprite('moving',pos-flare_w/2,flare_y,flare_w,flare_h,
-            225*fi,mix(c1,c2,t))
     end
     function self:destroy()
         for _,id in pairs(self.ids) do windower.prim.delete(id) end
