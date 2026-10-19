@@ -265,7 +265,7 @@ assert(prims.sc_resonance_fx_wash_cap_l.h<
     prims.sc_resonance_fx_wash.h,
     'Rounded white caps sit inset vertically from the bar')
 local fx_edge=overlay.fx.sprites.edge
-local bottom=opt.bar.y+math.max(3,math.floor(5*opt.scale+.5))+2
+local bottom=opt.bar.y+math.max(3,math.floor(5*opt.scale+.5))+1
 assert(fx_edge.visible and fx_edge.y+fx_edge.height==bottom,
     'Rounded base touches fill bottom, with no dangling body below')
 local old_show=fx_edge.show_calls
