@@ -2,6 +2,84 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Animation6 — anchored light-leak assets and white-sweep hitch investigation (2026-10-19; LIVE PENDING)
+
+**Branch:** `development/skillchains-resonance-animation7`, from
+Animation5 commit `d26ec78c098753cd335bd31c569721f0cb2040ad`.
+**Version:** `2.20.08.25-resonance.7-animation.6`.
+
+**User's in-game observation on Animation5:** The opener's original
+vertical flare still floats **above** the rounded fill end. User wants
+light leaking *upward from* its bright rounded edge, with mirrorable
+left/right sprite assets. Follow-up observations identify upward
+flare "growth" that appears to shift position rather than growing in
+place; center SC pulses should use the actual center fill color;
+confirmed-chain white sweep should start at the **far left** and
+traverse the entire gauge, with its previous fill and dark track
+underneath. Persistent opener hitch warrants render-work reduction.
+The FFXI screenshots apply to **Animation5**, not Animation6.
+
+**This branch's implementation:**
+- Two new generated, white-alpha **64×96 RGBA** images,
+  `images/resonance/edge_flare_left.png` and `edge_flare_right.png`,
+  have a bright rounded cap at the outer edge and a narrow translucent
+  upward plume, with no alpha below the cap's lower boundary.
+  The left is a pixel-perfect horizontal mirror of the right.
+  `tools/generate_edge_flares.py --check` deterministically
+  verifies them; both PNGs are included in test packages.
+  Windower tints them via `images:color`; `texture.fit=false`.
+- The white flare's **bottom raster row** is pinned to the SC fill's
+  lower raster edge. Opener flare height expands upward while this
+  foot remains still. New sprites render white for white wash and
+  adopt result property colors as the active stage arrives. Opener
+  has no left-hand flare or centered SC pulse.
+- Successful skillchains retain **previous fraction** and dark track
+  in the real bar, growing that underlay toward full width over one
+  second. Independently, their white full-bar **overlay starts at
+  x=0** and grows to full width, exactly like the opener, so the
+  previous bar remains visible beneath the leading white wash.
+- Keep the original three center pulses from level-four treatment
+  across successful levels 1–4. Color the center pulse from the
+  **middle stop(s) of the actual result palette** (including Radiance)
+  instead of a decorative level-four gold override. Glow rails
+  and original 23/28 rad/s flicker remain separate.
+- Fix potential unnecessary rendering work: stop hiding and
+  re-showing every FX sprite/primitive every animation frame.
+  Cache visibility, dimensions, position, tint and alpha; hide only
+  resources no longer drawn. Skip all 24 hidden SC gradient segments
+  during the first beat of the opener. Do not infer that this proves
+  the observed hitch is fixed; the FFXI renderer must be tested.
+
+**Static/simulation check:** CI runs Lua 5.1 parser; seeded learning
+layout and SC presentation tests (mirrored textures, alpha and
+stroke fades, pinned flare bottom, continued sprite visibility,
+whole-bar sweep from left, prior underlay retained, actual center
+property palette, absolute countdown); TargetSC publisher/consumer
+and native addon Lua lifecycle regressions; strict generated PNG
+verification and two-addon archive manifest checks. These cannot
+measure real in-game frame pacing.
+
+**Live testing requested:** Install Skillchains files/assets only,
+preserve `data/`, run `//lua reload Skillchains`. At 1× and 2×
+scale and on a small client run `//sc anim preview opener|level1|
+level2|level3|level4`. Compare first-second white motion for
+stutters, check the flare grows UP from the rounded cap without
+a floating stem or light below the fill, and verify that the left
+flare stays absent on opener. On successful chains the prior colored
+fill and dark track should remain, white should start at far left,
+and all three center pulses should match the fill's central hue.
+Test `//sc anim intensity 2`, `flare 2`, `glow 2`, and both
+`fade on` and `fade off`. Confirm `//tsc sync`, old real
+clock deadlines, and no unexpected multi-client performance hit.
+
+**Outstanding:** only the user can verify Windower smoothness,
+texture color fidelity, transparency blending, scale clipping and
+whether the graphic hitch was reduced. TargetSC DLL, Lua, ring
+geometry, bridge and MB behavior untouched; no actual in-game
+testing of this new build is claimed.
+
+---
+
 ## Animation5 — user visual corrections (LIVE PENDING)
 
 User-provided opener screenshots confirm no left flare or center pulse
