@@ -32,13 +32,13 @@ function M.new(prefix)
     end
     function self:shake(state,opt)
         if not state or state.step<=1 or not opt.enabled then return 0 end
-        local age=max(0,(state.now or 0)-(state.created or state.now))
+        local age=max(0,(state.now or 0)-(state.created or state.now or 0))
         if age>.35 then return 0 end
         return floor(3*(opt.intensity or 1)*sin(75*age)*exp(-12*age)+.5)
     end
     function self:label_alpha(state,opt)
         if not state or not opt.enabled then return 1 end
-        local age=max(0,(state.now or 0)-(state.created or state.now))
+        local age=max(0,(state.now or 0)-(state.created or state.now or 0))
         local duration=max(.1,(state.sc_open or 0)-(state.created or 0))
         if state.step==1 and age<duration then
             local phase=3*age/duration
@@ -51,7 +51,7 @@ function M.new(prefix)
         local fraction=clamp((state.sc_left or 0)/max(.01,state.sc_total or 8),0,1)
         if (state.sc_wait or 0)>0 then fraction=1 end
         if not opt.enabled or state.step<=1 then return fraction end
-        local age=max(0,(state.now or 0)-(state.created or state.now))
+        local age=max(0,(state.now or 0)-(state.created or state.now or 0))
         if age<.3 then
             local previous=clamp(state.from_fraction or .45,0,1)
             return previous+(1-previous)*smooth(age/.3)
@@ -73,7 +73,7 @@ function M.new(prefix)
         local enabled=opt.enabled~=false and intensity>0
         local x,y,w,h=bar.x,bar.y,bar.width,bar.height
         local fill=clamp(bar.fill or w,0,w)
-        local age=max(0,(state.now or 0)-(state.created or state.now))
+        local age=max(0,(state.now or 0)-(state.created or state.now or 0))
         local level=tonumber(state.level) or 0
         local c1=(palette and palette[1]) or white
         local c2=(palette and palette[#palette]) or c1
