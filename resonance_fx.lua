@@ -215,8 +215,9 @@ function M.new(prefix)
         local fill=clamp(bar.fill or w,0,w)
         local age,delay=age_and_delay(s)
         local level=tonumber(s.level) or 0
-        local c1=(palette and palette[1]) or white
-        local c2=(palette and palette[#palette]) or c1
+        palette=palette or {white}
+        local c1=palette[1] or white
+        local c2=palette[#palette] or c1
         local frame=bar.frame
         local border=dark
         local border_alpha=180
@@ -278,12 +279,12 @@ function M.new(prefix)
         local opener=(s.step or 0)<=1
         local white_alpha=age<1 and 255 or
             (age<2 and 255*(1-smooth(age-1)) or 0)
-        local white_edge_alpha=age<1 and 210 or
+        local white_edge_alpha=age<1 and 210*smooth(age/.20) or
             (age<2 and 210*(1-smooth(age-1)) or 0)
-        local previous=clamp(s.from_fraction or .45,0,1)
-        local fill_extent=age<1 and
-            (opener and w*smooth(age) or
-             (previous*w+(1-previous)*w*smooth(age))) or w
+        -- The white effect ALWAYS grows from 0. For successful chains
+        -- draw_bar independently grows its underlying property fill from
+        -- the prior fraction (without hiding the track or previous state).
+        local fill_extent=age<1 and w*smooth(age) or w
         if age<2 then
             -- Like the opener, the WHITE sweep starts at the left rail and
             -- covers the entire bar through the growing right edge. For
@@ -326,8 +327,10 @@ function M.new(prefix)
         if age>=delay then active=1 end
         local flicker=.87+.13*sin((s.now or 0)*26)^2
         if fill>2 and active>0 then
-            sprite('left',left_edge,flare_y,flare_w,flare_h,
-                185*fi*active*flicker,c1)
+            if not opener then
+                sprite('left',left_edge,flare_y,flare_w,flare_h,
+                    185*fi*active*flicker,c1)
+            end
             sprite('right',right_edge-flare_w,flare_y,flare_w,flare_h,
                 185*fi*active*flicker,c2)
         end
