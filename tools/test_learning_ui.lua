@@ -68,6 +68,20 @@ assert(r.rows[1].icons[1].image.width==9 and
     'Icons match font size and have visible spacing between properties')
 assert(r.icon_column_x < 80+300,
     'Icon column follows actual longest ability name, not distant fixed edge')
+assert(r.icon_column_x>=80+math.ceil(#'Savage Blade'*11*.82)+8,
+    'Column reserves the italic text width AND a gap beyond its stroke')
+local long_actions={{level=3,property='Light',actions={
+    {name='Extremely Long Double-Property Weapon Skill Name',properties={
+        'Fragmentation','Scission','Detonation','Liquefaction'}}}}}
+r:render(long_actions,80,420,1)
+local long_row=r.rows[1]
+local measured=math.max(long_row.label:extents(),
+    #long_row.label._text*11*.82)
+assert(long_row.label.x+measured+3 < long_row.icons[1].image.x,
+    'Long names must ellipsize BEFORE the fixed icon column on 960px view')
+assert(long_row.icons[4].image.x+long_row.icons[4].image.width<=960-8,
+    'Even four-property abilities must remain within client bounds')
+r:render(groups,80,420,1)
 assert(r.rows[1].icons[1].image.path_value:match('fragmentation.png$'))
 assert(r.rows[1].icons[2].image.path_value:match('scission.png$'))
 local before_l,before_i=created_labels,created_images
@@ -98,7 +112,7 @@ windower.prim={
 }
 local opt={
     mode='learn',display='both',names='full',scale=1,
-    name_offset={x=0,y=-11},
+    name_offset={x=0,y=-11},icon_offset={x=0,y=0},
     bar={x=180,y=370,width=260},list={x=180,y=320}
 }
 local info={
@@ -120,6 +134,13 @@ assert(overlay.properties.visible and overlay.mb_caption.visible)
 assert(overlay.caption_icons.sc[1].image.visible)
 assert(overlay.caption_icons.sc[2].image.visible)
 assert(overlay.caption_icons.sc[2].image.fit==false)
+local old_icon_y=overlay.caption_icons.sc[1].image.y
+opt.icon_offset.y=3
+overlay:render(state)
+assert(overlay.caption_icons.sc[1].image.y==old_icon_y+3,
+    'Independent SC icon offset shifts icons without moving label')
+opt.icon_offset.y=0
+overlay:render(state)
 assert(overlay.caption_icons.mb[1].image.visible)
 local original_bottom=opt.list.y
 overlay:edit(true)
@@ -225,30 +246,34 @@ assert(prims.sc_resonance_fx_wash.visible,
     'New opener should show white strike wash')
 assert(overlay.fx:bar_fraction(opener,opt.animation)==1,
     'Countdown may not shrink during opener delay')
-assert(prims.sc_resonance_sc_frame.alpha==0,
-    'Opener bar border stays invisible behind growing white overlay')
-assert(overlay.properties.opacity==0 and
-    overlay.properties.outline_opacity==0 and
-    overlay.learning.rows[1].label.outline_opacity==0,
-    'Neither dark stroke nor text shows in first opener second')
+assert(prims.sc_resonance_sc_frame.alpha==0 and
+    prims.sc_resonance_sc_base.alpha==0,
+    'Real bar and dark border remain invisible during first opener strike')
+assert(prims.sc_resonance_fx_wash_cap_l.visible and
+    prims.sc_resonance_fx_wash_cap_r.visible,
+    'Expanding white bar has rounded left and right end caps')
+assert(prims.sc_resonance_fx_wash_cap_l.h<
+    prims.sc_resonance_fx_wash.h,
+    'Rounded white caps sit inset vertically from the bar')
+assert(overlay.properties.opacity>0 and overlay.properties.opacity<245 and
+    overlay.properties.outline_opacity>0 and
+    overlay.learning.rows[1].label.outline_opacity>0,
+    'Property text, icons and BOTH stroke and foreground start fading in first beat')
 opener.now=101.5;opener.sc_wait=1.5
 overlay:render(opener)
-assert(overlay.properties.opacity>0 and overlay.properties.opacity<245,
-    'SC caption fades in during the SECOND opener beat')
-assert(overlay.properties.outline_opacity>0 and
-    overlay.properties.outline_opacity<235)
-assert(overlay.learning.rows[1].label.opacity>0 and
-    overlay.learning.rows[1].label.opacity<245)
-assert(overlay.learning.rows[1].label.outline_opacity>0 and
-    overlay.learning.rows[1].label.outline_opacity<235,
-    'Learning text and dark outline fade together')
+assert(overlay.properties.opacity==245 and
+    overlay.properties.outline_opacity==235 and
+    overlay.learning.rows[1].label.opacity==245,
+    'Labels reach full opacity by the end of first opener second')
+assert(prims.sc_resonance_fx_wash.visible,
+    'Rounded white overlay fades out during second beat')
 assert(not overlay.fx.sprites.moving.visible,
     'No extra pulses travel during an opener')
 opener.now=102.5;opener.sc_wait=.5
 overlay:render(opener)
 assert(overlay.properties.opacity==245 and
     overlay.learning.rows[1].label.opacity==245,
-    'Property labels and ability names finish entering in second beat')
+    'Property labels remain fully visible after first beat')
 assert(not prims.sc_resonance_fx_wash.visible,
     'White wash is gone in the third beat')
 opener.now=103.5;opener.sc_wait=0;opener.sc_left=6.5
@@ -273,7 +298,11 @@ assert(overlay.fx:bar_fraction(chain,opt.animation)==1)
 assert(overlay.fx.sprites.left.visible and overlay.fx.sprites.right.visible,
     'Confirmed chain emits two soft-alpha side flares')
 assert(overlay.fx.sprites.moving.visible,
-    'Level 2 flare traverses during its three-second prewindow')
+    'Level 2 has one traveling follow flare during its three-second prewindow')
+assert(overlay.fx.sprites.left.y+
+    overlay.fx.sprites.left.height==opt.bar.y+
+    math.max(3,math.floor(5*opt.scale+.5))+1,
+    'Flare foot is level with the bottom of the SC fill')
 local trans_a=overlay.fx:palette_blend(chain)
 assert(trans_a>0 and trans_a<1,'Property transition fades instead of switches')
 chain.now=111.3;chain.sc_wait=1.7
@@ -282,8 +311,8 @@ assert(overlay.fx.sprites.moving.visible)
 local first_pass=overlay.fx.sprites.moving.x
 chain.now=111.6;chain.sc_wait=1.4
 overlay:render(chain)
-assert(overlay.fx.sprites.moving.x<first_pass,
-    'Second level-2 follow flare restarts from left after 1.5s')
+assert(overlay.fx.sprites.moving.x>first_pass,
+    'Single level-2 follow flare continues rightward, no midway reset')
 chain.now=113.1;chain.sc_wait=0;chain.sc_left=5.9
 overlay:render(chain)
 assert(not overlay.fx.sprites.moving.visible,
@@ -295,11 +324,34 @@ local prior=chain.sc_left
 opt.animation.fade=true
 overlay:render(chain)
 assert(chain.sc_left==prior and overlay.fx:opacity(chain,opt.animation)<1)
+assert(prims.sc_resonance_sc_base.alpha==115,
+    'Even with fade ON, the empty dark bar must retain its original alpha')
+assert(overlay.fx.sprites.border_glow.visible==false,
+    'Level-2 has no intrusive full-width glow')
 opt.animation.enabled=false
 overlay:render(chain)
 assert(not prims.sc_resonance_fx_wash.visible and
     not overlay.fx.sprites.left.visible)
 opt.animation.enabled=true
+local lvl1={now=201,created=200,sc_open=203,step=2,level=1,
+    active={'Liquefaction'},sc_wait=2,sc_left=6,sc_total=6,
+    from_fraction=.5,closed=false,groups=groups}
+overlay:render(lvl1)
+assert(not overlay.fx.sprites.moving.visible,
+    'Level 1 has no follow-up moving flare')
+local lvl3={now=301,created=300,sc_open=303,step=2,level=3,
+    active={'Light'},sc_wait=2,sc_left=6,sc_total=6,
+    from_fraction=.5,closed=false,groups=groups}
+overlay:render(lvl3)
+assert(overlay.fx.sprites.moving.visible and
+    overlay.fx.sprites.border_glow.visible and
+    overlay.fx.sprites.border_lower.visible,
+    'Level 3 has one follow-up and separate top and bottom halo rails')
+local first3=overlay.fx.sprites.moving.x
+lvl3.now=301.6;lvl3.sc_wait=1.4
+overlay:render(lvl3)
+assert(overlay.fx.sprites.moving.x>first3,
+    'Level 3 follow-up does not repeat')
 overlay:render(nil)
 assert(not overlay.fx.sprites.moving.visible)
 overlay:destroy()
