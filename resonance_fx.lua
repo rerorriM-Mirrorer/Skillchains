@@ -149,7 +149,10 @@ function M.new(prefix)
         end
         -- The opener never whitens its actual SC border; only its detached
         -- expanding white overlay flashes, and the dark frame emerges after.
-        if s.step==1 then border=dark end
+        if s.step==1 then
+            border=dark
+            border_alpha=border_alpha*self:bar_reveal(s,opt)
+        end
         if not enabled then border=level>0 and border or dark end
         for _,id in ipairs({frame.frame,frame.cap_l,frame.cap_r}) do
             windower.prim.set_color(id,floor(clamp(border_alpha,0,255)+.5),
