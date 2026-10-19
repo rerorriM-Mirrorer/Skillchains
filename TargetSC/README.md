@@ -18,6 +18,19 @@ as PE32/i386. Lua and simulated event/lifecycle tests passed. **It has not been
 loaded in Windower or tested in FFXI.** No screenshot or render is presented as a
 live result.
 
+## Related Skillchains HUD animation test — 2026-10-18
+
+The paired `Skillchains-TargetSC-Animation1-test` package
+contains a newer Skillchains HUD with stronger source-clocked
+resonance effects and compact learning icons. **TargetSC's own code
+and DLL are unchanged in this batch.** The companion still receives
+the same Skillchains event/deadline snapshots. Its requested ground/
+sky rings and property discs will be developed independently after
+the Skillchains in-game check. No level-4 or native live validation is
+claimed. The existing `//tsc sync` command requests an authoritative
+source state snapshot, useful after load/reload ordering or missed
+events, without inventing another animation event.
+
 ## Current development: Skillchains Grid1 (2026-10-18)
 
 The branch `development/targetsc-resonance-grid` carries a layout-only
