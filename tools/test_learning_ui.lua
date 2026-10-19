@@ -297,8 +297,8 @@ overlay:render(chain)
 assert(overlay.fx:bar_fraction(chain,opt.animation)<1)
 assert(overlay.fx.sprites.left.visible and not overlay.fx.sprites.right.visible,
     'White pre-window has white edge flare before property edge flares')
-assert(not overlay.fx.sprites.moving.visible,
-    'No traveling follow-up flare during level-2 white expansion')
+assert(overlay.fx.sprites.moving.visible,
+    'Original level-4 center pulse restored for level 2')
 assert(overlay.fx.sprites.left.y+
     overlay.fx.sprites.left.height==opt.bar.y+
     math.max(3,math.floor(5*opt.scale+.5))+1,
@@ -307,12 +307,13 @@ local trans_a=overlay.fx:palette_blend(chain)
 assert(trans_a==0,'Property transition stays dim during first white expansion')
 chain.now=111.3;chain.sc_wait=1.7
 overlay:render(chain)
-assert(not overlay.fx.sprites.moving.visible)
+assert(overlay.fx.sprites.moving.visible)
 local first_pass=overlay.fx.sprites.moving.x
 chain.now=111.6;chain.sc_wait=1.4
 overlay:render(chain)
-assert(not overlay.fx.sprites.moving.visible,
-    'No traveling follow-up flare during level-2 white fade')
+assert(overlay.fx.sprites.moving.visible and
+    overlay.fx.sprites.moving.x==first_pass,
+    'Level-2 center pulse remains stationary while it flickers')
 chain.now=113.1;chain.sc_wait=0;chain.sc_left=5.9
 overlay:render(chain)
 assert(not overlay.fx.sprites.moving.visible,
@@ -337,21 +338,22 @@ local lvl1={now=201,created=200,sc_open=203,step=2,level=1,
     active={'Liquefaction'},sc_wait=2,sc_left=6,sc_total=6,
     from_fraction=.5,closed=false,groups=groups}
 overlay:render(lvl1)
-assert(not overlay.fx.sprites.moving.visible,
-    'Level 1 has no traveling flare before the center pulse')
+assert(overlay.fx.sprites.moving.visible,
+    'Level 1 shares the original three-beat center pulse')
 local lvl3={now=301,created=300,sc_open=303,step=2,level=3,
     active={'Light'},sc_wait=2,sc_left=6,sc_total=6,
     from_fraction=.5,closed=false,groups=groups}
 overlay:render(lvl3)
-assert(not overlay.fx.sprites.moving.visible and
+assert(overlay.fx.sprites.moving.visible and
     overlay.fx.sprites.border_glow.visible and
     overlay.fx.sprites.border_lower.visible,
     'Level 3 has one follow-up and separate top and bottom halo rails')
 local first3=overlay.fx.sprites.moving.x
 lvl3.now=301.6;lvl3.sc_wait=1.4
 overlay:render(lvl3)
-assert(not overlay.fx.sprites.moving.visible,
-    'Level 3 has no traveling follow-up')
+assert(overlay.fx.sprites.moving.visible and
+    overlay.fx.sprites.moving.x==first3,
+    'Level 3 center pulse stays stationary')
 overlay:render(nil)
 assert(not overlay.fx.sprites.moving.visible)
 overlay:destroy()
