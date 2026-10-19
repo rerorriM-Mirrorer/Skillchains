@@ -97,8 +97,10 @@ assert(created_labels==before_l and created_images==before_i,
 r:render(groups,80,300,1)
 assert(r.rows[1].label.y==300-36, 'Learning list must extend UP from its bottom anchor')
 r:render({},80,300,1)
-assert(r.rows[1].label._text=='No compatible learned actions')
-assert(not r.rows[2].label.visible and not r.rows[1].icons[1].image.visible)
+assert(r.displayed==0 and r:height()==0,
+    'Empty learning panel draws no placeholder, box or rows')
+assert(not r.rows[1].label.visible and not r.rows[2].label.visible
+    and not r.rows[1].icons[1].image.visible)
 r:render(groups,80,35,1)
 assert(r:height()<=26, 'Clamp list to small viewport/top edge')
 r:hide()
@@ -136,10 +138,10 @@ assert(overlay.learning.displayed==2)
 assert(prims.sc_resonance_fx_wash~=nil,'Pooled resonance strike graphics initialized')
 assert(overlay.fx.sprites.glow_cap_l and
     overlay.fx.sprites.glow_cap_l.fit==false and
-    overlay.fx.sprites.glow_cap_l.path_value:match('ghost_glow_cap_l.png$'),
+    overlay.fx.sprites.glow_cap_l.path_value:match('capsule_halo_l.png$'),
     'Rounded ghost cap replaces vertical flare sprites')
 assert(overlay.fx.sprites.glow_cap_r and
-    overlay.fx.sprites.glow_cap_r.path_value:match('ghost_glow_cap_r.png$'),
+    overlay.fx.sprites.glow_cap_r.path_value:match('capsule_halo_r.png$'),
     'Mirrored endcap uses a second real ghost-glow asset')
 assert(not overlay.fx.sprites.left and not overlay.fx.sprites.moving,
     'Retired edge and center flare sprites are no longer allocated')
@@ -256,12 +258,14 @@ local opener={
     groups=groups,closed=false
 }
 opt.animation={enabled=true,intensity=1,glow=1,flare=2,fade=false}
-opt.glow={levels='34',rail12=.3,cap12=.35,rail34=.6,cap34=.75,
-    level1=1,level2=1,level3=1,level4=1,scale=1,l4='whitegold'}
+opt.glow={levels='34',rail12=.3,cap12=.35,rail34=.75,cap34=.85,
+    level1=1,level2=.65,level3=.70,level4=1,
+    pre12=.18,pre3=.38,pre4=.85,scale=1,l4='gold'}
+opt.track={alpha=155,color={6,8,17}}
 opt.transition={duration=.30,style='energized'}
-assert(overlay.fx.sprites.glow_cap_l.path_value:match('ghost_glow_cap_l.png$'))
-assert(overlay.fx.sprites.glow_cap_r.path_value:match('ghost_glow_cap_r.png$'))
-assert(overlay.fx.sprites.border_glow.path_value:match('ghost_glow.png$'))
+assert(overlay.fx.sprites.glow_cap_l.path_value:match('capsule_halo_l.png$'))
+assert(overlay.fx.sprites.glow_cap_r.path_value:match('capsule_halo_r.png$'))
+assert(overlay.fx.sprites.border_glow.path_value:match('capsule_halo_rail.png$'))
 assert(overlay.fx.sprites.moving==nil and overlay.fx.sprites.edge==nil,
     'Vertical and center flare sprites are retired')
 overlay:render(opener)
@@ -304,6 +308,16 @@ assert(overlay.fx:bar_fraction(chain,opt.animation)==.27,
     'Successful chain keeps previous fill fraction at beginning')
 assert(prims.sc_resonance_sc_base.visible,
     'Successful chain does not hide previous dark track')
+assert(prims.sc_resonance_sc_frame.h==1
+    and prims.sc_resonance_sc_frame_bottom.h==1,
+    'Crisp border is TWO horizontal 1px rails, not a bright sheet')
+assert(prims.sc_resonance_sc_frame_bottom.y==
+    prims.sc_resonance_sc_base.y+prims.sc_resonance_sc_base.h,
+    'Lower border belongs below track, never behind transparent interior')
+assert(prims.sc_resonance_sc_base.color[1]==6
+    and prims.sc_resonance_sc_base.color[2]==8
+    and prims.sc_resonance_sc_base.color[3]==17,
+    'New translucent track is darker and level-independent')
 chain.now=110.5;chain.sc_wait=2.5
 overlay:render(chain)
 local middle=overlay.fx:bar_fraction(chain,opt.animation)
@@ -342,17 +356,17 @@ assert(overlay.fx:transition_progress(chain,opt.transition)==1 and
     not prims.sc_resonance_fx_wash.visible,
     'White disappears at countdown +0.15s without changing deadline')
 assert(overlay.fx:bar_fraction(chain,opt.animation)<1)
-assert(prims.sc_resonance_sc_base.alpha==115,
+assert(prims.sc_resonance_sc_base.alpha==155,
     'Dark empty track remains constant')
 local deadline=chain.sc_left
 opt.animation.fade=true
 overlay:render(chain)
-assert(chain.sc_left==deadline and prims.sc_resonance_sc_base.alpha==115,
+assert(chain.sc_left==deadline and prims.sc_resonance_sc_base.alpha==155,
     'Optional countdown opacity wave does not alter deadlines or empty track')
 opt.animation.fade=false
 
--- The caps and rails share the same modulation; caps are 25% stronger
--- by default, with the level 4 white-gold color.
+-- Both caps are a little stronger than the rail, while ALL three
+-- textures sample exactly the same border path.
 local lvl4={
     now=403.3,created=400,sc_open=403,step=2,level=4,
     active={'Radiance'},sc_wait=0,sc_left=5.7,sc_total=6,
@@ -362,15 +376,16 @@ overlay:render(lvl4)
 local left=overlay.fx.sprites.glow_cap_l
 local right=overlay.fx.sprites.glow_cap_r
 local top=overlay.fx.sprites.border_glow
-local bottom=overlay.fx.sprites.border_lower
-assert(left.visible and right.visible and top.visible and bottom.visible,
-    'Four continuous glow components form the level-4 electric capsule')
-assert(left.x==opt.bar.x and right.x+right.width==opt.bar.x+opt.bar.width,
-    'New glow endcaps stay INSIDE bar bounds and meet each rail')
+assert(left.visible and right.visible and top.visible
+    and overlay.fx.sprites.border_lower==nil,
+    'Three seamless halo pieces; no overlapping second rail sprites')
+assert(left.x<opt.bar.x and right.x+right.width>opt.bar.x+opt.bar.width
+    and left.x+left.width==top.x and top.x+top.width==right.x,
+    'Caps bloom just outside frame while joining central twin rail exactly')
 assert(left.opacity>top.opacity and right.opacity==left.opacity,
     'Default cap-forward mode makes endcaps moderately stronger')
-assert(left.rgb[1]==255 and left.rgb[2]==239 and left.rgb[3]==194,
-    'Default level 4 glow is white-gold')
+assert(left.rgb[1]==249 and left.rgb[2]==207 and left.rgb[3]==103,
+    'Preferred prewindow electric level-4 glow defaults gold')
 local electric_a=top.opacity
 lvl4.now=403.37;lvl4.sc_left=5.63
 overlay:render(lvl4)
@@ -396,7 +411,7 @@ overlay:render(lvl4)
 assert(left.rgb[1]==255 and left.rgb[2]==255 and left.rgb[3]==255,
     'Optional white L4 palette remains available')
 opt.glow.l4='whitegold'
-opt.glow.cap34=.75
+opt.glow.cap34=.85
 opt.glow.levels='off'
 overlay:render(lvl4)
 assert(not left.visible and not top.visible,
