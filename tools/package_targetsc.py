@@ -102,7 +102,7 @@ def main():
         for file in icons:
             assert z.read('Skillchains/images/skillchain/' + file.name).startswith(b'\x89PNG\r\n\x1a\n')
         for file in fx_art:
-            assert z.read('Skillchains/images/resonance/' + file.name).startswith(b'\\x89PNG\\r\\n\\x1a\\n')
+            assert z.read('Skillchains/images/resonance/' + file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
         for folder in ('Skillchains', 'TargetSC'):
             checks = json.loads(z.read(folder + '/SHA256SUMS.json'))
             for name, expected in checks.items():
