@@ -1,4 +1,4 @@
-name: Skillchains animation batch 8 + TargetSC integration
+name: Skillchains animation batch 8.1 + TargetSC integration
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-TargetSC-Animation8-test
+          name: Skillchains-TargetSC-Animation8.1-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30

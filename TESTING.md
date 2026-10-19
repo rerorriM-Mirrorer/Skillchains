@@ -2,6 +2,38 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Animation8.1 — Lionstag saved glow-level mask runtime fix (2026-10-19; LIVE PENDING)
+
+**Branch:** `development/skillchains-resonance-animation9`.
+**Version:** `2.20.08.25-resonance.7-animation.8.1`.
+**User observation:** On Lionstag, loading Animation8 produced repeated
+`resonance_fx.lua:278` errors: `"find" is not defined for numbers`.
+This is direct in-game error evidence; Animation8's preview appearance on
+another client had been positively received, but Lionstag could not complete
+this runtime test.
+
+**Cause:** Windower's persisted `glow.levels` mask (`34`, `1234`, etc.) may
+arrive as a Lua number after config load. The HUD's per-frame halo code
+called the string-only `levels:find` method, so a saved numeric mask caused
+continuous drawing errors. The render boundary now calls `tostring` before
+testing enabled levels. No palette, sprite, opacity, timing, TargetSC bridge,
+or saved-position behavior has been altered.
+
+**Static/simulated regression:** Extend `tools/test_learning_ui.lua` to render
+with numeric masks `34` and `1234`, asserting that the intended levels still
+show without an exception. Re-run Lua 5.1 parser, existing visual, bridge and
+native-identity checks, and the curated two-addon package verification.
+These checks are not live FFXI verification.
+
+**Next live check:** Preserve `Skillchains/data/`, install Animation8.1's
+Skillchains files only, reload Skillchains on Lionstag, and repeat `//sc anim
+preview opener`, `level1` through `level4` and `//sc glow` before and after
+a subsequent reload. Confirm no repeated Lua errors and unchanged halo/mask
+behavior at Lionstag's small resolution. TargetSC remains unchanged; do not
+replace its loaded native DLL.
+
+---
+
 ## Animation8 — genuine perimeter, seamless capsule halo and restored level-four electricity (2026-10-19; LIVE PENDING)
 
 **Branch:** `development/skillchains-resonance-animation9`, forked from

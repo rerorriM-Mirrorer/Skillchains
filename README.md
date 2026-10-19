@@ -1,9 +1,23 @@
-# Skillchains — Resonance HUD Animation8 test build
+# Skillchains — Resonance HUD Animation8.1 test build
 
 A standalone FFXI Windower 4 addon based on Ivaar's original Skillchains, updated by posimagi.
 This test branch adds a restrained, FFXI-inspired visual layer without modifying EnemyBar2 or XIVCrossbar.
 
 **Start with [TESTING.md](TESTING.md).** Initial addon load and basic commands were user-confirmed; the newest combat/rendering changes remain live-untested. This is not a public release.
+
+## Animation8.1 — Lionstag saved-mask crash fix
+
+Lionstag reported repeated `resonance_fx.lua:278` errors while loading the
+Animation8 HUD. Windower can read a saved glow-level mask such as `34` as a
+number, while the renderer expected a string and called `:find` on it.
+The renderer now converts this setting to text at the lookup, preserving the
+same enabled levels and every existing visual/timing setting. Numeric `34`
+and `1234` masks have dedicated simulated regression cases. This correction
+still needs live confirmation on Lionstag; it is not a new visual pass.
+
+Preserve `Skillchains/data/`, replace only the Skillchains files from the
+Animation8.1 testing package, then `//lua reload Skillchains`. No TargetSC
+DLL or Lua update is needed.
 
 ## Animation8 — real capsule perimeter and stronger electric border
 
@@ -465,6 +479,9 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-19 — Animation8.1: prevent numeric saved glow-mask render errors
+- Treat a saved numeric glow-level mask as text before matching enabled levels; simulate numeric `34`/`1234` settings and preserve Animation8 rendering.
 
 ### 2026-10-19 — Animation8: dark true-perimeter SC bar and seamless capsule halo
 - Removed the old full-height white/gold frame behind translucent track; separated 1px upper/lower rails plus corner ends. The bar interiors are now truly dark, regardless of chain level.

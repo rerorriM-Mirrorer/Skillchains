@@ -1,5 +1,16 @@
 # TargetSC TESTING.md — start here
 
+## Paired Skillchains Animation8.1 runtime compatibility — 2026-10-19
+
+Lionstag's saved numeric glow-level mask exposed an Animation8-only HUD error
+(`resonance_fx.lua:278` string `:find` on number). Animation8.1 converts the
+mask to text at the renderer boundary; the paired TargetSC 0.1.0 source,
+native DLL, bridge events and source-clock timing remain unchanged. Numeric
+settings are covered by a simulated regression; live Lionstag confirmation
+is still pending. Update Skillchains files only and preserve character data.
+
+---
+
 ## Paired Skillchains Animation8 compatibility — 2026-10-19
 
 `development/skillchains-resonance-animation9` replaces HUD-only
