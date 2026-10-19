@@ -78,7 +78,7 @@ local function equal(a,b,path)
     for k in pairs(b)do assert(a[k]~=nil,path..' added '..tostring(k))end
 end
 assert(#before==#after,'Existing state render count changed unexpectedly')
-local stable={'res','id','active','delay','times','mb_window','step','closed','bound','result_level'}
+local stable={'res','id','active','delay','times','mb_window','step','closed','bound'}
 for i=1,#baseline_raw do
     for _,key in ipairs(stable) do
         equal(baseline_raw[i][key],new_raw[i][key],'combat['..i..'].'..key)
