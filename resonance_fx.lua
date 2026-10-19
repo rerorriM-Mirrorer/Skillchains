@@ -127,6 +127,8 @@ function M.new(prefix)
         opt=opt or {}
         local intensity=clamp(tonumber(opt.intensity) or 1,0,2)
         local enabled=opt.enabled~=false and intensity>0
+        local fi=intensity*clamp(tonumber(opt.flare) or 1,0,2)
+        local gi=intensity*clamp(tonumber(opt.glow) or 1,0,2)
         local x,y,w,h=bar.x,bar.y,bar.width,bar.height
         local fill=clamp(bar.fill or w,0,w)
         local age,delay=age_and_delay(s)
@@ -163,7 +165,7 @@ function M.new(prefix)
         local flare_w=max(8,14*scale)
         local flare_h=max(11,20*scale)
         if level>=3 then
-            local alpha=(level==3 and 110 or 160)*intensity
+            local alpha=(level==3 and 110 or 160)*gi
             if level>=4 then alpha=alpha*(.60+.40*sin(age*23)^2) end
             sprite('border_glow',x-3*scale,y-8*scale,w+6*scale,h+16*scale,
                 alpha,level>=4 and gold or white)
@@ -177,7 +179,7 @@ function M.new(prefix)
                 -- No SC background/frame underneath this first beat.
                 wash(x,y,end_x,h,255*intensity,white)
                 sprite('edge',x+end_x-flare_w/2,y+(h-flare_h)/2,
-                    flare_w,flare_h,220*intensity,white)
+                    flare_w,flare_h,220*fi,white)
             elseif beat<2 then
                 wash(x,y,w,h,255*intensity*(1-smooth(beat-1)),white)
             end
@@ -188,21 +190,21 @@ function M.new(prefix)
             wash(x+1,y+1,max(1,fill-2),max(1,h-2),a*intensity,white)
             if age<.3 then
                 sprite('edge',x+fill-flare_w/2,y+(h-flare_h)/2,flare_w,
-                    flare_h,210*intensity*(1-age/.3),white)
+                    flare_h,210*fi*(1-age/.3),white)
             end
         end
         if fill<=2 then return end
         local flicker=.87+.13*sin((s.now or 0)*26)^2
         sprite('left',x-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
-            185*intensity*flicker,c1)
+            185*fi*flicker,c1)
         sprite('right',x+fill-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
-            185*intensity*flicker,c2)
+            185*fi*flicker,c2)
         -- All follow flares run in the THREE-SECOND WAIT, not during SC decay.
         if age>=delay then
             -- Future level-four choice: three pulses then a brighter flicker,
             -- no unapproved continuous traveling flare.
             if level>=4 then
-                local a=80*intensity*(.5+.5*sin(age*28)^2)
+                local a=80*gi*(.5+.5*sin(age*28)^2)
                 sprite('border_glow',x-4*scale,y-8*scale,
                     w+8*scale,h+16*scale,a,gold)
             end
@@ -212,7 +214,7 @@ function M.new(prefix)
             -- Preview-only provisional three-beat pulse, reserved for live
             -- calibration after actual Radiance/Umbra become available.
             local t=3*age/delay
-            local a=210*intensity*(1-smooth(t-floor(t)))
+            local a=210*fi*(1-smooth(t-floor(t)))
             sprite('moving',x+w/2-flare_w/2,y+(h-flare_h)/2,flare_w,
                 flare_h,a,white)
             return
@@ -224,7 +226,7 @@ function M.new(prefix)
         if pass>=passes then return end
         local pos=x+1+t*max(1,fill-2)
         sprite('moving',pos-flare_w/2,y+(h-flare_h)/2,flare_w,flare_h,
-            225*intensity,mix(c1,c2,t))
+            225*fi,mix(c1,c2,t))
     end
     function self:destroy()
         for _,id in pairs(self.ids) do windower.prim.delete(id) end
