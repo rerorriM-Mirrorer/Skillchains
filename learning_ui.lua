@@ -44,6 +44,7 @@ function M.new(color_for_result)
     local self={rows={},color_for_result=color_for_result,
         icon_root=windower.addon_path..'images/skillchain/',
         displayed=0,height_px=0}
+    self.measure=make_label(11) -- pooled font-metric probe; never drawn
     function self:hide()
         for _,row in ipairs(self.rows) do
             row.label:hide()
@@ -66,14 +67,32 @@ function M.new(color_for_result)
         x=clamp(x,8,math.max(8,width-215))
         bottom=clamp(bottom,25,math.max(25,height-12))
         local rh=math.max(12,math.floor(18*scale+.5))
-        local glyphsize=math.max(10,math.floor(15*scale+.5))
-        local gap=math.max(1,math.floor(2*scale+.5))
         local font=math.max(7,math.floor(11*scale+.5))
-        -- The column has one fixed RIGHT edge for every row, regardless
-        -- of action-name length or number of inherent properties.
-        local panelwidth=math.max(120,math.min(math.floor(315*scale+.5),width-x-8))
+        local glyphsize=font -- match actual text size, not row height
+        local gap=math.max(2,math.floor(4*scale+.5))
         local all=flatten(groups)
         if #all==0 then all[1]={name='No compatible learned actions',properties={}} end
+        -- One fixed icon COLUMN starts just after the widest learned name.
+        -- Recompute from unscaled text metrics each time the list changes;
+        -- reserve room for every property in dual/multi-property abilities.
+        self.measure:size(font)
+        local longest,max_icons=0,0
+        for _,item in ipairs(all) do
+            self.measure:text(item.name or '')
+            longest=math.max(longest,self.measure:extents())
+            max_icons=math.max(max_icons,math.min(6,#item.properties))
+        end
+        local max_available=math.max(65,width-x-8)
+        local icons_width=max_icons>0 and
+            max_icons*glyphsize+(max_icons-1)*gap or 0
+        local column_gap=math.max(6,math.floor(9*scale+.5))
+        local reserved=max_icons>0 and (icons_width+column_gap) or 0
+        local label_width=math.max(50,math.min(longest+2,max_available-reserved))
+        local column_x=x+label_width+column_gap
+        self.icon_column_x=column_x
+        local label_max=label_width
+        -- Small screens clip labels before the icons, never overlap them.
+        local right=math.min(x+max_available,column_x+icons_width)
         local limit=math.max(0,math.floor((bottom-9)/rh))
         local visible=math.min(#all,limit)
         local truncated=#all>visible
@@ -82,7 +101,6 @@ function M.new(color_for_result)
         self.height_px=count*rh
         self.displayed=count
         local top=bottom-self.height_px
-        local right=x+panelwidth-4
         for i=1,count do
             local item=all[i]
             if i>visible then item={name='+'..(#all-visible)..' more',properties={}} end
@@ -97,8 +115,6 @@ function M.new(color_for_result)
                 row.label:color(c[1],c[2],c[3]);row.last_color=color_key
             end
             local n=math.min(#item.properties,6)
-            local icon_width=n>0 and (n*glyphsize+(n-1)*gap+8) or 0
-            local label_max=math.max(50,panelwidth-icon_width-8)
             -- Keep long names out of the property-icon column.
             if row.last_name~=item.name or row.last_max~=label_max or row.last_font~=font then
                 local label=item.name or ''
@@ -117,7 +133,7 @@ function M.new(color_for_result)
                 row.last_x,row.last_y=x,yy
             end
             row.label:show()
-            local start=right-(n*glyphsize+(n-1)*gap)
+            local start=column_x
             for j=1,n do
                 local name=item.properties[j]
                 local path=self.icon_root..glyph(name)
@@ -133,7 +149,8 @@ function M.new(color_for_result)
                     slot.image:size(glyphsize,glyphsize);slot.last_size=glyphsize
                 end
                 if slot.last_x~=ix or slot.last_y~=yy then
-                    slot.image:pos(ix,yy);slot.last_x,slot.last_y=ix,yy
+                    local iy=yy+math.max(0,math.floor((rh-glyphsize)/2))
+                    slot.image:pos(ix,iy);slot.last_x,slot.last_y=ix,yy
                 end
                 slot.image:show()
             end
@@ -147,6 +164,7 @@ function M.new(color_for_result)
     end
     function self:destroy()
         self:hide()
+        self.measure:destroy()
         for _,row in ipairs(self.rows) do
             row.label:destroy()
             for _,icon in ipairs(row.icons) do icon.image:destroy() end
