@@ -294,7 +294,13 @@ function M.new(prefix)
             if opener then
                 charge=1
             elseif style=='energized' then
+                -- A brief electrical wake-up as the white wash lifts.
+                -- Once the transition is complete only L4 retains its
+                -- continuous high-frequency border flicker.
                 charge=.10+.90*smooth(progress/.85)
+                if progress>0 and progress<1 then
+                    charge=charge*(.82+.18*sin(age*31)^2)
+                end
             else
                 charge=progress
             end
