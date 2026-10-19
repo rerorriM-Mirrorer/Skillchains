@@ -1,9 +1,9 @@
-name: TargetSC 0.2.0 Test2 + preserved Animation8
+name: TargetSC 0.3.0 Test3 + preserved Animation8 HUD
 
 on:
   push:
     branches:
-      - development/targetsc-resonance-test2
+      - development/targetsc-resonance-test3
   workflow_dispatch:
 
 permissions:
@@ -26,6 +26,8 @@ jobs:
           i686-w64-mingw32-objdump -p /tmp/_TargetSC.dll
           g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-stroke TargetSC/tests/test_stroke.cpp
           /tmp/tsc-stroke
+          g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-property TargetSC/tests/test_property.cpp
+          /tmp/tsc-property
       - name: Verify deterministic three-part capsule-border halo PNGs
         run: python3 tools/generate_capsule_halo.py --check
       - name: Verify capsule geometry, seams, and dark interior
@@ -40,6 +42,7 @@ jobs:
           lua5.1 tools/test_learning_ui.lua
           lua5.1 tools/test_visual_commands.lua
           lua5.1 TargetSC/tests/test_motion.lua
+          lua5.1 TargetSC/tests/test_transport.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
           lua5.1 TargetSC/tests/test_missing.lua
@@ -51,7 +54,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-0.2.0-Test2-Animation8-test
+          name: TargetSC-0.3.0-Test3-Animation8-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30

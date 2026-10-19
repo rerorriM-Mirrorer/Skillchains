@@ -1,0 +1,101 @@
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p Skillchains.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p skills.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p resonance_ui.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p resonance_fx.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p learning_ui.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p targetsc_bridge.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p tools/test_learning_ui.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p tools/test_visual_commands.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/TargetSC.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/resonance.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/resonance_controls.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/resonance_motion.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/resonance_preview.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/tests/test_addon.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/tests/test_missing.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/tests/test_motion.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/tests/test_resonance.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/tests/test_skillchains_regression.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/luac5.1 -p TargetSC/tests/test_transport.lua
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 tools/test_learning_ui.lua
+learning_ui simulation passed: ordering, property images, alignment, anchor, pooling and clipping
+resonance FX simulation passed: white refill, 0.30s overlap, glow cap geometry, levels, options, flicker, pooling
+resonance_ui integration simulation passed: bars, captions, icons, drag guide, cleanup
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 tools/test_visual_commands.lua
+PASS visual commands: cap presets, prewindow electricity, per-level glow, track RGB/alpha, selective resets and validation
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_motion.lua
+PASS Test3 motion: snapshot defaults, equal world-space strikes, no fall, independent steady-amplitude slowing hum, segmented opener colors, level hierarchy, glyph layers, spin-to-stop, in-place fades, MB reminder
+PASS full Umbra demo: 0/9/17/24/30s, four links, shrinking source-style windows, no bursts; exact snapshots/deadlines preserved
+PASS geometry sweep: 8 properties x 3 motions x 3 layouts x 1051 frames, <=32 bands/8 discs
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_transport.lua
+PASS real-addon command transport: both load orders, subscription, source states, snapshot, reload, off/on, unsubscribe, zone, no polling
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_resonance.lua
+PASS publisher/consumer integration: deadlines, transitions, AoE MB, closed chains, lifecycle, snapshots, client isolation
+PASS animation sweep: 7 palettes x 1121 frames, finite/bounded geometry, model scale clamps
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_addon.lua
+PASS actual addon lifecycle/commands: preview timeline, native submissions, identity gate, cutscene, zone, off/on, settings, help, restart/unload
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_missing.lua
+PASS missing native/source handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_missing.lua mismatch
+PASS mismatched native handling: useful status/help, clean lifecycle, no combat parser or per-frame console traffic
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/lua5.1 TargetSC/tests/test_skillchains_regression.lua /tmp/Skillchains-test3-baseline.lua
+PASS combat deadlines and bridge state unchanged: opener, chains, confirmed MB, MB-only tail, zone/logout; 14 snapshots, expected UI waiting-timer change
+exit=0
+$ python3 tools/generate_capsule_halo.py --check
+verified: capsule_halo_l.png
+verified: capsule_halo_rail.png
+verified: capsule_halo_r.png
+exit=0
+$ python3 tools/test_capsule_halo.py
+PASS capsule PNGs: pixel-exact mirror, no halo seams, dark interior, two narrow rails
+exit=0
+$ git diff --check
+
+exit=0
+All checks are static/host simulations; no Windower, DLL invocation, D3D or FFXI execution.

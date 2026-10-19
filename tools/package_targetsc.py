@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'TargetSC-0.2.0-Test2-Animation8-Full'
+NAME = 'TargetSC-0.3.0-Test3-Animation8-Full'
 HUD_BASELINE = 'e3a8b632e29eeebdbd4455da470810a9574a7ddd'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
@@ -37,22 +37,25 @@ def verify_dll(path):
 def main():
     assert not git('status', '--porcelain', '--untracked-files=normal'), 'Commit work before packaging'
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
-    # User-accepted Animation8 is a byte-for-byte payload contract, including
-    # its bridge/assets. Documentation can record the new pairing separately.
-    guarded = ('Skillchains.lua','targetsc_bridge.lua','skills.lua','resonance_ui.lua',
+    # User-accepted Animation8 HUD/combat/assets are byte-for-byte protected.
+    # The ONLY publisher change allowed is the two documented dispatch fixes.
+    guarded = ('Skillchains.lua','skills.lua','resonance_ui.lua',
                'learning_ui.lua','resonance_fx.lua','images')
     assert not git('diff',HUD_BASELINE,'--',*guarded), 'Animation8 runtime/assets changed'
+    original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
+    assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'TargetSC 0.2.0 Test2 / Skillchains Animation8 preserved', 'author': 'A.',
+    info = {'batch': 'TargetSC 0.3.0 Test3 / Animation8 HUD preserved, bridge dispatch fixed', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': HUD_BASELINE,
             'skillchains_preview_user_confirmed': True,
             'targetsc_test1_render_user_confirmed': True,
-            'targetsc_test2_in_game_tested': False,
-            'bridge_commit': '43943483518847f317228d0f0fc3ba472d642685',
-            'native_commit': 'cb634e94e1fc76c82c50b16591e3f59303a076de',
-            'motion_commit': 'bd873b365a23251b364baf89448c7ca1daf3996a',
+            'targetsc_test2_previews_user_confirmed': True,
+            'targetsc_test3_in_game_tested': False,
+            'bridge_fix_commit': 'aaf233f',
+            'native_api': '0.3.0', 'bridge_protocol': 1, 'scenehook_abi': 2,
+            'native_source_sha256': hashlib.sha256((ROOT/'TargetSC/src/TargetSC.cpp').read_bytes()).hexdigest(),
             'native_dll_sha256': dll_hash, 'native_machine': 'PE32/i386',
             'compilation': 'MinGW-w64 GCC 13.2 x86, warnings treated as errors',
             'in_game_tested': False}

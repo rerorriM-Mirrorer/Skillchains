@@ -108,6 +108,17 @@ are included. No user data/settings or extra workflow copies at the ZIP root.
     frame pacing from Test1 below. Native device/scene lifecycle code and
     identity gates are preserved, but these remain live regression checks.
 
+### Delivery register — Test3
+
+| Commit | Work | Publication |
+| --- | --- | --- |
+| `aaf233f` | Correct real command dispatch; initial real-handler transport checks | Local; push blocked by automatic approval review |
+| `0d40912` | Paired Lua/native 0.3.0, bell/glyph/level hierarchy, controls, full demo and current guides | Local; not pushed |
+| Package source commit | See BUILD_INFO.json for the exact final verification/package commit | Reported separately at delivery |
+
+All completed local check output is recorded in `docs/verification/test3-*`.
+GitHub Actions is configured, but no run for these unpushed commits is claimed.
+
 ### Automated coverage and practical limits
 
 - Lua 5.1 parse of all delivered runtime/tests; actual TargetSC command/lifecycle

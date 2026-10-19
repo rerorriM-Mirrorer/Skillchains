@@ -1,0 +1,21 @@
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/i686-w64-mingw32-g++-win32 -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror -shared -static -static-libgcc -static-libstdc++ -Wl,--no-insert-timestamp -o TargetSC/libs/_TargetSC.dll TargetSC/src/TargetSC.cpp TargetSC/src/exports.def -ld3d8
+
+exit=0
+$ /workspace/scratch/031cad0b0519/toolchain/root/usr/bin/i686-w64-mingw32-strip --strip-unneeded TargetSC/libs/_TargetSC.dll
+
+exit=0
+$ g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-stroke TargetSC/tests/test_stroke.cpp
+
+exit=0
+$ /tmp/tsc-stroke
+PASS native stroke geometry: 2304 projected ellipse/width cases, one/two/eight-pixel floors, bounded miter, degenerate points
+exit=0
+$ g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-property TargetSC/tests/test_property.cpp
+
+exit=0
+$ /tmp/tsc-property
+PASS portable property geometry: border-reaching cross, four-point star, central square, transparent line geometry, complete sector coverage
+exit=0
+Delivered DLL SHA256 68d2b4d8c421bbb64df3bd1cdaf89b457768c356353b8ad014d027a5dd8bd9b7
+Native source SHA256 6eae9906480b2807772e11722cf32eb7861f58f01233034d7ef39977a9578193
+Compilation and CPU geometry only; no Windows loader, DLL invocation, D3D or FFXI execution.
