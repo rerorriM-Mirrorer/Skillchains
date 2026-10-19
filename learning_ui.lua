@@ -44,7 +44,6 @@ function M.new(color_for_result)
     local self={rows={},color_for_result=color_for_result,
         icon_root=windower.addon_path..'images/skillchain/',
         displayed=0,height_px=0}
-    self.measure=make_label(11) -- pooled font-metric probe; never drawn
     function self:hide()
         for _,row in ipairs(self.rows) do
             row.label:hide()
@@ -76,24 +75,36 @@ function M.new(color_for_result)
         -- One fixed icon COLUMN starts just after the widest learned name.
         -- Recompute from unscaled text metrics each time the list changes;
         -- reserve room for every property in dual/multi-property abilities.
-        self.measure:size(font)
         local longest,max_icons=0,0
-        for _,item in ipairs(all) do
-            self.measure:text(item.name or '')
-            longest=math.max(longest,self.measure:extents())
+        -- The original invisible probe underestimated Windower's italic,
+        -- stroked text. Use the SAME pooled label instances we actually
+        -- render, and conservatively allow for italic overhang and stroke.
+        -- The fallback is deliberate: fonts can report glyph extents smaller
+        -- than their visible raster bounds before their first visible frame.
+        local stroke=math.max(1,math.floor(1.5*scale+.5))
+        for i,item in ipairs(all) do
             max_icons=math.max(max_icons,math.min(6,#item.properties))
+            local row=self:ensure_row(i,font)
+            row.label:size(font)
+            row.label:stroke_width(stroke)
+            row.label:text(item.name or '')
+            local measured=tonumber(row.label:extents()) or 0
+            local fallback_width=#(item.name or '')*font*.82
+            longest=math.max(longest,measured+2*stroke,fallback_width+2*stroke)
         end
         local max_available=math.max(65,width-x-8)
         local icons_width=max_icons>0 and
             max_icons*glyphsize+(max_icons-1)*gap or 0
-        local column_gap=math.max(6,math.floor(9*scale+.5))
+        -- Give lettering and its black outline 8px of breathing space.
+        local column_gap=math.max(8,math.floor(8*scale+.5))+stroke
         local reserved=max_icons>0 and (icons_width+column_gap) or 0
-        local label_width=math.max(50,math.min(longest+2,max_available-reserved))
+        local label_width=math.max(32,math.min(math.ceil(longest+2),
+            max_available-reserved))
         local column_x=x+label_width+column_gap
         self.icon_column_x=column_x
-        local label_max=label_width
-        -- Small screens clip labels before the icons, never overlap them.
-        local right=math.min(x+max_available,column_x+icons_width)
+        self.label_width=label_width
+        self.icon_column_gap=column_gap
+        local label_max=label_width-stroke
         local limit=math.max(0,math.floor((bottom-9)/rh))
         local visible=math.min(#all,limit)
         local truncated=#all>visible
@@ -120,7 +131,10 @@ function M.new(color_for_result)
             if row.last_name~=item.name or row.last_max~=label_max or row.last_font~=font then
                 local label=item.name or ''
                 row.label:text(label)
-                while #label>4 and row.label:extents()>label_max do
+                while #label>4 do
+                    local measured=tonumber(row.label:extents()) or 0
+                    local conservative=#label*font*.82
+                    if math.max(measured,conservative)+2*stroke<=label_max then break end
                     label=label:sub(1,-2)
                     row.label:text(label..'...')
                 end
@@ -170,7 +184,6 @@ function M.new(color_for_result)
     end
     function self:destroy()
         self:hide()
-        self.measure:destroy()
         for _,row in ipairs(self.rows) do
             row.label:destroy()
             for _,icon in ipairs(row.icons) do icon.image:destroy() end
