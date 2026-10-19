@@ -1,9 +1,9 @@
-name: Skillchains animation batch 7 + TargetSC integration
+name: Skillchains animation batch 8 + TargetSC integration
 
 on:
   push:
     branches:
-      - development/skillchains-resonance-animation8
+      - development/skillchains-resonance-animation9
   workflow_dispatch:
 
 permissions:
@@ -20,8 +20,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq lua5.1
-      - name: Verify deterministic ghost-glow endcap PNGs
-        run: python3 tools/generate_glow_caps.py --check
+      - name: Verify deterministic three-part capsule-border halo PNGs
+        run: python3 tools/generate_capsule_halo.py --check
       - name: Validate runtime Lua 5.1
         run: |
           for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua TargetSC/TargetSC.lua TargetSC/resonance.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
@@ -42,7 +42,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-TargetSC-Animation7-test
+          name: Skillchains-TargetSC-Animation8-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
