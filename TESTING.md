@@ -2,6 +2,110 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Animation8 — genuine perimeter, seamless capsule halo and restored level-four electricity (2026-10-19; LIVE PENDING)
+
+**Branch:** `development/skillchains-resonance-animation9`, forked from
+Animation7 tested snapshot `a680b8b3ae4ec46a40de1e4f781cb94d81a33643`.
+**Version:** `2.20.08.25-resonance.7-animation.8`.
+User in-game observations of Animation7: opener confirmed excellent.
+The prior high saturation washed out L2's Fusion gradient; with
+`//sc anim intensity 2`, `//sc anim glow 2`, `//sc glow
+rail34 .75`, `//sc glow cap34 .85`, and L4 gold, the
+old electric flicker returned somewhat. L3 should have a darker
+interior and a distinct flicker; L4 should recover continuous pre-window
+power; all successful-chain caps still appeared geometrically detached.
+The learning panel must disappear entirely when empty. User wants to
+lock the 2D language then adapt it to **TargetSC 3D** later.
+
+**Root cause found in source:** the previous frame primitive was a
+**solid white/gold rectangle, full bar height**, not a perimeter.
+The transparent base (`115,18,21,39`) was rendered ON TOP of
+this bright sheet, so levels 2–4 looked washed out even with
+`//sc glow levels off`. This batch replaces the background geometry,
+not merely its alpha. The main SC/MB borders now consist of **one
+top and one bottom one-pixel primitive rail, plus the two inset
+endcap primitives**, leaving the center transparent to game scenery.
+Default dark track is `RGB(6,8,17), alpha 155` (61% opaque);
+`//sc track alpha 0-255`, `//sc track rgb R G B` and
+`//sc track reset` allow independent tuning. The dark center
+does not flicker or participate in countdown-opacity effects.
+
+**New capsule halo mechanism:** old `ghost_glow_cap_l/r` assets,
+and separately stretched top/bottom glow rectangles are retired
+from the *runtime ZIP* in favor of a three-piece contour sharing
+a single signed-distance function:
+`images/resonance/capsule_halo_l.png`,
+`capsule_halo_rail.png`, `capsule_halo_r.png`.
+At scale 1 the exact design frame is 7px high with a 1px corner,
+3px bloom margin and cap/straight join at 10px from each end.
+All art is tintable alpha-only white. The rail contains two narrow
+luminous lines but a nearly transparent middle. Adjacent sprites
+touch *without overlap*; caps bloom slightly beyond the actual
+bar, and sprites are scaled from original design units.
+`python3 tools/generate_capsule_halo.py --check` validates PNG bytes
+and `python3 tools/test_capsule_halo.py` independently checks
+pixel mirroring, identical seam alpha, dark center, and rail profiles.
+
+**Result-level behavior:** Opener's confirmed white grow/dim
+remains unchanged; no added opener halo. Successful chains keep
+a full-width white refill and 0.30s white-to-property body overlap
+centered on actual decay start; source window/MB clocks unchanged.
+The *actual narrow perimeter* begins white and develops resulting
+property color during the pre-window, independent of body fade.
+Level 1 gets the property color; L2 now uses the midpoint of its
+palette rather than an opaque-white border, reducing gradient wash.
+L3 keeps a restrained white rim and 11-rad/s shimmer, with pre-window
+strength control. L4 defaults to **gold**, fast 23-rad/s border flicker
+throughout white pre-window, plus 28-rad/s modulation in decay.
+Its tuned .75 rails/.85 caps are new defaults; L3 uses a lower
+multiplier. The glow still supports arbitrary nonnegative strength
+settings, but as before Windower alpha saturates at 255.
+
+**New default glow:** levels `34`, `rail12=.30`, `cap12=.35`,
+`rail34=.75`, `cap34=.85`, `level1=1`, `level2=.65`,
+`level3=.70`, `level4=1`, `pre12=.18`,
+`pre3=.38`, `pre4=.85`, `scale=1`, `l4=gold`.
+`//sc glow pre3 1`, `//sc glow pre4 1`, `//sc glow
+preset balanced|capforward`, `//sc glow l4 whitegold|gold|white`.
+`//sc glow reset` resets only glow, and `//sc track reset`
+resets only the dark track, **without resetting saved positions**.
+Previously saved glow settings are preserved; run glow/track
+reset selectively to try Animation8 defaults. Empty learning
+groups hide all pooled text/icons, with no "No compatible learned
+actions" placeholder or empty learning box.
+
+**Automated checks (not FFXI):** GitHub Actions Lua 5.1 parse;
+seeded UI and clean-opener simulations; shadowless perimeter
+geometry, dark track, source-timed white/color overlap, sprite
+join, user controls, empty learning list, TargetSC native/bridge
+simulators, snapshot deadline regression; strict PNG generation
+and independent source-art geometry tests; PE32 native DLL
+identity and complete 2-folder ZIP SHA manifest.
+
+**Live FFXI test plan:** Preserve Skillchains `data/`, copy the
+full `Skillchains` folder including three new capsule textures,
+and `//lua reload Skillchains`. With TargetSC installed, leave
+it alone. Preview `//sc anim preview opener` and verify no hitch,
+color/timing or silhouette regression. Preview levels 1–4 at scale
+1 and 2.5, with `//sc glow levels off`: confirm **all four have
+equally dark translucent centers** with no white/gold center sheet.
+Then `//sc glow levels 34`; on L3 compare
+`//sc glow pre3 .38` vs `1`, on L4 compare
+`//sc glow pre4 0` vs `.85` vs `1`, and check uninterrupted
+gold electricity during white pre-window. Compare
+`//sc glow rail34 .75`, `cap34 .85` with
+`//sc glow preset balanced`. Check matching, seamless ends
+and any halo reaching the text or crossing a short bar at scale2.5.
+On L2 verify Fusion gradient remains saturated and the background
+shows scenery correctly. Try `//sc track alpha 100` vs `155`,
+or `//sc track rgb 0 0 0`, then `//sc track reset`.
+Look for empty learned-actions panel, real SC windows and
+MB timing, 4-box load, and `//tsc sync`.
+**No live testing of Animation8 has been claimed.** The user's
+observations above concern the preceding Animation7 only.
+
+---
+
 ## Animation7 — rounded electric glow caps and simplified white refill (2026-10-19; LIVE PENDING)
 
 **Repository / branch:** `rerorriM-Mirrorer/Skillchains`,
