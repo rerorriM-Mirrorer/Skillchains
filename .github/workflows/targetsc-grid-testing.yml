@@ -1,9 +1,9 @@
-name: Skillchains + TargetSC grid test package
+name: Skillchains animation batch 1 + TargetSC integration
 
 on:
   push:
     branches:
-      - development/targetsc-resonance-grid
+      - development/skillchains-resonance-animation2
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
           sudo apt-get install -y -qq lua5.1
       - name: Validate runtime Lua 5.1
         run: |
-          for f in Skillchains.lua skills.lua resonance_ui.lua learning_ui.lua targetsc_bridge.lua TargetSC/TargetSC.lua TargetSC/resonance.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
+          for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua TargetSC/TargetSC.lua TargetSC/resonance.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
             luac5.1 -p "$f"
           done
       - name: Simulate Skillchains and TargetSC
@@ -39,7 +39,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-TargetSC-Grid1-test
+          name: Skillchains-TargetSC-Animation1-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
