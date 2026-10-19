@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.6'
+_addon.version = '2.20.08.25-resonance.7-animation.7'
 
 require('luau')
 require('pack')
@@ -50,6 +50,13 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 default.Resonance = {
     mode='learn', display='sc', names='full', scale=1, grid=10,
     animation={enabled=true,intensity=2.0,flare=2.0,glow=2.0,fade=false},
+    -- Rails + rounded ends share color/flicker. Tier mask defaults to L3/4.
+    -- Strengths are multipliers, with no artificial upper bound. Actual
+    -- Windower alpha ultimately saturates at 255.
+    glow={levels='34',rail12=.30,cap12=.35,rail34=.60,cap34=.75,
+          level1=1,level2=1,level3=1,level4=1,
+          scale=1,l4='whitegold'},
+    transition={duration=.30,style='energized'},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=5,y=-9},
     -- Additional positioning applies only to SC property icons.
@@ -487,6 +494,28 @@ local function message(str)
     windower.add_to_chat(207,'Skillchains: '..str)
 end
 
+local function finite_nonnegative(s)
+    local n=tonumber(s)
+    if not n or n~=n or n==math.huge or n==-math.huge or n<0 then
+        return nil
+    end
+    return n
+end
+
+local function glow_setting(opts,key,value)
+    local numeric=finite_nonnegative(value)
+    local defaults=default.Resonance.glow
+    if not numeric then
+        message(('Glow %s %.3f (default %.3f). Use //sc glow %s <number >= 0>.'):format(
+            key,opts.glow[key] or defaults[key],defaults[key],key))
+        return
+    end
+    opts.glow[key]=numeric
+    config.save(settings)
+    message(('Glow %s %.3f (default %.3f; alpha saturates at 255).'):format(
+        key,numeric,defaults[key]))
+end
+
 -- Read modifiers without intercepting normal keyboard/controller input.
 -- Either Ctrl key can request snap while existing draggable text moves.
 windower.register_event('keyboard', function(dik, down)
@@ -598,6 +627,91 @@ windower.register_event('addon command', function(cmd, ...)
         overlay:scale(number)
         config.save(settings)
         message(('Scale set to %.2f.'):format(opts.scale))
+    elseif cmd=='glow' then
+        opts.glow=opts.glow or {}
+        local g=opts.glow
+        local defs=default.Resonance.glow
+        for key,val in pairs(defs) do
+            if g[key]==nil then g[key]=val end
+        end
+        if option=='levels' then
+            local value=(args[2] or ''):lower()
+            if value=='off' then
+                g.levels='off'
+            elseif value~='' and value:match('^[1-4]+$') then
+                local unique={}
+                for level=1,4 do
+                    if value:find(tostring(level),1,true) then
+                        unique[#unique+1]=tostring(level)
+                    end
+                end
+                g.levels=table.concat(unique)
+            else
+                message('Glow levels: '..g.levels..
+                    ' (default '..defs.levels..'). Use //sc glow levels 34|1234|off|<digits 1-4>.')
+                return
+            end
+            config.save(settings)
+            message('Glow levels '..g.levels..' (default '..defs.levels..').')
+        elseif option=='rail12' or option=='rail34' or
+            option=='cap12' or option=='cap34' or option=='scale' or
+            option=='level1' or option=='level2' or
+            option=='level3' or option=='level4' then
+            glow_setting(opts,option,args[2])
+        elseif option=='l4' then
+            local value=(args[2] or ''):lower()
+            if value~='gold' and value~='white' and value~='whitegold' then
+                message('Glow L4 '..g.l4..' (default '..defs.l4..
+                    '). Use //sc glow l4 whitegold|gold|white.')
+                return
+            end
+            g.l4=value
+            config.save(settings)
+            message('Glow L4 '..value..' (default '..defs.l4..').')
+        elseif option=='preset' then
+            local preset=(args[2] or ''):lower()
+            if preset~='balanced' and preset~='capforward' then
+                message('Use //sc glow preset balanced|capforward (default capforward).')
+                return
+            end
+            local factor=preset=='balanced' and 1 or 1.25
+            g.cap12=g.rail12*factor
+            g.cap34=g.rail34*factor
+            config.save(settings)
+            message(('Glow %s: cap12 %.3f, cap34 %.3f; rail12 %.3f, rail34 %.3f. Default preset capforward.'):format(
+                preset,g.cap12,g.cap34,g.rail12,g.rail34))
+        else
+            message(('Glow levels %s (default 34), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f, scale %.2f, L4 %s.'):format(
+                g.levels,g.rail12,g.cap12,g.rail34,g.cap34,g.scale,g.l4))
+            message('Use //sc glow levels 34|1234|off; rail12|cap12|rail34|cap34|level1-4|scale <number>; preset balanced|capforward; l4 whitegold|gold|white.')
+        end
+    elseif cmd=='transition' then
+        opts.transition=opts.transition or {}
+        local t=opts.transition
+        if option=='style' then
+            local value=(args[2] or ''):lower()
+            if value~='uniform' and value~='energized' then
+                message('Transition style '..(t.style or 'energized')..
+                    ' (default energized). Use //sc transition style energized|uniform.')
+                return
+            end
+            t.style=value
+            config.save(settings)
+            message('Transition style '..value..' (default energized).')
+        elseif option then
+            local seconds=finite_nonnegative(option)
+            if not seconds then
+                message('Transition duration '..(t.duration or .3)..
+                    's (default .30s). Use //sc transition <seconds >= 0>.')
+                return
+            end
+            t.duration=seconds
+            config.save(settings)
+            message(('Transition %.3fs centered on countdown start (default .300s).'):format(seconds))
+        else
+            message(('Transition %.3fs, style %s (defaults .300s, energized).'):format(
+                t.duration or .3,t.style or 'energized'))
+        end
     elseif cmd=='anim' or cmd=='animation' then
         opts.animation=opts.animation or {enabled=true,intensity=2,flare=2,glow=2,fade=false}
         local a=opts.animation
@@ -606,14 +720,18 @@ windower.register_event('addon command', function(cmd, ...)
             config.save(settings)
             message('Resonance animations '..(a.enabled and 'ON' or 'OFF')..'.')
         elseif option=='intensity' or option=='flare' or option=='glow' then
-            local value=tonumber(args[2])
-            if not value or value<0 or value>2 then
-                message('Use //sc anim '..option..' <0-2> (default 1).')
+            local value=finite_nonnegative(args[2])
+            if not value then
+                message('Use //sc anim '..option..
+                    ' <number >= 0> (default '..tostring(default.Resonance.animation[option])..').')
                 return
             end
             a[option]=value
             config.save(settings)
-            message(('Animation %s %.2f.'):format(option,value))
+            message(('Animation %s %.2f (default %.2f%s).'):format(
+                option,value,default.Resonance.animation[option],
+                option=='flare' and '; legacy flare sprites retired' or
+                '; drawable opacity saturates at 255'))
         elseif option=='fade' then
             local value=args[2] and args[2]:lower()
             if value~='on' and value~='off' then
@@ -677,6 +795,10 @@ windower.register_event('addon command', function(cmd, ...)
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.grid=10
         opts.animation={enabled=true,intensity=2,flare=2,glow=2,fade=false}
+        opts.glow={levels='34',rail12=.30,cap12=.35,rail34=.60,cap34=.75,
+                   level1=1,level2=1,level3=1,level4=1,
+                   scale=1,l4='whitegold'}
+        opts.transition={duration=.30,style='energized'}
         opts.name_offset.x,opts.name_offset.y=5,-9
         opts.icon_offset=opts.icon_offset or {x=0,y=0}
         opts.icon_offset.x,opts.icon_offset.y=0,0
@@ -712,7 +834,7 @@ windower.register_event('addon command', function(cmd, ...)
             (opts.animation or {}).intensity or 1,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; anim [on|off|intensity <0-2>|flare <0-2>|glow <0-2>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; glow [levels 34|off|1234|rail12|cap12|rail34|cap34|level1-4|scale|l4|preset]; transition [seconds|style energized|uniform]; anim [on|off|intensity <number>|flare <number>|glow <number>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
