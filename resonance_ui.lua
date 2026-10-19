@@ -635,7 +635,8 @@ function ui.new(settings, sc_info)
                 x=math.floor(opt.bar.x+shake+.5),y=y,
                 width=math.floor(opt.bar.width+.5),
                 height=math.max(3,math.floor(5*opt.scale+.5))+2,
-                fill=fill,frame=self.names.sc,scale=opt.scale},result_color)
+                fill=fill,frame=self.names.sc,scale=opt.scale},
+                result_color,bar_color)
             y=y+bar_height
             local reveal=self.fx:label_alpha(state,effects)
             if opt.mode~='minimal' and opt.names~='off' then
