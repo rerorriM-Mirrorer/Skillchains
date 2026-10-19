@@ -282,6 +282,7 @@ function M.new(prefix)
             local cap=max(0,tonumber(glow_options[upper_tier and 'cap34'
                 or 'cap12']) or (upper_tier and .75 or .35))
             local base=upper_tier and (level>=4 and 72 or 68) or 72
+            local level_strength=max(0,tonumber(glow_options['level'..level]) or 1)
             local electric=level>=4 and (.60+.40*sin(age*23)^2) or 1
             if level>=4 and age>=delay then
                 electric=electric*(.78+.22*sin(age*28)^2)
@@ -299,8 +300,8 @@ function M.new(prefix)
             end
             local glow_color=level>=4 and level4_color
                 or (level==3 and white or c1)
-            local rail_alpha=base*gi*rail*electric*charge
-            local cap_alpha=base*gi*cap*electric*charge
+            local rail_alpha=base*gi*level_strength*rail*electric*charge
+            local cap_alpha=base*gi*level_strength*cap*electric*charge
             local scale=max(.5,tonumber(bar.scale) or 1)
             local inset=max(2,math.floor(5*scale+.5))
             local rail_height=max(5,math.floor(7*scale+.5))
