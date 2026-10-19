@@ -18,6 +18,15 @@ as PE32/i386. Lua and simulated event/lifecycle tests passed. **It has not been
 loaded in Windower or tested in FFXI.** No screenshot or render is presented as a
 live result.
 
+## Skillchains Animation7 paired package — 2026-10-19
+
+Skillchains adds white-refill/color-fade timing and new 64px mirrored
+rounded ghost-glow border caps. Its HUD no longer instantiates
+vertical/center flare sprites; glow is configurable by skillchain
+level. The paired TargetSC 0.1.0 addon remains unchanged:
+native binary, Lua, 3D rings, bridge, MB and deadline behavior.
+See the cumulative TESTING.md files before in-game testing.
+
 ## Skillchains Animation6 paired package
 
 The new Animation6 package contains Skillchains-only rounded end
