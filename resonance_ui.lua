@@ -4,6 +4,7 @@
 local texts = require('texts')
 local images = require('images')
 local learning = require('learning_ui')
+local resonance_fx = require('resonance_fx')
 local ui = {}
 
 local elements = {
@@ -165,6 +166,7 @@ function ui.new(settings, sc_info)
         end
         return rounded
     end
+    self.fx=resonance_fx.new('sc_resonance_fx_')
     local prefix = 'sc_resonance_'
     for _,kind in ipairs({'sc','mb'}) do
         self.names[kind] = {
@@ -211,10 +213,12 @@ function ui.new(settings, sc_info)
     self.caption_icons = {sc={},mb={}}
     -- The same small source PNGs used in the Learn column also precede
     -- the attached SC property names and the Magic Burst label.
-    function self:place_caption_icons(kind,properties,x,y,scale)
+    function self:place_caption_icons(kind,properties,x,y,scale,opacity)
         local slots=self.caption_icons[kind]
-        local icon_size=math.max(10,math.floor(12*scale+.5))
-        local gap=math.max(1,math.floor(2*scale+.5))
+        local icon_size=math.max(7,math.floor(10*scale+.5))
+        local gap=math.max(1,math.floor(scale+.5))
+        -- The glyph has transparent margins. Drop it toward Arial's baseline.
+        y=y+math.max(1,math.floor(2*scale+.5))
         for i,property in ipairs(properties or {}) do
             local filename=(property=='Radiance' and 'light'
                 or property=='Umbra' and 'darkness' or property:lower())..'.png'
@@ -233,10 +237,12 @@ function ui.new(settings, sc_info)
             end
             slot.image:size(icon_size,icon_size)
             slot.image:pos(x+(i-1)*(icon_size+gap),y)
+            slot.image:alpha(math.floor(240*clamp(opacity or 1,0,1)+.5))
             slot.image:show()
         end
         for i=#(properties or {})+1,#slots do slots[i].image:hide() end
-        return #(properties or {})>0 and (#properties*(icon_size+gap)+2) or 0
+        return #(properties or {})>0 and (#properties*icon_size+
+            math.max(0,#properties-1)*gap+1) or 0
     end
     function self:hide_caption_icons(kind)
         for _,slot in ipairs(self.caption_icons[kind]) do slot.image:hide() end
@@ -301,6 +307,7 @@ function ui.new(settings, sc_info)
         self.properties:hide()
         self.mb_caption:hide()
         for kind in pairs(self.names) do self:hide_bar(kind) end
+        self.fx:hide()
     end
 
     function self:hide()
@@ -343,7 +350,7 @@ function ui.new(settings, sc_info)
 
         -- Update the gradient at the new absolute-time fraction. Do not
         -- tween between distinct weapon skills; only each expiry runs smoothly.
-        local alpha=waiting and 105 or 230
+        local alpha=(waiting and 105 or 230)*clamp(self.bar_opacity or 1,0,1)
         for i=1,segments do
             local id=bar.slices[i]
             local start=math.floor((i-1)*fill/segments)
@@ -354,7 +361,7 @@ function ui.new(settings, sc_info)
             if finish==fill then count=count-1 end
             if count>0 then
                 local c=interpolate(palette_stops,(i-.5)/segments)
-                windower.prim.set_color(id,alpha,c[1],c[2],c[3])
+                windower.prim.set_color(id,math.floor(alpha+.5),c[1],c[2],c[3])
                 windower.prim.set_position(id,draw_x,y+1)
                 windower.prim.set_size(id,count,height)
                 windower.prim.set_visibility(id,true)
@@ -370,7 +377,7 @@ function ui.new(settings, sc_info)
         }) do
             if fill>0 and (entry.id~=bar.fill_r or fill>1) then
                 local c=entry.color
-                windower.prim.set_color(entry.id,alpha,c[1],c[2],c[3])
+                windower.prim.set_color(entry.id,math.floor(alpha+.5),c[1],c[2],c[3])
                 windower.prim.set_position(entry.id,entry.pos,y+2)
                 windower.prim.set_size(entry.id,1,cap_h)
                 windower.prim.set_visibility(entry.id,true)
@@ -518,7 +525,8 @@ function ui.new(settings, sc_info)
                 if math.abs(value-opt.scale) > .015 then self:scale(value) end
             end
             state=state or {
-                active={'Fusion'},step=2,sc_left=5,sc_total=8,
+                now=os.clock(),created=os.clock()-5,sc_open=os.clock()-2,
+                active={'Fusion'},level=2,step=2,sc_left=5,sc_total=8,
                 sc_wait=0,mb_left=7,mb_total=10,closed=false,
                 groups={
                     {level=3,property='Light',actions={
@@ -539,11 +547,15 @@ function ui.new(settings, sc_info)
         local mode=opt.display
         local show_sc=(mode=='sc' or mode=='both')
         local show_mb=(mode=='mb' or mode=='both')
-        local sc_alive=show_sc and state.sc_left and state.sc_left>0 and not state.closed
+        local sc_alive=show_sc and (state.sc_left or 0)>0 and not state.closed
+        local fading_opener=show_sc and state.step==1 and
+            state.expire_age~=nil and state.expire_age<.35
+        sc_alive=sc_alive or fading_opener
         local mb_alive=show_mb and state.mb_left and state.mb_left>0 and state.step>1
         -- Avoid hiding the active bar between frames; this also eliminates
         -- repeated visibility flicker at higher redraw rates.
         if not sc_alive then
+            self.fx:hide()
             self:hide_caption_icons('sc')
             self:hide_bar('sc')
             self.properties:hide()
@@ -552,17 +564,28 @@ function ui.new(settings, sc_info)
         local y=math.floor(opt.bar.y+.5)
         if sc_alive then
             local total=math.max(.1,state.sc_total or 8)
-            local fraction=state.sc_left/total
+            local effects=opt.animation or {enabled=true,intensity=1,fade=false}
+            local fraction=self.fx:bar_fraction(state,effects)
+            local bar_color=palette(state,self.sc_info,false)
+            self.bar_opacity=self.fx:opacity(state,effects)
             local bar_height=self:draw_bar('sc',y,fraction,state.sc_wait>0,
-                palette(state,self.sc_info,false))
+                bar_color)
+            self.bar_opacity=1
+            local fill=math.floor(clamp(fraction,0,1)*(opt.bar.width-2)+.5)
+            self.fx:render(state,effects,{
+                x=math.floor(opt.bar.x+.5),y=y,
+                width=math.floor(opt.bar.width+.5),
+                height=math.max(3,math.floor(5*opt.scale+.5))+2,
+                fill=fill,frame=self.names.sc},bar_color)
             y=y+bar_height
+            local reveal=self.fx:label_alpha(state,effects)
             if opt.mode~='minimal' and opt.names~='off' then
                 local inset=math.max(2,math.floor(3*opt.scale+.5))
                 local name_offset=opt.name_offset or {x=0,y=0}
                 local caption_gap=math.max(1,math.floor(2*opt.scale+.5))
                 local caption_y=y+caption_gap+name_offset.y
                 local icon_width=self:place_caption_icons('sc',state.active,
-                    math.floor(opt.bar.x+inset+name_offset.x+.5),caption_y,opt.scale)
+                    math.floor(opt.bar.x+inset+name_offset.x+.5),caption_y,opt.scale,reveal)
                 local label_width=math.max(30,opt.bar.width-inset*2-icon_width)
                 local signature=table.concat(state.active or {},'|')
                     ..':'..tostring(label_width)..':'..tostring(opt.scale)
@@ -579,6 +602,7 @@ function ui.new(settings, sc_info)
                 -- Icons occupy a small prefix, while names and timer wrap.
                 self.properties:pos(math.floor(opt.bar.x+inset+name_offset.x+icon_width+.5),
                     caption_y)
+                self.properties:alpha(math.floor(245*reveal+.5))
                 self.properties:show()
                 -- Positive Y needs extra clearance for the optional MB bar;
                 -- negative Y does not collapse the normal safe spacing.
@@ -622,7 +646,8 @@ function ui.new(settings, sc_info)
         if opt.mode=='learn' and (sc_alive or self.editing) then
             -- Color represents the predicted RESULT. Icons represent the
             -- action's own skillchain properties (possibly several).
-            self.learning:render(state.groups or {},opt.list.x,opt.list.y,opt.scale)
+            self.learning:render(state.groups or {},opt.list.x,opt.list.y,opt.scale,
+                self.editing and 1 or self.fx:label_alpha(state,opt.animation or {}))
             if not self.editing then self.panel:hide() end
         else
             self.learning:hide()
@@ -631,6 +656,7 @@ function ui.new(settings, sc_info)
                 if sc_alive then values[#values+1]=('SC %.1fs'):format(state.sc_left) end
                 if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
                 self:set_panel_text(table.concat(values,'  /  '))
+                self.panel:alpha(math.floor(245*(self.fx:label_alpha(state,opt.animation or {}))+.5))
                 self:position_panel()
                 self.panel:show()
             elseif not self.editing then
@@ -652,6 +678,7 @@ function ui.new(settings, sc_info)
         for _,slots in pairs(self.caption_icons) do
             for _,slot in ipairs(slots) do slot.image:destroy() end
         end
+        self.fx:destroy()
         self.learning:destroy()
         self.properties:destroy()
         self.mb_caption:destroy()
