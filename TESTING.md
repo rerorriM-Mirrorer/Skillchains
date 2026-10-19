@@ -2,6 +2,31 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Animation5 — user visual corrections (LIVE PENDING)
+
+User-provided opener screenshots confirm no left flare or center pulse
+is desired on opener, plus a remaining white-expansion hitch.
+Successful chains should retain previous dark track and previous fill,
+re-expanding from their previous fraction rather than from zero.
+Restore the **original three full pre-window center pulses** from
+level-four Animation3 for all successful SC levels 1–4; keep the
+level-four fast electrical flicker. Improve colored-edge flare entry
+to begin before the final brightening, increase L1/L2 visibility,
+inset vertical flares further and raise their lower body. Introduce
+soft endcaps on shortened L3/L4 top/bottom glow rails, within the
+bar's rounded ends. Opener has no left or center flare; white right
+flare grows/shrinks with the white expansion.
+
+Branch `development/skillchains-resonance-animation6`.
+Source clocks and TargetSC protocol remain unchanged. Effects are
+pure presentation. User's screenshot feedback is FFXI observation
+of the **preceding Animation4**, not live verification of this build.
+Synthetic Lua 5.1 tests and package CI are tracked separately.
+Investigate any remaining hitch in the FFXI client; screenshots
+cannot identify frame timing.
+
+---
+
 ## Animation4 unified pre-window preview — 2026-10-19 (LIVE PENDING)
 
 User confirms Animation3 learning icons now look better. Screenshots
