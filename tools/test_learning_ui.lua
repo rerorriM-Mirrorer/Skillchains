@@ -304,7 +304,7 @@ assert(overlay.fx.sprites.left.y+
     math.max(3,math.floor(5*opt.scale+.5))+1,
     'Flare foot is level with the bottom of the SC fill')
 local trans_a=overlay.fx:palette_blend(chain)
-assert(trans_a>0 and trans_a<1,'Property transition fades instead of switches')
+assert(trans_a==0,'Property transition stays dim during first white expansion')
 chain.now=111.3;chain.sc_wait=1.7
 overlay:render(chain)
 assert(not overlay.fx.sprites.moving.visible)
