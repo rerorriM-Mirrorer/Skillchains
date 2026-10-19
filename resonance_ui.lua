@@ -171,7 +171,8 @@ function ui.new(settings, sc_info)
     local prefix = 'sc_resonance_'
     for _,kind in ipairs({'sc','mb'}) do
         self.names[kind] = {
-            frame=prefix..kind..'_frame', base=prefix..kind..'_base',
+            frame=prefix..kind..'_frame',frame_bottom=prefix..kind..'_frame_bottom',
+            base=prefix..kind..'_base',
             cap_l=prefix..kind..'_cap_l', cap_r=prefix..kind..'_cap_r',
             fill_l=prefix..kind..'_fill_l', fill_r=prefix..kind..'_fill_r',
             slices={},hidden=true,
@@ -181,6 +182,7 @@ function ui.new(settings, sc_info)
         -- to suggest a capsule without texture assets or antialiasing.
         -- The underlying tracks are darker and somewhat transparent.
         create_prim(bar.frame,180,9,10,21)
+        create_prim(bar.frame_bottom,180,9,10,21)
         create_prim(bar.cap_l,180,9,10,21)
         create_prim(bar.cap_r,180,9,10,21)
         create_prim(bar.base,115,18,21,39)
@@ -300,7 +302,7 @@ function ui.new(settings, sc_info)
     function self:hide_bar(kind)
         local bar=self.names[kind]
         if bar.hidden then return end
-        for _,id in ipairs({bar.frame,bar.base,bar.cap_l,bar.cap_r,
+        for _,id in ipairs({bar.frame,bar.frame_bottom,bar.base,bar.cap_l,bar.cap_r,
             bar.fill_l,bar.fill_r}) do
             windower.prim.set_visibility(id,false)
         end
@@ -350,7 +352,7 @@ function ui.new(settings, sc_info)
             (self.bar_opacity or 1)<=0 and (self.base_opacity or 1)<=0
         if fully_hidden then
             if not bar.visual_hidden then
-                for _,id in ipairs({bar.frame,bar.cap_l,bar.cap_r,bar.base,
+                for _,id in ipairs({bar.frame,bar.frame_bottom,bar.cap_l,bar.cap_r,bar.base,
                     bar.fill_l,bar.fill_r}) do
                     windower.prim.set_visibility(id,false)
                 end
@@ -363,10 +365,15 @@ function ui.new(settings, sc_info)
         end
         bar.visual_hidden=false
 
-        -- Dark rounded outline: a central rectangle with 1px-inset endcaps.
+        -- The crisp border is a PERIMETER, not a solid rectangle under
+        -- the translucent track. The old full-height white/gold frame made
+        -- higher SC tiers appear washed-out with sprite glows disabled.
         windower.prim.set_position(bar.frame,x+1,y)
-        windower.prim.set_size(bar.frame,width-2,height+2)
+        windower.prim.set_size(bar.frame,width-2,1)
         windower.prim.set_visibility(bar.frame,true)
+        windower.prim.set_position(bar.frame_bottom,x+1,y+height+1)
+        windower.prim.set_size(bar.frame_bottom,width-2,1)
+        windower.prim.set_visibility(bar.frame_bottom,true)
         windower.prim.set_position(bar.cap_l,x,y+1)
         windower.prim.set_size(bar.cap_l,1,height)
         windower.prim.set_visibility(bar.cap_l,true)
@@ -375,10 +382,14 @@ function ui.new(settings, sc_info)
         windower.prim.set_visibility(bar.cap_r,true)
 
         windower.prim.set_position(bar.base,x+1,y+1)
-        -- The dark, translucent empty track NEVER participates in the
-        -- countdown-opacity wave. Only the opener's initial reveal hides it.
-        windower.prim.set_color(bar.base,math.floor(115*
-            clamp(self.base_opacity or 1,0,1)+.5),18,21,39)
+        -- The dark track is genuinely translucent OVER THE GAME now, not
+        -- over a fully opaque bright rectangle. Never pulse its opacity.
+        local track=opts.track or {}
+        local rgb=track.color or {6,8,17}
+        local track_alpha=clamp(tonumber(track.alpha) or 155,0,255)
+        windower.prim.set_color(bar.base,math.floor(track_alpha*
+            clamp(self.base_opacity or 1,0,1)+.5),
+            rgb[1] or 6,rgb[2] or 8,rgb[3] or 17)
         windower.prim.set_size(bar.base,width-2,height)
         windower.prim.set_visibility(bar.base,true)
 
@@ -749,7 +760,7 @@ function ui.new(settings, sc_info)
         self.handle:destroy()
         self.scalehandle:destroy()
         for _,bar in pairs(self.names) do
-            for _,id in ipairs({bar.frame,bar.base,bar.cap_l,bar.cap_r,
+            for _,id in ipairs({bar.frame,bar.frame_bottom,bar.base,bar.cap_l,bar.cap_r,
                 bar.fill_l,bar.fill_r}) do
                 windower.prim.delete(id)
             end
