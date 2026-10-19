@@ -2,6 +2,114 @@
 
 **Start here.** Cumulative development and testing record; not a claim of live validation.
 
+## Animation7 — rounded electric glow caps and simplified white refill (2026-10-19; LIVE PENDING)
+
+**Repository / branch:** `rerorriM-Mirrorer/Skillchains`,
+`development/skillchains-resonance-animation8`, based on Animation6
+commit `011b64b0c4c92d46245caa2be21373ef7f76a62c`.
+**Skillchains version:** `2.20.08.25-resonance.7-animation.7`.
+This is a **Skillchains-only HUD animation change**; previous branches
+and the trusted main branch are untouched. TargetSC 0.1.0 native DLL,
+Lua, bridge protocol, MB observation and real source deadlines have
+no changes.
+
+**Latest user feedback (live observation of Animation6):**
+Opener is much smoother and L1 animation is good. However mirrored
+vertical flare assets overlap awkwardly, leave exposed ends, and
+center pulses are no longer useful. User prefers an elegant white
+full-bar refill on successful chains, remaining white through most of
+the SC pre-window, transitioning uniformly toward property color
+over `0.30s` centered on the start of actual countdown (roughly
+0.15s before through 0.15s after). Opener keeps its confirmed
+white -> dim -> active behavior. Preserve the cool fast L4
+**electrical border glow**, filling in round ends with separate
+matching, tintable ghost-glow cap assets rather than flare sprites.
+Default cap slightly stronger than rail; expose optional balanced
+caps, lower-level glows, per-tier and per-level strengths, global
+strength, L4 white-gold/gold/white and energized/uniform transition.
+User requests numerical settings be freely tunable, reporting defaults
+with each setting change.
+
+**Implementation:**
+- Added two real, neutral-white-alpha, mirrored PNGs:
+  `images/resonance/ghost_glow_cap_l.png` and
+  `ghost_glow_cap_r.png`. Their semicircular soft glowing tips
+  connect to upper/lower `ghost_glow.png` rails inside the frame's
+  outer X bounds, tracking bar scale. The assets are reproducible via
+  `python3 tools/generate_glow_caps.py`; `--check` verifies exact
+  committed bytes. Old edge/center flare textures remain in history
+  but are **not instantiated or included in the new install ZIP**.
+- The opener retains its single white growth and second-beat dim
+  reveal and has **no flares**. On confirmed chains, white overlay
+  sweeps the entire length from the left over the previous fill and
+  dark track, then **holds white** until the transition around the
+  actual SC-open deadline. The underlying fill still grows from the
+  prior fraction; absolute continuation and MB timers remain fully
+  authoritative and unmodified. White overlay narrows with the actual
+  fill fraction once decay begins, avoiding a full-width leftover.
+- Transition uses `smoothstep` over a default 0.30s window centered
+  on the real countdown boundary. The fill fades uniformly. With
+  style `energized`, border rails and matching caps briefly flicker
+  to full power as the fade proceeds. Style `uniform` disables this
+  special start-up flicker. The independent strong level-four border
+  oscillations at 23 and 28 rad/s remain after activation. Default
+  level-four glow color is pale white-gold; gold and white optional.
+- Defaults: glow levels `34`, `rail12=.30 cap12=.35`,
+  `rail34=.60 cap34=.75` (cap-forward ratio 1.25×), levels
+  1–4 multipliers each 1, global scale 1, L4 `whitegold`;
+  transition duration `.30`, style `energized`. Existing
+  `//sc anim glow` and `//sc anim intensity` are independent
+  upstream multipliers and saved settings are preserved. Legacy
+  `//sc anim flare` remains accepted for settings compatibility,
+  but retired visual flares are not rendered.
+- Commands:
+  `//sc glow levels 34|1234|13|off`;
+  `//sc glow rail12 0.3`, `cap12 0.35`, `rail34 0.6`,
+  `cap34 0.75`, `level1 1` through `level4 1`,
+  `scale 1`; `//sc glow preset capforward|balanced`;
+  `//sc glow l4 whitegold|gold|white`;
+  `//sc transition 0.30`;
+  `//sc transition style energized|uniform`.
+  Commands report the defaults on change. Nonnegative finite numeric
+  multiplier inputs have **no hard maximum**; Windower alpha itself
+  saturates to 255 and extreme values may look flat/clipped.
+  `//sc default` restores all new default fields as well.
+
+**Automated verification, not live FFXI validation:** Lua 5.1 syntax
+checks, deterministic mirrored PNG byte tests, learning icon and
+bar integration simulation; assert white opener unchanged, full
+white successful refill from x-origin, previous fraction retained,
+0.30s deadline-centered overlap, no center/side flare allocations,
+empty background alpha unchanged, cap and rail inside bounds and
+active together, cap-forward/balanced values, L1 opt-in, per-level
+strength control, white/gold/whitegold tint, energized/uniform
+difference, preserved level-four electric oscillation, effect cleanup
+and no repeated hide/show. TargetSC native Lua lifespan, bridge,
+missed-DLL, frame geometry and source deadline regression tests;
+two-folder archive integrity, SHA256 manifest and DLL PE32/i386
+identity remain part of GitHub Actions.
+
+**User in-game checklist:** Preserve Skillchains `data/`, install
+full new `Skillchains/` contents (including three runtime
+`images/resonance/` PNGs), `//lua reload Skillchains`.
+Try `//sc anim preview opener|level1|level2|level3|level4`
+at scales 1 and 2.5 plus a small client; compare newly clean
+white refill against Animation6. In level 3/4 look for continuous
+bright round ends and the familiar flicker without detached flares.
+Verify 0.30s color overlap exactly as countdown starts, old dark
+track and previous fill beneath white successful sweeps, no
+countdown hesitation. Try `//sc glow preset balanced` then
+`capforward`; `//sc glow levels 1234`;
+`//sc glow level1 0.4`; `//sc glow l4 gold`,
+`white`, `whitegold`; and
+`//sc transition style uniform` then `energized`.
+Report screenshot/feel, small-client scale, border clipping,
+and any regression in opener hitch or multibox responsiveness.
+TargetSC's DLL does not need replacing when already installed.
+**Nothing in this new batch has yet been tested in the game.**
+
+---
+
 ## Animation6 — anchored light-leak assets and white-sweep hitch investigation (2026-10-19; LIVE PENDING)
 
 **Branch:** `development/skillchains-resonance-animation7`, from
