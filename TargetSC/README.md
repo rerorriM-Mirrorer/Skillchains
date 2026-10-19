@@ -18,6 +18,16 @@ as PE32/i386. Lua and simulated event/lifecycle tests passed. **It has not been
 loaded in Windower or tested in FFXI.** No screenshot or render is presented as a
 live result.
 
+## Skillchains Animation8 paired package — 2026-10-19
+
+The sibling Skillchains addon now uses a true dark-center
+capsule perimeter and three seamless rim-halo textures.
+A faster 2D L4 electrical cadence, slower L3 shimmer, and
+user-controllable pre-window glow may guide later native 3D
+ring revisions. The TargetSC 0.1.0 DLL, Lua, 3D effects,
+authoritative deadlines and bridge are **unchanged** in this
+paired test archive; see TESTING.md for the new 2D FFXI checklist.
+
 ## Skillchains Animation7 paired package — 2026-10-19
 
 Skillchains adds white-refill/color-fade timing and new 64px mirrored
