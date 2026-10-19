@@ -3,7 +3,7 @@ name: Skillchains animation batch 3 + TargetSC integration
 on:
   push:
     branches:
-      - development/skillchains-resonance-animation5
+      - development/skillchains-resonance-animation6
   workflow_dispatch:
 
 permissions:
@@ -39,7 +39,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-TargetSC-Animation4-test
+          name: Skillchains-TargetSC-Animation5-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
