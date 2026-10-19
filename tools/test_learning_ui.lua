@@ -31,7 +31,9 @@ end
 package.preload.images=function()
     return {new=function(_,settings)
         created_images=created_images+1
-        local obj={path_value=settings.texture.path,fit=settings.texture.fit,alpha_initial=settings.color and settings.color.alpha}
+        local obj={path_value=settings.texture.path,fit=settings.texture.fit,
+            visible=settings.visible==true,
+            alpha_initial=settings.color and settings.color.alpha}
         function obj:path(v) if v then self.path_value=v end return self.path_value end
         function obj:alpha(v) if v then self.opacity=v end return self.opacity or 240 end
         function obj:color(r,g,b) self.rgb={r,g,b} end
