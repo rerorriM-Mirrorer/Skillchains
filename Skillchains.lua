@@ -49,7 +49,7 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- client; //sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
     mode='learn', display='sc', names='full', scale=1, grid=10,
-    animation={enabled=true,intensity=1.0,fade=false},
+    animation={enabled=true,intensity=1.0,flare=1.0,glow=1.0,fade=false},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=0,y=-11},
     bar={x=466,y=696,width=310},
@@ -579,21 +579,21 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message(('Scale set to %.2f.'):format(opts.scale))
     elseif cmd=='anim' or cmd=='animation' then
-        opts.animation=opts.animation or {enabled=true,intensity=1,fade=false}
+        opts.animation=opts.animation or {enabled=true,intensity=1,flare=1,glow=1,fade=false}
         local a=opts.animation
         if option=='on' or option=='off' then
             a.enabled=(option=='on')
             config.save(settings)
             message('Resonance animations '..(a.enabled and 'ON' or 'OFF')..'.')
-        elseif option=='intensity' then
+        elseif option=='intensity' or option=='flare' or option=='glow' then
             local value=tonumber(args[2])
             if not value or value<0 or value>2 then
-                message('Use //sc anim intensity <0-2> (default 1).')
+                message('Use //sc anim '..option..' <0-2> (default 1).')
                 return
             end
-            a.intensity=value
+            a[option]=value
             config.save(settings)
-            message(('Animation intensity %.2f.'):format(value))
+            message(('Animation %s %.2f.'):format(option,value))
         elseif option=='fade' then
             local value=args[2] and args[2]:lower()
             if value~='on' and value~='off' then
@@ -627,8 +627,9 @@ windower.register_event('addon command', function(cmd, ...)
                 message('Use //sc anim preview opener|level1|level2|level3|level4|off.')
             end
         else
-            message(('Animations %s, intensity %.2f, opacity wave %s; //sc anim preview opener|level1|level2|level3|level4|off'):format(
-                a.enabled and 'on' or 'off',a.intensity or 1,a.fade and 'on' or 'off'))
+            message(('Animations %s, intensity %.2f, flare %.2f, glow %.2f, opacity wave %s; //sc anim preview opener|level1|level2|level3|level4|off'):format(
+                a.enabled and 'on' or 'off',a.intensity or 1,
+                a.flare or 1,a.glow or 1,a.fade and 'on' or 'off'))
         end
     elseif cmd=='grid' then
         local grid=tonumber(option)
@@ -655,7 +656,7 @@ windower.register_event('addon command', function(cmd, ...)
     elseif cmd=='default' then
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.grid=10
-        opts.animation={enabled=true,intensity=1,fade=false}
+        opts.animation={enabled=true,intensity=1,flare=1,glow=1,fade=false}
         opts.name_offset.x,opts.name_offset.y=0,-11
         opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
         opts.list.x,opts.list.y=465,300
@@ -689,7 +690,7 @@ windower.register_event('addon command', function(cmd, ...)
             (opts.animation or {}).intensity or 1,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; anim [on|off|intensity <0-2>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; anim [on|off|intensity <0-2>|flare <0-2>|glow <0-2>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
