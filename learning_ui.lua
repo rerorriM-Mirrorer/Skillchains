@@ -85,12 +85,18 @@ function M.new(color_for_result)
         for i,item in ipairs(all) do
             max_icons=math.max(max_icons,math.min(6,#item.properties))
             local row=self:ensure_row(i,font)
-            row.label:size(font)
-            row.label:stroke_width(stroke)
-            row.label:text(item.name or '')
-            local measured=tonumber(row.label:extents()) or 0
+            if row.measure_name~=(item.name or '') or row.measure_font~=font then
+                row.label:size(font)
+                row.label:stroke_width(stroke)
+                row.label:text(item.name or '')
+                row.measured_width=tonumber(row.label:extents()) or 0
+                row.measure_name=item.name or ''
+                row.measure_font=font
+                row.last_name=nil -- The row may need ellipsis with the new column.
+            end
             local fallback_width=#(item.name or '')*font*.82
-            longest=math.max(longest,measured+2*stroke,fallback_width+2*stroke)
+            longest=math.max(longest,row.measured_width+2*stroke,
+                fallback_width+2*stroke)
         end
         local max_available=math.max(65,width-x-8)
         local icons_width=max_icons>0 and
