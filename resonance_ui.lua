@@ -984,20 +984,21 @@ function ui.new(settings, sc_info)
             self.learning:hide()
             if opt.mode=='compact' and not self.editing and (sc_alive or mb_alive) then
                 local values={}
-                if finale then
-                    values[#values+1]=prop
-                else
-                    if sc_alive and not terminal then
-                        values[#values+1]=('SC %.1fs'):format(state.sc_left)
-                    end
-                    if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
+                -- Compact presentation shares one text handle. When MB is
+                -- alive it must outlive (and remain readable during) a
+                -- terminal SC result, even if its SC companion turns black.
+                if finale then values[#values+1]=prop
+                elseif sc_alive and not terminal then
+                    values[#values+1]=('SC %.1fs'):format(state.sc_left)
                 end
+                if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
                 self:set_panel_text(table.concat(values,'  /  '))
                 local fade=self.fx:label_alpha(state,opt.animation or {})
-                self.panel:alpha(math.floor(245*fade*finale_mult+.5))
-                local tint=self.terminal_color or white
+                local fade_mult=mb_alive and 1 or finale_mult
+                self.panel:alpha(math.floor(245*fade*fade_mult+.5))
+                local tint=mb_alive and white or (self.terminal_color or white)
                 self.panel:color(tint[1],tint[2],tint[3])
-                self.panel:stroke_alpha(finale and 0 or math.floor(210*fade+.5))
+                self.panel:stroke_alpha((mb_alive or not finale) and math.floor(210*fade+.5) or 0)
                 self:position_panel()
                 self.panel:show()
             elseif not self.editing then
