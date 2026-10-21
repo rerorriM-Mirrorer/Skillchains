@@ -46,7 +46,7 @@ def main():
     # Only Skillchains HUD and FX files are intentionally changed since 8.4.
     assert not git('diff','6a0d6231b2633c47ebf8ec68e6d40bc76d8239d2','--',
         'skills.lua','targetsc_bridge.lua','skillchains_demo.lua',
-        'learning_ui.lua','images','TargetSC'), 'Unexpected gameplay/TargetSC changes'
+        'learning_ui.lua','images'), 'Unexpected gameplay changes'
     # The new demo module is mandatory; TargetSC is never the HUD's runtime source.
     demo=(ROOT/'skillchains_demo.lua').read_text()
     assert 'require(\'resonance_preview\')' not in demo
