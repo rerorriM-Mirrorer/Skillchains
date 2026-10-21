@@ -478,6 +478,10 @@ assert(top.opacity~=energized_alpha,
 opt.transition.style='energized'
 -- Once explicitly enabled, both promoted classes glow during the white
 -- pre-window, before countdown decay begins. Old 34 masks remain unchanged.
+-- Use Killala's restored intensity 2/glow 2 to resolve opacity oscillations
+-- even after Windower's integer alpha quantization.
+opt.animation.intensity=2
+opt.animation.glow=2
 opt.glow.levels='234'
 opt.glow.level_mask=nil
 opt.glow.l4='gold'
@@ -493,6 +497,11 @@ assert(top.visible and left.visible and top.opacity>0
 assert(top.rgb[1]==255 and top.rgb[2]==255 and top.rgb[3]==255,
     'L2 gets previous L3 halo white')
 local slow_alpha=top.opacity
+shimmer.now=501
+shimmer.sc_wait=3
+overlay:render(shimmer)
+assert(top.visible and top.opacity>0,
+    'L2 halo is already present on the very first white-refill frame')
 shimmer.now=501.17;shimmer.sc_wait=2.83
 overlay:render(shimmer)
 assert(top.opacity~=slow_alpha, 'L2 uses 11 rad/s shimmer')
@@ -508,6 +517,11 @@ assert(top.visible and top.opacity>0
 assert(top.rgb[1]==249 and top.rgb[2]==207 and top.rgb[3]==103,
     'L3 gets prior L4 golden halo')
 local fast_alpha=top.opacity
+charged.now=601
+charged.sc_wait=3
+overlay:render(charged)
+assert(top.visible and top.opacity>0,
+    'L3 electric halo exists from the first registered frame')
 charged.now=601.17;charged.sc_wait=2.83
 overlay:render(charged)
 assert(top.opacity~=fast_alpha, 'L3 uses former L4 23 rad/s electricity')
@@ -519,6 +533,8 @@ overlay:render(lvl4)
 assert(top.visible and left.visible and top.opacity>0
     and top.rgb[1]==249 and top.rgb[2]==207 and top.rgb[3]==103,
     'L4 terminal visual effect unchanged')
+opt.animation.intensity=1
+opt.animation.glow=1
 opt.animation.enabled=false
 overlay:render(lvl3)
 assert(not left.visible and not top.visible,
