@@ -40,8 +40,10 @@ def main():
     # Unchanged Animation8.1 HUD/combat/assets are protected, except mask-loading Lua.
     # The publisher must still retain Test3's corrected lua c transport.
     guarded = ('skills.lua','resonance_ui.lua',
-               'learning_ui.lua','resonance_fx.lua','images')
+               'learning_ui.lua','images')
     assert not git('diff',HUD_BASELINE,'--',*guarded), 'HUD/assets changed'
+    changed=set(git('diff','--name-only',HUD_BASELINE,'--','Skillchains.lua','resonance_fx.lua').splitlines())
+    assert changed=={'Skillchains.lua','resonance_fx.lua'}, 'Missing mask repair'
     assert not git('diff','721242f15f1c02c542af290208662f0ed4f21417','--',
         'TargetSC/TargetSC.lua','TargetSC/resonance.lua',
         'TargetSC/resonance_controls.lua','TargetSC/resonance_motion.lua',
