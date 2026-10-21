@@ -880,7 +880,7 @@ function ui.new(settings, sc_info)
                 or palette(state,self.sc_info,true)
             local mb_y=self:mb_ribbon_y(state)
             local mb_height=self:draw_mb_ribbon(mb_y,state,mb_palette)
-            if opt.mode~='minimal' then
+            if opt.mode~='minimal' and (opt.mb or {}).text~='off' then
                 -- No numerical timer during the monochrome end punctuation.
                 -- Restore the true independent MB countdown after it fades.
                 local caption=finale and 'Magic Burst'

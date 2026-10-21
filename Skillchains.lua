@@ -37,6 +37,7 @@ texts = require('texts')
 skills = require('skills')
 local resonance_view = require('resonance_ui')
 local skillchains_demo = require('skillchains_demo')
+local chat = require('chat') -- Provides string:color for BattleStations-style help.
 
 _static = S{'WAR','MNK','WHM','BLM','RDM','THF','PLD','DRK','BST','BRD','RNG','SAM','NIN','DRG','SMN','BLU','COR','PUP','DNC','SCH','GEO','RUN'}
 
@@ -64,6 +65,7 @@ default.Resonance = {
     track={alpha=155,color={6,8,17}},
     transition={duration=.30,style='energized'},
     tip={enabled=true,length=16,opacity=.85},
+    mb={position='below',gap=3,height=2,text='on'},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=5,y=-9},
     -- Additional positioning applies only to SC property icons.
@@ -539,6 +541,57 @@ local function glow_setting(opts,key,value)
         key,numeric,defaults[key]))
 end
 
+-- BattleStations convention: chat-only syntax, actionable examples,
+-- colored sections and deterministic order. Never mirror help to console.
+local function show_help()
+    local function heading(value)
+        windower.add_to_chat(0,('Skillchains  /  '..value):color(167))
+    end
+    local function line(syntax,description)
+        windower.add_to_chat(0,('//sc '):color(200)..syntax:color(207)
+            ..(' -> '):color(200)..description:color(0))
+    end
+    windower.add_to_chat(0,('-----------------------------------'):color(140))
+    heading('Resonance HUD')
+    line('status','Version, display, mode and positions')
+    line('demo [start|status|off]','Local five-stage Umbra HUD preview')
+    line('display sc|mb|both','Select independent SC and MB opportunities')
+    line('mode learn|compact|minimal','Choose learning suggestions or small labels')
+    line('names full|short|off','SC result labels')
+    line('names offset <x> <y>','Move SC labels and icons together')
+    line('icons offset <x> <y>','Move SC property icons independently')
+    heading('Effects')
+    line('tip on|off','Toggle moving bright SC endpoint')
+    line('tip length <8-40>','Set ghostflare length in base UI pixels')
+    line('tip opacity <0-1>','Set ghostflare brightness')
+    line('mb position above|below','Move independent fill-only MB ribbon')
+    line('mb gap <0-32>','Set SC-to-MB ribbon spacing')
+    line('mb height <1-6>','Set ribbon thickness before HUD scale')
+    line('mb text on|off','Toggle independent Magic Burst text')
+    line('anim on|off','Enable/disable animated bar effects')
+    line('anim fade on|off','Toggle SC countdown opacity pulse')
+    line('anim fade period <seconds>','Set SC pulse rhythm (e.g. 0.24)')
+    line('anim preview opener|level1|level2|level3|level4|umbra|radiance|off',
+         'Preview local visuals without sending game actions')
+    line('glow levels 1234|234|off','Choose enabled border-glow levels')
+    line('glow level1|level2|level3|level4 <number>','Per-level glow strength')
+    line('glow pre2|pre4 <number>','Pre-window glow strength')
+    line('glow rail34|cap34 <number>','Bright-tier halo rail / cap power')
+    line('glow l4 gold|whitegold|white','Terminal border palette')
+    line('transition <seconds>','Window-opening color transition')
+    heading('Layout and lifecycle')
+    line('edit on|off','Drag anchors; Ctrl snaps to grid')
+    line('scale <0.5-2.5>|edit','Scale HUD or edit scaling interactively')
+    line('grid <pixels>','Ctrl-drag grid spacing')
+    line('pos <x> <y>','Position SC bar and companion ribbon')
+    line('width <pixels>','Width of SC bar and MB ribbon')
+    line('center','Recover HUD on screen')
+    line('save [all]','Save settings')
+    line('restart|unload','Reload or unload Skillchains')
+    line('help','Show this guide')
+    windower.add_to_chat(0,('-----------------------------------'):color(140))
+end
+
 -- Read modifiers without intercepting normal keyboard/controller input.
 -- Either Ctrl key can request snap while existing draggable text moves.
 windower.register_event('keyboard', function(dik, down)
@@ -546,7 +599,7 @@ windower.register_event('keyboard', function(dik, down)
 end)
 
 windower.register_event('addon command', function(cmd, ...)
-    cmd=(cmd or 'status'):lower()
+    cmd=(cmd or 'help'):lower()
     local args={...}
     local option=args[1] and args[1]:lower()
     local opts=settings.Resonance
@@ -574,6 +627,62 @@ windower.register_event('addon command', function(cmd, ...)
             message('Use //sc demo [start|status|off].')
         end
         return
+    elseif cmd=='tip' then
+        opts.tip=opts.tip or {enabled=true,length=16,opacity=.85}
+        local t=opts.tip
+        if option=='on' or option=='off' then
+            t.enabled=(option=='on')
+        elseif option=='length' or option=='opacity' then
+            local v=finite_nonnegative(args[2])
+            local hi=option=='length' and 40 or 1
+            local lo=option=='length' and 8 or 0
+            if not v or v<lo or v>hi then
+                message(('Use //sc tip %s <%.2f-%.2f>.'):format(option,lo,hi))
+                return
+            end
+            t[option]=v
+        else
+            message(('SC ghost tip %s; length %.1f, opacity %.2f.'):format(
+                t.enabled~=false and 'on' or 'off',t.length or 16,t.opacity or .85))
+            return
+        end
+        config.save(settings)
+        message(('SC ghost tip %s; length %.1f, opacity %.2f.'):format(
+            t.enabled~=false and 'on' or 'off',t.length or 16,t.opacity or .85))
+    elseif cmd=='mb' then
+        opts.mb=opts.mb or {position='below',gap=3,height=2,text='on'}
+        local m=opts.mb
+        if option=='position' then
+            local v=(args[2] or ''):lower()
+            if v~='above' and v~='below' then
+                message('Use //sc mb position above|below.')
+                return
+            end
+            m.position=v
+        elseif option=='gap' or option=='height' then
+            local v=finite_nonnegative(args[2])
+            local lo=option=='height' and 1 or 0
+            local hi=option=='height' and 6 or 32
+            if not v or v<lo or v>hi then
+                message(('Use //sc mb %s <%.0f-%.0f>.'):format(option,lo,hi))
+                return
+            end
+            m[option]=v
+        elseif option=='text' then
+            local v=(args[2] or ''):lower()
+            if v~='on' and v~='off' then
+                message('Use //sc mb text on|off.')
+                return
+            end
+            m.text=v
+        else
+            message(('MB ribbon %s, gap %.1fpx, height %.1fpx, text %s.'):format(
+                m.position or 'below',m.gap or 3,m.height or 2,m.text or 'on'))
+            return
+        end
+        config.save(settings)
+        message(('MB ribbon %s, gap %.1fpx, height %.1fpx, text %s.'):format(
+            m.position or 'below',m.gap or 3,m.height or 2,m.text or 'on'))
     elseif cmd=='display' then
         if option~='sc' and option~='mb' and option~='both' then
             message('Display: '..opts.display..'. Use sc, mb, or both.')
@@ -902,6 +1011,7 @@ windower.register_event('addon command', function(cmd, ...)
         opts.track={alpha=155,color={6,8,17}}
         opts.transition={duration=.30,style='energized'}
         opts.tip={enabled=true,length=16,opacity=.85}
+        opts.mb={position='below',gap=3,height=2,text='on'}
         opts.name_offset.x,opts.name_offset.y=5,-9
         opts.icon_offset=opts.icon_offset or {x=0,y=0}
         opts.icon_offset.x,opts.icon_offset.y=0,0
@@ -937,9 +1047,14 @@ windower.register_event('addon command', function(cmd, ...)
             (opts.animation or {}).intensity or 1,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('demo [start|status|off] (standalone Umbra HUD sequence); display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; glow [levels 34|off|1234|rail12|cap12|rail34|cap34|level1-4|scale|l4|preset]; transition [seconds|style energized|uniform]; anim [on|off|intensity <number>|flare <number>|glow <number>|fade on|off|period <seconds>|preview <opener|level1|level2|level3|level4|radiance|umbra|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        show_help()
+    elseif cmd=='restart' or cmd=='unload' then
+        message(cmd=='restart' and 'Reloading Skillchains.' or 'Unloading Skillchains.')
+        windower.send_command(cmd=='restart' and 'lua reload Skillchains'
+            or 'lua unload Skillchains')
     else
-        message('Unknown command. Use //sc help.')
+        message('Unknown command: '..tostring(cmd))
+        show_help()
     end
 end)
 
