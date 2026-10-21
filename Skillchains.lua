@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.8.4'
+_addon.version = '2.20.08.25-resonance.7-animation.8.5'
 
 require('luau')
 require('pack')
@@ -50,7 +50,7 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- client; //sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
     mode='learn', display='sc', names='full', scale=1, grid=10,
-    animation={enabled=true,intensity=2.0,flare=2.0,glow=2.0,fade=false},
+    animation={enabled=true,intensity=2.0,flare=2.0,glow=2.0,fade=false,fade_period=1/2.4},
     -- Rails + rounded ends share color/flicker. Tier mask defaults to L3/4.
     -- Strengths are multipliers, with no artificial upper bound. Actual
     -- Windower alpha ultimately saturates at 255.
@@ -59,7 +59,7 @@ default.Resonance = {
     -- Keep legacy masks and use a textual key for newly saved changes.
     glow={rail12=.30,cap12=.35,rail34=.75,cap34=.85,
           level1=1,level2=.70,level3=1,level4=1,
-          pre12=.18,pre3=.38,pre4=.85,scale=1,l4='gold'},
+          pre12=.18,pre2=.85,pre3=.38,pre4=.85,scale=1,l4='gold'},
     -- RGB controls the hue; alpha sets how much game scenery shows through.
     track={alpha=155,color={6,8,17}},
     transition={duration=.30,style='energized'},
@@ -695,7 +695,7 @@ windower.register_event('addon command', function(cmd, ...)
             message('Glow levels '..glow_levels(g)..' (default 234).')
         elseif option=='rail12' or option=='rail34' or
             option=='cap12' or option=='cap34' or option=='scale' or
-            option=='pre12' or option=='pre3' or option=='pre4' or
+            option=='pre12' or option=='pre2' or option=='pre3' or option=='pre4' or
             option=='level1' or option=='level2' or
             option=='level3' or option=='level4' then
             glow_setting(opts,option,args[2])
@@ -729,10 +729,10 @@ windower.register_event('addon command', function(cmd, ...)
             config.save(settings)
             message('Glow restored to Animation8 defaults (positions unchanged).')
         else
-            message(('Glow levels %s (default 234), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f; pre3 %.2f pre4 %.2f; scale %.2f L4 %s.'):format(
+            message(('Glow levels %s (default 234), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f; pre2 %.2f pre3 %.2f pre4 %.2f; scale %.2f L4 %s.'):format(
                 glow_levels(g),g.rail12,g.cap12,g.rail34,g.cap34,
-                g.pre3,g.pre4,g.scale,g.l4))
-            message('Use //sc glow levels 34|1234|off; rail12|cap12|rail34|cap34|level1-4|pre12|pre3|pre4|scale <number>; preset balanced|capforward; l4 gold|whitegold|white; reset.')
+                g.pre2,g.pre3,g.pre4,g.scale,g.l4))
+            message('Use //sc glow levels 34|1234|off; rail12|cap12|rail34|cap34|level1-4|pre12|pre2|pre3|pre4|scale <number>; preset balanced|capforward; l4 gold|whitegold|white; reset.')
         end
     elseif cmd=='track' then
         opts.track=opts.track or {}
@@ -820,8 +820,19 @@ windower.register_event('addon command', function(cmd, ...)
                 '; drawable opacity saturates at 255'))
         elseif option=='fade' then
             local value=args[2] and args[2]:lower()
+            if value=='period' then
+                local n=tonumber(args[3])
+                if not n or n~=n or n<.08 or n>5 then
+                    message(('Countdown pulse period %.3fs. Use //sc anim fade period <0.08-5 seconds>.'):format(a.fade_period or 1/2.4))
+                    return
+                end
+                a.fade_period=n
+                config.save(settings)
+                message(('Countdown pulse period %.3fs (TargetSC default L1 hum ~0.24s).'):format(n))
+                return
+            end
             if value~='on' and value~='off' then
-                message('Use //sc anim fade on|off.')
+                message('Use //sc anim fade on|off | period <seconds>.')
                 return
             end
             a.fade=(value=='on')
@@ -881,10 +892,10 @@ windower.register_event('addon command', function(cmd, ...)
     elseif cmd=='default' then
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.grid=10
-        opts.animation={enabled=true,intensity=2,flare=2,glow=2,fade=false}
+        opts.animation={enabled=true,intensity=2,flare=2,glow=2,fade=false,fade_period=1/2.4}
         opts.glow={level_mask='L2,L3,L4',rail12=.30,cap12=.35,rail34=.75,cap34=.85,
                    level1=1,level2=.70,level3=1,level4=1,
-                   pre12=.18,pre3=.38,pre4=.85,scale=1,l4='gold'}
+                   pre12=.18,pre2=.85,pre3=.38,pre4=.85,scale=1,l4='gold'}
         opts.track={alpha=155,color={6,8,17}}
         opts.transition={duration=.30,style='energized'}
         opts.name_offset.x,opts.name_offset.y=5,-9
@@ -922,7 +933,7 @@ windower.register_event('addon command', function(cmd, ...)
             (opts.animation or {}).intensity or 1,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('demo [start|status|off] (standalone Umbra HUD sequence); display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; glow [levels 34|off|1234|rail12|cap12|rail34|cap34|level1-4|scale|l4|preset]; transition [seconds|style energized|uniform]; anim [on|off|intensity <number>|flare <number>|glow <number>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('demo [start|status|off] (standalone Umbra HUD sequence); display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; glow [levels 34|off|1234|rail12|cap12|rail34|cap34|level1-4|scale|l4|preset]; transition [seconds|style energized|uniform]; anim [on|off|intensity <number>|flare <number>|glow <number>|fade on|off|period <seconds>|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
