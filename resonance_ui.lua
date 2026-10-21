@@ -16,6 +16,10 @@ local fallback = {185,171,204}
 local black={0,0,0}
 local white={255,255,255}
 local terminal_fade=.8
+local function smooth(v)
+    v=math.max(0,math.min(1,v))
+    return v*v*(3-2*v)
+end
 local segments = 24
 local bar_handle_offset = 34
 local scale_handle_offset = 62
@@ -149,6 +153,16 @@ end
 -- Display the useful names directly, without redundant level/step headings.
 
 function ui.new(settings, sc_info)
+    -- Existing characters only have MB gap/position from Animation8.7.
+    -- Seed a separate anchor ONCE; later SC moves never drag MB with them.
+    settings.mb=settings.mb or {}
+    local mb=settings.mb
+    if mb.x==nil then mb.x=settings.bar.x end
+    if mb.y==nil then
+        mb.y=settings.bar.y+math.floor(22*(settings.scale or 1)+.5)
+            +(tonumber(mb.gap) or 3)
+    end
+    if mb.width==nil then mb.width=settings.bar.width end
     local self = {options=settings, sc_info=sc_info, editing=false, names={},
         ctrl_keys={[29]=false,[157]=false}}
     -- Native Windower text handles retain mouse capture. Keyboard events
@@ -274,7 +288,9 @@ function ui.new(settings, sc_info)
     -- the attached SC property names and the Magic Burst label.
     function self:place_caption_icons(kind,properties,x,y,scale,opacity)
         local slots=self.caption_icons[kind]
-        local icon_size=math.max(7,math.floor(10*scale+.5))
+        local mbcfg=self.options.mb or {}
+        local icon_size=math.max(7,math.floor(
+            (kind=='mb' and (tonumber(mbcfg.iconsize) or 10) or 10)*scale+.5))
         local gap=math.max(1,math.floor(scale+.5))
         -- Match the user's preferred SC baseline and permit fine adjustment
         -- independent from //sc names offset (which still moves both).
@@ -288,7 +304,11 @@ function ui.new(settings, sc_info)
             -- A white tint on a colored PNG is neutral, not a recolor.
             -- Use a true white-alpha silhouette during terminal effects,
             -- then tint that silhouette white (Radiance) or black (Umbra).
-            local folder=self.terminal_color and 'images/terminal/'
+            local is_sc=kind=='sc'
+            local finishing=is_sc and self.terminal_color
+            local flashing=not is_sc and (self.mb_flash or 0)>.01
+            local folder=finishing and 'images/terminal/'
+                or flashing and 'images/mb_flash/'
                 or 'images/skillchain/'
             local path=windower.addon_path..folder..filename
             local slot=slots[i]
@@ -306,8 +326,8 @@ function ui.new(settings, sc_info)
             slot.image:size(icon_size,icon_size)
             slot.image:pos(x+(i-1)*(icon_size+gap),y)
             slot.image:alpha(math.floor(240*clamp(opacity or 1,0,1)*
-                (self.terminal_mult or 1)+.5))
-            local tint=self.terminal_color or white
+                (is_sc and (self.terminal_mult or 1) or 1)+.5))
+            local tint=finishing or white
             slot.image:color(tint[1],tint[2],tint[3])
             slot.image:show()
         end
@@ -321,6 +341,8 @@ function ui.new(settings, sc_info)
     self.panel_cache = nil
     self.is_hidden = true
     self.handle = texts.new('SC BAR  [drag]', text_settings(settings.bar.x,settings.bar.y-bar_handle_offset,10,true))
+    self.mb_handle=texts.new('MB RIBBON  [drag separately]',
+        text_settings(mb.x,mb.y-28,10,true))
     self.scalehandle = texts.new('SC SCALE  [drag left/right]',
         text_settings(settings.bar.x+math.floor(100*settings.scale+.5),
             settings.bar.y-scale_handle_offset,10,true))
@@ -336,6 +358,7 @@ function ui.new(settings, sc_info)
             math.floor(col[3]*.70+255*.30+.5)}
     end)
     self.handle:hide()
+    self.mb_handle:hide()
     self.scalehandle:hide()
     self.panel:hide()
     self.properties:hide()
@@ -391,6 +414,7 @@ function ui.new(settings, sc_info)
         self.is_hidden=true
         if not self.editing then
             self.handle:hide()
+            self.mb_handle:hide()
             self.scalehandle:hide()
             self.panel:hide()
         end
@@ -507,9 +531,10 @@ function ui.new(settings, sc_info)
     function self:draw_mb_ribbon(y,s,stops)
         local bar=self.names.mb
         local cfg=self.options.mb or {}
-        local x=math.floor(self.options.bar.x+.5)
-        local width=math.max(24,math.floor(self.options.bar.width+.5))
-        local scale=self.options.scale or 1
+        local x=math.floor(cfg.x+.5)
+        local width=math.max(24,math.floor((tonumber(cfg.width) or
+            self.options.bar.width)+.5))
+        local scale=tonumber(cfg.scale) or 1
         local height=math.max(1,math.floor((tonumber(cfg.height) or 2)*scale+.5))
         local fraction=clamp((s.mb_left or 0)/
             math.max(.1,s.mb_total or 10),0,1)
@@ -522,14 +547,20 @@ function ui.new(settings, sc_info)
             local phase=clamp(1-(s.mb_left or 0)/.6,0,1)
             breath=breath*(.86+.14*math.sin(3*math.pi*phase)^2)
         end
-        local alpha=math.floor(225*breath*(self.terminal_mult or 1)+.5)
-        -- Keep the distinct MB identity even when the source palette is dark.
-        -- During Radiance/Umbra terminal punctuation colors remain exact.
+        -- Source WS creation marks the start of EVERY genuinely new MB
+        -- window, including the first successful link and replacements.
+        -- Unlike the SC terminal effect, this short flash is MB-owned.
+        local duration=tonumber(cfg.flash_duration) or .24
+        self.mb_flash=cfg.flash=='off' and 0 or
+            (duration>0 and (1-smooth(age/duration)) or 0)
+        local alpha=math.floor(225*breath+.5)
+        -- A brief full-white introduction resolves smoothly into the
+        -- slightly brighter MB palette. SC Level 4 never recolors or dims MB.
         local function tint(c)
-            if self.terminal_color then return self.terminal_color end
-            return {math.floor(c[1]*.72+255*.28+.5),
-                    math.floor(c[2]*.72+255*.28+.5),
-                    math.floor(c[3]*.72+255*.28+.5)}
+            local m=self.mb_flash
+            return {math.floor((c[1]*.72+255*.28)*(1-m)+255*m+.5),
+                    math.floor((c[2]*.72+255*.28)*(1-m)+255*m+.5),
+                    math.floor((c[3]*.72+255*.28)*(1-m)+255*m+.5)}
         end
         for _,id in ipairs({bar.frame,bar.frame_bottom,bar.base,
             bar.cap_l,bar.cap_r}) do
@@ -539,7 +570,7 @@ function ui.new(settings, sc_info)
         windower.prim.set_position(self.mb_glow_id,x+1,y-1)
         windower.prim.set_size(self.mb_glow_id,math.max(1,fill),height+2)
         windower.prim.set_color(self.mb_glow_id,
-            math.floor(56*breath*(self.terminal_mult or 1)+.5),
+            math.floor(56*breath+105*self.mb_flash+.5),
             center[1],center[2],center[3])
         windower.prim.set_visibility(self.mb_glow_id,fill>0)
         for i,id in ipairs(bar.slices) do
@@ -566,17 +597,7 @@ function ui.new(settings, sc_info)
     end
 
     function self:mb_ribbon_y(state)
-        local cfg=self.options.mb or {}
-        local gap=clamp(tonumber(cfg.gap) or 3,0,32)
-        local height=math.max(1,math.floor((tonumber(cfg.height) or 2)*
-            (self.options.scale or 1)+.5))
-        local y=math.floor(self.options.bar.y+.5)
-        if cfg.position=='above' then return y-height-gap-1 end
-        local show_sc=self.options.display=='sc' or self.options.display=='both'
-        if show_sc then
-            y=y+math.max(3,math.floor(5*(self.options.scale or 1)+.5))+2+gap
-        end
-        return y
+        return math.floor((self.options.mb or {}).y+.5)
     end
 
     -- A saved position from a larger client may put every drag handle beyond
@@ -588,6 +609,10 @@ function ui.new(settings, sc_info)
         local max_y=math.max(42,h-55)
         opt.bar.x=math.floor(clamp(opt.bar.x,8,max_x)+.5)
         opt.bar.y=math.floor(clamp(opt.bar.y,42,max_y)+.5)
+        local mb=opt.mb
+        mb.x=math.floor(clamp(mb.x,8,math.max(8,w-60))+.5)
+        mb.y=math.floor(clamp(mb.y,35,math.max(35,h-35))+.5)
+        self.mb_handle:pos(mb.x,mb.y-28)
         opt.list.x=math.floor(clamp(opt.list.x,8,math.max(8,w-135))+.5)
         -- The saved anchor is the lower edge, regardless of line count.
         opt.list.y=math.floor(clamp(opt.list.y,20,math.max(20,h-12))+.5)
@@ -598,6 +623,24 @@ function ui.new(settings, sc_info)
         end
     end
 
+    function self:set_mb_position(x,y)
+        self.options.mb.x=x;self.options.mb.y=y
+        self:rescue()
+    end
+    function self:mb_align(position)
+        local cfg=self.options.mb
+        cfg.position=position
+        cfg.x=self.options.bar.x
+        if position=='above' then
+            cfg.y=self.options.bar.y-
+                math.max(1,math.floor((cfg.height or 2)*(cfg.scale or 1)+.5))-
+                (cfg.gap or 3)-1
+        else
+            cfg.y=self.options.bar.y+
+                math.floor(22*(self.options.scale or 1)+.5)+(cfg.gap or 3)
+        end
+        self:rescue()
+    end
     function self:set_position(x,y)
         self.options.bar.x=x
         self.options.bar.y=y
@@ -627,16 +670,18 @@ function ui.new(settings, sc_info)
     function self:edit(toggle)
         if toggle==nil then toggle=not self.editing end
         self.editing=toggle
-        if not toggle then self.scaling=false; self.scalehandle:hide() end
+        if not toggle then self.scaling=false;self.scalehandle:hide() end
         self.panel:draggable(toggle)
         if toggle then
             self:rescue()
             self.handle:show()
+            self.mb_handle:show()
             self:set_panel_text('LEARNING  [drag]')
             self.panel:show()
             self.panel_drag_x,self.panel_drag_y=self.panel:pos()
         else
             self.handle:hide()
+            self.mb_handle:hide()
         end
         return toggle
     end
@@ -649,8 +694,11 @@ function ui.new(settings, sc_info)
         self.scalehandle:size(math.max(7,math.floor(10*self.options.scale+.5)))
         self.properties:size(math.max(7,math.floor(10*self.options.scale+.5)))
         self.properties:stroke_width(math.max(1,math.floor(1.5*self.options.scale+.5)))
-        self.mb_caption:size(math.max(7,math.floor(10*self.options.scale+.5)))
-        self.mb_caption:stroke_width(math.max(1,math.floor(1.5*self.options.scale+.5)))
+        local mb=self.options.mb or {}
+        self.mb_caption:size(math.max(6,math.floor(
+            (tonumber(mb.fontsize) or 10)*(tonumber(mb.scale) or 1)+.5)))
+        self.mb_caption:stroke_width(math.max(1,math.floor(
+            1.5*(tonumber(mb.scale) or 1)+.5)))
         self.property_cache=nil
     end
 
@@ -696,6 +744,14 @@ function ui.new(settings, sc_info)
                 if bx~=hx or by-bar_handle_offset~=hy then
                     self.handle:pos(bx,by-bar_handle_offset)
                 end
+            end
+            -- Independent MB handle (not coupled to SC label/anchor/scale).
+            local mx,my=self.mb_handle:pos()
+            local mb=opt.mb
+            if mx~=mb.x or my+28~=mb.y then
+                mb.x=self:anchor(mx,8,math.max(8,w-60))
+                mb.y=self:anchor(my+28,35,math.max(35,h-35))
+                self.mb_handle:pos(mb.x,mb.y-28)
             end
             -- The edit guide is not the list itself. Track its movement
             -- delta so a changing number of suggestions cannot jump rows.
@@ -776,7 +832,10 @@ function ui.new(settings, sc_info)
             self:hide_bar('sc')
             self.properties:hide()
         end
-        if not mb_alive then self:hide_caption_icons('mb');self:hide_bar('mb') end
+        if not mb_alive then
+            self.mb_flash=0
+            self:hide_caption_icons('mb');self:hide_bar('mb')
+        end
         local y=math.floor(opt.bar.y+.5)
         if sc_alive then
             local total=math.max(.1,state.sc_total or 8)
@@ -876,30 +935,33 @@ function ui.new(settings, sc_info)
         end
         if mb_alive then
             local total=math.max(.1,state.mb_total or 10)
-            local mb_palette=self.terminal_color and {self.terminal_color}
-                or palette(state,self.sc_info,true)
+            local mb_palette=palette(state,self.sc_info,true)
             local mb_y=self:mb_ribbon_y(state)
             local mb_height=self:draw_mb_ribbon(mb_y,state,mb_palette)
-            if opt.mode~='minimal' and (opt.mb or {}).text~='off' then
-                -- No numerical timer during the monochrome end punctuation.
-                -- Restore the true independent MB countdown after it fades.
-                local caption=finale and 'Magic Burst'
-                    or ('Magic Burst: '..countdown(state.mb_left))
+            local mbcfg=opt.mb or {}
+            if opt.mode~='minimal' and mbcfg.text~='off' then
+                -- The MB deadline persists across the SC terminal finish.
+                local caption='Magic Burst: '..countdown(state.mb_left)
                 if caption~=self.mb_caption_cache then
                     self.mb_caption:text(caption)
                     self.mb_caption_cache=caption
                 end
-                local offset=opt.name_offset or {x=0,y=0}
-                local gap=math.max(1,math.floor(2*opt.scale+.5))
-                local inset=math.max(2,math.floor(3*opt.scale+.5))
-                local bx=math.floor(opt.bar.x+inset+offset.x+.5)
-                local by=mb_y+mb_height+gap+offset.y
-                local icon_w=self:place_caption_icons('mb',
-                    {state.active and state.active[1] or 'Light'},bx,by,opt.scale)
-                local tint=self.terminal_color or white
-                self.mb_caption:color(tint[1],tint[2],tint[3])
-                self.mb_caption:alpha(math.floor(245*finale_mult+.5))
-                self.mb_caption:stroke_alpha(finale and 0 or 235)
+                local mbscale=tonumber(mbcfg.scale) or 1
+                local gap=math.max(1,math.floor(2*mbscale+.5))
+                local bx=math.floor(mbcfg.x+math.max(2,3*mbscale)+.5)
+                local by=mb_y+mb_height+gap
+                self.mb_caption:size(math.max(6,math.floor(
+                    (tonumber(mbcfg.fontsize) or 10)*mbscale+.5)))
+                self.mb_caption:stroke_width(math.max(1,math.floor(1.5*mbscale+.5)))
+                local icon_w=0
+                if mbcfg.icon~='off' then
+                    icon_w=self:place_caption_icons('mb',
+                        {state.active and state.active[1] or 'Light'},
+                        bx,by,mbscale)
+                else self:hide_caption_icons('mb') end
+                self.mb_caption:color(255,255,255)
+                self.mb_caption:alpha(245)
+                self.mb_caption:stroke_alpha(235)
                 self.mb_caption:pos(bx+icon_w,by)
                 self.mb_caption:show()
             else
@@ -966,6 +1028,7 @@ function ui.new(settings, sc_info)
         self.panel:destroy()
         self.handle:destroy()
         self.scalehandle:destroy()
+        self.mb_handle:destroy()
         for _,bar in pairs(self.names) do
             for _,id in ipairs({bar.frame,bar.frame_bottom,bar.base,bar.cap_l,bar.cap_r,
                 bar.fill_l,bar.fill_r}) do
