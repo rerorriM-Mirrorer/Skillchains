@@ -155,18 +155,44 @@ assert(prims.sc_resonance_mb_ribbon_glow.visible
     'MB uses luminous fill, no dark track or border')
 assert(prims.sc_resonance_mb_1.visible,
     'Independent MB duration renders pooled gradient fill')
-assert(overlay:mb_ribbon_y(state)==opt.bar.y+10,
-    'MB ribbon rests close below the SC bar, not below long captions')
-opt.mb={position='above',gap=4,height=3,text='on'}
+assert(overlay:mb_ribbon_y(state)==opt.bar.y+25,
+    'Legacy attached MB migrates to its own anchor clear of SC labels')
+local original_mb_x,original_mb_y=opt.mb.x,opt.mb.y
+opt.mb.gap=4;opt.mb.height=3
+overlay:mb_align('above')
 overlay:render(state)
 assert(overlay:mb_ribbon_y(state)==opt.bar.y-8,
-    'MB ribbon can move above with independent gap and height')
-opt.mb.text='off'
+    'Above command moves standalone anchor just once')
+opt.mb.text='off';opt.mb.icon='off'
+overlay:render(state)
+assert(not overlay.mb_caption.visible
+    and not overlay.caption_icons.mb[1].image.visible
+    and prims.sc_resonance_mb_ribbon_glow.visible,
+    'MB ribbon alone is possible with both text and icons hidden')
+opt.mb.text='on';opt.mb.icon='off';opt.mb.scale=1.5;opt.mb.fontsize=15
+overlay:render(state)
+assert(overlay.mb_caption.visible and
+    not overlay.caption_icons.mb[1].image.visible,
+    'Text-only MB option independent of icon visibility')
+opt.mb.text='off';opt.mb.icon='on'
 overlay:render(state)
 assert(not overlay.mb_caption.visible and
-    not overlay.caption_icons.mb[1].image.visible,
-    'MB text switch leaves the fill-only ribbon visible')
-opt.mb={position='below',gap=3,height=2,text='on'}
+    overlay.caption_icons.mb[1].image.visible,
+    'Icon-only MB option independent of text visibility')
+opt.mb.text='on';opt.mb.icon='on';opt.mb.iconsize=16
+opt.mb.width=220
+overlay:set_mb_position(original_mb_x+15,original_mb_y+34)
+overlay:render(state)
+assert(prims.sc_resonance_mb_1.x>=opt.mb.x
+    and prims.sc_resonance_mb_1.y==opt.mb.y,
+    'MB coordinates follow their own saved x/y')
+assert(overlay.caption_icons.mb[1].image.width==24,
+    'MB icon size independent from SC scale and font size')
+assert(overlay.mb_caption.size_value==23 or overlay.mb_caption.font_size==23
+    or overlay.mb_caption.font_size==22,
+    'MB font size uses independent setting and scale')
+opt.mb.scale=1;opt.mb.fontsize=10;opt.mb.iconsize=10
+opt.mb.height=2;opt.mb.width=260
 overlay:render(state)
 assert(overlay.caption_icons.sc[1].image.visible)
 assert(overlay.caption_icons.sc[2].image.visible)
@@ -196,10 +222,20 @@ local bx,by=overlay.handle:pos()
 overlay.handle:pos(277,by+5)
 overlay:render(state)
 assert(opt.bar.x==277 and opt.bar.y==375,'Unmodified bar drag remains free')
+assert(opt.mb.x==original_mb_x+15 and opt.mb.y==original_mb_y+34,
+    'Dragging SC must not move separately anchored MB')
+overlay.mb_handle:pos(319,272)
+overlay:render(state)
+assert(opt.mb.x==319 and opt.mb.y==300 and opt.mb.position=='custom',
+    'Separate MB edit handle moves and saves custom position')
 overlay:set_ctrl(29,true)
 overlay.handle:pos(286,112)
 overlay:render(state)
 assert(opt.bar.x==280 and opt.bar.y==140,'Left Ctrl snaps bar anchor from screen origin')
+overlay.mb_handle:pos(333,289)
+overlay:render(state)
+assert(opt.mb.x==330 and opt.mb.y==320,
+    'MB handle Ctrl-snaps independently of SC bar anchor')
 assert(prims.sc_resonance_sc_frame.x==281,'SC frame follows the same parent anchor')
 assert(overlay.properties.x==
     overlay.caption_icons.sc[2].image.x+
@@ -596,21 +632,21 @@ assert(not overlay.tip.visible and not prims.sc_resonance_tip_core.visible,
     'Terminal monochrome event has no false countdown endpoint')
 assert(prims.sc_resonance_sc_frame.color[1]==0
     and prims.sc_resonance_sc_frame.color[2]==0
-    and prims.sc_resonance_mb_ribbon_glow.color[1]==0,
-    'Umbra monochrome covers visible SC perimeter and MB background')
-assert(overlay.properties.rgb[1]==0 and overlay.mb_caption.rgb[1]==0
+    and prims.sc_resonance_mb_ribbon_glow.color[1]>0,
+    'Umbra black SC does not recolor separate MB ribbon')
+assert(overlay.properties.rgb[1]==0 and overlay.mb_caption.rgb[1]==255
     and overlay.caption_icons.sc[1].image.rgb[1]==0
-    and overlay.caption_icons.mb[1].image.rgb[1]==0,
-    'Umbra icon silhouettes and text are all black')
+    and overlay.caption_icons.mb[1].image.rgb[1]==255,
+    'Umbra only recolors SC; independent MB stays readable')
 assert(overlay.properties._text=='Umbra'
-    and overlay.mb_caption._text=='Magic Burst',
-    'Terminal SC has no continuation countdown; MB number pauses in finale')
+    and overlay.mb_caption._text=='Magic Burst: 6.9s',
+    'Terminal SC has no continuation timer; MB retains live countdown')
 assert(overlay.properties.outline_opacity==0
-    and overlay.mb_caption.outline_opacity==0,
-    'Black/white finisher labels suppress their otherwise dark text strokes')
+    and overlay.mb_caption.outline_opacity==235,
+    'Terminal hides SC ink stroke but preserves independent MB stroke')
 assert(overlay.caption_icons.sc[1].image.path_value:match('images/terminal/darkness%.png$')
-    and overlay.caption_icons.mb[1].image.path_value:match('images/terminal/darkness%.png$'),
-    'Finisher glyphs use true monochrome silhouettes instead of colored PNG tint')
+    and overlay.caption_icons.mb[1].image.path_value:match('images/skillchain/darkness%.png$'),
+    'Only SC property glyph uses monochrome terminal artwork')
 local black_alpha=prims.sc_resonance_sc_frame.alpha
 terminal.now=903.55;terminal.mb_left=6.45
 overlay:render(terminal)
@@ -644,22 +680,28 @@ assert(not prims.sc_resonance_sc_base.visible
 assert(overlay.properties.rgb[1]==255
     and overlay.caption_icons.sc[1].image.rgb[1]==255
     and overlay.properties.outline_opacity==0
-    and overlay.mb_caption.outline_opacity==0,
-    'Radiance lettering, icon tint and outlines are pure white')
+    and overlay.mb_caption.outline_opacity==235,
+    'Radiance SC lettering is pure white while MB stroke stays normal')
 assert(overlay.properties._text=='Radiance'
-    and overlay.mb_caption._text=='Magic Burst',
-    'Radiance charge/finish display result and burst title, no countdown')
+    and overlay.mb_caption._text=='Magic Burst: 6.8s',
+    'Radiance SC hides timer but MB retains independent deadline')
 assert(overlay.caption_icons.sc[1].image.path_value:match('images/terminal/light%.png$')
-    and overlay.caption_icons.mb[1].image.path_value:match('images/terminal/light%.png$'),
-    'Radiance glyphs use genuinely white source silhouettes')
+    and overlay.caption_icons.mb[1].image.path_value:match('images/skillchain/light%.png$'),
+    'Radiance white SC art does not replace independent MB icon')
 -- Charge begins immediately with a dark track; it is removed when full.
 light.now=1000;light.sc_wait=3;light.mb_left=10
 overlay:render(light)
+assert(overlay.caption_icons.mb[1].image.path_value:match('images/mb_flash/light%.png$')
+    and overlay.mb_flash>.98,
+    'First newly created MB window flashes full-white including its icon')
 assert(prims.sc_resonance_sc_base.visible and
     overlay.fx.sprites.glow_cap_l.visible,
     'Closed L4 shows charge and original track from initial WS frame')
 light.now=1001.5;light.sc_wait=1.5;light.mb_left=8.5
 overlay:render(light)
+assert(overlay.mb_flash==0
+    and overlay.caption_icons.mb[1].image.path_value:match('images/skillchain/light%.png$'),
+    'MB white introduction settles to native property art after its window starts')
 assert(not prims.sc_resonance_sc_base.visible
     and prims.sc_resonance_sc_frame.visible
     and overlay.properties._text=='Radiance',
@@ -687,6 +729,26 @@ mb_only.now=1204;mb_only.sc_left=4
 overlay:render(mb_only)
 assert(prims.sc_resonance_mb_1.y==mb_y,
     'MB ribbon position does not jump on SC expiry')
+-- A new skillchain replacement gets a NEW MB white-introduction beat
+-- without borrowing the old chain's continuation period.
+local replacement={now=1300,created=1300,sc_open=1303,step=3,level=2,
+    active={'Gravitation'},closed=false,sc_wait=3,sc_left=6,sc_total=6,
+    mb_left=10,mb_total=10,groups={}}
+overlay:render(replacement)
+assert(overlay.mb_flash>.98
+    and prims.sc_resonance_mb_1.color[1]==255
+    and overlay.caption_icons.mb[1].image.path_value:match('images/mb_flash/gravitation%.png$'),
+    'Subsequent MB replacement also flashes pure-white bar and icon')
+replacement.now=1300.4;replacement.sc_wait=2.6;replacement.mb_left=9.6
+overlay:render(replacement)
+assert(overlay.mb_flash==0
+    and prims.sc_resonance_mb_1.color[1]<255,
+    'MB introduction resolves into the colored ribbon, clocks unchanged')
+opt.mb.flash='off'
+replacement.now=1400;replacement.created=1400
+overlay:render(replacement)
+assert(overlay.mb_flash==0,'MB white flash is individually disableable')
+opt.mb.flash='on'
 opt.animation.enabled=false
 overlay:render(lvl3)
 assert(not left.visible and not top.visible,
