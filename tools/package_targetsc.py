@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'TargetSC-0.8.0-Test8-MB-Finish-Paired-Full'
+NAME = 'Skillchains-Animation8.7-Tip-MB-Ribbon-TargetSC-Test8-Paired-Full'
 PATCH_BASE = '700bef129e9932dde996127813f6853e1227af7b'
 SC_CURRENT = '3d96aeac0b63dc5e1fbd61ca8bf576bb3758cada'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
@@ -39,15 +39,30 @@ def verify_dll(path):
 def main():
     assert not git('status', '--porcelain', '--untracked-files=normal'), 'Commit work before packaging'
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
-    # Freeze the entire current Animation8.6 HUD, combat source and bridge.
+    # The HUD renderer, command help and new glyph are intentionally updated.
+    # Combat interpretation, native bridge, source clocks, existing artwork and
+    # all TargetSC Test8 source/native files stay exactly at their baseline.
     assert not git('diff',SC_CURRENT,'--',
-        'Skillchains.lua','skills.lua','resonance_ui.lua','learning_ui.lua',
-        'resonance_fx.lua','targetsc_bridge.lua','skillchains_demo.lua','images'), 'Current Skillchains runtime changed'
+        'skills.lua','learning_ui.lua','resonance_fx.lua',
+        'targetsc_bridge.lua','skillchains_demo.lua',
+        'images/skillchain','images/terminal',
+        'images/resonance/capsule_halo_l.png',
+        'images/resonance/capsule_halo_rail.png',
+        'images/resonance/capsule_halo_r.png'), 'Protected Skillchains runtime or artwork changed'
+    runtime=set(git('diff','--name-only',SC_CURRENT,'--',
+        'Skillchains.lua','resonance_ui.lua').splitlines())
+    assert runtime=={'Skillchains.lua','resonance_ui.lua'}, 'Unexpected HUD implementation changes'
+    assert (ROOT/'images/resonance/ghost_flare.png').is_file(), 'SC endpoint texture missing'
+    assert not git('diff','fa2952959c736a1f7cf605a0caa6dc83045c4146',
+        '--','TargetSC/src','TargetSC/libs','TargetSC/TargetSC.lua',
+        'TargetSC/resonance.lua','TargetSC/resonance_motion.lua',
+        'TargetSC/resonance_burst.lua','TargetSC/resonance_controls.lua',
+        'TargetSC/resonance_preview.lua','TargetSC/tests'), 'Latest TargetSC Test8 runtime changed'
     assert not git('diff',PATCH_BASE,'--','TargetSC/libs','TargetSC/src'), 'Native API 0.5.0 renderer changed'
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'TargetSC Test8 sustained property disc and MB ending choices / native 0.5.0 and Animation8.6 preserved', 'author': 'A.',
+    info = {'batch': 'Skillchains Animation8.7 ghost endpoint and independent MB ribbon / TargetSC Test8 0.8.0 native 0.5.0 unchanged', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': SC_CURRENT,
@@ -93,6 +108,11 @@ def main():
         dest = STAGE / 'Skillchains/images/terminal' / file.name
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file, dest)
+    ghostflare=ROOT/'images/resonance/ghost_flare.png'
+    assert ghostflare.read_bytes().startswith(b'\\x89PNG\\r\\n\\x1a\\n')
+    dest=STAGE/'Skillchains/images/resonance/ghost_flare.png'
+    dest.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copy2(ghostflare,dest)
     # Track exactly the committed deliverable. Never copy caches, user data,
     # scratch binaries or arbitrary untracked files into the archive.
     for relative in git('ls-files', 'TargetSC').splitlines():
@@ -132,6 +152,7 @@ def main():
             assert z.read('Skillchains/images/resonance/' + file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
         for file in terminal_art:
             assert z.read('Skillchains/images/terminal/' + file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
+        assert z.read('Skillchains/images/resonance/ghost_flare.png').startswith(bytes.fromhex('89504e470d0a1a0a'))
         for folder in ('Skillchains', 'TargetSC'):
             checks = json.loads(z.read(folder + '/SHA256SUMS.json'))
             for name, expected in checks.items():

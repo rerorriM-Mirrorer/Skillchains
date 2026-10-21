@@ -1,9 +1,9 @@
-name: TargetSC Test8 sustained glyph and MB finish
+name: Skillchains Animation8.7 Ghost endpoint + MB ribbon / TargetSC Test8
 
 on:
   push:
     branches:
-      - development/targetsc-mb-final-pass
+      - development/skillchains-ribbon-endpoint-test1
   workflow_dispatch:
 
 permissions:
@@ -63,14 +63,14 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test8-MB-Finish-Paired-test
+          name: Skillchains-Animation8.7-MB-Ribbon-TargetSC-Test8-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
       - name: Publish Skillchains-only testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Current-HUD-Compatible-test
+          name: Skillchains-Animation8.7-MB-Ribbon-Solo-test
           path: dist/skillchains-demo-package/
           if-no-files-found: error
           retention-days: 30
