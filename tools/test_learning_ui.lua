@@ -675,8 +675,9 @@ overlay:render(light)
 assert(not prims.sc_resonance_sc_base.visible
     and prims.sc_resonance_sc_frame.color[1]==255
     and prims.sc_resonance_sc_frame.color[2]==255
-    and prims.sc_resonance_mb_ribbon_glow.color[3]==255,
-    'Radiance pure white perimeter and MB use no redundant SC track')
+    and prims.sc_resonance_mb_ribbon_glow.visible
+    and not prims.sc_resonance_mb_base.visible,
+    'Radiance pure-white SC frame and independent fill-only MB remain active')
 assert(overlay.properties.rgb[1]==255
     and overlay.caption_icons.sc[1].image.rgb[1]==255
     and overlay.properties.outline_opacity==0
