@@ -551,8 +551,8 @@ assert(math.abs(pulse_a-pulse_b)>.01,
 opt.animation.fade=false
 
 -- A real terminal arrives with closed=true already set from the WS packet.
--- Three-second charge must show despite closed, then ALL HUD elements
--- monochrome-fade together; MB still uses its own independent deadline.
+-- After one full second the white refill covers the bar, and the track is
+-- hidden (not deleted). During its finale no false continuation timer appears.
 local terminal={
     now=903.15,created=900,sc_open=903,step=5,level=4,
     active={'Umbra'},closed=true,sc_wait=0,
@@ -563,31 +563,43 @@ opt.glow.levels='234'
 opt.glow.level_mask=nil
 opt.mode='learn';opt.display='both';opt.names='full'
 overlay:render(terminal)
-assert(prims.sc_resonance_sc_base.visible,
-    'Closed terminal SC bar remains visible during .8s end effect')
-assert(prims.sc_resonance_sc_base.color[1]==0
-    and prims.sc_resonance_sc_base.color[2]==0,
-    'Umbra recolors the SC track black')
-assert(prims.sc_resonance_mb_base.color[1]==0,
-    'Umbra also recolors the MB bar backdrop')
-assert(overlay.properties.rgb[1]==0 and
-    overlay.caption_icons.sc[1].image.rgb[1]==0
-    and overlay.mb_caption.rgb[1]==0 and
-    overlay.caption_icons.mb[1].image.rgb[1]==0,
-    'Umbra recolors caption lettering and both icon sets black')
-local black_alpha=prims.sc_resonance_sc_base.alpha
+assert(not prims.sc_resonance_sc_base.visible
+    and prims.sc_resonance_sc_frame.visible,
+    'Filled terminal SC hides redundant track, not the bar or frame')
+assert(prims.sc_resonance_sc_frame.color[1]==0
+    and prims.sc_resonance_sc_frame.color[2]==0
+    and prims.sc_resonance_mb_base.color[1]==0,
+    'Umbra monochrome covers visible SC perimeter and MB background')
+assert(overlay.properties.rgb[1]==0 and overlay.mb_caption.rgb[1]==0
+    and overlay.caption_icons.sc[1].image.rgb[1]==0
+    and overlay.caption_icons.mb[1].image.rgb[1]==0,
+    'Umbra icon silhouettes and text are all black')
+assert(overlay.properties._text=='Umbra'
+    and overlay.mb_caption._text=='Magic Burst',
+    'Terminal SC has no continuation countdown; MB number pauses in finale')
+assert(overlay.properties.outline_opacity==0
+    and overlay.mb_caption.outline_opacity==0,
+    'Black/white finisher labels suppress their otherwise dark text strokes')
+assert(overlay.caption_icons.sc[1].image.path_value:match('images/terminal/darkness%.png$')
+    and overlay.caption_icons.mb[1].image.path_value:match('images/terminal/darkness%.png$'),
+    'Finisher glyphs use true monochrome silhouettes instead of colored PNG tint')
+local black_alpha=prims.sc_resonance_sc_frame.alpha
 terminal.now=903.55;terminal.mb_left=6.45
 overlay:render(terminal)
-assert(prims.sc_resonance_sc_base.alpha<black_alpha,
-    'Entire terminal HUD fades out after monochrome conversion')
+assert(prims.sc_resonance_sc_frame.alpha<black_alpha,
+    'Monochrome terminal SC fades in place')
 terminal.now=903.9;terminal.mb_left=6.1
 overlay:render(terminal)
-assert(not prims.sc_resonance_sc_base.visible
+assert(not prims.sc_resonance_sc_frame.visible
     and prims.sc_resonance_mb_base.visible
     and prims.sc_resonance_mb_base.color[1]==6,
-    'Terminal SC vanishes but MB reverts to its normal look and lives on')
-assert(overlay.caption_icons.mb[1].image.rgb[1]==255,
-    'MB icon tint returns to white after terminal fade')
+    'Terminal SC vanishes and MB returns to normal on its original deadline')
+assert(overlay.mb_caption._text=='Magic Burst: 6.1s'
+    and overlay.mb_caption.outline_opacity==235,
+    'MB timer and its standard dark stroke return after finishing fade')
+assert(overlay.caption_icons.mb[1].image.path_value:match('images/skillchain/darkness%.png$'),
+    'Original full-color icon is restored after terminal fade')
+
 local light={
     now=1003.2,created=1000,sc_open=1003,step=5,level=4,
     active={'Radiance'},closed=true,sc_wait=0,
@@ -595,19 +607,46 @@ local light={
     from_fraction=.5,from_active={'Light'},groups={}
 }
 overlay:render(light)
-assert(prims.sc_resonance_sc_base.color[1]==255
-    and prims.sc_resonance_sc_base.color[2]==255
+assert(not prims.sc_resonance_sc_base.visible
+    and prims.sc_resonance_sc_frame.color[1]==255
+    and prims.sc_resonance_sc_frame.color[2]==255
     and prims.sc_resonance_mb_base.color[3]==255,
-    'Radiance/Lux recolors all bar backgrounds white')
-assert(overlay.properties.rgb[1]==255 and
-    overlay.caption_icons.sc[1].image.rgb[1]==255,
-    'Radiance/Lux text and icon are white')
--- Terminal charge must be visible the instant its WS is registered.
+    'Radiance pure white perimeter and MB use no redundant SC track')
+assert(overlay.properties.rgb[1]==255
+    and overlay.caption_icons.sc[1].image.rgb[1]==255
+    and overlay.properties.outline_opacity==0
+    and overlay.mb_caption.outline_opacity==0,
+    'Radiance lettering, icon tint and outlines are pure white')
+assert(overlay.properties._text=='Radiance'
+    and overlay.mb_caption._text=='Magic Burst',
+    'Radiance charge/finish display result and burst title, no countdown')
+assert(overlay.caption_icons.sc[1].image.path_value:match('images/terminal/light%.png$')
+    and overlay.caption_icons.mb[1].image.path_value:match('images/terminal/light%.png$'),
+    'Radiance glyphs use genuinely white source silhouettes')
+-- Charge begins immediately with a dark track; it is removed when full.
 light.now=1000;light.sc_wait=3;light.mb_left=10
 overlay:render(light)
 assert(prims.sc_resonance_sc_base.visible and
     overlay.fx.sprites.glow_cap_l.visible,
-    'Closed L4 chain appears during its initial white charge')
+    'Closed L4 shows charge and original track from initial WS frame')
+light.now=1001.5;light.sc_wait=1.5;light.mb_left=8.5
+overlay:render(light)
+assert(not prims.sc_resonance_sc_base.visible
+    and prims.sc_resonance_sc_frame.visible
+    and overlay.properties._text=='Radiance',
+    'Terminal full white refill hides track without a fake continuation timer')
+
+local ordinary={
+    now=1103.3,created=1100,sc_open=1103,step=3,level=2,
+    active={'Fusion'},closed=false,sc_wait=0,
+    sc_left=5.7,sc_total=6,mb_left=6.7,mb_total=10,
+    from_fraction=.5,from_active={'Detonation'},groups={}
+}
+overlay:render(ordinary)
+assert(prims.sc_resonance_sc_base.visible
+    and overlay.properties.outline_opacity>0
+    and overlay.caption_icons.sc[1].image.path_value:match('images/skillchain/fusion%.png$'),
+    'Next ordinary chain restores dark track, normal stroke and color icon')
 opt.animation.enabled=false
 overlay:render(lvl3)
 assert(not left.visible and not top.visible,
