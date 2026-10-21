@@ -236,7 +236,12 @@ function ui.new(settings, sc_info)
         for i,property in ipairs(properties or {}) do
             local filename=(property=='Radiance' and 'light'
                 or property=='Umbra' and 'darkness' or property:lower())..'.png'
-            local path=windower.addon_path..'images/skillchain/'..filename
+            -- A white tint on a colored PNG is neutral, not a recolor.
+            -- Use a true white-alpha silhouette during terminal effects,
+            -- then tint that silhouette white (Radiance) or black (Umbra).
+            local folder=self.terminal_color and 'images/terminal/'
+                or 'images/skillchain/'
+            local path=windower.addon_path..folder..filename
             local slot=slots[i]
             if not slot then
                 slot={path=path,image=images.new('',{
@@ -397,7 +402,8 @@ function ui.new(settings, sc_info)
             clamp(self.base_opacity or 1,0,1)*(self.terminal_mult or 1)+.5),
             rgb[1] or 6,rgb[2] or 8,rgb[3] or 17)
         windower.prim.set_size(bar.base,width-2,height)
-        windower.prim.set_visibility(bar.base,true)
+        windower.prim.set_visibility(bar.base,
+            not (kind=='sc' and self.hide_terminal_track))
 
         -- Update the gradient at the new absolute-time fraction. Do not
         -- tween between distinct weapon skills; only each expiry runs smoothly.
@@ -605,8 +611,11 @@ function ui.new(settings, sc_info)
         -- Give its three-second white charge an SC bar, then fade the
         -- terminal result in monochrome; MB continues on its own clock.
         local prop=state.active and state.active[1]
-        local terminal=state.closed and (prop=='Umbra' or
-            prop=='Radiance' or prop=='Lux')
+        -- The local Umbra demo's final stage initially retains closed=false
+        -- to preserve its pre-charge timeline, but its actual final WS is
+        -- terminal from the instant Entropy lands, like real combat.
+        local terminal=(state.closed or (state.step or 0)>=5)
+            and (prop=='Umbra' or prop=='Radiance' or prop=='Lux')
         local elapsed=(state.now or 0)-(state.sc_open or 0)
         local finale=terminal and elapsed>=0 and elapsed<terminal_fade
         local terminal_sc=terminal and elapsed<terminal_fade
@@ -616,6 +625,11 @@ function ui.new(settings, sc_info)
         self.terminal_color=finale and
             ((prop=='Umbra') and black or white) or nil
         self.terminal_mult=finale_mult
+        -- Terminal refill stays visible for three seconds, but a filled bar
+        -- has no empty fraction to reveal: hide its reusable background once
+        -- the white refill reaches full width. Keep it for ordinary countdowns.
+        self.hide_terminal_track=terminal and
+            (state.now or 0)-(state.created or 0)>=1
         local sc_alive=show_sc and
             ((state.sc_left or 0)>0 and not state.closed or terminal_sc)
         local fading_opener=show_sc and state.step==1 and
@@ -688,13 +702,16 @@ function ui.new(settings, sc_info)
                 local icon_width=self:place_caption_icons('sc',state.active,
                     math.floor(opt.bar.x+inset+name_offset.x+.5),caption_y,opt.scale,reveal)
                 local label_width=math.max(30,opt.bar.width-inset*2-icon_width)
+                -- A terminal result cannot be continued: never append the
+                -- SC timer during its charge, fade, or MB-only tail.
+                local sc_timer=terminal and nil or countdown(state.sc_left)
                 local signature=table.concat(state.active or {},'|')
                     ..':'..tostring(label_width)..':'..tostring(opt.scale)
                     ..':'..tostring(opt.names or 'full')
-                    ..':'..countdown(state.sc_left)
+                    ..':'..(sc_timer or '')
                 if signature~=self.property_cache then
                     local label,rows=properties_label(state.active,label_width,
-                        self.properties,opt.names or 'full',countdown(state.sc_left))
+                        self.properties,opt.names or 'full',sc_timer)
                     self.properties:text(label)
                     self.property_rows=rows
                     self.property_cache=signature
@@ -706,7 +723,11 @@ function ui.new(settings, sc_info)
                 local tint=self.terminal_color or white
                 self.properties:color(tint[1],tint[2],tint[3])
                 self.properties:alpha(math.floor(245*reveal*finale_mult+.5))
-                self.properties:stroke_alpha(math.floor(235*reveal*finale_mult+.5))
+                -- The dark ink-like outline was still visible around white
+                -- Radiance letters. Suppress it during the monochrome
+                -- finish and restore the usual outlined labels afterward.
+                self.properties:stroke_alpha(finale and 0 or
+                    math.floor(235*reveal+.5))
                 self.properties:show()
                 -- Positive Y needs extra clearance for the optional MB bar;
                 -- negative Y does not collapse the normal safe spacing.
@@ -727,7 +748,10 @@ function ui.new(settings, sc_info)
             local mb_height=self:draw_bar('mb',y,state.mb_left/total,false,
                 mb_palette)
             if opt.mode~='minimal' then
-                local caption='Magic Burst: '..countdown(state.mb_left)
+                -- No numerical timer during the monochrome end punctuation.
+                -- Restore the true independent MB countdown after it fades.
+                local caption=finale and 'Magic Burst'
+                    or ('Magic Burst: '..countdown(state.mb_left))
                 if caption~=self.mb_caption_cache then
                     self.mb_caption:text(caption)
                     self.mb_caption_cache=caption
@@ -742,6 +766,7 @@ function ui.new(settings, sc_info)
                 local tint=self.terminal_color or white
                 self.mb_caption:color(tint[1],tint[2],tint[3])
                 self.mb_caption:alpha(math.floor(245*finale_mult+.5))
+                self.mb_caption:stroke_alpha(finale and 0 or 235)
                 self.mb_caption:pos(bx+icon_w,by)
                 self.mb_caption:show()
             else
@@ -762,12 +787,20 @@ function ui.new(settings, sc_info)
             self.learning:hide()
             if opt.mode=='compact' and not self.editing and (sc_alive or mb_alive) then
                 local values={}
-                if sc_alive then values[#values+1]=('SC %.1fs'):format(state.sc_left) end
-                if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
+                if finale then
+                    values[#values+1]=prop
+                else
+                    if sc_alive and not terminal then
+                        values[#values+1]=('SC %.1fs'):format(state.sc_left)
+                    end
+                    if mb_alive then values[#values+1]=('MB %.1fs'):format(state.mb_left) end
+                end
                 self:set_panel_text(table.concat(values,'  /  '))
                 local fade=self.fx:label_alpha(state,opt.animation or {})
-                self.panel:alpha(math.floor(245*fade+.5))
-                self.panel:stroke_alpha(math.floor(210*fade+.5))
+                self.panel:alpha(math.floor(245*fade*finale_mult+.5))
+                local tint=self.terminal_color or white
+                self.panel:color(tint[1],tint[2],tint[3])
+                self.panel:stroke_alpha(finale and 0 or math.floor(210*fade+.5))
                 self:position_panel()
                 self.panel:show()
             elseif not self.editing then
