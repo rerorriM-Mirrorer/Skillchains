@@ -1,5 +1,19 @@
 # TESTING.md — Skillchains Resonance UI
 
+## Current Development Status — Animation8.6 terminal purity (2026-10-21)
+
+**Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-terminal-purity`, based on live-feedback Animation8.5 (`1c870a6`). User confirms Umbra's black fade looks wonderful and 0.24s countdown pulse is preferred, and intends to keep the optional Level 1 glow. Needs timer-free terminal results, completely white Radiance including stroke and icon, and wants the dark underlying bar removed once terminal white refill reaches full length.
+
+**Clarification from source:** Prior to Animation8.5 Skillchains' HUD continuation bar would be hidden on `closed=true` even during the 3-second charge. TargetSC independently renders closed skillchains with `pre` phase until `sc_open`, then `terminal` fading phase (`fade_duration=.8`) and may retain MB-only rings; Skillchains bar visibility does not determine TSC ring visibility. Animation8.5 already repaired Skillchains' terminal bar, and this iteration refines its display.
+
+**Animation8.6:** The terminal result label shows `Umbra`/`Radiance` **without any SC countdown** from the instant the terminal result is registered, both for real closed combat frames and `//sc demo`/individual previews. During the brief end fade, the MB caption says `Magic Burst` with no numeric timer, then resumes its original time-based countdown after the effect; deadlines are not changed. Pure Radiance white drops the black text stroke (SC caption, MB caption, compact text) and uses a true white-alpha icon texture. Umbra uses the same silhouette tinted black. Monochrome assets are generated reproducibly from the source icons' alpha masks, bundled in the installable package, and used only for terminal effects. The pooled dark SC track is hidden when a terminal charge reaches full width (~1s), but never destroyed; it is visible again for any normal continuation bar. This is not applied to nonterminal skillchains, which need the dark track for decay.
+
+**In-game test:** Back up existing `Skillchains/data/`; install Skillchains-only package; `//lua reload Skillchains`, `//sc glow levels 1234` (only if desired), keep `//sc anim fade period 0.24`, then `//sc demo`; `//sc anim preview umbra` and `//sc anim preview radiance` should show no terminal SC timer, true black/white glyphs and no dark stroke. Observe dark track disappearing from fully charged terminal bar, returning on later normal chains. With `//sc display both`, confirm numeric MB label is absent during terminal fade but returns when the fade is complete, at original MB deadline. Confirm `//sc targetsc` and `//tsc status` unchanged.
+
+**Tests:** Lua 5.1 parse; white icon-alpha generation validation; actual HUD renderer simulations of text/no timer, black/white glyph asset paths, stroke suppression, full-track hide/reuse, restored MB timer/color, independent 40s demo and TargetSC bridge/native tests, no changes to FFXI timing. Check CI's final source checkpoint before claiming pass. Host tests are **not** a real FFXI rendering test.
+
+---
+
 ## Current Development Status — Animation8.5 terminal and pulse timing (2026-10-21)
 
 **Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-pulse-terminal-fx`, based on `6a0d623` (Animation8.4, user says dramatically improved). Skillchains version `2.20.08.25-resonance.7-animation.8.5`. TargetSC Test3 0.3.0 native DLL/Lua/bridge unchanged.

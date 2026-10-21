@@ -1,5 +1,11 @@
 # TargetSC TESTING.md — start here
 
+## Skillchains Animation8.6 terminal display only (2026-10-21)
+
+TargetSC is unchanged. Skillchains now suppresses its misleading terminal continuation countdown; its MB numerical countdown disappears during 0.8s terminal monochrome effect and resumes afterward. Radiance gets pure-white text glyph/strokes, Umbra retains black, and the filled terminal SC track is hidden then restored for ordinary play. TargetSC continues showing its independent closed-chain floor/sky rings through preparation and terminal fade, plus MB reminder. Its source deadlines, bridge and native DLL are unchanged. Install only Skillchains, retain both `data/` directories, confirm subscriber status.
+
+---
+
 ## Skillchains Animation8.5 companion — 2026-10-21
 
 No TargetSC source/native changes, no bridge protocol changes or synthesized game events. Skillchains adds a separately adjustable countdown fade period (`//sc anim fade period 0.24` approximately matches TargetSC default `hum_period=.12`; not phase-locking), stronger L2 pre-window border glow, black Umbra / white Radiance terminal HUD fade and local preview. The current real FFXI TargetSC ring timing remains unaltered. Existing companion `//tsc preview demo` also remains independent. Keep TargetSC and its DLL installed as-is; only Skillchains-only folder needs update, and keep character `data/`. Check in-game bridge and visuals.

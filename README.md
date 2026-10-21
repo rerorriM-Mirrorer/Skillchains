@@ -1,5 +1,13 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## Animation8.6 — terminal result, no continuation timer; pure monochrome finish
+
+The Umbra and Radiance terminal effects are still 0.8 seconds following their real 3-second white charge. Both display **only the property name** during charge and finish, without a misleading skillchain countdown. During the finishing fade, the separate Magic Burst caption displays just **Magic Burst** with no numerical timer; after 0.8 seconds, the normal independent MB timer returns for whatever time remains. Source windows and durations are unchanged. Existing `//sc demo`, `//sc anim preview umbra`, `//sc anim preview radiance` and `//sc anim preview lux` provide visual comparisons.
+
+Radiance now removes the label's dark text stroke and uses a **genuinely white icon silhouette** rather than white tint over a multicolored PNG. Umbra uses that same silhouette tinted black. Source colored icons are still used everywhere else. Once a terminal white refill fills the entire SC bar (around 1 second into its 3-second preparation), the redundant underlying SC dark track is **hidden but not destroyed**; the normal track returns on subsequent nonterminal countdowns. Ordinary skillchains retain their dark background to reveal the shrinking fill. TargetSC's ground/sky closed-ring phases and native DLL are untouched.
+
+**For Killala:** Keep the accepted `//sc anim fade period 0.24` and enable Level 1 glow via `//sc glow levels 1234`. These saved preferences are preserved. After backing up `Skillchains/data/`, install the **Skillchains-only** testing package and `//lua reload Skillchains`. Preview each terminal color; confirm the terminal property label has no timer, its icon/text/outline is truly monochrome, track disappears when the white charge fills completely, and the MB timer returns after the finishing fade.
+
 ## Animation8.5 — rhythmic countdown, L2 charge, black/white terminal finish
 
 **Skillchains-only.** Run `//sc anim fade on` and `//sc anim fade period 0.24` to set the colored countdown's opacity pulse near the default TargetSC ground-hum cycle (0.24 seconds at Level 1). Period is adjustable from 0.08 to 5 seconds and stored independently of the on/off toggle. TargetSC's actual floor-hum frequency also varies with skillchain level and slows to rest, so this is a *tempo match*, not a locked phase handshake. The existing 0.417-second pulse period remains the default for older saves. The white refill pre-window deliberately does not pulse the fill.
@@ -514,6 +522,12 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-21 — Animation8.6 terminal clarity / true monochrome (A)
+- Display terminal Umbra/Radiance name without false SC continuation timer; hide MB numerical countdown only during the 0.8s terminal fade and restore its true count afterward.
+- Remove black label and MB strokes during the black/white finish; generate and package reproducible white-alpha icon silhouettes, preserving the original colored icons for normal play.
+- Hide the pooled SC dark track once a terminal refill reaches full width, never destroy it; ordinary countdown bars retain their dark track. Preserve level1 glow opt-in and the saved 0.24s pulse period.
+- Keep TargetSC closed-ring presentation and bridge/native DLL untouched. In-game visual verification pending.
 
 ### 2026-10-21 — Animation8.5 countdown + terminal visuals (A)
 - Expose adjustable `//sc anim fade period 0.24` while retaining legacy pulse by default; period is approximate TargetSC floor hum and does not transmit synchronization.
