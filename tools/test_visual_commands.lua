@@ -184,8 +184,8 @@ run('glow','reset')
 assert(opt.glow.level_mask=='L2,L3,L4')
 assert(opt.glow.rail34==.75 and opt.glow.cap34==.85 and
     opt.glow.pre4==.85)
-assert(opt.track.alpha==155 and opt.bar.x==466,
-    'Glow-only reset must not change track/positions')
+assert(opt.track.alpha==155 and opt.bar.x==300,
+    'Glow-only reset must not change the explicitly moved SC anchor')
 opt.glow.levels=34
 opt.glow.level_mask=nil
 run('glow')
