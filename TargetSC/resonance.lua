@@ -1,6 +1,7 @@
 -- Pure state/animation model. No Windower or combat packet dependency. Author: A.
 local M={}
 local motion=require('resonance_motion')
+local burst_effect=require('resonance_burst')
 M.defaults=motion.defaults
 M.phase=motion.phase
 local min,max,exp,sin,pi=math.min,math.max,math.exp,math.sin,math.pi
@@ -18,6 +19,10 @@ for name in pairs(levels) do names[name:lower()]=name end
 local alias={fire='Liquefaction',ice='Induration',wind='Detonation',earth='Scission',
     lightning='Impaction',water='Reverberation',dark='Compression'}
 function M.property(name) return names[(name or 'Liquefaction'):lower()] or alias[(name or ''):lower()] end
+function M.element(name)
+    for element in pairs(E)do if element:lower()==(name or ''):lower()then return element end end
+end
+function M.element_color(name)return E[name]end
 function M.level(name) return levels[name] or 1 end
 function M.elements(name) return P[name] or ((name=='Light' or name=='Radiance') and {'Fire','Wind','Lightning','Light'} or {'Earth','Ice','Water','Dark'}) end
 local function palette(s)
@@ -113,9 +118,9 @@ function M.new()
     function self:clear() self.states={} self.bursts={} self.awakening_glyphs={} end
     function self:opening_glyph(state)
         local glyph=self.awakening_glyphs[state.id]
-        if state.step==1 and (not glyph or glyph.created~=state.created)then
+        if not glyph or (state.step==1 and glyph.created~=state.created)then
             glyph={created=state.created,open=state.sc_open,rotation=0,glyph=2,opacity=0,
-                shape='property-glyph',radius=0,offset=0}
+                shape='property-glyph',radius=0,offset=0,opener_seen=state.step==1}
             self.awakening_glyphs[state.id]=glyph
         end
         return glyph
@@ -165,14 +170,23 @@ function M.new()
             if not id then return false,'invalid burst' end
             if not E[element] then self.unknown_bursts=self.unknown_bursts+1 return true,'burst element unavailable' end
             local state=self.states[id]
-            if state and state.mb_close>stamp then
+            if state and not state.source_expired and state.mb_close>stamp then
                 local bursts=self.bursts[id] or {}
                 bursts[#bursts+1]={at=stamp,color=E[element]}
                 if #bursts>4 then table.remove(bursts,1) end
                 self.bursts[id]=bursts
             end
         elseif kind=='expire' then
-            local id=tonumber(args[6]) if id then self.states[id]=nil self.bursts[id]=nil self.awakening_glyphs[id]=nil end
+            local id=tonumber(args[6])
+            if id then
+                local tail=0
+                for _,burst in ipairs(self.bursts[id]or {})do tail=max(tail,burst.at+burst_effect.duration)end
+                if self.states[id]and tail>now then
+                    -- Retain only a confirmed response's visual tail, never
+                    -- an expired opportunity or continuation window.
+                    self.states[id].source_expired=true
+                else self.states[id]=nil self.bursts[id]=nil self.awakening_glyphs[id]=nil end
+            end
         elseif kind=='reset' then self:clear()
         elseif kind=='offline' then self:clear() self.connected=false self.synced=false
         elseif kind=='synced' then self.synced=not self.needs_sync
@@ -185,15 +199,20 @@ function M.new()
         if not s then return out end
         local fade=opts.fade_duration or motion.defaults.fade_duration
         local boundary=s.closed and s.sc_open or s.sc_close
-        if now>max(boundary+fade,s.mb_close) then
+        local tail=0
+        for _,burst in ipairs(self.bursts[id]or {})do tail=max(tail,burst.at+burst_effect.duration)end
+        local expires=s.source_expired and tail or max(boundary+fade,s.mb_close,tail)
+        if now>expires then
             local glyph=self.awakening_glyphs[id]
             if glyph then glyph.opacity=0 end
+            if s.source_expired then self.awakening_glyphs[id]=nil end
             self.states[id]=nil self.bursts[id]=nil return out
         end
         if (opts.motion or motion.defaults.motion)~='legacy' then
             if s.previous and now-s.created>=.3 then s.previous=nil end
             return motion.frame(self,s,now,radius,height,opts,{palette=palette,argb=M.argb,level=M.level})
         end
+        if s.source_expired then return out end
         if s.previous and now-s.created<.12 then
             local old=s.previous
             local _,sep=base_motion(old,s.created)

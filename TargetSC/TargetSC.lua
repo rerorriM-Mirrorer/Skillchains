@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.5.0-test5'
+_addon.version='0.6.0-test6'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -85,13 +85,16 @@ local function help()
         {'on|off','Enable or disable resonance drawing.'},
         {'status','Report source, timing, tracking and native renderer state.'},
         {'preview [opener|pre|chain|window|expire|closed] [property] [level]','Run one explicit local scenario.'},
+        {'preview burst [element]','Local MB response preview; no game actions or bridge events.'},
         {'preview demo','Five weaponskills: opener then L1/L2/L3/Umbra, no bursts.'},
         {'preview opener Liquefaction,Impaction','Compare multiple opening properties.'},
         {'motion flutter|sine|legacy','Select discrete, smooth or original motion.'},
         {'layout grounded|symmetric|center','Choose how the pair moves.'},
         {'strike period|amplitude|damping <number>','Strike: half-cycle seconds, world displacement, decay/sec. Also: flutter.'},
         {'hum amplitude|period|slowdown|gain <number>','Ground hum: displacement, half-cycle, slowing power, level gain.'},
-        {'ground height <0-1>','Floor-ring/glyph anchor above model ground, in world units.'},
+        {'ground height <0-1>','Floor-ring anchor above model ground, in world units.'},
+        {'discs height <0-0.5>','Independent glyph anchor above model ground; original default 0.008.'},
+        {'sky expand <0-2>','Bell-profile expansion reaching full size at MB-ring height; 0 disables.'},
         {'fade duration <0.1-1>','Fade existing rings in place after the source deadline.'},
         {'width <1-8>','Minimum screen-pixel core width (default 2).'},
         {'brightness <0-4>','Core alpha multiplier (default 4).'},
@@ -106,7 +109,11 @@ local function help()
         {'discs height|speed|slowdown <number>','Ground offset, starting-spin multiplier, slowing power.'},
         {'discs speed opener|level1|level2|level3|level4 <0-4>','Initial turns/sec before the global speed multiplier.'},
         {'mb opacity <0-1>','MB ring opacity independent of global opacity; fades across the full window.'},
-        {'awakening on|off|opacity <0-1>','Expanding white glyph; retained hidden after fading, also with discs off.'},
+        {'mb idle|burst <0-1>','Large glyph idle breathing / burst-response opacity; idle 0 hides it between bursts.'},
+        {'mb floor|ring <0-1>','Confirmed-burst flash strength for floor disc / middle MB ring.'},
+        {'mb period <0.2-6>','Large glyph full breathing cycle in seconds (default 2).'},
+        {'mb rise|expand <0-2>','Burst glyph rise as model-height fraction / extra radial growth.'},
+        {'awakening on|off|opacity <0-1>','Filled white opening glyph; MB breathing/burst controls are independent.'},
         {'preset default|discson|discsoff|vivid|gentle|legacy','Reset visual settings; default is your latest snapshot.'},
         {'preview off','End preview and return to live state.'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
@@ -119,7 +126,7 @@ local function help()
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
     }
-    windower.add_to_chat(0,('TargetSC 0.5.0 — elemental resonance'):color(167))
+    windower.add_to_chat(0,('TargetSC 0.6.0 — elemental resonance'):color(167))
     for _,line in ipairs(lines) do
         windower.add_to_chat(0,('//tsc '):color(200)..line[1]:color(207)..(' -> '):color(200)..line[2]:color(0))
     end
@@ -143,6 +150,8 @@ local function status()
     say(('initial turns/sec: opener=%.2f L1=%.2f L2=%.2f L3=%.2f L4=%.2f; MB opacity=%.2f'):format(
         settings.disc_speed_opener,settings.disc_speed_level1,settings.disc_speed_level2,
         settings.disc_speed_level3,settings.disc_speed_level4,settings.mb_opacity))
+    say(('glyph anchor=%.3f; MB idle=%.2f burst=%.2f period=%.2fs rise=%.2f expand=%.2f; sky bell=%.2f'):format(
+        settings.disc_height,settings.mb_idle,settings.mb_burst,settings.mb_period,settings.mb_rise,settings.mb_expand,settings.sky_expand))
     local state=(preview and preview.model or model).states[selected_id]
     if state then say(('target revision=%d properties=%s; continuation=%.3fs (wait %.3fs); MB=%.3fs; closed=%s'):format(
         state.revision,table.concat(state.properties,'/'),state.closed and 0 or math.max(0,state.sc_close-math.max(now,state.sc_open)),math.max(0,state.sc_open-now),

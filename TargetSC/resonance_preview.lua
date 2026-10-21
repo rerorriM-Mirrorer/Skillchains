@@ -17,6 +17,11 @@ function M.parse(args,resonance)
     local first=(args[1] or 'opener'):lower()
     local kind=first
     local prop,level
+    if first=='burst'then
+        local element=resonance.element(args[2]or 'Wind')
+        if not element then return nil,'Use an element such as Wind, Fire, Ice, Water, Earth, Lightning, Light or Dark.'end
+        return {kind='burst',properties={'Fragmentation'},level=2,element=element}
+    end
     if first=='demo' or first=='umbra' or first=='full'then
         return {kind='umbra',properties={'Scission'},level=1}
     elseif examples[first] then kind='chain';prop=examples[first]
@@ -52,11 +57,14 @@ function M.new(spec,id,now,resonance,opts)
     local s
     if kind=='opener' or kind=='pre' or kind=='umbra' then s=state(now,1,spec.properties,spec.level,false)
     else s=state(now,2,spec.properties,spec.level,kind=='closed' or spec.level==4) end
-    if kind=='window' then
+    if kind=='window'or kind=='burst' then
         s=state(now-3,2,spec.properties,spec.level,false)
     elseif kind=='expire' then s=state(now-8,2,spec.properties,spec.level,false) end
     self.model.states[id]=s
     self.ends=kind=='pre' and now+3 or math.max(s.sc_close+1.05,s.mb_close)
+    if kind=='burst'then
+        self.events[1]={at=now+.6,kind='burst',color=resonance.element_color(spec.element)}
+    end
     if kind=='umbra' then
         local prior=s
         self.stage='Fast Blade: Scission opener'
@@ -74,7 +82,12 @@ function M.new(spec,id,now,resonance,opts)
         for _,event in ipairs(self.events)do
             if not event.done and clock>=event.at then
                 event.done=true
-                if event.kind=='chain' then
+                if event.kind=='burst'then
+                    local bursts=self.model.bursts[self.id]or {}
+                    bursts[#bursts+1]={at=event.at,color=event.color}
+                    self.model.bursts[self.id]=bursts
+                    self.stage=spec.element..' burst (local visual preview)'
+                elseif event.kind=='chain' then
                     local next_state=event.state
                     local previous=self.model.states[self.id]
                     if previous then previous.previous=nil end
@@ -88,7 +101,7 @@ function M.new(spec,id,now,resonance,opts)
         return clock>=self.ends
     end
     local relative_open=s.sc_open-now
-    self.description=kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or
+    self.description=kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or
         kind=='pre' and 'pre only: ground charge 0–3s; stops before countdown' or
         kind=='opener' and 'opener: ground charge 0–3s; sky enters/countdown 3–10s; no MB' or
         s.closed and 'closed: paired charge 0–3s, rings settle/fade in place; MB reminder until 10s; no continuation opportunity' or

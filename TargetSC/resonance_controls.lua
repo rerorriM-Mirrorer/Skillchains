@@ -5,7 +5,8 @@ local direct={opacity={0,1},scale={.25,3},height={.25,3},intensity={0,4},width={
 local strike={prefix='',values={period={.05,.5},amplitude={0,1},damping={0,8}}}
 local groups={flutter=strike,strike=strike,
     hum={prefix='hum_',values={amplitude={0,.3},period={.05,1},slowdown={.1,4},gain={0,2}}},
-    mb={prefix='mb_',values={opacity={0,1}}},
+    mb={prefix='mb_',values={opacity={0,1},idle={0,1},burst={0,1},floor={0,1},ring={0,1},period={.2,6},rise={0,2},expand={0,2}}},
+    sky={prefix='sky_',values={expand={0,2}}},
     ground={prefix='ground_',values={height={0,1}}},fade={prefix='fade_',values={duration={.1,1}}}}
 local disc_limits={opacity={0,1},outline={0,1},height={0,.5},speed={0,4},slowdown={.1,4}}
 local presets={default=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}

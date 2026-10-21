@@ -1,5 +1,44 @@
 # TargetSC — elemental resonance
 
+## 0.6.0 Test6 — bell shape, breathing glyph and confirmed MB response
+
+Lua-only patch for Test5: merge TargetSC/, preserve data/, then
+`//lua reload TargetSC`. Native DLL remains 0.5.0; Lua reports 0.6.0-test6.
+The installed Skillchains folder stays untouched.
+
+Sky rings broaden with height into a bell profile; normal continuation expiry
+keeps its existing fade but now descends/contracts to the floor glyph AFTER
+the deadline. The floor glyph returns to its old low placement, independent
+of floor-ring height. The opener gets its filled white expansion back.
+
+During MB opportunity, the larger outlined glyph breathes in/out without
+spinning. On a confirmed burst, the small disc flashes opaque white with an
+opaque elemental trace; the larger glyph flickers white/element, rises and
+expands while fading, then returns invisibly to rest. The middle ring briefly
+flashes white/element and resumes its time-based fade. Source timers and
+normal disc rotation are never restarted by these responses.
+
+| Command | Tuning |
+| --- | --- |
+| `//tsc preview burst Wind` | Local MB preview; try any of the eight elements |
+| `//tsc mb idle 0.18` | Large glyph breathing opacity; 0 hides idle breathing |
+| `//tsc mb burst 0.8` | Large glyph rising-release opacity |
+| `//tsc mb floor 1` | Floor hit-flash strength; 0 disables only this flash |
+| `//tsc mb ring 1` | Middle-ring hit-flash strength; 0 disables only this flash |
+| `//tsc mb period 2` | Full breath cycle in seconds: one in, one out |
+| `//tsc mb rise 0.65` | Rise as a fraction of model height |
+| `//tsc mb expand 0.25` | Extra radius during release |
+| `//tsc mb opacity 0.3` | Normal middle MB ring opacity, separate from glyphs |
+| `//tsc discs height 0.008` | Glyph height above model ground; original low default |
+| `//tsc sky expand 0.6` | Bell widening; 0 restores constant-radius sky rings |
+
+Small-disc baseline fill and trace remain `discs opacity` and `discs outline`,
+multiplied by global opacity/lifetime. MB idle, release, ring opacity and flash
+strengths are independent so you can pare back individual layers. Existing
+saved settings survive. `preview demo` remains burst-free; use `preview off`
+to restore live rendering. See TESTING.md for verification and late-burst tails.
+
+
 ## 0.5.0 Test5 — two gaps, opening glyph, L2 rotation and full MB window
 
 Install the cumulative TargetSC patch with every FFXI client closed. Preserve
@@ -632,3 +671,7 @@ Optional exact opener gap, black/colored/no surround, muted hue-preserving color
 ### 2026-10-21 — 0.5.0 Test5 (A)
 
 Two opposite opener gaps; retained expanding opening glyph replaces filled flash and permanent base; shared L2 disc/ring rotation; independent stage speeds and full-window MB opacity; property glyph follows MB life; resettable .39 height/.1 speed. Current Animation8.6 HUD/bridge preserved.
+
+### 2026-10-21 — 0.6.0 Test6 (A)
+
+Bell-profile sky rings and post-deadline down/in close; independent original low glyph anchor; filled opener expansion; MB breathing and coordinated confirmed-hit floor/ring/rising-glyph response; independent strengths and eight-element local preview. Native 0.5.0 and Animation8.6 unchanged.

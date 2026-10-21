@@ -1,5 +1,12 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## TargetSC Test6 companion patch (2026-10-21)
+
+Lua-only bell/MB expression update for Test5. See TargetSC/README.md for preview
+and independent layer controls. Current Animation8.6 and native 0.5.0 remain
+unchanged; preserve settings and reload TargetSC after merging the patch.
+
+
 ## TargetSC Test5 companion patch (2026-10-21)
 
 See TargetSC/README.md for opposed opener gaps, retained opening glyph, shared
@@ -705,3 +712,7 @@ Optional opener presentation comparisons and full opposed L2 palettes; no Skillc
 ### 2026-10-21 — TargetSC Test5 companion (A)
 
 Retained opening glyph, two gaps, per-stage rotation and full-window MB ring/property glyph. Animation8.6 runtime unchanged.
+
+### 2026-10-21 — TargetSC Test6 companion (A)
+
+Bell shape and closing motion, original low glyph anchor, coordinated MB response and breathing controls. No Skillchains/native change.

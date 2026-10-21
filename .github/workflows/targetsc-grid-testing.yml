@@ -1,9 +1,9 @@
-name: TargetSC Test5 retained glyph and full MB window
+name: TargetSC Test6 bell and burst glyph response
 
 on:
   push:
     branches:
-      - development/targetsc-mb-glyph-spin
+      - development/targetsc-bell-burst
   workflow_dispatch:
 
 permissions:
@@ -48,6 +48,7 @@ jobs:
           lua5.1 tools/test_skillchains_demo.lua
           lua5.1 TargetSC/tests/test_motion.lua
           lua5.1 TargetSC/tests/test_mb_glyph.lua
+          lua5.1 TargetSC/tests/test_bell_burst.lua
           lua5.1 TargetSC/tests/test_transport.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
@@ -60,7 +61,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test5-MB-Glyph-Spin-Paired-test
+          name: TargetSC-Test6-Bell-Burst-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
@@ -74,7 +75,7 @@ jobs:
       - name: Publish minimal TargetSC patch
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test5-MB-Glyph-Spin-Patch
-          path: dist/TargetSC-0.5.0-Test5-MB-Glyph-Spin-Patch.zip
+          name: TargetSC-Test6-Bell-Burst-Patch
+          path: dist/TargetSC-0.6.0-Test6-Bell-Burst-Lua-Patch.zip
           if-no-files-found: error
           retention-days: 30

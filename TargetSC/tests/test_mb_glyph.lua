@@ -15,15 +15,16 @@ local function layer(frame,kind,role,part)
     end
 end
 local opts=copy(R.defaults)
-assert(opts.disc_speed==.1 and opts.ground_height==.39 and opts.mb_opacity==1)
+assert(opts.disc_speed==.1 and opts.ground_height==.39 and opts.mb_opacity==.3)
+opts.mb_opacity=1;opts.mb_idle=0 -- preserve the Test5 hidden-between-bursts comparison
 local m=R.new()
 local opener=state(100,1,1,'Scission');m.states[71]=opener
 local early=m:frame(71,100.3,2,4,opts)
 local glyph=early.awakening_glyph
 local first=layer(early,'disc','awakening')
-assert(glyph and first and first.glyph==2 and first.rotation==0)
-assert(first.color<16777216 and first.outline>=16777216,'opening glyph is outline-only')
-near(first.offset,.39+.008)
+assert(glyph and first and first.glyph==1 and first.rotation==0)
+assert(first.color>=16777216 and first.outline>=16777216,'opening white fill restored')
+near(first.offset,.008)
 local radius=glyph.radius
 local later=m:frame(71,101.5,2,4,opts)
 assert(later.awakening_glyph==glyph and glyph.radius>radius and glyph.rotation==0)

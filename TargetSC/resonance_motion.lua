@@ -1,6 +1,7 @@
 -- Analytic presentation driven by source timestamps, never accumulated frames.
 -- Strike displacement and the settled ground hum are in world units. Author: A.
 local M={}
+local Burst=require('resonance_burst')
 local min,max,sin,exp,pi=math.min,math.max,math.sin,math.exp,math.pi
 local function clamp(v,a,b)return max(a,min(b,v))end
 local function smooth(v)v=clamp(v,0,1)return v*v*(3-2*v)end
@@ -10,7 +11,8 @@ M.defaults={opacity=.3,scale=2,height=1,intensity=1,motion='sine',layout='ground
     period=.09,amplitude=.3,damping=3,width=2,glow=1,brightness=4,discs=true,disc_opacity=.3,
     hum_amplitude=.018,hum_period=.12,hum_slowdown=1,hum_gain=.35,
     disc_outline=.45,disc_style='glyph',disc_height=.008,disc_speed=.1,disc_slowdown=1,
-    disc_speed_opener=.5,disc_speed_level1=1,disc_speed_level2=2,disc_speed_level3=4,disc_speed_level4=0,mb_opacity=1,
+    disc_speed_opener=.5,disc_speed_level1=1,disc_speed_level2=2,disc_speed_level3=4,disc_speed_level4=0,mb_opacity=.3,
+    mb_idle=.18,mb_burst=.8,mb_floor=1,mb_ring=1,mb_period=2,mb_rise=.65,mb_expand=.25,sky_expand=.6,
     awakening=true,awakening_opacity=.3,ground_height=.39,fade_duration=.8,
     opener_gap=12,opener_glow='black',opener_muted=true}
 local white,gold={255,255,255},{255,217,115}
@@ -105,6 +107,14 @@ function M.positions(s,now,height,opts)
     -- Sky: damped strike only. Ground: strike plus its smaller sustained hum.
     bottom=bottom+ground_wave
     top=max(floor,top-sky_wave)
+    -- Continuation has already closed: finish inside the same fade interval,
+    -- moving down/in to the independently anchored property disc.
+    details.close=not s.closed and smooth((now-s.sc_close)/option(opts,'fade_duration'))or 0
+    if details.close>0 then
+        local target=option(opts,'disc_height')+.006+ground_wave
+        bottom=bottom+(target-bottom)*details.close
+        top=top+(target-top)*details.close
+    end
     return bottom,top,remaining,details
 end
 local function property_palette(name,context)
@@ -132,14 +142,15 @@ end
 function M.frame(model,s,now,radius,height,opts,context)
     local out={discs={}}
     local age=max(0,now-s.created)
-    local phase=M.phase(s,now,opts)
+    local phase=s.source_expired and 'expired'or M.phase(s,now,opts)
     out.phase=phase
     local opening=model:opening_glyph(s)
-    if phase=='expired'then
+    local response=Burst.sample(model,s,now,function(k)return option(opts,k)end)
+    if phase=='expired'and not response.responding then
         if opening then opening.opacity=0 end
         return out
     end
-    local mb_strength=s.mb_close>now and now>=s.created and clamp((s.mb_close-now)/10,0,1)or 0
+    local mb_strength=not s.source_expired and s.mb_close>now and now>=s.created and clamp((s.mb_close-now)/10,0,1)or 0
     out.mb_strength=mb_strength
     local bottom,top,remaining,details=M.positions(s,now,height,opts)
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
@@ -157,6 +168,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     end
     local function band(r,h,colors,a,pixels,role,part,strand,rotation)
         if a<=.002 or r<.01 then return end
+        r=min(r,100)
         local p=packed(colors,a)
         out[#out+1]={radius=r,offset=h,width=0,pixels=pixels,color=p[1],colors=p,
             rotation=rotation or 0,role=role,part=part,strand=strand,
@@ -171,16 +183,17 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         band(r,h,colors,a,px,'core',part,strand,rotation)
     end
-    local function disc(r,h,angle,colors,a,glyph,outline,role)
+    local function disc(r,h,angle,colors,a,glyph,outline,role,stroke_color)
         if (a<=.002 and outline<=.002)or r<.01 or #out.discs>=8 then return end
+        r=min(r,100)
         local p=packed(colors,a)
         out.discs[#out.discs+1]={radius=r,offset=h,rotation=angle,color=p[1],colors=p,
-            glyph=glyph,outline=context.argb(white,outline),role=role}
+            glyph=glyph,outline=context.argb(stroke_color or white,outline),role=role}
     end
     local electric=1
     if not opener and s.level==3 then electric=.68+.32*sin(age*11)^2
     elseif not opener and s.level>=4 then electric=(.37+.63*sin(age*23)^2)*(.72+.28*sin(age*28)^2)end
-    if phase~='mb-only'then
+    if phase~='mb-only'and phase~='expired'then
         local specs=specifications(s,context)
         if not opener and s.level~=2 and age<.16 then specs={{colors={white},radial=1,stack=0}}end
         out.strands=#specs
@@ -197,34 +210,56 @@ function M.frame(model,s,now,radius,height,opts,context)
             for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
                 if place[1]then
                     local h=place[1]+spec.stack
+                    local draw_radius=r
+                    if place[2]=='sky'then
+                        local reach=max(.1,height*.49-option(opts,'ground_height'))
+                        draw_radius=r*(1+option(opts,'sky_expand')*smooth((h-option(opts,'ground_height'))/reach))
+                    end
+                    draw_radius=draw_radius*(1-.22*(details.close or 0))
                     if glow>0 and not opener and s.level>=3 then
                         local tint=(s.properties[1]=='Darkness'or s.properties[1]=='Umbra')and {132,74,224}or gold
-                        band(r,h,{tint},opacity*.32*glow*electric*fade,px+6*min(glow,3),'glow',place[2],j,rotation)
+                        band(draw_radius,h,{tint},opacity*.32*glow*electric*fade,px+6*min(glow,3),'glow',place[2],j,rotation)
                     end
-                    ring(r,h,colors,alpha,place[2],j,rotation)
+                    ring(draw_radius,h,colors,alpha,place[2],j,rotation)
                 end
             end
         end
     end
-    -- Retained logical effect, even when its opacity reaches zero. Geometry is
-    -- shared/cached by the native renderer; hidden effects submit no vertices.
+    -- One pooled large glyph: filled opener, breathing outline, rising release.
+    -- It returns to its resting height only after the release is invisible.
     if opening then
         local progress=clamp((now-opening.created)/max(.1,opening.open-opening.created),0,1)
         local grow=1-(1-clamp(progress*3,0,1))^3
-        opening.radius=radius*.96*grow
-        opening.offset=option(opts,'ground_height')+option(opts,'disc_height')
-        opening.opacity=option(opts,'awakening')and option(opts,'awakening_opacity')*opacity*
-            (1-smooth((progress-1/3)*3))or 0
+        local initial=opening.opener_seen and option(opts,'awakening')and
+            option(opts,'awakening_opacity')*opacity*(1-smooth((progress-1/3)*3))or 0
+        local role='mb-glyph'
+        local fill=0
+        local color=white
+        opening.radius=radius*.96
+        opening.offset=option(opts,'disc_height')
+        opening.opacity=response.idle
+        if initial>0 then
+            role='awakening';fill=initial
+            opening.radius=opening.radius*grow;opening.opacity=initial
+        end
+        if response.responding then
+            fill=0;role='mb-glyph'
+            color=mix(response.element,white,response.white)
+            opening.radius=radius*.96*(1+option(opts,'mb_expand')*response.rise)
+            opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*response.rise
+            opening.opacity=response.release
+        end
         out.awakening_glyph=opening
-        disc(opening.radius,opening.offset,0,{white},0,2,opening.opacity,'awakening')
+        disc(opening.radius,opening.offset,0,{white},fill,fill>0 and 1 or 2,
+            opening.opacity,role,color)
     end
     if option(opts,'discs')then
-        local sc_life=phase=='mb-only'and 0 or phase=='pre'and 1 or s.closed and fade or remaining
+        local sc_life=(phase=='mb-only'or phase=='expired')and 0 or phase=='pre'and 1 or s.closed and fade or remaining
         local life=max(sc_life,mb_strength)
         local reveal=opener and smooth(progress*5)or 1
         local fill=option(opts,'disc_opacity')*opacity*life*reveal
         local outline=option(opts,'disc_outline')*opacity*life*reveal
-        local base=option(opts,'ground_height')+option(opts,'disc_height')+details.ground_wave
+        local base=option(opts,'disc_height')+details.ground_wave
         local glyph=option(opts,'disc_style')=='outline'and 2 or option(opts,'disc_style')=='fill'and 0 or 1
         local properties=opener and s.properties or {s.properties[1]}
         for j,p in ipairs(properties)do
@@ -236,26 +271,28 @@ function M.frame(model,s,now,radius,height,opts,context)
                 if s.level>=4 then colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
                 else for i,c in ipairs(colors)do colors[i]=mix(white,c,color_t)end end
             end
+            local flash=response.flash*option(opts,'mb_floor')
+            local disc_fill,disc_outline=fill+(1-fill)*flash,outline+(1-outline)*flash
+            local stroke=response.element and mix(white,response.element,flash)or white
+            if flash>0 then
+                for i,c in ipairs(colors)do colors[i]=mix(c,white,flash)end
+            end
             disc(radius*(.78-(j-1)*.11),base+.006+(j-1)*.008,M.rotation(s,now,opts),
-                colors,fill,glyph,outline,'property')
+                colors,disc_fill,flash>0 and 1 or glyph,disc_outline,'property',stroke)
         end
     end
-    -- Show throughout the authoritative MB window, including its overlap
-    -- with continuation. Keep the original remaining-seconds/10 fade curve;
-    -- the dedicated opacity deliberately bypasses global ring opacity.
+    -- MB ring remains tied to its original deadline; response overlays never
+    -- reset its fade, the continuation phase, or the property-disc rotation.
     if mb_strength>0 then
         local colors=context.palette(s)
-        ring(radius,height*.49,{colors[#colors]},option(opts,'mb_opacity')*mb_strength,'mb',0,0)
-    end
-    local bursts=model.bursts[s.id]or {}
-    for i=#bursts,1,-1 do
-        local b=bursts[i];local a=now-b.at
-        if a>.52 then table.remove(bursts,i)
-        elseif a>=0 then
-            local f=(1-a/.52)^2*opacity*intensity
-            ring(radius*(1+a*3),height*.42,{b.color},f*.6,'burst',0,0,false)
-            if a<.16 then ring(radius,height*.49+sin(a*110)*height*.008,{mix(b.color,white,.4)},f*.5,'burst',0,0,false)end
+        local color=colors[#colors]
+        local alpha=option(opts,'mb_opacity')*mb_strength
+        local strength=response.ring*option(opts,'mb_ring')
+        if response.element and strength>0 then
+            color=mix(color,mix(response.element,white,response.flicker),strength)
+            alpha=alpha+(1-alpha)*strength
         end
+        ring(radius,height*.49,{color},alpha,'mb',0,0)
     end
     while #out>32 do table.remove(out,1)end
     return out

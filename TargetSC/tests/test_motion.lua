@@ -138,11 +138,11 @@ for _,property in ipairs({'Fusion','Fragmentation','Distortion','Gravitation'})d
  for i,d in ipairs(a.discs)do assert(d.color==b.discs[i].color and d.outline==b.discs[i].outline)end
 end
 print('PASS opener comparisons: all 12 combinations, exact gap metadata, black/off/color surround, preserved motion and completed chains; all four L2 opposed palettes on ground/sky from charge through fade')
--- A normal expiry fades exactly the existing geometry, with no white flash.
+-- A normal expiry keeps its fade, adding downward/inward closure after the deadline.
 s=state('Liquefaction',1,1);m.states[71]=s
 local end_frame=frame(110);local faded=frame(110.3)
 local end_ground=cores(end_frame,'ground')[1];local fade_ground=cores(faded,'ground')[1]
-near(end_ground.radius,fade_ground.radius);near(end_ground.offset,fade_ground.offset)
+assert(fade_ground.radius<end_ground.radius and fade_ground.offset<end_ground.offset,'post-deadline close moves inward/downward')
 assert(end_ground.color%16777216==fade_ground.color%16777216 and faded.phase=='expiration')
 assert(math.floor(fade_ground.color/16777216)<math.floor(end_ground.color/16777216))
 assert(#frame(110.81)==0,'no MB halo invented for an expired opener')

@@ -11,7 +11,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'TargetSC-0.5.0-Test5-MB-Glyph-Spin-Paired-Full'
+NAME = 'TargetSC-0.6.0-Test6-Bell-Burst-Paired-Full'
+PATCH_BASE = '700bef129e9932dde996127813f6853e1227af7b'
 SC_CURRENT = '3d96aeac0b63dc5e1fbd61ca8bf576bb3758cada'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
@@ -42,16 +43,15 @@ def main():
     assert not git('diff',SC_CURRENT,'--',
         'Skillchains.lua','skills.lua','resonance_ui.lua','learning_ui.lua',
         'resonance_fx.lua','targetsc_bridge.lua','skillchains_demo.lua','images'), 'Current Skillchains runtime changed'
-    assert not git('diff',SC_CURRENT,'--',
-        'TargetSC/resonance_preview.lua','TargetSC/src/SceneHook'), 'Preview/SceneHook changed'
+    assert not git('diff',PATCH_BASE,'--','TargetSC/libs','TargetSC/src'), 'Native API 0.5.0 renderer changed'
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'TargetSC Test5 two gaps, retained awakening glyph, matched L2 spin and full MB window / Animation8.6 preserved', 'author': 'A.',
+    info = {'batch': 'TargetSC Test6 bell closure and MB glyph response / native 0.5.0 and Animation8.6 preserved', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': SC_CURRENT,
-            'targetsc_test5_in_game_tested': False,
+            'targetsc_test6_in_game_tested': False,
             'skillchains_preview_user_confirmed': True,
             'targetsc_test1_render_user_confirmed': True,
             'targetsc_test2_previews_user_confirmed': True,
@@ -137,16 +137,17 @@ def main():
             for name, expected in checks.items():
                 assert hashlib.sha256(z.read(folder + '/' + name)).hexdigest() == expected
     # A minimal TargetSC patch preserves the user's independently updated HUD.
-    patch_paths=set(git('diff','--name-only',SC_CURRENT,'--','TargetSC').splitlines())
+    patch_paths=set(git('diff','--name-only',PATCH_BASE,'--','TargetSC').splitlines())
+    assert not any(name.endswith('.dll')for name in patch_paths), 'Lua-only patch must not include DLL'
     patch_paths.update({'TargetSC/README.md','TargetSC/WORKFLOW.md','TargetSC/TESTING.md'})
-    patch = DIST / 'TargetSC-0.5.0-Test5-MB-Glyph-Spin-Patch.zip'
+    patch = DIST / 'TargetSC-0.6.0-Test6-Bell-Burst-Lua-Patch.zip'
     patch_checks={}
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED) as z:
         for name in sorted(patch_paths):
             data=(ROOT/name).read_bytes();z.writestr(name,data)
             patch_checks[name]=hashlib.sha256(data).hexdigest()
-        z.writestr('TargetSC/BUILD_INFO_TEST5.json',json.dumps(info,indent=2)+'\n')
-        z.writestr('TargetSC/SHA256SUMS_TEST5.json',json.dumps(patch_checks,indent=2)+'\n')
+        z.writestr('TargetSC/BUILD_INFO_TEST6.json',json.dumps(info,indent=2)+'\n')
+        z.writestr('TargetSC/SHA256SUMS_TEST6.json',json.dumps(patch_checks,indent=2)+'\n')
     with zipfile.ZipFile(patch) as z:
         assert z.testzip() is None
         assert all(name.startswith('TargetSC/')and '/data/'not in name for name in z.namelist())
