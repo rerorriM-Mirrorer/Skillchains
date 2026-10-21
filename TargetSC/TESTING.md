@@ -1,5 +1,11 @@
 # TargetSC TESTING.md — start here
 
+## Skillchains Animation8.2 companion compatibility (2026-10-20; LIVE PENDING)
+
+Skillchains removes the ambiguous typed glow-level default and saves future selections under nonnumeric `level_mask`; legacy XML remains supported. TargetSC Lua Test3, native API/DLL 0.3.0, bridge-v1 protocol, `lua c` command transport, rings/discs and authoritative deadlines are **unchanged**. Existing Test3 users should update Skillchains only, preserving both `data` folders. Confirm `//sc status`, `//sc targetsc`, `//tsc status` and optionally `//tsc sync` on reload. New pairing requires live validation; CI is static/simulated.
+
+---
+
 ## Paired repair — TargetSC Test3 with Skillchains Animation8.1 (2026-10-20; LIVE PENDING)
 
 Use the complete **TargetSC-0.3.0-Test3-Animation8.1-Paired-Full** package. TargetSC Lua, native 0.3.0 DLL, ring/disc presentation, source deadline handling and `lua c` subscriber are unchanged from published Test3. Skillchains Lua/HUD uses exact Animation8.1, while **its publisher must retain Test3's `lua c TargetSC` delivery**. Installing standalone Animation8.1 over the pair can silently revert the bridge to `lua i` and break synchronization. This new pairing makes that compatibility explicit and tests it through the existing real-handler transport suite.

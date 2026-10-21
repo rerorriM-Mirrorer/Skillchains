@@ -1,5 +1,9 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## Animation8.2 — no more regenerated glow settings warnings
+
+Windower converted Skillchains' old default string `'34'` into numeric `34` when automatically creating settings.xml, producing warnings even after deleting the file. Animation8.2 removes this conflicting typed default, accepts prior numeric/text masks, and saves new level choices under a nonnumeric `glow.level_mask` key. Keep existing settings and positions. The corrected TargetSC Test3 bridge, native DLL and 3D presentation are unchanged; update Skillchains only if already on the matched paired build. See TESTING.md for checks.
+
 ## Paired Skillchains Animation8.1 + TargetSC 0.3.0 Test3 (2026-10-20)
 
 Install **both** addon folders from the matched pairing, not standalone Animation8.1 over Test3. Skillchains reports `2.20.08.25-resonance.7-animation.8.1`, TargetSC reports `0.3.0-test3` with native `0.3.0`. The companion bridge uses Windower `lua c` commands in both directions (subscription, readiness, events, unsubscribe). The prior standalone Animation8.1 publisher contains `lua i` and cannot synchronize with Test3 if copied over the fixed publisher. The renderer tolerates numeric `glow.levels`, but saved XML may still trigger harmless load-time schema warnings. Preserve both `data/` folders and close FFXI before replacing TargetSC's DLL. Verify with `//sc status`, `//tsc sync`, `//sc targetsc`, `//tsc status`; see TESTING.md.
@@ -492,6 +496,11 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-20 — Animation8.2 glow default schema (A)
+- Avoid numeric-looking mask in typed defaults; no startup warnings from regenerated settings.
+- Read existing masks, store new alphabetic `level_mask` values, preserve visuals and positions.
+- Retain TargetSC Test3 native renderer and working `lua c` sync. CI and live status are recorded in TESTING.md.
 
 ### 2026-10-19 — TargetSC 0.3.0 Test3 pairing (A)
 

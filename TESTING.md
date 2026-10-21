@@ -1,5 +1,25 @@
 # TESTING.md — Skillchains Resonance UI
 
+## Current Development Status — Animation8.2 glow configuration (2026-10-20)
+
+**Repository:** `rerorriM-Mirrorer/Skillchains`; branch `development/skillchains-glow-config-schema-fix`. Source checkpoint: `721242f` paired Animation8.1 + TargetSC Test3, confirmed in-game by user to synchronize. **Runtime:** Skillchains `2.20.08.25-resonance.7-animation.8.2`; TargetSC `0.3.0-test3` / native `0.3.0`, unchanged.
+
+**Cause:** Windower's `config.load` saves defaults when XML is missing, then reads newly written `<levels>34</levels>` back as number 34. The addon defined string default `'34'`, so even deleting settings.xml caused repeated string/number merge warnings. Animation8.1 prevented the `:find()` runtime exception but did not correct the loader's default type.
+
+**Remedy:** Remove `levels` from typed defaults, keep reading legacy numeric and string masks, and save newly chosen masks as alphabetic `level_mask` (`L3,L4`, `L1,L2,L3,L4`, or `off`). The priority is new mask, old levels, then default L3/L4. No XML deletion, lost settings, visual changes or TargetSC bridge/native changes required.
+
+**Verification:** Lua 5.1 parsing, legacy/new mask command and rendering simulations, TargetSC actual-handler bridge protocol and source deadlines, cross-compiled native build and two-addon package CI. Consult the associated GitHub Actions result before claiming pass. The **new build has not yet been verified in FFXI**.
+
+**Next test:** On Killala/Franklet/Lionstag, keep settings.xml, update Skillchains source only and reload. Confirm `//sc status` Animation8.2 and no type-mismatch warning. Set `//sc glow levels 34`, reload once more, and verify warnings remain absent; verify `//sc targetsc` subscribed=true and `//tsc status` synced=true.
+
+---
+
+## Animation8.2 — correction to previous XML advice (2026-10-20; LIVE PENDING)
+
+~~Deleting or hand-editing the saved glow mask fixes the startup warning.~~ This did not address the root cause: an ambiguous numeric-looking **default**, reproduced even with no XML present. Windower/Lua `addons/libs/config.lua` writes a fresh settings file and parses `34` numerically. Keeping old saved `levels` keys as untyped legacy values prevents the merge warning; new `level_mask` values are textual. No effect on prior TargetSC Test3 transport correction. Old records and in-game observations preserved below.
+
+---
+
 ## TargetSC Test3 + Skillchains Animation8.1 paired repair (2026-10-20; LIVE SYNC PENDING)
 
 **Branch:** `development/targetsc-test3-animation8.1-paired`, based on published Test3 `c18f262`.

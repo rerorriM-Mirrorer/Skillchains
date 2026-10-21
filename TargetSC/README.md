@@ -1,5 +1,9 @@
 # TargetSC — elemental resonance
 
+## Skillchains Animation8.2 — paired configuration update
+
+Skillchains' `glow.levels` numeric/string merge warning has been addressed at its config default and save command. Existing settings survive. TargetSC 0.3.0 Test3 Lua, DLL, rings and `lua c` synchronization remain unchanged. If Test3 is already installed, update Skillchains only; check `//sc targetsc` and `//tsc status` after reload. New build needs live verification.
+
 ## Paired Skillchains Animation8.1 + TargetSC 0.3.0 Test3 (2026-10-20)
 
 Install **both** addon folders from the matched pairing, not standalone Animation8.1 over Test3. Skillchains reports `2.20.08.25-resonance.7-animation.8.1`, TargetSC reports `0.3.0-test3` with native `0.3.0`. The companion bridge uses Windower `lua c` commands in both directions (subscription, readiness, events, unsubscribe). The prior standalone Animation8.1 publisher contains `lua i` and cannot synchronize with Test3 if copied over the fixed publisher. The renderer tolerates numeric `glow.levels`, but saved XML may still trigger harmless load-time schema warnings. Preserve both `data/` folders and close FFXI before replacing TargetSC's DLL. Verify with `//sc status`, `//tsc sync`, `//sc targetsc`, `//tsc status`; see TESTING.md.
