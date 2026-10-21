@@ -11,10 +11,10 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-Animation8.2-TargetSC-Test3-ConfigFix-Full'
+NAME = 'Skillchains-Animation8.3-Umbra-HUD-Demo-Paired-Full'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
-            'targetsc_bridge.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
+            'targetsc_bridge.lua', 'skillchains_demo.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
 BASELINE = 'e095657a2e7ecc5a49d05e96c1b78523a4860af5'
 
 
@@ -43,7 +43,11 @@ def main():
                'learning_ui.lua','images')
     assert not git('diff',HUD_BASELINE,'--',*guarded), 'HUD/assets changed'
     changed=set(git('diff','--name-only',HUD_BASELINE,'--','Skillchains.lua','resonance_fx.lua').splitlines())
-    assert changed=={'Skillchains.lua','resonance_fx.lua'}, 'Missing mask repair'
+    assert changed=={'Skillchains.lua','resonance_fx.lua'}, 'Unexpected source baseline differences'
+    # The new demo module is mandatory; TargetSC is never the HUD's runtime source.
+    demo=(ROOT/'skillchains_demo.lua').read_text()
+    assert 'require(\'resonance_preview\')' not in demo
+    assert 'targetsc:state(' not in demo and 'windower.send_command' not in demo
     assert not git('diff','721242f15f1c02c542af290208662f0ed4f21417','--',
         'TargetSC/TargetSC.lua','TargetSC/resonance.lua',
         'TargetSC/resonance_controls.lua','TargetSC/resonance_motion.lua',
@@ -51,7 +55,7 @@ def main():
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains Animation8.2 glow schema fix with preserved TargetSC Test3 bridge', 'author': 'A.',
+    info = {'batch': 'Skillchains Animation8.3 local Umbra HUD demo / TargetSC 0.3.0 Test3 unchanged', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': HUD_BASELINE,

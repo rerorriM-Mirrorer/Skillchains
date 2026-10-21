@@ -1,9 +1,9 @@
-name: Skillchains Animation8.2 glow schema + TargetSC Test3
+name: Skillchains standalone Umbra HUD demo + TargetSC Test3 regression
 
 on:
   push:
     branches:
-      - development/skillchains-glow-config-schema-fix
+      - development/skillchains-umbra-hud-demo
   workflow_dispatch:
 
 permissions:
@@ -34,13 +34,14 @@ jobs:
         run: python3 tools/test_capsule_halo.py
       - name: Validate runtime Lua 5.1
         run: |
-          for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua TargetSC/*.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
+          for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua tools/test_skillchains_demo.lua skillchains_demo.lua TargetSC/*.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
             luac5.1 -p "$f"
           done
       - name: Simulate Skillchains and TargetSC
         run: |
           lua5.1 tools/test_learning_ui.lua
           lua5.1 tools/test_visual_commands.lua
+          lua5.1 tools/test_skillchains_demo.lua
           lua5.1 TargetSC/tests/test_motion.lua
           lua5.1 TargetSC/tests/test_transport.lua
           lua5.1 TargetSC/tests/test_resonance.lua
@@ -54,7 +55,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.2-TargetSC-Test3-ConfigFix-test
+          name: Skillchains-Animation8.3-Umbra-HUD-Demo-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
