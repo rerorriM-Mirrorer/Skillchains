@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-Animation8.7-Tip-MB-Ribbon-TargetSC-Test8-Paired-Full'
+NAME = 'Skillchains-Animation8.8-Independent-MB-TargetSC-Test8-Paired-Full'
 PATCH_BASE = '700bef129e9932dde996127813f6853e1227af7b'
 SC_CURRENT = '3d96aeac0b63dc5e1fbd61ca8bf576bb3758cada'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
@@ -62,7 +62,7 @@ def main():
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains Animation8.7 ghost endpoint and independent MB ribbon / TargetSC Test8 0.8.0 native 0.5.0 unchanged', 'author': 'A.',
+    info = {'batch': 'Skillchains Animation8.8 independent draggable MB HUD, true-white introductions and SC terminal isolation / TargetSC Test8 unchanged', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': SC_CURRENT,
@@ -108,6 +108,15 @@ def main():
         dest = STAGE / 'Skillchains/images/terminal' / file.name
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file, dest)
+    # Build-time-only pure-white MB glyph silhouettes are shipped under
+    # Skillchains, never replacing the original full-color property icons.
+    mb_white=sorted((ROOT/'images/mb_flash').glob('*.png'))
+    assert len(mb_white)==len(icons)==14, 'Run tools/generate_mb_flash_icons.py first'
+    for file in mb_white:
+        assert file.name in {i.name for i in icons}
+        dest=STAGE/'Skillchains/images/mb_flash'/file.name
+        dest.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(file,dest)
     ghostflare=ROOT/'images/resonance/ghost_flare.png'
     assert ghostflare.read_bytes().startswith(bytes.fromhex('89504e470d0a1a0a'))
     dest=STAGE/'Skillchains/images/resonance/ghost_flare.png'
@@ -153,6 +162,8 @@ def main():
         for file in terminal_art:
             assert z.read('Skillchains/images/terminal/' + file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
         assert z.read('Skillchains/images/resonance/ghost_flare.png').startswith(bytes.fromhex('89504e470d0a1a0a'))
+        for file in mb_white:
+            assert z.read('Skillchains/images/mb_flash/'+file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
         for folder in ('Skillchains', 'TargetSC'):
             checks = json.loads(z.read(folder + '/SHA256SUMS.json'))
             for name, expected in checks.items():

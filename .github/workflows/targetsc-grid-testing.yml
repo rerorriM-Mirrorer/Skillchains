@@ -1,9 +1,9 @@
-name: Skillchains Animation8.7 Ghost endpoint + MB ribbon / TargetSC Test8
+name: Skillchains Animation8.8 independent MB introduction / TargetSC Test8
 
 on:
   push:
     branches:
-      - development/skillchains-ribbon-endpoint-test1
+      - development/skillchains-mb-independent-white-intro
   workflow_dispatch:
 
 permissions:
@@ -36,6 +36,10 @@ jobs:
         run: |
           python3 tools/generate_terminal_icons.py
           python3 tools/generate_terminal_icons.py --check
+      - name: Generate and verify MB property white-flash silhouettes
+        run: |
+          python3 tools/generate_mb_flash_icons.py
+          python3 tools/generate_mb_flash_icons.py --check
       - name: Validate runtime Lua 5.1
         run: |
           for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua tools/test_skillchains_demo.lua skillchains_demo.lua TargetSC/*.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
@@ -63,14 +67,14 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.7-MB-Ribbon-TargetSC-Test8-Paired-test
+          name: Skillchains-Animation8.8-MB-Intro-TargetSC-Test8-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
       - name: Publish Skillchains-only testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.7-MB-Ribbon-Solo-test
+          name: Skillchains-Animation8.8-MB-Intro-Solo-test
           path: dist/skillchains-demo-package/
           if-no-files-found: error
           retention-days: 30
