@@ -1,5 +1,74 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.8.0 Test8 — MB finish and sustained property glyph (2026-10-21)
+
+Branch `development/targetsc-mb-final-pass`, based on Test7 `649752f6`.
+A's final animation pass for now; all controls remain available for later tuning.
+User's 09:14:40 Killala snapshot has speed .1, opener 4, L1 1, L2 3, L3 4,
+L4 0 and slowdown 1. Preserve all saved stage speeds, opacity, sky curve/cutoff,
+MB duration/ending length and other settings. Do not ship or rewrite personal XML.
+
+Lua-only cumulative patch over working Test5–7: merge TargetSC/ into
+Windower/addons, preserve data/, then `//lua reload TargetSC`. Lua reports
+0.8.0-test8; native remains 0.5.0. No DLL replacement or FFXI restart.
+Skillchains Animation8.6 runtime, bridge and assets are unchanged.
+
+With display both or mb AND an actual MB window, the small property floor disc
+holds its configured fill/trace alpha instead of following the SC countdown.
+During the final mb_ending interval, it fades smoothly to zero at mb_close,
+keeping its normal property colors and continuous rotation. The opener still
+uses SC-only lifetime because no MB window exists yet. Display sc preserves
+Test7's disc lifetime and slowdown-to-stop; off remains hidden.
+
+`//tsc discs minimum 0.5` adds a minimum property-disc speed before the existing
+speed multiplier. At speed .1 this is .05 turns/sec, one turn per 20 seconds.
+The existing slowdown exponent blends initial stage speed toward this minimum
+through the continuation countdown, then holds it through MB. Minimum is capped
+at the stage's initial speed; stage 0 stays stationary. No angle discontinuity
+at opening, continuation deadline or MB deadline. Rings retain their original
+SC rotation; hum and all gameplay clocks remain untouched. Set minimum 0 for
+the previous slowdown-to-stop comparison. Resettable new minimum is .5.
+
+`//tsc mb opacity 0.39` now means starting opacity, growing toward full strength
+across the source's existing MB window. `//tsc mb overall 1` is a separate master
+for the middle ring, large MB glyph and confirmed-MB flash contributions. At
+start .39 and master .5, middle alpha grows .195 -> .5. Closing white peaks are
+also bounded by the master. The shared property's ordinary baseline continues
+using discs opacity/outline * global opacity; MB master 0 removes MB overlays,
+not that shared SC foundation. Existing mb effects remains animated strength.
+
+`//tsc mb ending style soft|hard|both|off` selects synchronized white endings:
+soft = three smooth strong/half/strong pulses; hard = three rectangular full/zero
+flashes; both = soft then hard inside the SAME total mb_ending interval. Default
+soft; no longer successively diminishing pulses. Both middle and large glyph
+use full selected pulse strength * mb_effects * mb_overall, independent of idle
+breathing alpha. The small property disc fades smoothly underneath these pulses.
+`//tsc mb ending 0.9` is useful to inspect both styles without rushing six pulses;
+existing saved .3/.6 values remain respected. Ending off disables closing white
+signals, retaining the original confirmed-burst visual-tail comparison. Other
+selected endings finish dark at the original deadline, even after a late MB;
+no released glyph resurrects after the closing flashes. Explicit cleanup/reset
+and pooled glyph ownership remain unchanged.
+
+`//tsc sky hold 0.5` keeps the unfolded bell at nominal full span through the
+.15s color transition plus .5s, then uses a smooth compressed descent to meet at
+the original continuation deadline. Strike vibration still modulates actual
+positions. 0 restores Test7's immediate linear descent. Range 0–2s; short windows
+cap the hold to leave at least .1s for descent. Source timer and opacity/spin
+progress are never paused. Existing cutoff/curve/expansion remain respected.
+New hold default .5; existing saved values are otherwise untouched.
+
+Host verification: all runtime/test Lua parses under Lua 5.1; all TargetSC tests,
+actual addon-handler and both-load-order transport simulations, eight-element
+burst previews, Skillchains HUD/demo tests and baseline combat-clock regression.
+New test_mb_finish covers .5/1/4 slowdown curves, minimum-speed continuity and
+stationary stages, SC-only compatibility, steady alpha/final fade, master-zero
+and half-opacity responses, synchronized soft/hard/both pulses, late-hit dark
+closure, bell hold/zero-hold/short-window deadlines, and saved command validation.
+Geometry sweeps remain bounded at 32 bands/8 discs. Package checks enforce no
+Skillchains/native changes and verify ZIP CRCs/manifests. These are host tests;
+Test8's appearance still awaits live FFXI evaluation.
+
 ## TargetSC 0.7.0 Test7 — configurable bell taper and SC/MB display (2026-10-21)
 
 Branch `development/targetsc-display-bell`, based on published Test6 `582301e7`.

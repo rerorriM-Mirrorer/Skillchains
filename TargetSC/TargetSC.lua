@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.7.0-test7'
+_addon.version='0.8.0-test8'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -86,9 +86,12 @@ local function help()
         {'display sc|mb|both|off','Choose continuation, MB opportunity/effects, or both.'},
         {'sky cutoff <0.05-1>','Descent fraction at which sky rings reach normal radius (default .55).'},
         {'sky curve <1-8>','Bell taper exponent (default 2).'},
+        {'sky hold <0-2>','Seconds at full bell span after colors settle; 0 restores immediate descent.'},
         {'mb duration <0.2-4>','Burst-response duration in seconds; does not change the MB window.'},
         {'mb effects <0-1>','Overall MB animation strength; normal middle-ring opacity stays separate.'},
-        {'mb ending <0.15-2>','Final three diminishing white flashes, seconds before the MB deadline.'},
+        {'mb ending <0.15-2>','Total closing interval before the MB deadline, including both styles when selected.'},
+        {'mb ending style soft|hard|both|off','Strong/half/strong pulses, hard on/off flickers, or soft then hard.'},
+        {'mb overall <0-1>','Master opacity for the middle ring, large MB glyph and MB flashes.'},
         {'status','Report source, timing, tracking and native renderer state.'},
         {'preview [opener|pre|chain|window|expire|closed] [property] [level]','Run one explicit local scenario.'},
         {'preview burst [element]','Local MB response preview; no game actions or bridge events.'},
@@ -108,14 +111,15 @@ local function help()
         {'opener preset original|gap|black|muted|combined|quiet','Compare opener treatments without resetting other visuals.'},
         {'opener gap <0-60>|on|off','Two opposite opener gaps, each this many degrees; on=12.'},
         {'opener glow color|black|off','Opener surround color; uses the global glow strength.'},
-        {'opener muted [on|off]','Quieter elemental hues on opener rings and disc fills.'},
+        {'opener muted [on|off]','Quieter elemental hues on opener rings.'},
         {'discs on|off|opacity <0-1>','Control procedural ground property glyphs.'},
         {'discs outline <0-1>','Glyph line opacity independent of elemental fill.'},
         {'discs style glyph|outline|fill','Select filled glyph, outline only, or fill only.'},
         {'discs height|speed|slowdown <number>','Ground offset, starting-spin multiplier, slowing power.'},
+        {'discs minimum <0-4>','MB-enabled property-disc idle spin before the global multiplier; default .5.'},
         {'discs speed opener|level1|level2|level3|level4 <0-4>','Initial turns/sec before the global speed multiplier.'},
-        {'mb opacity <0-1>','Middle-ring peak opacity; grows toward the deadline, then flashes out.'},
-        {'mb idle|burst <0-1>','Large glyph idle breathing / burst-response opacity; idle 0 hides it between bursts.'},
+        {'mb opacity <0-1>','Middle-ring starting opacity; grows toward full strength within mb overall.'},
+        {'mb idle|burst <0-1>','Large glyph breathing / burst opacity; closing flashes use mb overall.'},
         {'mb floor|ring <0-1>','Confirmed-burst flash strength for floor disc / middle MB ring.'},
         {'mb period <0.2-6>','Large glyph full breathing cycle in seconds (default 2).'},
         {'mb rise|expand <0-2>','Burst glyph rise as model-height fraction / extra radial growth.'},
@@ -132,7 +136,7 @@ local function help()
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
     }
-    windower.add_to_chat(0,('TargetSC 0.7.0 — elemental resonance'):color(167))
+    windower.add_to_chat(0,('TargetSC 0.8.0 — elemental resonance'):color(167))
     for _,line in ipairs(lines) do
         windower.add_to_chat(0,('//tsc '):color(200)..line[1]:color(207)..(' -> '):color(200)..line[2]:color(0))
     end
@@ -160,6 +164,8 @@ local function status()
         settings.disc_height,settings.mb_idle,settings.mb_burst,settings.mb_period,settings.mb_rise,settings.mb_expand,settings.sky_expand))
     say(('display=%s; bell cutoff=%.2f curve=%.2f; MB response=%.2fs effects=%.2f ending=%.2fs'):format(
         settings.display,settings.sky_cutoff,settings.sky_curve,settings.mb_duration,settings.mb_effects,settings.mb_ending))
+    say(('MB start=%.2f overall=%.2f ending style=%s; disc minimum=%.2f (before speed multiplier); sky hold=%.2fs'):format(
+        settings.mb_opacity,settings.mb_overall,settings.mb_ending_style,settings.disc_minimum,settings.sky_hold))
     local state=(preview and preview.model or model).states[selected_id]
     if state then say(('target revision=%d properties=%s; continuation=%.3fs (wait %.3fs); MB=%.3fs; closed=%s'):format(
         state.revision,table.concat(state.properties,'/'),state.closed and 0 or math.max(0,state.sc_close-math.max(now,state.sc_open)),math.max(0,state.sc_open-now),

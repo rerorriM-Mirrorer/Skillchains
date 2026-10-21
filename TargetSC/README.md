@@ -1,5 +1,27 @@
 # TargetSC — elemental resonance
 
+## 0.8.0 Test8 — the last animation pass for now
+
+Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
+then `//lua reload TargetSC`. Keep native 0.5.0 and your installed Skillchains.
+Your saved stage speeds and tuning stay intact; no preset reset is required.
+
+- `//tsc discs minimum 0.5`: MB-enabled floor-disc minimum before global speed.
+  At speed .1 this is one turn per 20 seconds. Stage 0 remains stationary.
+- `//tsc mb opacity 0.39`: middle-ring starting strength, increasing toward 1.
+- `//tsc mb overall 1`: MB master opacity, including full-strength white flashes.
+- `//tsc mb ending style soft`: strong/half/strong smooth white pulses.
+  Other choices: hard (three on/off flashes), both (soft then hard), off.
+- `//tsc mb ending 0.9`: total ending duration; useful for inspecting both styles.
+- `//tsc sky hold 0.5`: hold full nominal bell span after color settles;
+  0 restores immediate descent. Rings still meet at the original deadline.
+
+With display both or mb, the regular property glyph stays at configured opacity
+until the closing interval, then fades gently under the synchronized larger-glyph
+and middle-ring white flashes. Display sc retains its earlier disc behavior.
+Selected endings finish dark at the MB deadline, even following a late burst.
+All settings remain available whenever you want to return to this.
+
 ## 0.7.0 Test7 — bell taper and separate SC/MB display
 
 Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
@@ -696,3 +718,6 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 
 
 2026-10-21 Test7: configurable height-driven bell taper, separate SC/MB display, deadline pulses and MB response controls; Killala defaults; plain opener fill and stationary SC fade. Author: A.
+
+
+2026-10-21 Test8: sustained MB property glyph, minimum spin, separate MB starting/master opacity, synchronized selectable endings and optional bell hold; preserved saved tuning. Author: A.

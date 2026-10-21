@@ -16,7 +16,7 @@ local function layer(frame,kind,role,part)
 end
 local opts=copy(R.defaults)
 assert(opts.disc_speed==.1 and opts.ground_height==.39 and opts.mb_opacity==.39)
-opts.mb_ending=.15;opts.mb_opacity=1;opts.mb_idle=0 -- preserve the Test5 hidden-between-bursts comparison
+opts.disc_minimum=0;opts.mb_ending=.15;opts.mb_opacity=1;opts.mb_idle=0 -- preserve the Test5 hidden-between-bursts comparison
 local m=R.new()
 local opener=state(100,1,1,'Scission');m.states[71]=opener
 local early=m:frame(71,100.3,2,4,opts)
@@ -40,7 +40,7 @@ for _,time in ipairs({103,103.2,104,107,111,112.5})do
     assert(not layer(f,'disc','ground-glyph')and not layer(f,'disc','awakening'))
     local mb=layer(f,'ring','core','mb')
     assert(mb,'MB exists during preparation, continuation and independent tail')
-    assert(math.floor(mb.color/16777216)==math.floor((1-.75*(113-time)/10)*255+.5))
+    assert(math.floor(mb.color/16777216)==255)
     local disc=layer(f,'disc','property')
     assert(disc,'property glyph survives until MB fade')
     for _,band in ipairs(f)do
@@ -50,11 +50,11 @@ end
 -- Its own opacity bypasses global ring opacity and increases toward closing.
 local faint=copy(opts);faint.opacity=0
 local full=m:frame(71,103,2,4,faint)
-assert(math.floor(layer(full,'ring','core','mb').color/16777216)==64)
+assert(math.floor(layer(full,'ring','core','mb').color/16777216)==255)
 faint.mb_opacity=.4
 local half=m:frame(71,108,2,4,faint)
-assert(math.floor(layer(half,'ring','core','mb').color/16777216)==64)
-faint.mb_opacity=0
+assert(math.floor(layer(half,'ring','core','mb').color/16777216)==179)
+faint.mb_overall=0
 assert(not layer(m:frame(71,108,2,4,faint),'ring','core','mb'))
 assert(not layer(m:frame(71,113,2,4,opts),'ring','core','mb'))
 assert(m.awakening_glyphs[71]==glyph,'natural visual expiry does not destroy cached opening glyph')
@@ -78,4 +78,4 @@ assert(receiver.awakening_glyphs[71])
 assert(receiver:receive({'1','test','3','expire','111','71'},111))
 assert(not receiver.awakening_glyphs[71])
 receiver:clear();assert(not next(receiver.awakening_glyphs))
-print('PASS Test5 MB full-window independent opacity, retained nonspinning opening glyph, no stationary base, MB-lived property disc, matched L2 rotations, stage speed tuning and source cleanup')
+print('PASS Test5 MB full-window independent opacity, retained nonspinning opening glyph, no stationary base, MB-lived property disc, zero-minimum L2 matched rotations, stage speed tuning and source cleanup')

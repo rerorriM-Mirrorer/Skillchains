@@ -44,11 +44,11 @@ assert(m:receive({'1','bell','3','burst','105','71','Wind','144','spells'},105))
 local burst=frame(105,quiet)
 local struck=layer(burst,'disc','property')
 assert(struck.color==4294967295 and struck.outline==R.argb(R.element_color('Wind'),1))
-near(struck.rotation,require('resonance_motion').rotation(s,105,opts))
+near(struck.rotation,require('resonance_motion').disc_rotation(s,105,opts))
 local restrained=copy(quiet);restrained.mb_floor=0;restrained.mb_ring=0
 local subdued=frame(105,restrained)
 assert(layer(subdued,'disc','property').color~=4294967295)
-assert(math.floor(layer(subdued,'ring','core','mb').color/16777216)==math.floor(opts.mb_opacity*.625*255+.5))
+assert(math.floor(layer(subdued,'ring','core','mb').color/16777216)==math.floor((opts.mb_opacity+(1-opts.mb_opacity)*.5)*255+.5))
 local lifted=layer(burst,'disc','mb-glyph')
 assert(lifted and lifted.rotation==0 and lifted.outline%16777216==16777215)
 assert(math.floor(layer(burst,'ring','core','mb').color/16777216)==255)
@@ -65,12 +65,14 @@ local invisible=frame(106.2,quiet)
 assert(not layer(invisible,'disc','mb-glyph'))
 frame(106.21,quiet);near(m.awakening_glyphs[71].offset,opts.disc_height)
 assert(s.created==deadlines[1]and s.sc_open==deadlines[2]and s.sc_close==deadlines[3]and s.mb_close==deadlines[4])
--- A late confirmed burst may finish its release, without extending MB/SC.
+-- A selected closing signal extinguishes even late releases at the deadline.
 assert(m:receive({'1','bell','4','burst','109.8','71','Fire','144','spells'},109.8))
 assert(m:receive({'1','bell','5','expire','110','71'},110))
 local tail=frame(110.2,quiet)
 assert(tail.phase=='expired'and not layer(tail,'ring','core','mb')and not layer(tail,'ring','core','ground'))
-assert(layer(tail,'disc','mb-glyph'))
+assert(not layer(tail,'disc','mb-glyph'))
+local no_ending=copy(quiet);no_ending.mb_ending_style='off'
+assert(layer(frame(110.2,no_ending),'disc','mb-glyph'),'ending off preserves the historical confirmed-burst tail')
 frame(111.01,quiet);assert(not m.states[71]and not m.awakening_glyphs[71])
 -- Overlapping confirmed hits reuse the release without a visible downward reset.
 local multi=model();multi.bursts[71]={{at=104,color=R.element_color('Wind')}}

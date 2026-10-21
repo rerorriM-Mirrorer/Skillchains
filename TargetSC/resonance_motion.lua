@@ -15,7 +15,8 @@ M.defaults={opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='groun
     mb_idle=0.06,mb_burst=1,mb_floor=1,mb_ring=1,mb_period=2,mb_rise=0.01,mb_expand=0.03,sky_expand=1,
     awakening=true,awakening_opacity=0.3,ground_height=0.39,fade_duration=0.8,
     opener_gap=12,opener_glow='black',opener_muted=true,
-    display='both',sky_cutoff=.55,sky_curve=2,mb_duration=1.2,mb_effects=1,mb_ending=.6}
+    display='both',sky_cutoff=.55,sky_curve=2,sky_hold=.5,disc_minimum=.5,
+    mb_duration=1.2,mb_effects=1,mb_ending=.6,mb_ending_style='soft',mb_overall=1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -52,6 +53,31 @@ function M.rotation(s,now,opts)
     local stage=s.step==1 and 'opener'or 'level'..s.level
     local turns=option(opts,'disc_speed_'..stage)
     return 2*pi*turns*option(opts,'disc_speed')*energy_time(s,now,opts,option(opts,'disc_slowdown'))
+end
+-- Only the property disc carries on through an enabled MB window. Integrate
+-- speed analytically so there is no angle jump as it reaches its idle speed.
+-- A stationary stage remains stationary; the minimum never speeds a stage up.
+function M.disc_rotation(s,now,opts)
+    local display=option(opts,'display')
+    if (display~='both'and display~='mb')or s.step==1 or s.mb_close<=s.created then
+        return M.rotation(s,now,opts)
+    end
+    local turns=option(opts,'disc_speed_level'..s.level)
+    local minimum=min(turns,option(opts,'disc_minimum'))
+    local at=min(now,s.mb_close)
+    local elapsed=max(0,at-s.sc_open)
+    local energy=energy_time(s,at,opts,option(opts,'disc_slowdown'))
+    return 2*pi*option(opts,'disc_speed')*((turns-minimum)*energy+
+        minimum*(max(0,min(at,s.sc_open)-s.created)+elapsed))
+end
+-- Hold the fully unfolded bell through its color transition, then use a
+-- smooth compressed descent that still reaches the source deadline exactly.
+function M.descent_remaining(s,now,opts)
+    local duration=max(.1,s.sc_close-s.sc_open)
+    local hold=option(opts,'sky_hold')
+    if hold<=0 then return clamp((s.sc_close-now)/duration,0,1)end
+    local held=min(hold+.15,max(0,duration-.1))
+    return 1-smooth((now-s.sc_open-held)/max(.1,duration-held))
 end
 local function wave(cycles,opts)
     if option(opts,'motion')=='flutter'then return math.floor(cycles*2+1e-9)%2 end
@@ -90,7 +116,8 @@ function M.positions(s,now,height,opts)
     local paired=s.step>1 or phase~='pre'
     if not paired then return floor+ground_wave,nil,remaining,details end
     local unfold=s.step>1 and smooth(age/.3)or smooth(elapsed/.28)
-    local span=height*.90*(s.closed and 1 or remaining)*unfold
+    local descent=s.closed and 1 or M.descent_remaining(s,at,opts)
+    local span=height*.90*descent*unfold
     local bottom,top=floor,floor+span
     local layout=option(opts,'layout')
     if layout~='grounded'then bottom=height*.49-span*.5;top=height*.49+span*.5 end
@@ -155,6 +182,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         return out
     end
     local mb_strength=not s.source_expired and s.mb_close>now and now>=s.created and clamp((s.mb_close-now)/10,0,1)or 0
+    local mb_active=not s.source_expired and s.step>1 and now>=s.created and now<s.mb_close
+    local mb_overall=option(opts,'mb_overall')
     out.mb_strength=mb_strength
     local bottom,top,remaining,details=M.positions(s,now,height,opts)
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
@@ -251,6 +280,13 @@ function M.frame(model,s,now,radius,height,opts,context)
             opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*response.rise
             opening.opacity=response.release
         end
+        if response.ending then
+            -- A closing signal wins over a simultaneous hit's color/alpha,
+            -- while an already rising glyph keeps its continuous trajectory.
+            color=white
+            opening.opacity=response.end_flash*option(opts,'mb_effects')
+        end
+        if role=='mb-glyph'then opening.opacity=opening.opacity*mb_overall end
         out.awakening_glyph=opening
         disc(opening.radius,opening.offset,0,{white},fill,fill>0 and 0 or 2,
             fill>0 and 0 or opening.opacity,role,color)
@@ -258,6 +294,11 @@ function M.frame(model,s,now,radius,height,opts,context)
     if option(opts,'discs')then
         local sc_life=(phase=='mb-only'or phase=='expired')and 0 or phase=='pre'and 1 or s.closed and fade or remaining
         local life=max(show_sc and sc_life or 0,show_mb and mb_strength or 0)
+        if show_mb and s.step>1 and s.mb_close>s.created then
+            -- Keep the elemental foundation steady, then gently extinguish
+            -- it across the SAME ending interval as the white MB signals.
+            life=mb_active and smooth((s.mb_close-now)/option(opts,'mb_ending'))or 0
+        end
         local reveal=opener and smooth(progress*5)or 1
         local fill=option(opts,'disc_opacity')*opacity*life*reveal
         local outline=option(opts,'disc_outline')*opacity*life*reveal
@@ -270,12 +311,15 @@ function M.frame(model,s,now,radius,height,opts,context)
                 colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
             end
             local flash=response.flash*option(opts,'mb_floor')
-            local disc_fill,disc_outline=fill+(1-fill)*flash,outline+(1-outline)*flash
+            if show_mb and s.step>1 then flash=flash*life end
+            local disc_fill=fill+(max(fill,mb_overall*life)-fill)*flash
+            local disc_outline=outline+(max(outline,mb_overall*life)-outline)*flash
+            flash=flash*mb_overall
             local stroke=response.element and mix(white,response.element,flash)or white
             if flash>0 then
                 for i,c in ipairs(colors)do colors[i]=mix(c,white,flash)end
             end
-            disc(radius*(.78-(j-1)*.11),base+.006+(j-1)*.008,M.rotation(s,now,opts),
+            disc(radius*(.78-(j-1)*.11),base+.006+(j-1)*.008,M.disc_rotation(s,now,opts),
                 colors,disc_fill,flash>0 and 1 or glyph,disc_outline,'property',stroke)
         end
     end
@@ -284,7 +328,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     if show_mb and mb_strength>0 then
         local colors=context.palette(s)
         local color=colors[#colors]
-        local alpha=option(opts,'mb_opacity')*(1-.75*mb_strength)
+        local alpha=option(opts,'mb_opacity')+(1-option(opts,'mb_opacity'))*(1-mb_strength)
         local strength=response.ring*option(opts,'mb_ring')
         if response.element and strength>0 then
             color=mix(color,mix(response.element,white,response.flicker),strength)
@@ -292,9 +336,9 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         if response.ending then
             color=mix(color,white,option(opts,'mb_effects'))
-            alpha=alpha*(1-option(opts,'mb_effects'))+option(opts,'mb_opacity')*response.end_flash*option(opts,'mb_effects')
+            alpha=alpha*(1-option(opts,'mb_effects'))+response.end_flash*option(opts,'mb_effects')
         end
-        ring(radius,height*.49,{color},alpha,'mb',0,0)
+        ring(radius,height*.49,{color},alpha*mb_overall,'mb',0,0)
     end
     while #out>32 do table.remove(out,1)end
     return out

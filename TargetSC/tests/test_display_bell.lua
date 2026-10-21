@@ -33,15 +33,15 @@ local m=model()
 local a=layer(m:frame(71,101,2,4,opts),'core','mb')
 local b=layer(m:frame(71,109,2,4,opts),'core','mb')
 assert(b.color>a.color,'middle-ring alpha increases toward deadline')
-local previous=math.huge
+local peaks={1,.5,1}
 for i=0,2 do
  local t=110-opts.mb_ending+(i+.5)*opts.mb_ending/3
  local response=Burst.sample(m,s,t,function(k)return opts[k]end)
- near(response.end_flash,1-i/3)
+ near(response.end_flash,peaks[i+1])
  local f=m:frame(71,t,2,4,opts)
  local ring=layer(f,'core','mb');local glyph=layer(f,'mb-glyph')
  assert(ring.color%16777216==16777215 and glyph.outline%16777216==16777215)
- assert(ring.color<previous);previous=ring.color
+ assert(math.floor(ring.color/16777216)==math.floor(peaks[i+1]*255+.5))
 end
 assert(not layer(m:frame(71,110,2,4,opts),'core','mb'))
 assert(not layer(m:frame(71,110,2,4,opts),'mb-glyph'))
@@ -60,4 +60,4 @@ local control=Controls.new(o,R.defaults,function()saves=saves+1 end,function()en
 for _,v in ipairs({{'display',{'mb'}},{'sky',{'cutoff','.6'}},{'sky',{'curve','3'}},{'mb',{'duration','2'}},{'mb',{'effects','.4'}},{'mb',{'ending','.9'}}})do assert(control(v[1],v[2]))end
 assert(saves==6 and o.display=='mb'and o.sky_cutoff==.6 and o.sky_curve==3 and o.mb_duration==2 and o.mb_effects==.4 and o.mb_ending==.9)
 control('sky',{'cutoff','0'});control('display',{'bad'});assert(saves==6)
-print('PASS Test7 bell cutoff/curve, SC/MB visibility, increasing middle opacity, three decreasing white deadline flashes, response duration/opacity and saved command validation')
+print('PASS Test7 bell cutoff/curve, SC/MB visibility, increasing middle opacity, strong/half/strong white deadline pulses, response duration/opacity and saved command validation')

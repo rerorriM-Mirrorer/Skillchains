@@ -4,6 +4,20 @@ local M={max_duration=4}
 function M.duration(opts)return opts.mb_duration or 1.2 end
 local function clamp(x)return math.max(0,math.min(1,x))end
 local function smooth(x)x=clamp(x)return x*x*(3-2*x)end
+-- The soft ending is strong / half-strength / strong. Hard uses three
+-- rectangular white on/off flashes. Both fit, in order, inside one interval.
+function M.ending(progress,style)
+    if progress<0 or progress>=1 or style=='off'then return 0 end
+    if style=='both'then
+        style=progress<.5 and 'soft'or 'hard'
+        progress=(progress*2)%1
+    end
+    local phase=progress*3
+    local pulse=math.floor(phase)
+    local within=phase-pulse
+    if style=='hard'then return within<.5 and 1 or 0 end
+    return (pulse==1 and .5 or 1)*math.sin(within*math.pi)^2
+end
 function M.sample(model,state,now,option)
     local duration=option('mb_duration')
     local effects=option('mb_effects')
@@ -15,10 +29,8 @@ function M.sample(model,state,now,option)
         local breathe=.5-.5*math.cos(age*2*math.pi/option('mb_period'))
         out.idle=option('mb_idle')*breathe*smooth(left)*effects
         local ending=option('mb_ending')
-        if left<=ending then
-            local progress=clamp(1-left/ending)*3
-            local pulse=math.min(2,math.floor(progress))
-            out.end_flash=(1-pulse/3)*math.sin((progress-pulse)*math.pi)^2
+        if left<=ending and option('mb_ending_style')~='off'then
+            out.end_flash=M.ending(clamp(1-left/ending),option('mb_ending_style'))
             out.ending=true
             out.idle=option('mb_idle')*out.end_flash*effects
         end
@@ -50,8 +62,14 @@ function M.sample(model,state,now,option)
         end
     end
     local glyph=model.awakening_glyphs and model.awakening_glyphs[state.id]
-    if not out.responding and glyph and glyph.release_end then
+    if not out.responding and not out.ending and glyph and glyph.release_end then
         out.idle=out.idle*smooth((now-glyph.release_end)/.5)
+    end
+    -- A selected ending extinguishes the MB presentation at its real deadline.
+    -- Do not let a late release reappear after those closing lights go out.
+    -- With ending off, retain the original confirmed-burst tail comparison.
+    if now>=state.mb_close and option('mb_ending_style')~='off'then
+        out.release=0;out.flash=0;out.ring=0;out.responding=false
     end
     return out
 end
