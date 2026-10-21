@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-Animation8.5-Pulse-Terminal-Paired-Full'
+NAME = 'Skillchains-Animation8.6-Terminal-Purity-Paired-Full'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skillchains_demo.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
@@ -46,7 +46,7 @@ def main():
     # Only Skillchains HUD and FX files are intentionally changed since 8.4.
     assert not git('diff','6a0d6231b2633c47ebf8ec68e6d40bc76d8239d2','--',
         'skills.lua','targetsc_bridge.lua','skillchains_demo.lua',
-        'learning_ui.lua','images'), 'Unexpected gameplay changes'
+        'learning_ui.lua','images/skillchain','images/resonance'), 'Unexpected gameplay assets changes'
     # The new demo module is mandatory; TargetSC is never the HUD's runtime source.
     demo=(ROOT/'skillchains_demo.lua').read_text()
     assert 'require(\'resonance_preview\')' not in demo
@@ -58,7 +58,7 @@ def main():
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains Animation8.5 pulse-period L2 visible charge Umbra black/Radiance white terminal fade / TargetSC unchanged', 'author': 'A.',
+    info = {'batch': 'Skillchains Animation8.6 timerless pure terminal fade, monochrome glyphs and hidden full terminal track / TargetSC unchanged', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': HUD_BASELINE,
@@ -92,6 +92,15 @@ def main():
     for file in fx_art:
         assert file.is_file()
         dest = STAGE / 'Skillchains/images/resonance' / file.name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(file, dest)
+    # The terminal glyphs are exact white-alpha silhouettes of existing
+    # source icons. Black and white variants use texture tinting at runtime.
+    terminal_art = [ROOT / 'images/terminal/light.png',
+                    ROOT / 'images/terminal/darkness.png']
+    for file in terminal_art:
+        assert file.is_file(), 'Generate terminal icons with tools/generate_terminal_icons.py'
+        dest = STAGE / 'Skillchains/images/terminal' / file.name
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file, dest)
     # Track exactly the committed deliverable. Never copy caches, user data,
@@ -131,6 +140,8 @@ def main():
             assert z.read('Skillchains/images/skillchain/' + file.name).startswith(b'\x89PNG\r\n\x1a\n')
         for file in fx_art:
             assert z.read('Skillchains/images/resonance/' + file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
+        for file in terminal_art:
+            assert z.read('Skillchains/images/terminal/' + file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
         for folder in ('Skillchains', 'TargetSC'):
             checks = json.loads(z.read(folder + '/SHA256SUMS.json'))
             for name, expected in checks.items():

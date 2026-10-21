@@ -1,9 +1,9 @@
-name: Skillchains pulse tempo L2 prewindow terminal FX + TargetSC regression
+name: Skillchains Animation8.6 pure white Radiance / black Umbra finish
 
 on:
   push:
     branches:
-      - development/skillchains-pulse-terminal-fx
+      - development/skillchains-terminal-purity
   workflow_dispatch:
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
       - name: Install Lua 5.1 and MinGW-w64
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq lua5.1 g++-mingw-w64-i686
+          sudo apt-get install -y -qq lua5.1 g++-mingw-w64-i686 python3-pil
       - name: Build native x86 source and test portable stroke math
         run: |
           i686-w64-mingw32-g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror -shared -static -static-libgcc -static-libstdc++ -Wl,--no-insert-timestamp -o /tmp/_TargetSC.dll TargetSC/src/TargetSC.cpp TargetSC/src/exports.def -ld3d8
@@ -32,6 +32,10 @@ jobs:
         run: python3 tools/generate_capsule_halo.py --check
       - name: Verify capsule geometry, seams, and dark interior
         run: python3 tools/test_capsule_halo.py
+      - name: Generate and verify true monochrome terminal glyphs
+        run: |
+          python3 tools/generate_terminal_icons.py
+          python3 tools/generate_terminal_icons.py --check
       - name: Validate runtime Lua 5.1
         run: |
           for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua tools/test_skillchains_demo.lua skillchains_demo.lua TargetSC/*.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
@@ -55,14 +59,14 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.5-Pulse-Terminal-Paired-test
+          name: Skillchains-Animation8.6-Terminal-Purity-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
       - name: Publish Skillchains-only testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.5-Pulse-Terminal-Solo-test
+          name: Skillchains-Animation8.6-Terminal-Purity-Solo-test
           path: dist/skillchains-demo-package/
           if-no-files-found: error
           retention-days: 30
