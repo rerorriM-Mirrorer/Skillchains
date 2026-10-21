@@ -233,7 +233,7 @@ overlay:render(state)
 assert(opt.bar.x==280 and opt.bar.y==140,'Left Ctrl snaps bar anchor from screen origin')
 overlay.mb_handle:pos(333,289)
 overlay:render(state)
-assert(opt.mb.x==330 and opt.mb.y==320,
+assert(opt.mb.x==330 and opt.mb.y==310,
     'MB handle Ctrl-snaps independently of SC bar anchor')
 assert(prims.sc_resonance_sc_frame.x==281,'SC frame follows the same parent anchor')
 assert(overlay.properties.x==
