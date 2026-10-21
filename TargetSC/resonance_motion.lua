@@ -5,16 +5,17 @@ local Burst=require('resonance_burst')
 local min,max,sin,exp,pi=math.min,math.max,math.sin,math.exp,math.pi
 local function clamp(v,a,b)return max(a,min(b,v))end
 local function smooth(v)v=clamp(v,0,1)return v*v*(3-2*v)end
--- Lionstag's 2026-10-19 13:16:05 snapshot is the resettable Test3 baseline.
+-- Effective global + Killala profile from 2026-10-21 08:18:23 XML.
 -- Existing saved settings survive; preset default deliberately restores these.
-M.defaults={opacity=.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded',
-    period=.09,amplitude=.3,damping=3,width=2,glow=1,brightness=4,discs=true,disc_opacity=.3,
-    hum_amplitude=.018,hum_period=.12,hum_slowdown=1,hum_gain=.35,
-    disc_outline=.45,disc_style='glyph',disc_height=.008,disc_speed=.1,disc_slowdown=1,
-    disc_speed_opener=.5,disc_speed_level1=1,disc_speed_level2=2,disc_speed_level3=4,disc_speed_level4=0,mb_opacity=.3,
-    mb_idle=.18,mb_burst=.8,mb_floor=1,mb_ring=1,mb_period=2,mb_rise=.65,mb_expand=.25,sky_expand=.6,
-    awakening=true,awakening_opacity=.3,ground_height=.39,fade_duration=.8,
-    opener_gap=12,opener_glow='black',opener_muted=true}
+M.defaults={opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded',
+    period=0.09,amplitude=0.3,damping=3,width=2,glow=1,brightness=4,discs=true,disc_opacity=1,
+    hum_amplitude=0.018,hum_period=0.12,hum_slowdown=1,hum_gain=0.35,
+    disc_outline=0.3,disc_style='glyph',disc_height=0.06,disc_speed=0.1,disc_slowdown=1,
+    disc_speed_opener=2,disc_speed_level1=1,disc_speed_level2=2,disc_speed_level3=4,disc_speed_level4=0,mb_opacity=0.39,
+    mb_idle=0.06,mb_burst=1,mb_floor=1,mb_ring=1,mb_period=2,mb_rise=0.01,mb_expand=0.03,sky_expand=1,
+    awakening=true,awakening_opacity=0.3,ground_height=0.39,fade_duration=0.8,
+    opener_gap=12,opener_glow='black',opener_muted=true,
+    display='both',sky_cutoff=.55,sky_curve=2,mb_duration=1.2,mb_effects=1,mb_ending=.6}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -107,15 +108,14 @@ function M.positions(s,now,height,opts)
     -- Sky: damped strike only. Ground: strike plus its smaller sustained hum.
     bottom=bottom+ground_wave
     top=max(floor,top-sky_wave)
-    -- Continuation has already closed: finish inside the same fade interval,
-    -- moving down/in to the independently anchored property disc.
-    details.close=not s.closed and smooth((now-s.sc_close)/option(opts,'fade_duration'))or 0
-    if details.close>0 then
-        local target=option(opts,'disc_height')+.006+ground_wave
-        bottom=bottom+(target-bottom)*details.close
-        top=top+(target-top)*details.close
-    end
     return bottom,top,remaining,details
+end
+-- Height, not elapsed time, traces the requested bell profile. The radius
+-- reaches normal after cutoff of the descent, then stays there.
+function M.bell_factor(separation,height,opts)
+    local descent=1-clamp(separation/max(.001,height*.9),0,1)
+    local curve=max(0,1-descent/option(opts,'sky_cutoff'))
+    return 1+option(opts,'sky_expand')*curve^option(opts,'sky_curve')
 end
 local function property_palette(name,context)
     return context.palette({properties={name},elements={},level=context.level(name)})
@@ -141,11 +141,15 @@ local function specifications(s,context)
 end
 function M.frame(model,s,now,radius,height,opts,context)
     local out={discs={}}
+    local display=option(opts,'display')
+    local show_sc=display=='both'or display=='sc'
+    local show_mb=display=='both'or display=='mb'
     local age=max(0,now-s.created)
     local phase=s.source_expired and 'expired'or M.phase(s,now,opts)
     out.phase=phase
     local opening=model:opening_glyph(s)
     local response=Burst.sample(model,s,now,function(k)return option(opts,k)end)
+    if not show_mb then response={idle=0,flash=0,rise=0,release=0,ring=0,ending=false}end
     if phase=='expired'and not response.responding then
         if opening then opening.opacity=0 end
         return out
@@ -193,7 +197,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     local electric=1
     if not opener and s.level==3 then electric=.68+.32*sin(age*11)^2
     elseif not opener and s.level>=4 then electric=(.37+.63*sin(age*23)^2)*(.72+.28*sin(age*28)^2)end
-    if phase~='mb-only'and phase~='expired'then
+    if show_sc and phase~='mb-only'and phase~='expired'then
         local specs=specifications(s,context)
         if not opener and s.level~=2 and age<.16 then specs={{colors={white},radial=1,stack=0}}end
         out.strands=#specs
@@ -212,10 +216,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local h=place[1]+spec.stack
                     local draw_radius=r
                     if place[2]=='sky'then
-                        local reach=max(.1,height*.49-option(opts,'ground_height'))
-                        draw_radius=r*(1+option(opts,'sky_expand')*smooth((h-option(opts,'ground_height'))/reach))
+                        draw_radius=r*M.bell_factor(top-bottom,height,opts)
                     end
-                    draw_radius=draw_radius*(1-.22*(details.close or 0))
                     if glow>0 and not opener and s.level>=3 then
                         local tint=(s.properties[1]=='Darkness'or s.properties[1]=='Umbra')and {132,74,224}or gold
                         band(draw_radius,h,{tint},opacity*.32*glow*electric*fade,px+6*min(glow,3),'glow',place[2],j,rotation)
@@ -230,7 +232,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     if opening then
         local progress=clamp((now-opening.created)/max(.1,opening.open-opening.created),0,1)
         local grow=1-(1-clamp(progress*3,0,1))^3
-        local initial=opening.opener_seen and option(opts,'awakening')and
+        local initial=show_sc and opening.opener_seen and option(opts,'awakening')and
             option(opts,'awakening_opacity')*opacity*(1-smooth((progress-1/3)*3))or 0
         local role='mb-glyph'
         local fill=0
@@ -240,7 +242,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         opening.opacity=response.idle
         if initial>0 then
             role='awakening';fill=initial
-            opening.radius=opening.radius*grow;opening.opacity=initial
+            opening.radius=opening.radius*grow;opening.opacity=0
         end
         if response.responding then
             fill=0;role='mb-glyph'
@@ -250,12 +252,12 @@ function M.frame(model,s,now,radius,height,opts,context)
             opening.opacity=response.release
         end
         out.awakening_glyph=opening
-        disc(opening.radius,opening.offset,0,{white},fill,fill>0 and 1 or 2,
-            opening.opacity,role,color)
+        disc(opening.radius,opening.offset,0,{white},fill,fill>0 and 0 or 2,
+            fill>0 and 0 or opening.opacity,role,color)
     end
     if option(opts,'discs')then
         local sc_life=(phase=='mb-only'or phase=='expired')and 0 or phase=='pre'and 1 or s.closed and fade or remaining
-        local life=max(sc_life,mb_strength)
+        local life=max(show_sc and sc_life or 0,show_mb and mb_strength or 0)
         local reveal=opener and smooth(progress*5)or 1
         local fill=option(opts,'disc_opacity')*opacity*life*reveal
         local outline=option(opts,'disc_outline')*opacity*life*reveal
@@ -264,12 +266,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         local properties=opener and s.properties or {s.properties[1]}
         for j,p in ipairs(properties)do
             local colors=property_palette(p,context)
-            if opener and option(opts,'opener_muted')then
-                for i,c in ipairs(colors)do colors[i]=muted(c)end
-            end
-            if not opener then
-                if s.level>=4 then colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
-                else for i,c in ipairs(colors)do colors[i]=mix(white,c,color_t)end end
+            if not opener and s.level>=4 then
+                colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
             end
             local flash=response.flash*option(opts,'mb_floor')
             local disc_fill,disc_outline=fill+(1-fill)*flash,outline+(1-outline)*flash
@@ -283,14 +281,18 @@ function M.frame(model,s,now,radius,height,opts,context)
     end
     -- MB ring remains tied to its original deadline; response overlays never
     -- reset its fade, the continuation phase, or the property-disc rotation.
-    if mb_strength>0 then
+    if show_mb and mb_strength>0 then
         local colors=context.palette(s)
         local color=colors[#colors]
-        local alpha=option(opts,'mb_opacity')*mb_strength
+        local alpha=option(opts,'mb_opacity')*(1-.75*mb_strength)
         local strength=response.ring*option(opts,'mb_ring')
         if response.element and strength>0 then
             color=mix(color,mix(response.element,white,response.flicker),strength)
             alpha=alpha+(1-alpha)*strength
+        end
+        if response.ending then
+            color=mix(color,white,option(opts,'mb_effects'))
+            alpha=alpha*(1-option(opts,'mb_effects'))+option(opts,'mb_opacity')*response.end_flash*option(opts,'mb_effects')
         end
         ring(radius,height*.49,{color},alpha,'mb',0,0)
     end

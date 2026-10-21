@@ -180,7 +180,7 @@ function M.new()
             local id=tonumber(args[6])
             if id then
                 local tail=0
-                for _,burst in ipairs(self.bursts[id]or {})do tail=max(tail,burst.at+burst_effect.duration)end
+                for _,burst in ipairs(self.bursts[id]or {})do tail=max(tail,burst.at+burst_effect.max_duration)end
                 if self.states[id]and tail>now then
                     -- Retain only a confirmed response's visual tail, never
                     -- an expired opportunity or continuation window.
@@ -200,7 +200,7 @@ function M.new()
         local fade=opts.fade_duration or motion.defaults.fade_duration
         local boundary=s.closed and s.sc_open or s.sc_close
         local tail=0
-        for _,burst in ipairs(self.bursts[id]or {})do tail=max(tail,burst.at+burst_effect.duration)end
+        for _,burst in ipairs(self.bursts[id]or {})do tail=max(tail,burst.at+burst_effect.duration(opts))end
         local expires=s.source_expired and tail or max(boundary+fade,s.mb_close,tail)
         if now>expires then
             local glyph=self.awakening_glyphs[id]

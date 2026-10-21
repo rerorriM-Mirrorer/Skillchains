@@ -1,5 +1,23 @@
 # TargetSC — elemental resonance
 
+## 0.7.0 Test7 — bell taper and separate SC/MB display
+
+Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
+then `//lua reload TargetSC`. Native 0.5.0 stays installed.
+
+- `//tsc sky cutoff 0.55`: reach floor-ring size 55% of the way down.
+- `//tsc sky curve 2`: stronger values narrow earlier; range 1–8.
+- `//tsc display sc|mb|both|off`: select continuation and MB layers (modern motion).
+- `//tsc mb duration 1.2`: confirmed-burst response seconds, not window length.
+- `//tsc mb effects 1`: overall MB animation opacity; `mb opacity` controls the middle ring.
+- `//tsc mb ending 0.6`: seconds for three decreasing white deadline flashes.
+
+The middle MB ring grows more opaque toward the deadline; it and the breathing
+glyph flash out together. The opener expansion is plain white fill. Normal
+floor glyphs keep their property colors. SC closing rings fade while stationary.
+New resettable defaults reflect Killala's supplied profile; saved settings stay
+intact unless you deliberately run `//tsc preset default`.
+
 ## 0.6.0 Test6 — bell shape, breathing glyph and confirmed MB response
 
 Lua-only patch for Test5: merge TargetSC/, preserve data/, then
@@ -675,3 +693,6 @@ Two opposite opener gaps; retained expanding opening glyph replaces filled flash
 ### 2026-10-21 — 0.6.0 Test6 (A)
 
 Bell-profile sky rings and post-deadline down/in close; independent original low glyph anchor; filled opener expansion; MB breathing and coordinated confirmed-hit floor/ring/rising-glyph response; independent strengths and eight-element local preview. Native 0.5.0 and Animation8.6 unchanged.
+
+
+2026-10-21 Test7: configurable height-driven bell taper, separate SC/MB display, deadline pulses and MB response controls; Killala defaults; plain opener fill and stationary SC fade. Author: A.

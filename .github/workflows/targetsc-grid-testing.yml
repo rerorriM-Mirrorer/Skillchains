@@ -1,9 +1,9 @@
-name: TargetSC Test6 bell and burst glyph response
+name: TargetSC Test7 configurable bell and SC/MB display
 
 on:
   push:
     branches:
-      - development/targetsc-bell-burst
+      - development/targetsc-display-bell
   workflow_dispatch:
 
 permissions:
@@ -49,6 +49,7 @@ jobs:
           lua5.1 TargetSC/tests/test_motion.lua
           lua5.1 TargetSC/tests/test_mb_glyph.lua
           lua5.1 TargetSC/tests/test_bell_burst.lua
+          lua5.1 TargetSC/tests/test_display_bell.lua
           lua5.1 TargetSC/tests/test_transport.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
@@ -61,7 +62,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test6-Bell-Burst-Paired-test
+          name: TargetSC-Test7-Display-Bell-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
@@ -75,7 +76,7 @@ jobs:
       - name: Publish minimal TargetSC patch
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test6-Bell-Burst-Patch
-          path: dist/TargetSC-0.6.0-Test6-Bell-Burst-Lua-Patch.zip
+          name: TargetSC-Test7-Display-Bell-Patch
+          path: dist/TargetSC-0.7.0-Test7-Display-Bell-Lua-Patch.zip
           if-no-files-found: error
           retention-days: 30

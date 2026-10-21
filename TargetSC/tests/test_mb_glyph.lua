@@ -15,16 +15,16 @@ local function layer(frame,kind,role,part)
     end
 end
 local opts=copy(R.defaults)
-assert(opts.disc_speed==.1 and opts.ground_height==.39 and opts.mb_opacity==.3)
-opts.mb_opacity=1;opts.mb_idle=0 -- preserve the Test5 hidden-between-bursts comparison
+assert(opts.disc_speed==.1 and opts.ground_height==.39 and opts.mb_opacity==.39)
+opts.mb_ending=.15;opts.mb_opacity=1;opts.mb_idle=0 -- preserve the Test5 hidden-between-bursts comparison
 local m=R.new()
 local opener=state(100,1,1,'Scission');m.states[71]=opener
 local early=m:frame(71,100.3,2,4,opts)
 local glyph=early.awakening_glyph
 local first=layer(early,'disc','awakening')
-assert(glyph and first and first.glyph==1 and first.rotation==0)
-assert(first.color>=16777216 and first.outline>=16777216,'opening white fill restored')
-near(first.offset,.008)
+assert(glyph and first and first.glyph==0 and first.rotation==0)
+assert(first.color>=16777216 and first.outline<16777216,'plain opening white fill')
+near(first.offset,opts.disc_height)
 local radius=glyph.radius
 local later=m:frame(71,101.5,2,4,opts)
 assert(later.awakening_glyph==glyph and glyph.radius>radius and glyph.rotation==0)
@@ -40,20 +40,20 @@ for _,time in ipairs({103,103.2,104,107,111,112.5})do
     assert(not layer(f,'disc','ground-glyph')and not layer(f,'disc','awakening'))
     local mb=layer(f,'ring','core','mb')
     assert(mb,'MB exists during preparation, continuation and independent tail')
-    assert(math.floor(mb.color/16777216)==math.floor((113-time)/10*255+.5))
+    assert(math.floor(mb.color/16777216)==math.floor((1-.75*(113-time)/10)*255+.5))
     local disc=layer(f,'disc','property')
     assert(disc,'property glyph survives until MB fade')
     for _,band in ipairs(f)do
         if band.part=='ground'or band.part=='sky'then near(band.rotation,disc.rotation)end
     end
 end
--- Its own opacity bypasses the global ring opacity and still fades linearly.
+-- Its own opacity bypasses global ring opacity and increases toward closing.
 local faint=copy(opts);faint.opacity=0
 local full=m:frame(71,103,2,4,faint)
-assert(math.floor(layer(full,'ring','core','mb').color/16777216)==255)
+assert(math.floor(layer(full,'ring','core','mb').color/16777216)==64)
 faint.mb_opacity=.4
 local half=m:frame(71,108,2,4,faint)
-assert(math.floor(layer(half,'ring','core','mb').color/16777216)==51)
+assert(math.floor(layer(half,'ring','core','mb').color/16777216)==64)
 faint.mb_opacity=0
 assert(not layer(m:frame(71,108,2,4,faint),'ring','core','mb'))
 assert(not layer(m:frame(71,113,2,4,opts),'ring','core','mb'))
@@ -78,4 +78,4 @@ assert(receiver.awakening_glyphs[71])
 assert(receiver:receive({'1','test','3','expire','111','71'},111))
 assert(not receiver.awakening_glyphs[71])
 receiver:clear();assert(not next(receiver.awakening_glyphs))
-print('PASS Test5 MB full-window opacity/fade, retained nonspinning opening glyph, no stationary base, MB-lived property disc, matched L2 rotations, stage speed tuning and source cleanup')
+print('PASS Test5 MB full-window independent opacity, retained nonspinning opening glyph, no stationary base, MB-lived property disc, matched L2 rotations, stage speed tuning and source cleanup')

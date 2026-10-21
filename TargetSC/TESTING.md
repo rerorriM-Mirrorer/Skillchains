@@ -1,5 +1,50 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.7.0 Test7 — configurable bell taper and SC/MB display (2026-10-21)
+
+Branch `development/targetsc-display-bell`, based on published Test6 `582301e7`.
+Lua-only cumulative patch over Test5/Test6; native API/DLL 0.5.0 and the full
+Skillchains Animation8.6 source/bridge/assets stay unchanged. Merge TargetSC/
+into Windower/addons, preserve data/, then `//lua reload TargetSC`.
+
+Sky radius follows height: `1 + sky_expand * max(0, 1 - descent / sky_cutoff)^sky_curve`.
+Descent is 0 at full separation and 1 when the pair meets. Default cutoff .55,
+curve 2: normal floor-ring radius from 55% descent onward. Higher curve values
+contract sooner. `//tsc sky cutoff 0.6`, `//tsc sky curve 3`, `//tsc sky expand 1`.
+Post-deadline SC closure restores the stationary .8s fade after meeting.
+
+`//tsc display sc|mb|both|off` selects the modern sine/flutter layers. SC includes
+continuation rings and plain white filled opener expansion. MB includes the
+middle ring, breathing/rising large glyph and confirmed-burst overlays. The
+small property disc is shared while either enabled opportunity is alive.
+Its normal property palette no longer whitens/mutes with the SC rings; confirmed
+MB flashes still overlay it. Historical legacy motion remains a comparison.
+
+Middle-ring opacity increases from 25% to its configured peak as the original
+MB deadline approaches. Both middle ring and breathing glyph end with three
+white pulses of decreasing opacity within the final .6s, then disappear exactly
+at the deadline. No source clocks change. Confirmed late bursts can complete
+their visual response tail without extending either opportunity.
+
+`//tsc mb duration 1.2` sets confirmed-burst response seconds (.2–4).
+`//tsc mb ending 0.6` sets final deadline-flash duration (.15–2).
+`//tsc mb effects 1` scales MB animated overlays and breathing (0–1), separately
+from normal middle-ring `mb opacity`, small-disc opacity and global opacity.
+`mb period` still controls the breathing cycle. `preview burst Wind` tests an
+actual response locally; `preview demo` retains the full no-burst Umbra timeline.
+
+Resettable defaults adopt the effective global + Killala values in the supplied
+2026-10-21 08:18:23 settings: disc fill 1, trace .3, height .06, global spin .1,
+opener spin 2, middle opacity .39, idle .06, release rise .01 and expansion .03,
+sky expansion 1, ground height .39. Existing saved values are preserved; use
+`//tsc preset default` only to deliberately restore this complete visual profile.
+The personal XML is neither modified nor shipped.
+
+Verification: Lua 5.1 parse, motion/geometry sweep, actual addon/transport
+simulations, burst pooling/deadline tests and new Test7 cutoff/curve, display,
+three-pulse, duration/opacity and command validation tests. This is host
+simulation; the changed appearance still needs Max's live FFXI evaluation.
+
 ## TargetSC 0.6.0 Test6 — bell profile and MB expression (2026-10-21)
 
 Branch `development/targetsc-bell-burst`, based on published Test5 `700bef12`.

@@ -1,5 +1,23 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## 0.7.0 Test7 — bell taper and separate SC/MB display
+
+Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
+then `//lua reload TargetSC`. Native 0.5.0 stays installed.
+
+- `//tsc sky cutoff 0.55`: reach floor-ring size 55% of the way down.
+- `//tsc sky curve 2`: stronger values narrow earlier; range 1–8.
+- `//tsc display sc|mb|both|off`: select continuation and MB layers (modern motion).
+- `//tsc mb duration 1.2`: confirmed-burst response seconds, not window length.
+- `//tsc mb effects 1`: overall MB animation opacity; `mb opacity` controls the middle ring.
+- `//tsc mb ending 0.6`: seconds for three decreasing white deadline flashes.
+
+The middle MB ring grows more opaque toward the deadline; it and the breathing
+glyph flash out together. The opener expansion is plain white fill. Normal
+floor glyphs keep their property colors. SC closing rings fade while stationary.
+New resettable defaults reflect Killala's supplied profile; saved settings stay
+intact unless you deliberately run `//tsc preset default`.
+
 ## TargetSC Test6 companion patch (2026-10-21)
 
 Lua-only bell/MB expression update for Test5. See TargetSC/README.md for preview
@@ -716,3 +734,6 @@ Retained opening glyph, two gaps, per-stage rotation and full-window MB ring/pro
 ### 2026-10-21 — TargetSC Test6 companion (A)
 
 Bell shape and closing motion, original low glyph anchor, coordinated MB response and breathing controls. No Skillchains/native change.
+
+
+2026-10-21 Test7: configurable height-driven bell taper, separate SC/MB display, deadline pulses and MB response controls; Killala defaults; plain opener fill and stationary SC fade. Author: A.

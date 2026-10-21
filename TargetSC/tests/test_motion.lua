@@ -19,7 +19,7 @@ local function discs(f,role)
     local r={}for _,d in ipairs(f.discs or {})do if d.role==role then r[#r+1]=d end end return r
 end
 for k,v in pairs({motion='sine',period=.09,amplitude=.3,damping=3,intensity=1,scale=2,
-    opacity=.3,brightness=4,glow=1,disc_opacity=.3,width=2,height=1})do assert(opts[k]==v,'snapshot default '..k)end
+    opacity=.3,brightness=4,glow=1,disc_opacity=1,width=2,height=1})do assert(opts[k]==v,'snapshot default '..k)end
 assert(frame(100.5).sky==nil and frame(102.999).sky==nil,'opener is ground-only before source opening')
 assert(frame(102).remaining==1,'no pre-window countdown')
 assert(frame(103.4).sky and frame(104).remaining>frame(108).remaining)
@@ -142,7 +142,7 @@ print('PASS opener comparisons: all 12 combinations, exact gap metadata, black/o
 s=state('Liquefaction',1,1);m.states[71]=s
 local end_frame=frame(110);local faded=frame(110.3)
 local end_ground=cores(end_frame,'ground')[1];local fade_ground=cores(faded,'ground')[1]
-assert(fade_ground.radius<end_ground.radius and fade_ground.offset<end_ground.offset,'post-deadline close moves inward/downward')
+near(fade_ground.radius,end_ground.radius);near(fade_ground.offset,end_ground.offset)
 assert(end_ground.color%16777216==fade_ground.color%16777216 and faded.phase=='expiration')
 assert(math.floor(fade_ground.color/16777216)<math.floor(end_ground.color/16777216))
 assert(#frame(110.81)==0,'no MB halo invented for an expired opener')
