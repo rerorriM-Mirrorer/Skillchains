@@ -7,7 +7,7 @@
 namespace targetsc {
 struct GlyphPoint {float x,y;};
 struct GlyphLine {GlyphPoint a,b;};
-constexpr int kGlyphLines=28;
+constexpr int kGlyphLines=24;
 inline int sector_index(int slice,int slices,int sectors) {
     return std::min(sectors-1,std::max(0,slice)*sectors/std::max(1,slices));
 }
@@ -17,20 +17,21 @@ inline std::array<GlyphLine,kGlyphLines> property_glyph() {
     auto polygon=[&](GlyphPoint const* p,int n) {
         for(int i=0;i<n;++i)lines[count++]={p[i],p[(i+1)%n]};
     };
-    // The pointed star is NOT a substitute for the full border-reaching cross.
-    GlyphPoint star[8]{};
-    for(int i=0;i<8;++i) {
-        const float a=i*6.28318530718f/8;
-        const float r=(i&1)? .18f:.78f;
-        star[i]={std::cos(a)*r,std::sin(a)*r};
+    // Trace the union of the diagonal star and wider cross, retaining only
+    // its exterior boundary. These are the exact approved Lua preview points.
+    const float tip=.78f/std::sqrt(2.f);
+    const float valley=.18f,half_width=.12f;
+    const float edge=std::sqrt(1.f-half_width*half_width);
+    const float join=valley+(tip-valley)*half_width/tip;
+    const GlyphPoint quarter[5]={{half_width,edge},{half_width,join},
+        {tip,tip},{join,half_width},{edge,half_width}};
+    GlyphPoint silhouette[20]{};
+    for(int turn=0;turn<4;++turn)for(int i=0;i<5;++i) {
+        auto p=quarter[i];
+        for(int j=0;j<turn;++j){const float x=p.x;p.x=p.y;p.y=-x;}
+        silhouette[turn*5+i]=p;
     }
-    polygon(star,8);
-    const float edge=std::sqrt(1.f-.045f*.045f);
-    for(int arm=0;arm<4;++arm) {
-        GlyphPoint cross[4]={{.15f,-.045f},{edge,-.045f},{edge,.045f},{.15f,.045f}};
-        for(auto& p:cross)for(int j=0;j<arm;++j){const float x=p.x;p.x=-p.y;p.y=x;}
-        polygon(cross,4);
-    }
+    polygon(silhouette,20);
     const GlyphPoint square[4]={{-.15f,-.15f},{.15f,-.15f},{.15f,.15f},{-.15f,.15f}};
     polygon(square,4);
     return lines;

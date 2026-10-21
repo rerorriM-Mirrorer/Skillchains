@@ -3,7 +3,7 @@
 #include <cstdio>
 int main() {
     const auto lines=targetsc::property_glyph();
-    assert(lines.size()==28);
+    assert(lines.size()==24);
     int rim_endpoints=0,square_edges=0,star_tips=0;
     for(std::size_t i=0;i<lines.size();++i) {
         const auto line=lines[i];
@@ -12,8 +12,17 @@ int main() {
             assert(std::hypot(p.x,p.y)<=1.00001f);
             if(std::hypot(p.x,p.y)>.999f)++rim_endpoints;
         }
-        if(i<8 && std::hypot(line.a.x,line.a.y)>.77f)++star_tips;
-        if(i>=24) {
+        if(i<20) {
+            const auto next=lines[(i+1)%20];
+            assert(line.b.x==next.a.x && line.b.y==next.a.y);
+            assert(std::max(std::fabs(line.a.x),std::fabs(line.a.y))>.15f);
+            if(std::hypot(line.a.x,line.a.y)>.77f &&
+               std::hypot(line.a.x,line.a.y)<.79f) {
+                assert(std::fabs(std::fabs(line.a.x)-std::fabs(line.a.y))<.00001f);
+                ++star_tips;
+            }
+        }
+        if(i>=20) {
             assert(std::fabs(std::fabs(line.a.x)-.15f)<.00001f);
             assert(std::fabs(std::fabs(line.a.y)-.15f)<.00001f);
             ++square_edges;
@@ -29,5 +38,5 @@ int main() {
         for(int i=0;i<sectors;++i)assert(counts[i]>=64/sectors && counts[i]<=64/sectors+1);
     }
     assert(targetsc::sector_index(31,64,2)==0 && targetsc::sector_index(32,64,2)==1);
-    std::puts("PASS portable property geometry: border-reaching cross, four-point star, central square, transparent line geometry, complete sector coverage");
+    std::puts("PASS portable property geometry: traced wide cross, diagonal four-point star, central square, transparent line geometry, complete sector coverage");
 }

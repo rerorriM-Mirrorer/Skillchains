@@ -1,5 +1,13 @@
 # TargetSC — elemental resonance
 
+## Traced glyph patch (2026-10-20)
+
+Merged diagonal-star/wide-cross outline with a central square opening replaces
+both static and spinning glyphs. Install only the patched DLL over Test3 or its
+Animation8.1 pairing; close all clients first. Native status: `glyph=traced`.
+Existing colors, fill, motion, settings and bridge remain compatible. See TESTING.md.
+
+
 ## Paired Skillchains Animation8.1 + TargetSC 0.3.0 Test3 (2026-10-20)
 
 Install **both** addon folders from the matched pairing, not standalone Animation8.1 over Test3. Skillchains reports `2.20.08.25-resonance.7-animation.8.1`, TargetSC reports `0.3.0-test3` with native `0.3.0`. The companion bridge uses Windower `lua c` commands in both directions (subscription, readiness, events, unsubscribe). The prior standalone Animation8.1 publisher contains `lua i` and cannot synchronize with Test3 if copied over the fixed publisher. The renderer tolerates numeric `glow.levels`, but saved XML may still trigger harmless load-time schema warnings. Preserve both `data/` folders and close FFXI before replacing TargetSC's DLL. Verify with `//sc status`, `//tsc sync`, `//sc targetsc`, `//tsc status`; see TESTING.md.
@@ -548,3 +556,7 @@ inside its own folder.
   burst shimmer/ripple, L1–L4 palettes, preview, settings and diagnostics.
 - Windows i386 cross-compilation and simulated/static checks completed;
   Windower loading, visual quality and multibox performance remain live tests.
+
+### 2026-10-20 — traced glyph (A)
+
+Replace overlapping primitive outlines with approved diagonal-star/wide-cross silhouette and central square; native API remains 0.3.0.

@@ -1,5 +1,35 @@
 # TargetSC TESTING.md — start here
 
+## Traced disc glyph patch — 2026-10-20 (A)
+
+User selected the exact merged-outline preview: diagonal star (45 degrees),
+cross width .24, central square half-size .15, and existing outer circle.
+Native geometry now traces the 20-edge exterior plus four square edges;
+internal cross/star overlap lines are removed. Both stationary and rotating
+copies use it. The colored disc fill remains the existing full property disc.
+
+Runtime installation is DLL-only over working TargetSC 0.3.0 Test3, including
+its Animation8.1 paired installation. Close ALL FFXI clients, back up
+`TargetSC/libs/_TargetSC.dll`, then merge this patch's TargetSC folder into
+`Windower/addons/`. Keep existing Lua, Skillchains and data/settings.
+The native API stays 0.3.0; `//tsc status` includes `glyph=traced` in native
+status to identify this build. Use `//tsc discs style glyph` (or `outline`),
+select a living enemy and run `//tsc preview opener Fragmentation`.
+Check diagonal points, wide arms, square opening, stationary/spinning copies,
+then `//tsc preview off` and a real chain. Saved ground height .33 is retained.
+
+Host checks passed: portable geometry (closure, diagonal tips, square, radius,
+sector coverage), warning-clean x86 DLL build, actual-handler paired bridge
+transport, TargetSC lifecycle/commands and full motion sweep, Animation8.1 HUD
+simulation. Live rendering and gameplay verification remain pending.
+Working baseline: paired commit 721242f. Skillchains and all TargetSC Lua are
+byte-identical to that baseline. Source/portable test accompany the DLL;
+README/WORKFLOW/TESTING are included. Package BUILD_INFO identifies source
+commit and DLL hash. Native maximum storage decreases to 18,048 vertices.
+
+---
+
+
 ## Paired repair — TargetSC Test3 with Skillchains Animation8.1 (2026-10-20; LIVE PENDING)
 
 Use the complete **TargetSC-0.3.0-Test3-Animation8.1-Paired-Full** package. TargetSC Lua, native 0.3.0 DLL, ring/disc presentation, source deadline handling and `lua c` subscriber are unchanged from published Test3. Skillchains Lua/HUD uses exact Animation8.1, while **its publisher must retain Test3's `lua c TargetSC` delivery**. Installing standalone Animation8.1 over the pair can silently revert the bridge to `lua i` and break synchronization. This new pairing makes that compatibility explicit and tests it through the existing real-handler transport suite.

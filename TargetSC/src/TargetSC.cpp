@@ -703,7 +703,7 @@ bool project(Position const& p,D3DVIEWPORT8 const& v, DrawVertex& out,DWORD colo
 // Bounded storage reused by the render thread: no per-frame allocations.
 constexpr int kMaxVertices=(kMaxRings+kMaxDiscs)*ring_slices_*6+
     kMaxDiscs*(ring_slices_*3+targetsc::kGlyphLines*6);
-static_assert(kMaxVertices==18240,"Review bounded storage when glyph complexity changes");
+static_assert(kMaxVertices==18048,"Review bounded storage when glyph complexity changes");
 DrawVertex g_vertices[kMaxVertices]{};
 unsigned g_vertex_count=0;
 void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
@@ -771,7 +771,7 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
     }
     if(!disc.glyph || !(disc.outline>>24))return;
     Ring rim{disc.radius,disc.offset,0,disc.outline,1.f};emit_ring(base,rim,viewport);
-    // Transparent glyph strokes: full cross, pointed star AND central square.
+    // Transparent strokes: traced diagonal star/wide cross and central square.
     static const auto lines=targetsc::property_glyph();
     for(auto const& line:lines) {
         auto point=[&](targetsc::GlyphPoint p) {
@@ -927,7 +927,7 @@ int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.3.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.3.0 %s; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.3.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;
