@@ -188,8 +188,7 @@ assert(prims.sc_resonance_mb_1.x>=opt.mb.x
     'MB coordinates follow their own saved x/y')
 assert(overlay.caption_icons.mb[1].image.width==24,
     'MB icon size independent from SC scale and font size')
-assert(overlay.mb_caption.size_value==23 or overlay.mb_caption.font_size==23
-    or overlay.mb_caption.font_size==22,
+assert(overlay.mb_caption._size==23,
     'MB font size uses independent setting and scale')
 opt.mb.scale=1;opt.mb.fontsize=10;opt.mb.iconsize=10
 opt.mb.height=2;opt.mb.width=260
