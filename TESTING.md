@@ -6,7 +6,7 @@
 
 **Present work:** Standalone `//sc demo` for the same five-step progression and absolute-derived clocks as TargetSC's Test3 Umbra visual demo, but running entirely in the Skillchains HUD. It temporarily takes over HUD presentation without modifying real combat or publishing bridge events. Demo ends automatically or via `//sc demo off`.
 
-**Checks:** host tests include exact timeline vs TargetSC, Skillchains command dispatch/render and absence of bridge traffic, existing Lua 5.1 and FX regression, TargetSC Test3 handshake/native build and package checks. **CI outcome and live in-game visuals require confirmation.**
+**Checks:** GitHub Actions run [39543735004](https://github.com/rerorriM-Mirrorer/Skillchains/actions/runs/39543735004) **PASSED** for source `9025f611` (Lua 5.1 parse, exact TargetSC demo timeline parity, real Skillchains command/HUD simulation with no fake bridge events or saved-setting writes, TargetSC Test3 handshake/native compilation, package manifests). It published a Skillchains-only install artifact `12320293616` and compatible paired artifact `12320597395`. These are **static/simulated checks**, not an in-game demo test; visual behavior and FPS remain to be verified by the user.
 
 **Next test:** Backup and preserve Skillchains/data; install the Skillchains-only folder; `//lua reload Skillchains`; `//sc status` expected 8.3. For an independent MB tail run `//sc display both`, then `//sc demo` and observe milestones, L4 charge through 33 s and MB expiry at 40 s; `//sc demo off` cancels. Restore `//sc display sc` if desired. Verify `//sc targetsc` and `//tsc status` still connected and that live WS actions render normally afterward. No real weaponskills are executed by the demo.
 
