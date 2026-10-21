@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.8.2'
+_addon.version = '2.20.08.25-resonance.7-animation.8.3'
 
 require('luau')
 require('pack')
@@ -36,6 +36,7 @@ require('actions')
 texts = require('texts')
 skills = require('skills')
 local resonance_view = require('resonance_ui')
+local skillchains_demo = require('skillchains_demo')
 
 _static = S{'WAR','MNK','WHM','BLM','RDM','THF','PLD','DRK','BST','BRD','RNG','SAM','NIN','DRG','SMN','BLU','COR','PUP','DNC','SCH','GEO','RUN'}
 
@@ -309,6 +310,8 @@ end
 local next_frame = os.clock()
 -- Visual preview never publishes any TargetSC events or acts on FFXI.
 local animation_preview=nil
+local hud_demo=nil
+local message -- Forward declaration: the prerender demo reports each milestone.
 local function preview_state(now)
     if not animation_preview then return nil end
     local p=animation_preview
@@ -341,6 +344,16 @@ windower.register_event('prerender', function()
         end
     end
     if not ensure_player() then overlay:render(nil) return end
+    if hud_demo then
+        local state,stage=hud_demo:frame(now)
+        if stage=='finished' then
+            hud_demo=nil
+        elseif state then
+            if stage then message('Demo: '..stage) end
+            overlay:render(state)
+            return
+        end
+    end
     local simulated=preview_state(now)
     if simulated then overlay:render(simulated);return end
     local target=windower.ffxi.get_mob_by_target('t','bt')
@@ -495,7 +508,7 @@ windower.register_event('incoming chunk', function(id, data)
     end
 end)
 
-local function message(str)
+message = function(str)
     windower.add_to_chat(207,'Skillchains: '..str)
 end
 
@@ -541,6 +554,24 @@ windower.register_event('addon command', function(cmd, ...)
         elseif option=='unsubscribe' then targetsc.subscribed=false
         else message(('TargetSC bridge v1: subscribed=%s, events=%d, send failures=%d'):format(
             tostring(targetsc.subscribed),targetsc.sequence,targetsc.failures)) end
+        return
+    elseif cmd=='demo' then
+        if option=='off' then
+            hud_demo=nil
+            overlay:hide()
+            message('Umbra HUD demo stopped; normal tracking restored.')
+        elseif option=='status' then
+            message(hud_demo and ('Umbra HUD demo: '..hud_demo:status(os.clock()))
+                or 'Umbra HUD demo idle. Use //sc demo.')
+        elseif not option or option=='start' then
+            animation_preview=nil
+            hud_demo=skillchains_demo.new(os.clock())
+            next_frame=os.clock()
+            message('Umbra HUD demo: Fast Blade -> Scission (opener).')
+            message('Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s; MB ends 40s. No game actions or TargetSC events.')
+        else
+            message('Use //sc demo [start|status|off].')
+        end
         return
     elseif cmd=='display' then
         if option~='sc' and option~='mb' and option~='both' then
@@ -805,6 +836,7 @@ windower.register_event('addon command', function(cmd, ...)
                 animation_preview=nil;overlay:hide()
                 message('Animation preview off.')
             elseif examples[kind] then
+                hud_demo=nil
                 local example=examples[kind]
                 local clock=os.clock()
                 animation_preview={
@@ -890,7 +922,7 @@ windower.register_event('addon command', function(cmd, ...)
             (opts.animation or {}).intensity or 1,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; glow [levels 34|off|1234|rail12|cap12|rail34|cap34|level1-4|scale|l4|preset]; transition [seconds|style energized|uniform]; anim [on|off|intensity <number>|flare <number>|glow <number>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('demo [start|status|off] (standalone Umbra HUD sequence); display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; glow [levels 34|off|1234|rail12|cap12|rail34|cap34|level1-4|scale|l4|preset]; transition [seconds|style energized|uniform]; anim [on|off|intensity <number>|flare <number>|glow <number>|fade on|off|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
@@ -905,6 +937,8 @@ windower.register_event('job change', function(job, lvl)
 end)
 
 windower.register_event('zone change', function()
+    hud_demo=nil
+    animation_preview=nil
     targetsc:reset('zone')
     resonating = {}
     overlay:hide()
@@ -928,12 +962,15 @@ windower.register_event('login', function()
 end)
 
 windower.register_event('unload', function()
+    hud_demo=nil
     targetsc:stop()
     if check_weapon then coroutine.close(check_weapon) end
     overlay:destroy()
 end)
 
 windower.register_event('logout', function()
+    hud_demo=nil
+    animation_preview=nil
     targetsc:reset('logout')
     if check_weapon then coroutine.close(check_weapon) end
     overlay:hide()
