@@ -44,6 +44,7 @@ local function harness()
             return {
                 render=function(_,frame)renders[#renders+1]=copy(frame or {hidden=true})end,
                 hide=function()end,destroy=function()end,
+                set_position=function(_,x,y)opt.bar.x=x;opt.bar.y=y end,
                 set_mb_position=function(_,x,y)m.x=math.floor(math.max(8,math.min(x,1220))+.5)
                     m.y=math.floor(math.max(35,math.min(y,685))+.5)end,
                 mb_align=function(_,side)
