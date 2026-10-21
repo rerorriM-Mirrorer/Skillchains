@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.4.0-test4'
+_addon.version='0.5.0-test5'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -25,8 +25,8 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     for _,name in ipairs({'start','stop','clear','begin','ring','disc','commit','status'}) do
         if type(result[name])~='function' then api_ok=false end
     end
-    if version_ok and version=='0.4.0' and api_ok then native=result
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.4.0, received '..tostring(version) end
+    if version_ok and version=='0.5.0' and api_ok then native=result
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.5.0, received '..tostring(version) end
 else renderer_error=tostring(result) end
 
 local function say(text) windower.add_to_chat(207,'TargetSC: '..text) end
@@ -91,20 +91,22 @@ local function help()
         {'layout grounded|symmetric|center','Choose how the pair moves.'},
         {'strike period|amplitude|damping <number>','Strike: half-cycle seconds, world displacement, decay/sec. Also: flutter.'},
         {'hum amplitude|period|slowdown|gain <number>','Ground hum: displacement, half-cycle, slowing power, level gain.'},
-        {'ground height <0-1>','Floor-ring anchor above model ground, in world units.'},
+        {'ground height <0-1>','Floor-ring/glyph anchor above model ground, in world units.'},
         {'fade duration <0.1-1>','Fade existing rings in place after the source deadline.'},
         {'width <1-8>','Minimum screen-pixel core width (default 2).'},
         {'brightness <0-4>','Core alpha multiplier (default 4).'},
         {'glow <0-3>','Surrounding light without thickening the core.'},
         {'opener preset original|gap|black|muted|combined|quiet','Compare opener treatments without resetting other visuals.'},
-        {'opener gap <0-60>|on|off','Opener arc gap in degrees; on selects 12 degrees.'},
+        {'opener gap <0-60>|on|off','Two opposite opener gaps, each this many degrees; on=12.'},
         {'opener glow color|black|off','Opener surround color; uses the global glow strength.'},
         {'opener muted [on|off]','Quieter elemental hues on opener rings and disc fills.'},
         {'discs on|off|opacity <0-1>','Control procedural ground property glyphs.'},
         {'discs outline <0-1>','Glyph line opacity independent of elemental fill.'},
         {'discs style glyph|outline|fill','Select filled glyph, outline only, or fill only.'},
         {'discs height|speed|slowdown <number>','Ground offset, starting-spin multiplier, slowing power.'},
-        {'awakening on|off|opacity <0-1>','Initial white ground flash, including with discs off.'},
+        {'discs speed opener|level1|level2|level3|level4 <0-4>','Initial turns/sec before the global speed multiplier.'},
+        {'mb opacity <0-1>','MB ring opacity independent of global opacity; fades across the full window.'},
+        {'awakening on|off|opacity <0-1>','Expanding white glyph; retained hidden after fading, also with discs off.'},
         {'preset default|discson|discsoff|vivid|gentle|legacy','Reset visual settings; default is your latest snapshot.'},
         {'preview off','End preview and return to live state.'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
@@ -117,7 +119,7 @@ local function help()
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
     }
-    windower.add_to_chat(0,('TargetSC 0.4.0 — elemental resonance'):color(167))
+    windower.add_to_chat(0,('TargetSC 0.5.0 — elemental resonance'):color(167))
     for _,line in ipairs(lines) do
         windower.add_to_chat(0,('//tsc '):color(200)..line[1]:color(207)..(' -> '):color(200)..line[2]:color(0))
     end
@@ -138,6 +140,9 @@ local function status()
         settings.disc_style,settings.disc_outline,settings.disc_height,settings.disc_speed,settings.disc_slowdown,tostring(settings.awakening),settings.awakening_opacity))
     say(('opener gap=%.1f degrees glow=%s muted=%s; L2=opposed two-color halves'):format(
         settings.opener_gap,settings.opener_glow,tostring(settings.opener_muted)))
+    say(('initial turns/sec: opener=%.2f L1=%.2f L2=%.2f L3=%.2f L4=%.2f; MB opacity=%.2f'):format(
+        settings.disc_speed_opener,settings.disc_speed_level1,settings.disc_speed_level2,
+        settings.disc_speed_level3,settings.disc_speed_level4,settings.mb_opacity))
     local state=(preview and preview.model or model).states[selected_id]
     if state then say(('target revision=%d properties=%s; continuation=%.3fs (wait %.3fs); MB=%.3fs; closed=%s'):format(
         state.revision,table.concat(state.properties,'/'),state.closed and 0 or math.max(0,state.sc_close-math.max(now,state.sc_open)),math.max(0,state.sc_open-now),

@@ -1,3 +1,13 @@
+# Building and verifying TargetSC 0.5.0 / Test5
+
+Native API 0.5.0 interprets the optional eleventh `ring` argument as the size of
+EACH of two opposite gaps. With gap=12 the 64 segments span open arcs 6–174
+and 186–354 degrees (66 points total, independent end caps). Closed circles
+remain on the original periodic path. Vertex storage remains 18,048 vertices,
+one draw call, SceneHook ABI 2. New Lua requires native 0.5.0.
+
+Previous API/build notes are retained below as history:
+
 # Building and verifying TargetSC 0.4.0 / Test4
 
 Native API 0.4.0 adds an optional eleventh `ring` argument, gap degrees (0–60).

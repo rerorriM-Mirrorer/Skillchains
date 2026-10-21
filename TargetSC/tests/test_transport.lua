@@ -58,7 +58,7 @@ local function run(source_first)
                 return wrapped
             end
             if module=='resonance_preview'or module=='resonance_controls'then return require(module)end
-            if module=='_TargetSC'then return {version=function()return '0.4.0'end,start=function()return'running'end,
+            if module=='_TargetSC'then return {version=function()return '0.5.0'end,start=function()return'running'end,
                 stop=function()end,clear=function()end,begin=function()end,ring=function()end,
                 disc=function()end,commit=function()end,status=function()return'simulated'end}end
             return {}

@@ -9,8 +9,9 @@ local function smooth(v)v=clamp(v,0,1)return v*v*(3-2*v)end
 M.defaults={opacity=.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded',
     period=.09,amplitude=.3,damping=3,width=2,glow=1,brightness=4,discs=true,disc_opacity=.3,
     hum_amplitude=.018,hum_period=.12,hum_slowdown=1,hum_gain=.35,
-    disc_outline=.45,disc_style='glyph',disc_height=.008,disc_speed=1,disc_slowdown=1,
-    awakening=true,awakening_opacity=.3,ground_height=.04,fade_duration=.8,
+    disc_outline=.45,disc_style='glyph',disc_height=.008,disc_speed=.1,disc_slowdown=1,
+    disc_speed_opener=.5,disc_speed_level1=1,disc_speed_level2=2,disc_speed_level3=4,disc_speed_level4=0,mb_opacity=1,
+    awakening=true,awakening_opacity=.3,ground_height=.39,fade_duration=.8,
     opener_gap=12,opener_glow='black',opener_muted=true}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
@@ -45,7 +46,8 @@ local function energy_time(s,now,opts,power)
     return charge+M.slow_integral(now-s.sc_open,duration,power)
 end
 function M.rotation(s,now,opts)
-    local turns=s.step==1 and .5 or s.level==1 and 1 or s.level==2 and 2 or s.level==3 and 4 or 0
+    local stage=s.step==1 and 'opener'or 'level'..s.level
+    local turns=option(opts,'disc_speed_'..stage)
     return 2*pi*turns*option(opts,'disc_speed')*energy_time(s,now,opts,option(opts,'disc_slowdown'))
 end
 local function wave(cycles,opts)
@@ -132,7 +134,13 @@ function M.frame(model,s,now,radius,height,opts,context)
     local age=max(0,now-s.created)
     local phase=M.phase(s,now,opts)
     out.phase=phase
-    if phase=='expired'then return out end
+    local opening=model:opening_glyph(s)
+    if phase=='expired'then
+        if opening then opening.opacity=0 end
+        return out
+    end
+    local mb_strength=s.mb_close>now and now>=s.created and clamp((s.mb_close-now)/10,0,1)or 0
+    out.mb_strength=mb_strength
     local bottom,top,remaining,details=M.positions(s,now,height,opts)
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
     local intensity,opacity=option(opts,'intensity'),option(opts,'opacity')
@@ -185,7 +193,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                 colors[#colors+1]=mix(mix(white,target,color_t),white,flash)
             end
             local r=radius*spec.radial
-            local rotation=opener and M.rotation(s,now,opts)or 0
+            local rotation=(opener or s.level==2)and M.rotation(s,now,opts)or 0
             for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
                 if place[1]then
                     local h=place[1]+spec.stack
@@ -197,39 +205,47 @@ function M.frame(model,s,now,radius,height,opts,context)
                 end
             end
         end
-        -- One awakening flash, independent of persistent property discs.
-        if opener and phase=='pre'and option(opts,'awakening')then
-            local grow=1-(1-clamp(progress*3,0,1))^3
-            local a=option(opts,'awakening_opacity')*opacity*(1-smooth((progress-1/3)*3))
-            disc(radius*.96*grow,.004,0,{white},a,0,0,'awakening')
-        end
-        if option(opts,'discs')then
-            local life=phase=='pre'and 1 or s.closed and fade or remaining
-            local reveal=opener and smooth(progress*5)or 1
-            local fill=option(opts,'disc_opacity')*opacity*life*reveal
-            local outline=option(opts,'disc_outline')*opacity*life*reveal
-            local base=option(opts,'disc_height')+details.ground_wave
-            local glyph=option(opts,'disc_style')=='outline'and 2 or option(opts,'disc_style')=='fill'and 0 or 1
-            disc(radius*.78,base,0,{white},0,2,outline*.65,'ground-glyph')
-            local properties=opener and s.properties or {s.properties[1]}
-            for j,p in ipairs(properties)do
-                local colors=property_palette(p,context)
-                if opener and option(opts,'opener_muted')then
-                    for i,c in ipairs(colors)do colors[i]=muted(c)end
-                end
-                if not opener then
-                    if s.level>=4 then colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
-                    else for i,c in ipairs(colors)do colors[i]=mix(white,c,color_t)end end
-                end
-                disc(radius*(.78-(j-1)*.11),base+.006+(j-1)*.008,M.rotation(s,now,opts),
-                    colors,fill,glyph,outline,'property')
+    end
+    -- Retained logical effect, even when its opacity reaches zero. Geometry is
+    -- shared/cached by the native renderer; hidden effects submit no vertices.
+    if opening then
+        local progress=clamp((now-opening.created)/max(.1,opening.open-opening.created),0,1)
+        local grow=1-(1-clamp(progress*3,0,1))^3
+        opening.radius=radius*.96*grow
+        opening.offset=option(opts,'ground_height')+option(opts,'disc_height')
+        opening.opacity=option(opts,'awakening')and option(opts,'awakening_opacity')*opacity*
+            (1-smooth((progress-1/3)*3))or 0
+        out.awakening_glyph=opening
+        disc(opening.radius,opening.offset,0,{white},0,2,opening.opacity,'awakening')
+    end
+    if option(opts,'discs')then
+        local sc_life=phase=='mb-only'and 0 or phase=='pre'and 1 or s.closed and fade or remaining
+        local life=max(sc_life,mb_strength)
+        local reveal=opener and smooth(progress*5)or 1
+        local fill=option(opts,'disc_opacity')*opacity*life*reveal
+        local outline=option(opts,'disc_outline')*opacity*life*reveal
+        local base=option(opts,'ground_height')+option(opts,'disc_height')+details.ground_wave
+        local glyph=option(opts,'disc_style')=='outline'and 2 or option(opts,'disc_style')=='fill'and 0 or 1
+        local properties=opener and s.properties or {s.properties[1]}
+        for j,p in ipairs(properties)do
+            local colors=property_palette(p,context)
+            if opener and option(opts,'opener_muted')then
+                for i,c in ipairs(colors)do colors[i]=muted(c)end
             end
+            if not opener then
+                if s.level>=4 then colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
+                else for i,c in ipairs(colors)do colors[i]=mix(white,c,color_t)end end
+            end
+            disc(radius*(.78-(j-1)*.11),base+.006+(j-1)*.008,M.rotation(s,now,opts),
+                colors,fill,glyph,outline,'property')
         end
     end
-    -- Keep the independent MB-lifetime reminder halo as requested.
-    if s.mb_close>now and now>=boundary then
+    -- Show throughout the authoritative MB window, including its overlap
+    -- with continuation. Keep the original remaining-seconds/10 fade curve;
+    -- the dedicated opacity deliberately bypasses global ring opacity.
+    if mb_strength>0 then
         local colors=context.palette(s)
-        ring(radius,height*.49,{colors[#colors]},opacity*.30*clamp((s.mb_close-now)/10,0,1),'mb',0,0)
+        ring(radius,height*.49,{colors[#colors]},option(opts,'mb_opacity')*mb_strength,'mb',0,0)
     end
     local bursts=model.bursts[s.id]or {}
     for i=#bursts,1,-1 do

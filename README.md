@@ -1,5 +1,12 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## TargetSC Test5 companion patch (2026-10-21)
+
+See TargetSC/README.md for opposed opener gaps, retained opening glyph, shared
+L2 spin and full-window MB opacity. TargetSC-only patch preserves the current
+Animation8.6 HUD and bridge; close all clients to install native/Lua 0.5.0 together.
+
+
 ## TargetSC Test4 companion patch (2026-10-21)
 
 TargetSC adds independently selectable opener gap, black/colored/no surround,
@@ -7,6 +14,22 @@ muted hues and opposed two-color L2 ground/sky rings; see TargetSC/README.md.
 The TargetSC-only patch preserves this branch's current Skillchains runtime,
 HUD controls and working bridge. Native/Lua 0.4.0 must be installed together.
 
+
+## Animation8.6 — terminal result, no continuation timer; pure monochrome finish
+
+The Umbra and Radiance terminal effects are still 0.8 seconds following their real 3-second white charge. Both display **only the property name** during charge and finish, without a misleading skillchain countdown. During the finishing fade, the separate Magic Burst caption displays just **Magic Burst** with no numerical timer; after 0.8 seconds, the normal independent MB timer returns for whatever time remains. Source windows and durations are unchanged. Existing `//sc demo`, `//sc anim preview umbra`, `//sc anim preview radiance` and `//sc anim preview lux` provide visual comparisons.
+
+Radiance now removes the label's dark text stroke and uses a **genuinely white icon silhouette** rather than white tint over a multicolored PNG. Umbra uses that same silhouette tinted black. Source colored icons are still used everywhere else. Once a terminal white refill fills the entire SC bar (around 1 second into its 3-second preparation), the redundant underlying SC dark track is **hidden but not destroyed**; the normal track returns on subsequent nonterminal countdowns. Ordinary skillchains retain their dark background to reveal the shrinking fill. TargetSC's ground/sky closed-ring phases and native DLL are untouched.
+
+**For Killala:** Keep the accepted `//sc anim fade period 0.24` and enable Level 1 glow via `//sc glow levels 1234`. These saved preferences are preserved. After backing up `Skillchains/data/`, install the **Skillchains-only** testing package and `//lua reload Skillchains`. Preview each terminal color; confirm the terminal property label has no timer, its icon/text/outline is truly monochrome, track disappears when the white charge fills completely, and the MB timer returns after the finishing fade.
+
+## Animation8.5 — rhythmic countdown, L2 charge, black/white terminal finish
+
+**Skillchains-only.** Run `//sc anim fade on` and `//sc anim fade period 0.24` to set the colored countdown's opacity pulse near the default TargetSC ground-hum cycle (0.24 seconds at Level 1). Period is adjustable from 0.08 to 5 seconds and stored independently of the on/off toggle. TargetSC's actual floor-hum frequency also varies with skillchain level and slows to rest, so this is a *tempo match*, not a locked phase handshake. The existing 0.417-second pulse period remains the default for older saves. The white refill pre-window deliberately does not pulse the fill.
+
+Level 2's white halo uses `pre2=0.85` (previous inherited 0.38 was difficult to see during white refill), adjustable by `//sc glow pre2 0.85`. `//sc glow levels 234` includes L2; L1 has a separate, softer property-colored halo available via `//sc glow levels 1234` and `//sc glow level1`.
+
+**Terminal results:** Real Umbra and Radiance (also called *Lux* in the preview commands) keep their three-second charge, then recolor the SC bar, bar background, glow, icon and text, and accompanying MB visuals black or white respectively; the collective 0.8-second fade resolves and the independent Magic Burst timer returns to its usual appearance. Preview `//sc anim preview umbra` or `//sc anim preview radiance` / `lux`, or watch the normal `//sc demo` end in Umbra. No game action is issued; source SC/MB deadlines, TargetSC native/bridge and personal saved positions are unchanged.
 
 ## Animation8.4 — L2 white shimmer, L3 gold electricity, L4 unchanged
 
@@ -515,6 +538,18 @@ eligible jobs.
 
 ## Changelog (cumulative)
 
+### 2026-10-21 — Animation8.6 terminal clarity / true monochrome (A)
+- Display terminal Umbra/Radiance name without false SC continuation timer; hide MB numerical countdown only during the 0.8s terminal fade and restore its true count afterward.
+- Remove black label and MB strokes during the black/white finish; generate and package reproducible white-alpha icon silhouettes, preserving the original colored icons for normal play.
+- Hide the pooled SC dark track once a terminal refill reaches full width, never destroy it; ordinary countdown bars retain their dark track. Preserve level1 glow opt-in and the saved 0.24s pulse period.
+- Keep TargetSC closed-ring presentation and bridge/native DLL untouched. In-game visual verification pending.
+
+### 2026-10-21 — Animation8.5 countdown + terminal visuals (A)
+- Expose adjustable `//sc anim fade period 0.24` while retaining legacy pulse by default; period is approximate TargetSC floor hum and does not transmit synchronization.
+- Improve Level 2 pre-window halo via independent `pre2`; keep optional L1 glow and saved masks.
+- Black Umbra and white Radiance/Lux briefly recolor the entire active HUD presentation and fade after the three-second charge; MB timer carries on, unaffected chronologically.
+- Keep standalone Umbra HUD demo, TargetSC bridge/DLL, all user layouts and gameplay packet processing intact. New visual behavior requires in-game verification.
+
 ### 2026-10-20 — Animation8.4 glow tier progression (A)
 - Promote old L3 white flicker and halo class to Level 2, including active pre-window charge. Promote old L4 gold electric flicker to Level 3; preserve L4.
 - Default newly initialized masks to 234 without rewriting saved 34 selections. Keep independent per-level strength, white fill/pulsing fade, and timelines.
@@ -666,3 +701,7 @@ eligible jobs.
 ### 2026-10-21 — TargetSC Test4 companion (A)
 
 Optional opener presentation comparisons and full opposed L2 palettes; no Skillchains runtime changes.
+
+### 2026-10-21 — TargetSC Test5 companion (A)
+
+Retained opening glyph, two gaps, per-stage rotation and full-window MB ring/property glyph. Animation8.6 runtime unchanged.

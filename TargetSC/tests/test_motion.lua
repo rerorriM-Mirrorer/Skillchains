@@ -59,8 +59,7 @@ local layers=discs(f,'property')
 assert(#layers==3 and #layers[1].colors==2)
 assert(layers[1].radius>layers[2].radius and layers[2].radius>layers[3].radius)
 assert(layers[1].offset<layers[2].offset and layers[2].offset<layers[3].offset)
-local glyph=discs(f,'ground-glyph')[1]
-assert(glyph.glyph==2 and math.floor(glyph.color/16777216)==0,'unfilled ground glyph')
+assert(#discs(f,'ground-glyph')==0,'stationary base glyph removed at every level')
 -- Filled, outline-only and discs-off comparisons; awakening stays independent.
 o=copy(opts);o.discs=false
 assert(#discs(frame(100.25,o),'awakening')==1 and #discs(frame(100.25,o),'property')==0)
@@ -83,7 +82,7 @@ for level,p in ipairs({'Liquefaction','Fragmentation','Darkness','Umbra'})do
         near(ground[1].offset,ground[4].offset)
     end
     local turns=level==1 and 1 or level==2 and 2 or level==3 and 4 or 0
-    near((Motion.rotation(s,100.01,opts)-Motion.rotation(s,100,opts))/.01,2*math.pi*turns,1e-8)
+    near((Motion.rotation(s,100.01,opts)-Motion.rotation(s,100,opts))/.01,2*math.pi*turns*opts.disc_speed,1e-8)
     local function speed(t)return (Motion.rotation(s,t+.00001,opts)-Motion.rotation(s,t,opts))/.00001 end
     if level<4 then
         assert(speed(103.1)>speed(106) and speed(106)>speed(108.999))
@@ -152,7 +151,7 @@ local terminal=frame(103.3)
 assert(terminal.phase=='terminal'and terminal.remaining==0 and #cores(terminal,'ground')==4)
 assert(#cores(terminal,'mb')==1,'MB reminder can coexist with terminal fade')
 local tail=frame(104)
-assert(tail.phase=='mb-only'and #cores(tail,'ground')==0 and #cores(tail,'mb')==1 and #tail.discs==0)
+assert(tail.phase=='mb-only'and #cores(tail,'ground')==0 and #cores(tail,'mb')==1 and #discs(tail,'property')==1)
 -- Demo has actual source-style shrinking windows and NO burst event.
 local spec=assert(Preview.parse({'demo'},R));local p=Preview.new(spec,71,200,R)
 local times={0,9,17,24,30}

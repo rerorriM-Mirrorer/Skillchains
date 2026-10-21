@@ -108,9 +108,18 @@ local function draw_state(out,s,now,radius,height,opts)
     end
 end
 function M.new()
-    local self={states={},bursts={},connected=false,session=nil,sequence=0,events=0,
+    local self={states={},bursts={},awakening_glyphs={},connected=false,session=nil,sequence=0,events=0,
         gaps=0,rejected=0,clock_warning=0,unknown_bursts=0,synced=false}
-    function self:clear() self.states={} self.bursts={} end
+    function self:clear() self.states={} self.bursts={} self.awakening_glyphs={} end
+    function self:opening_glyph(state)
+        local glyph=self.awakening_glyphs[state.id]
+        if state.step==1 and (not glyph or glyph.created~=state.created)then
+            glyph={created=state.created,open=state.sc_open,rotation=0,glyph=2,opacity=0,
+                shape='property-glyph',radius=0,offset=0}
+            self.awakening_glyphs[state.id]=glyph
+        end
+        return glyph
+    end
     function self:receive(args,now)
         if #args<5 or args[1]~='1' then self.rejected=self.rejected+1 return false,'unsupported/malformed bridge frame' end
         local session,seq,kind,stamp=args[2],tonumber(args[3]),args[4],tonumber(args[5])
@@ -150,6 +159,7 @@ function M.new()
             end
             if step==1 and args[17]=='0' then self.bursts[id]=nil end
             self.states[id]=state
+            self:opening_glyph(state)
         elseif kind=='burst' then
             local id,element=tonumber(args[6]),args[7]
             if not id then return false,'invalid burst' end
@@ -162,7 +172,7 @@ function M.new()
                 self.bursts[id]=bursts
             end
         elseif kind=='expire' then
-            local id=tonumber(args[6]) if id then self.states[id]=nil self.bursts[id]=nil end
+            local id=tonumber(args[6]) if id then self.states[id]=nil self.bursts[id]=nil self.awakening_glyphs[id]=nil end
         elseif kind=='reset' then self:clear()
         elseif kind=='offline' then self:clear() self.connected=false self.synced=false
         elseif kind=='synced' then self.synced=not self.needs_sync
@@ -175,7 +185,11 @@ function M.new()
         if not s then return out end
         local fade=opts.fade_duration or motion.defaults.fade_duration
         local boundary=s.closed and s.sc_open or s.sc_close
-        if now>max(boundary+fade,s.mb_close) then self.states[id]=nil self.bursts[id]=nil return out end
+        if now>max(boundary+fade,s.mb_close) then
+            local glyph=self.awakening_glyphs[id]
+            if glyph then glyph.opacity=0 end
+            self.states[id]=nil self.bursts[id]=nil return out
+        end
         if (opts.motion or motion.defaults.motion)~='legacy' then
             if s.previous and now-s.created>=.3 then s.previous=nil end
             return motion.frame(self,s,now,radius,height,opts,{palette=palette,argb=M.argb,level=M.level})

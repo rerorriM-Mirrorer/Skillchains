@@ -1,5 +1,43 @@
 # TargetSC — elemental resonance
 
+## 0.5.0 Test5 — two gaps, opening glyph, L2 rotation and full MB window
+
+Install the cumulative TargetSC patch with every FFXI client closed. Preserve
+settings; new driver/model/motion/controls and native DLL must be installed
+together. Skillchains stays installed as-is (tested against Animation8.6).
+
+Opener combined now has two opposite 12-degree gaps, black surround and muted
+hues. The larger white outline glyph expands/fades without spinning, replacing
+the plain white expansion. It stays retained but hidden after fading, ready
+for future work; there is no permanent stationary glyph under property discs.
+The property glyph continues through the MB window. Ground glyphs now share
+the floor-ring anchor for terrain clearance.
+
+L2 ground and sky pairs retain their reversed elemental halves while rotating
+in time with the property disc. Initial speeds still progress by level and
+slow to a stop; each stage can now be tuned separately.
+
+| Command | Effect |
+| --- | --- |
+| `//tsc mb opacity 1` | MB ring begins opaque; independent of overall opacity |
+| `//tsc mb opacity 0.4` | Reduce MB ring opacity; its original gradual fade remains |
+| `//tsc discs speed 0.1` | Global speed multiplier (new default) |
+| `//tsc discs speed opener 0.5` | Opener initial turns/sec before global multiplier |
+| `//tsc discs speed level1 1` | L1 initial turns/sec |
+| `//tsc discs speed level2 2` | L2 initial turns/sec, shared with both ring pairs |
+| `//tsc discs speed level3 4` | L3 initial turns/sec |
+| `//tsc discs speed level4 0` | L4 initially stationary |
+| `//tsc ground height 0.39` | Floor rings and glyph anchor (new default) |
+
+MB ring is present during preparation, continuation and MB-only tail; alpha is
+its own opacity times remaining MB seconds / 10. Existing saved values survive
+installation. New defaults .39/.1 apply to fresh settings and explicit visual
+preset resets. Do not reset all visuals just to install this patch.
+`//tsc preview opener Fusion`, `//tsc preview chain Fusion 2`, and
+`//tsc preview demo` exercise the changes; `//tsc preview off` restores live state.
+See TESTING.md for simulated results, retained-effect ownership and live checks.
+
+
 ## 0.4.0 Test4 — optional opener treatments and paired L2 colors
 
 Install the patch over working TargetSC; close every FFXI client before replacing
@@ -590,3 +628,7 @@ inside its own folder.
 ### 2026-10-21 — 0.4.0 Test4 (A)
 
 Optional exact opener gap, black/colored/no surround, muted hue-preserving colors, selective comparison presets; complete reversed L2 palettes on ground/sky. Retain user-approved traced glyph from d981e9d7. Native/Lua API 0.4.0; current Skillchains/bridge unchanged.
+
+### 2026-10-21 — 0.5.0 Test5 (A)
+
+Two opposite opener gaps; retained expanding opening glyph replaces filled flash and permanent base; shared L2 disc/ring rotation; independent stage speeds and full-window MB opacity; property glyph follows MB life; resettable .39 height/.1 speed. Current Animation8.6 HUD/bridge preserved.

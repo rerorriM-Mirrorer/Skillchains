@@ -1,9 +1,9 @@
-name: TargetSC Test4 opener options and opposed L2 palettes
+name: TargetSC Test5 retained glyph and full MB window
 
 on:
   push:
     branches:
-      - development/targetsc-opener-options
+      - development/targetsc-mb-glyph-spin
   workflow_dispatch:
 
 permissions:
@@ -32,6 +32,10 @@ jobs:
         run: python3 tools/generate_capsule_halo.py --check
       - name: Verify capsule geometry, seams, and dark interior
         run: python3 tools/test_capsule_halo.py
+      - name: Verify terminal white-alpha icon assets
+        run: |
+          python3 tools/generate_terminal_icons.py
+          python3 tools/generate_terminal_icons.py --check
       - name: Validate runtime Lua 5.1
         run: |
           for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua tools/test_visual_commands.lua tools/test_skillchains_demo.lua skillchains_demo.lua TargetSC/*.lua tools/test_learning_ui.lua TargetSC/tests/*.lua; do
@@ -43,6 +47,7 @@ jobs:
           lua5.1 tools/test_visual_commands.lua
           lua5.1 tools/test_skillchains_demo.lua
           lua5.1 TargetSC/tests/test_motion.lua
+          lua5.1 TargetSC/tests/test_mb_glyph.lua
           lua5.1 TargetSC/tests/test_transport.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
@@ -55,7 +60,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test4-Opener-Options-Paired-test
+          name: TargetSC-Test5-MB-Glyph-Spin-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
@@ -69,7 +74,7 @@ jobs:
       - name: Publish minimal TargetSC patch
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test4-Opener-Options-Patch
-          path: dist/TargetSC-0.4.0-Test4-Opener-Options-Patch.zip
+          name: TargetSC-Test5-MB-Glyph-Spin-Patch
+          path: dist/TargetSC-0.5.0-Test5-MB-Glyph-Spin-Patch.zip
           if-no-files-found: error
           retention-days: 30

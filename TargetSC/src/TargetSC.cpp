@@ -1,4 +1,4 @@
-// TargetSC 0.4.0 — Author: A.
+// TargetSC 0.5.0 — Author: A.
 // Device discovery, projection and model following adapted from Broguypal's
 // TargetRing (BSD-3-Clause); see licenses/ and THIRD_PARTY_NOTICES.md.
 // SceneHook.h is deliberately byte-identical to both reference addons.
@@ -712,9 +712,9 @@ void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
 }
 void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewport) {
     const bool open=ring.gap>0;
-    const int point_count=ring_slices_+(open?1:0);
-    DrawVertex points[ring_slices_+1]{};bool valid[ring_slices_+1]{};
-    float widths[ring_slices_+1]{};
+    const int point_count=ring_slices_+(open?2:0);
+    DrawVertex points[ring_slices_+2]{};bool valid[ring_slices_+2]{};
+    float widths[ring_slices_+2]{};
     const float cr=std::cos(ring.rotation),sr=std::sin(ring.rotation);
     for(int i=0;i<point_count;++i) {
         const float angle=targetsc::ring_angle(i,ring_slices_,ring.gap);
@@ -729,11 +729,13 @@ void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewpor
             ? std::hypot(outer.x-inner.x,outer.y-inner.y):0.f;
         widths[i]=targetsc::visible_width(natural,ring.pixels);
     }
-    DrawVertex inside[ring_slices_+1]{},outside[ring_slices_+1]{};
+    DrawVertex inside[ring_slices_+2]{},outside[ring_slices_+2]{};
     for(int i=0;i<point_count;++i) {
         if(!valid[i])continue;
-        const int prev=open?std::max(0,i-1):(i+ring_slices_-1)%ring_slices_;
-        const int next=open?std::min(point_count-1,i+1):(i+1)%ring_slices_;
+        const bool first=open&&(i==0||i==ring_slices_/2+1);
+        const bool last=open&&(i==ring_slices_/2||i==point_count-1);
+        const int prev=first?i:open?i-1:(i+ring_slices_-1)%ring_slices_;
+        const int next=last?i:open?i+1:(i+1)%ring_slices_;
         auto const& p=points[i];
         auto const& a=valid[prev]?points[prev]:p;
         auto const& b=valid[next]?points[next]:p;
@@ -744,13 +746,14 @@ void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewpor
         outside[i].x+=d.x;outside[i].y+=d.y;
     }
     for(int i=0;i<ring_slices_;++i) {
-        const int n=open?i+1:(i+1)%ring_slices_;
-        if(!valid[i]||!valid[n])continue;
+        const int start=open&&i>=ring_slices_/2?i+1:i;
+        const int n=open?start+1:(i+1)%ring_slices_;
+        if(!valid[start]||!valid[n])continue;
         const DWORD palette[]={ring.color,ring.color2,ring.color3,ring.color4};
         const DWORD color=palette[targetsc::sector_index(i,ring_slices_,ring.sectors)];
         // Each arc shares exactly the same joined centerline; duplicate only
         // the color at a sector boundary, avoiding interpolation or any gap.
-        auto a=inside[i],b=outside[i],c=inside[n],d=outside[n];
+        auto a=inside[start],b=outside[start],c=inside[n],d=outside[n];
         a.color=b.color=c.color=d.color=color;
         triangle(a,b,c);triangle(c,b,d);
     }
@@ -930,11 +933,11 @@ int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.4.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.5.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.4.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.5.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;

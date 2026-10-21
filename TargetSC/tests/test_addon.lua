@@ -6,7 +6,7 @@ local realclock=os.clock os.clock=function()return now end
 local events,messages,commands={}, {}, {}
 local saved
 local native={starts=0,stops=0,clears=0,draws=0,rings={}}
-function native.version()return '0.4.0'end
+function native.version()return '0.5.0'end
 function native.start()native.starts=native.starts+1 return 'running'end
 function native.stop()native.stops=native.stops+1 end
 function native.clear()native.clears=native.clears+1 native.rings={} native.discs={}end
@@ -67,6 +67,11 @@ assert(saved.disc_style=='outline' and saved.hum_amplitude==.02 and saved.disc_s
 command('discs','speed','nan') command('hum','amplitude','99') command('discs','style','invalid')
 assert(saved.disc_speed==.5 and saved.hum_amplitude==.02 and saved.disc_style=='outline','invalid options cannot overwrite settings')
 command('ground','height','.39')
+command('mb','opacity','.6') assert(saved.mb_opacity==.6)
+command('mb','opacity','2') assert(saved.mb_opacity==.6)
+command('discs','speed','level2','.7') assert(saved.disc_speed_level2==.7 and saved.disc_speed==.5)
+command('discs','speed','opener','.25') assert(saved.disc_speed_opener==.25)
+command('discs','speed','level2','nan') assert(saved.disc_speed_level2==.7)
 command('opener','preset','combined')
 assert(saved.opener_gap==12 and saved.opener_glow=='black'and saved.opener_muted)
 assert(saved.ground_height==.39 and saved.disc_outline==.6,'opener preset preserves other tuning')

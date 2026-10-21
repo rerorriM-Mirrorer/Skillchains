@@ -5,6 +5,7 @@ local direct={opacity={0,1},scale={.25,3},height={.25,3},intensity={0,4},width={
 local strike={prefix='',values={period={.05,.5},amplitude={0,1},damping={0,8}}}
 local groups={flutter=strike,strike=strike,
     hum={prefix='hum_',values={amplitude={0,.3},period={.05,1},slowdown={.1,4},gain={0,2}}},
+    mb={prefix='mb_',values={opacity={0,1}}},
     ground={prefix='ground_',values={height={0,1}}},fade={prefix='fade_',values={duration={.1,1}}}}
 local disc_limits={opacity={0,1},outline={0,1},height={0,.5},speed={0,4},slowdown={.1,4}}
 local presets={default=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}
@@ -37,7 +38,10 @@ function M.new(settings,defaults,save,say)
         save(settings);say('Visual preset '..value..'. Enabled/debug preserved; all visual values reset.')
     end
     local function discs(args,value)
-        if disc_limits[value]then numeric('disc_'..value,args[2],disc_limits[value],'discs '..value)
+        local stage=(args[2]or ''):lower()
+        if value=='speed'and (stage=='opener'or stage:match('^level[1-4]$'))then
+            numeric('disc_speed_'..stage,args[3],{0,4},'discs speed '..stage)
+        elseif disc_limits[value]then numeric('disc_'..value,args[2],disc_limits[value],'discs '..value)
         elseif value=='style'then
             local style=(args[2]or ''):lower()
             if style~='glyph'and style~='outline'and style~='fill'then say('Use //tsc discs style glyph|outline|fill.');return end

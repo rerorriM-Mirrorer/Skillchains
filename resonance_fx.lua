@@ -167,7 +167,12 @@ function M.new(prefix)
         if s.expire_age then return 1-smooth(s.expire_age/.35) end
         if (opt or {}).enabled==false or not (opt or {}).fade or (s.sc_wait or 0)>0 then return 1 end
         local proportion=clamp((s.sc_left or 0)/max(.01,s.sc_total or 8),0,1)
-        return (.30+.70*proportion)*(.82+.18*sin((s.now or 0)*pi*2.4)^2)
+        -- sin^2 repeats every period seconds; use the source's created clock
+        -- so a new chain restarts its pulse. .24s resembles TSC's L1 hum.
+        local period=tonumber(opt.fade_period) or (1/2.4)
+        if period<.08 or period>5 then period=1/2.4 end
+        local age=max(0,(s.now or 0)-(s.created or 0))
+        return (.30+.70*proportion)*(.82+.18*sin(pi*age/period)^2)
     end
     -- The bar is intentionally absent behind the white opener's first beat.
     -- The white overlay itself is the bar at that moment.
@@ -220,6 +225,8 @@ function M.new(prefix)
         local opener=(s.step or 0)<=1
         palette=palette or {white}
         local c1=palette[1] or white
+        local finale_color=s.finale_color
+        local finale_alpha=s.finale_alpha or 1
         local progress=opener and 0 or self:transition_progress(s,transition_options)
         local l4mode=glow_options.l4 or 'gold'
         local level4_color=(l4mode=='gold' and gold)
@@ -232,6 +239,10 @@ function M.new(prefix)
         elseif level==2 then border=white;border_alpha=200
         elseif level==3 then border=level4_color;border_alpha=220
         elseif level>=4 then border=level4_color;border_alpha=220 end
+        if finale_color then
+            border=finale_color
+            border_alpha=220
+        end
         if opener then
             -- Preserve the already gameplay-approved white opener.
             border=dark
@@ -239,13 +250,13 @@ function M.new(prefix)
             -- Color the REAL perimeter while the body is still white.
             -- The .30s body fade remains centered on decay start.
             local ramp=smooth((age-.75)/max(.30,delay-1.0))
-            border=mix(white,border,ramp)
+            if not finale_color then border=mix(white,border,ramp) end
             border_alpha=210+(border_alpha-210)*ramp
         end
         if s.expire_age then
             border_alpha=border_alpha*(1-smooth(s.expire_age/.35))
         end
-        border_alpha=border_alpha*self:bar_reveal(s,opt)
+        border_alpha=border_alpha*self:bar_reveal(s,opt)*finale_alpha
         local alpha=floor(clamp(border_alpha,0,255)+.5)
         for _,id in ipairs({bar.frame.frame,bar.frame.frame_bottom,
             bar.frame.cap_l,bar.frame.cap_r}) do
@@ -269,6 +280,7 @@ function M.new(prefix)
             -- No lingering full-width white block over the shrinking fill.
             fill_extent=min(w,max(0,(bar.fill or w)+2))
         end
+        if finale_color then white_alpha=0 end
         white_caps(x,y,fill_extent,h,white_alpha*intensity)
 
         -- Tight capsule perimeter halo: left arc | twin-strip rail |
@@ -298,10 +310,10 @@ function M.new(prefix)
                     electric=electric*(.72+.28*sin(age*28)^2)
                 end
             end
-            -- Move the pre-window energy with its style, before countdown start.
+            -- L2 pre2 is strong during white refill; pre3 remains a legacy setting.
             local pre=level>=3 and
                 max(0,tonumber(glow_options.pre4) or .85) or
-                (level==2 and max(0,tonumber(glow_options.pre3) or .38)
+                (level==2 and max(0,tonumber(glow_options.pre2) or .85)
                 or max(0,tonumber(glow_options.pre12) or .18))
             local charge=pre+(1-pre)*progress
             if opener then charge=0 end -- opener already looks right
@@ -309,10 +321,11 @@ function M.new(prefix)
             if style=='energized' and progress>0 and progress<1 then
                 charge=charge*(.82+.18*sin(age*31)^2)
             end
-            local glow_color=level>=3 and level4_color
-                or (level==2 and white or border)
-            local rail_alpha=base*gi*level_strength*rail*electric*charge
-            local cap_alpha=base*gi*level_strength*cap*electric*charge
+            local glow_color=finale_color or (level>=3 and level4_color
+                or (level==2 and white or border))
+            if finale_color then electric=1 end
+            local rail_alpha=base*gi*level_strength*rail*electric*charge*finale_alpha
+            local cap_alpha=base*gi*level_strength*cap*electric*charge*finale_alpha
             local scale=max(.5,tonumber(bar.scale) or 1)
             local padding=max(2,floor(3*scale+.5))
             local join=max(5,floor(10*scale+.5))

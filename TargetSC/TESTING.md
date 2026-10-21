@@ -1,5 +1,102 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.5.0 Test5 — retained glyph, opposed gaps, L2 spin and full MB window (2026-10-21)
+
+**Branch:** `development/targetsc-mb-glyph-spin`. Combines user-tested Test4
+`c186d765` with current Animation8.6 `3d96aeac`. Skillchains runtime, assets and
+bridge are byte-identical to Animation8.6. Source-clock/protocol-v1 deadlines
+are unchanged. User likes combined opener treatment and opposed L2 palettes,
+and prefers ground height .39 and global disc-speed multiplier .1.
+
+**Install:** Close every FFXI client. Back up TargetSC, preserve data/settings,
+merge TargetSC/ from `TargetSC-0.5.0-Test5-MB-Glyph-Spin-Patch.zip` into
+Windower/addons. This is cumulative over Test3/Test4, with all five changed
+runtime files: TargetSC.lua, resonance.lua, resonance_motion.lua,
+resonance_controls.lua, libs/_TargetSC.dll. New Lua/native must match 0.5.0;
+status reports 0.5.0-test5/native 0.5.0, glyph=traced. Do not replace Skillchains
+for this TargetSC-only patch. SceneHook ABI remains 2. Source/tests/docs included.
+
+**Changes:** Each opener ground/sky ring and surround now has two opposite
+gaps, each 12 degrees by default. Exact native open arcs are 6–174 and 186–354
+degrees, 64 segments total, with no connecting segment or joined cap across
+either gap. Combined remains the preferred initial opener treatment (black
+surround, hue-preserving muted colors); all Test4 comparison controls remain.
+Both reversed-palette L2 rings on ground/sky now share property-disc rotation.
+
+The stationary base glyph is removed at every level. Its role moves to the
+larger (.96 radius-factor) white outline glyph that expands and fades without
+spinning during the opening weaponskill, replacing the plain filled white
+expansion. The same logical glyph object and native shared geometry remain
+available after alpha reaches zero; it is NOT destroyed just because its
+animation faded. Hidden glyphs submit no native vertices. The retained object
+survives subsequent chain states and ordinary visual expiry; explicit source
+expiry, reset, zone/logout, or a new opener releases/replaces its ownership.
+This reserves it for future effects without inventing a new burst animation.
+
+Property discs retain their colored fill/white design and now live through the
+MB opportunity (taking the greater SC/MB fade while they overlap). After the
+opening expansion disappears, there is no stationary glyph beneath them.
+Ground height now anchors the property/opening glyphs as well as floor rings,
+so .39 clears floor geometry for the whole ground design.
+
+**MB ring:** Visible from the successful chain's source `created` timestamp
+through `mb_close`, including preparation and continuation overlap; no MB ring
+is invented for an opener with mb_close=0. Same time-based linear fade as before:
+remaining seconds / 10, clamped to [0,1], now multiplied by independent
+`//tsc mb opacity <0-1>` (default 1). Global opacity/brightness do not multiply
+this core. At registration of a ten-second window it is opaque, then gradually
+fades. Opacity 0 hides the MB ring; master off still disables all drawing.
+Its midpoint position and element choice are preserved. Actual confirmed burst
+rings still use their existing behavior and do not change source deadlines.
+
+**Speed/defaults:** Global `//tsc discs speed 0.1`, ground height .39 are new
+resettable defaults, never overwriting existing saved tuning. New per-stage
+initial turns/sec before that multiplier: `//tsc discs speed opener 0.5`,
+`level1 1`, `level2 2`, `level3 4`, `level4 0`. Each command requires its own
+`//tsc discs speed` prefix. Global speed/slowdown still apply; L2 ring pair follows
+the same analytic angle as its disc and stops with it. Other successful-level
+outline rings retain their previous rotation behavior. Legacy motion remains
+an explicitly historical comparison path; use sine/flutter for new presentation.
+
+**Live test:** Select a living enemy; `//tsc opener preset combined`,
+`//tsc preview opener Fusion`: two gaps on opposite ends; larger white outlined
+glyph expands/fades without rotation, then only property disc remains. Compare
+`//tsc preview chain Fusion 2` and all other L2 properties: two complete palettes,
+reversed halves, rotating together on ground/sky and matched to property disc.
+`//tsc mb opacity 1`, then .4: MB ring visible during white charge, countdown and
+MB-only tail, fading to its original deadline. Property glyph should persist
+through that tail. Run `//tsc preview demo`, then `//tsc preview off` for real
+opener/chain/MB checks, subscriber/load-order/reload and multiclient checks.
+Preserve the preferred .39/.1 saved settings; no global preset is necessary.
+
+**Completed host checks:** Lua 5.1 parser; updated full motion sweep and Test4
+comparisons; new MB/glyph test checks opacity at registration/overlap/tail,
+independence from global alpha, unchanged MB deadline, retained object identity
+through fade and chain advance, no stationary base/replayed expansion, MB-lived
+property disc, matched L2 angles and stage speeds, explicit source cleanup;
+actual addon controls/selective presets/invalid inputs; real-addon bridge
+transport; latest HUD/terminal renderer, commands and demo regression; portable
+stroke and two-gap geometry tests; warning-clean PE32 x86 cross-build.
+Package builder protects current Animation8.6 and validates manifests/CRC.
+New Test5 appearance/gameplay/multibox performance await FFXI validation.
+Native maximum remains 18,048 vertices, one draw call, no hidden-glyph draw cost.
+
+---
+
+
+## Skillchains Animation8.6 terminal display only (2026-10-21)
+
+TargetSC is unchanged. Skillchains now suppresses its misleading terminal continuation countdown; its MB numerical countdown disappears during 0.8s terminal monochrome effect and resumes afterward. Radiance gets pure-white text glyph/strokes, Umbra retains black, and the filled terminal SC track is hidden then restored for ordinary play. TargetSC continues showing its independent closed-chain floor/sky rings through preparation and terminal fade, plus MB reminder. Its source deadlines, bridge and native DLL are unchanged. Install only Skillchains, retain both `data/` directories, confirm subscriber status.
+
+---
+
+## Skillchains Animation8.5 companion — 2026-10-21
+
+No TargetSC source/native changes, no bridge protocol changes or synthesized game events. Skillchains adds a separately adjustable countdown fade period (`//sc anim fade period 0.24` approximately matches TargetSC default `hum_period=.12`; not phase-locking), stronger L2 pre-window border glow, black Umbra / white Radiance terminal HUD fade and local preview. The current real FFXI TargetSC ring timing remains unaltered. Existing companion `//tsc preview demo` also remains independent. Keep TargetSC and its DLL installed as-is; only Skillchains-only folder needs update, and keep character `data/`. Check in-game bridge and visuals.
+
+---
+
+
 ## TargetSC 0.4.0 Test4 — opener comparisons and opposed L2 halves (2026-10-21)
 
 **Branch:** `development/targetsc-opener-options`. Baseline: current Skillchains

@@ -3,11 +3,13 @@
 #include <cstdio>
 int main() {
     constexpr float tau=6.28318530718f;
-    const float first=targetsc::ring_angle(0,64,12),last=targetsc::ring_angle(64,64,12);
-    assert(std::fabs(first-tau*6/360)<.000001f);
-    assert(std::fabs(last-tau*354/360)<.000001f);
-    assert(std::fabs((tau-last+first)*360/tau-12)<.0001f);
-    for(int i=1;i<=64;++i)assert(targetsc::ring_angle(i,64,12)>targetsc::ring_angle(i-1,64,12));
+    auto degrees=[](int i){return targetsc::ring_angle(i,64,12)*360/6.28318530718f;};
+    assert(std::fabs(degrees(0)-6)<.0001f && std::fabs(degrees(32)-174)<.0001f);
+    assert(std::fabs(degrees(33)-186)<.0001f && std::fabs(degrees(65)-354)<.0001f);
+    assert(std::fabs(degrees(33)-degrees(32)-12)<.0001f);
+    assert(std::fabs(360-degrees(65)+degrees(0)-12)<.0001f);
+    for(int i=1;i<66;++i)assert(targetsc::ring_angle(i,64,12)>targetsc::ring_angle(i-1,64,12));
+    for(int i=0;i<=32;++i)assert(std::fabs(targetsc::ring_angle(i+33,64,12)-targetsc::ring_angle(i,64,12)-tau/2)<.00001f);
     const auto lines=targetsc::property_glyph();
     assert(lines.size()==24);
     int rim_endpoints=0,square_edges=0,star_tips=0;

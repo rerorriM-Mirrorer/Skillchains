@@ -11,8 +11,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'TargetSC-0.4.0-Test4-Opener-Options-Paired-Full'
-SC_CURRENT = '0b1c6c73e02bfda3d5a4ff4bb85ba6ebdefadd74'
+NAME = 'TargetSC-0.5.0-Test5-MB-Glyph-Spin-Paired-Full'
+SC_CURRENT = '3d96aeac0b63dc5e1fbd61ca8bf576bb3758cada'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skillchains_demo.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
@@ -38,35 +38,26 @@ def verify_dll(path):
 def main():
     assert not git('status', '--porcelain', '--untracked-files=normal'), 'Commit work before packaging'
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
-    # Unchanged Animation8.1 HUD/combat/assets are protected, except mask-loading Lua.
-    # The publisher must still retain Test3's corrected lua c transport.
-    guarded = ('skills.lua','resonance_ui.lua',
-               'learning_ui.lua','images')
-    assert not git('diff',HUD_BASELINE,'--',*guarded), 'HUD/assets changed'
-    changed=set(git('diff','--name-only',HUD_BASELINE,'--','Skillchains.lua','resonance_fx.lua').splitlines())
-    assert changed=={'Skillchains.lua','resonance_fx.lua'}, 'Unexpected source baseline differences'
-    # The new demo module is mandatory; TargetSC is never the HUD's runtime source.
-    demo=(ROOT/'skillchains_demo.lua').read_text()
-    assert 'require(\'resonance_preview\')' not in demo
-    assert 'targetsc:state(' not in demo and 'windower.send_command' not in demo
+    # Freeze the entire current Animation8.6 HUD, combat source and bridge.
     assert not git('diff',SC_CURRENT,'--',
         'Skillchains.lua','skills.lua','resonance_ui.lua','learning_ui.lua',
         'resonance_fx.lua','targetsc_bridge.lua','skillchains_demo.lua','images'), 'Current Skillchains runtime changed'
     assert not git('diff',SC_CURRENT,'--',
-        'TargetSC/resonance.lua','TargetSC/resonance_preview.lua','TargetSC/src/SceneHook'), 'State/preview/SceneHook changed'
+        'TargetSC/resonance_preview.lua','TargetSC/src/SceneHook'), 'Preview/SceneHook changed'
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'TargetSC Test4 optional opener treatments and opposed L2 halves / current Skillchains preserved', 'author': 'A.',
+    info = {'batch': 'TargetSC Test5 two gaps, retained awakening glyph, matched L2 spin and full MB window / Animation8.6 preserved', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
-            'hud_reference_commit': HUD_BASELINE,
+            'hud_reference_commit': SC_CURRENT,
+            'targetsc_test5_in_game_tested': False,
             'skillchains_preview_user_confirmed': True,
             'targetsc_test1_render_user_confirmed': True,
             'targetsc_test2_previews_user_confirmed': True,
             'targetsc_test3_in_game_tested': False,
             'bridge_fix_commit': 'aaf233f',
-            'native_api': '0.4.0', 'bridge_protocol': 1, 'scenehook_abi': 2,
+            'native_api': '0.5.0', 'bridge_protocol': 1, 'scenehook_abi': 2,
             'native_source_sha256': hashlib.sha256((ROOT/'TargetSC/src/TargetSC.cpp').read_bytes()).hexdigest(),
             'native_dll_sha256': dll_hash, 'native_machine': 'PE32/i386',
             'compilation': 'MinGW-w64 GCC 13.2 x86, warnings treated as errors',
@@ -91,6 +82,15 @@ def main():
     for file in fx_art:
         assert file.is_file()
         dest = STAGE / 'Skillchains/images/resonance' / file.name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(file, dest)
+    # The terminal glyphs are exact white-alpha silhouettes of existing
+    # source icons. Black and white variants use texture tinting at runtime.
+    terminal_art = [ROOT / 'images/terminal/light.png',
+                    ROOT / 'images/terminal/darkness.png']
+    for file in terminal_art:
+        assert file.is_file(), 'Generate terminal icons with tools/generate_terminal_icons.py'
+        dest = STAGE / 'Skillchains/images/terminal' / file.name
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file, dest)
     # Track exactly the committed deliverable. Never copy caches, user data,
@@ -130,6 +130,8 @@ def main():
             assert z.read('Skillchains/images/skillchain/' + file.name).startswith(b'\x89PNG\r\n\x1a\n')
         for file in fx_art:
             assert z.read('Skillchains/images/resonance/' + file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
+        for file in terminal_art:
+            assert z.read('Skillchains/images/terminal/' + file.name).startswith(bytes.fromhex('89504e470d0a1a0a'))
         for folder in ('Skillchains', 'TargetSC'):
             checks = json.loads(z.read(folder + '/SHA256SUMS.json'))
             for name, expected in checks.items():
@@ -137,14 +139,14 @@ def main():
     # A minimal TargetSC patch preserves the user's independently updated HUD.
     patch_paths=set(git('diff','--name-only',SC_CURRENT,'--','TargetSC').splitlines())
     patch_paths.update({'TargetSC/README.md','TargetSC/WORKFLOW.md','TargetSC/TESTING.md'})
-    patch = DIST / 'TargetSC-0.4.0-Test4-Opener-Options-Patch.zip'
+    patch = DIST / 'TargetSC-0.5.0-Test5-MB-Glyph-Spin-Patch.zip'
     patch_checks={}
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED) as z:
         for name in sorted(patch_paths):
             data=(ROOT/name).read_bytes();z.writestr(name,data)
             patch_checks[name]=hashlib.sha256(data).hexdigest()
-        z.writestr('TargetSC/BUILD_INFO_TEST4.json',json.dumps(info,indent=2)+'\n')
-        z.writestr('TargetSC/SHA256SUMS_TEST4.json',json.dumps(patch_checks,indent=2)+'\n')
+        z.writestr('TargetSC/BUILD_INFO_TEST5.json',json.dumps(info,indent=2)+'\n')
+        z.writestr('TargetSC/SHA256SUMS_TEST5.json',json.dumps(patch_checks,indent=2)+'\n')
     with zipfile.ZipFile(patch) as z:
         assert z.testzip() is None
         assert all(name.startswith('TargetSC/')and '/data/'not in name for name in z.namelist())

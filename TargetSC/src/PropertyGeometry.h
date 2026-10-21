@@ -11,12 +11,14 @@ constexpr int kGlyphLines=24;
 inline int sector_index(int slice,int slices,int sectors) {
     return std::min(sectors-1,std::max(0,slice)*sectors/std::max(1,slices));
 }
-// An open ring has 65 points and 64 segments. Distribute the visible arc
-// between exact gap endpoints; no segment crosses the opening.
+// Two opposite gaps split the ring into equal 32-segment open arcs.
+// Points 0..32 describe the first arc; 33..65 describe the opposite arc.
 inline float ring_angle(int point,int slices,float gap_degrees) {
-    constexpr float tau=6.28318530718f;
-    const float gap=gap_degrees*tau/360.f;
-    return gap*.5f+point*(tau-gap)/slices;
+    constexpr float pi=3.14159265359f;
+    const float gap=gap_degrees*pi/180.f;
+    const int points_per_arc=slices/2+1;
+    const int arc=point/points_per_arc,at=point%points_per_arc;
+    return gap*.5f+arc*pi+at*(pi-gap)/(slices/2);
 }
 inline std::array<GlyphLine,kGlyphLines> property_glyph() {
     std::array<GlyphLine,kGlyphLines> lines{};
