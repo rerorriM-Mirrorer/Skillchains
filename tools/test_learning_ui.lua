@@ -450,6 +450,19 @@ opt.glow.levels=34
 overlay:render(lvl3)
 assert(left.visible and top.visible,
     'Numeric saved glow mask 34 renders enabled level 3 without a Lua error')
+-- New mask overrides old persisted values without a default type conflict.
+opt.glow.level_mask='L3,L4'
+opt.glow.levels=1234
+overlay:render(lvl1)
+assert(not left.visible and not top.visible,
+    'New mask disables L1 regardless of legacy mask')
+overlay:render(lvl3)
+assert(left.visible and top.visible, 'New mask enables L3')
+opt.glow.level_mask='off'
+overlay:render(lvl3)
+assert(not left.visible and not top.visible, 'New off value disables glow')
+opt.glow.level_mask=nil
+opt.glow.levels=34
 opt.transition.style='energized'
 local transient={
     now=302.96,created=300,sc_open=303,step=2,level=3,

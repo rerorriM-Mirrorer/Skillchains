@@ -275,7 +275,7 @@ function M.new(prefix)
         -- mirrored right arc. No overlapping vertical glow blobs.
         -- Windower config can deserialize the digit-only mask as a number
         -- (e.g. 34). Treat it as text before checking enabled levels.
-        local levels=tostring(glow_options.levels or '34')
+        local levels=tostring(glow_options.level_mask or glow_options.levels or 'L3,L4')
         if levels~='off' and level>=1 and level<=4
             and levels:find(tostring(level),1,true) then
             local upper_tier=level>=3

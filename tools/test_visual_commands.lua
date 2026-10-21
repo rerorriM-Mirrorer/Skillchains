@@ -57,13 +57,15 @@ local function run(cmd,...)
     command(cmd,...)
     return messages[#messages] or ''
 end
-assert(opt.glow.levels=='34' and opt.glow.rail34==.75 and opt.glow.cap34==.85)
+assert(opt.glow.levels==nil and opt.glow.level_mask==nil,
+    'No numeric-looking mask in Windower typed defaults')
+assert(opt.glow.rail34==.75 and opt.glow.cap34==.85)
 assert(opt.transition.duration==.30 and opt.transition.style=='energized')
 assert(run('glow','levels','1234'):find('default 34',1,true))
-assert(opt.glow.levels=='1234')
+assert(opt.glow.level_mask=='L1,L2,L3,L4' and not tonumber(opt.glow.level_mask))
 run('glow','levels','42')
-assert(opt.glow.levels=='24','Canonicalize and sort level mask')
-run('glow','levels','off') assert(opt.glow.levels=='off')
+assert(opt.glow.level_mask=='L2,L4','Canonicalize and sort level mask')
+run('glow','levels','off') assert(opt.glow.level_mask=='off')
 run('glow','levels','34')
 local before=saves()
 assert(run('glow','rail12','3.125'):find('default 0.300',1,true))
@@ -103,12 +105,20 @@ run('track','alpha','400') assert(opt.track.alpha==95)
 run('track','reset')
 assert(opt.track.alpha==155 and opt.track.color[1]==6)
 run('glow','reset')
+assert(opt.glow.level_mask=='L3,L4')
 assert(opt.glow.rail34==.75 and opt.glow.cap34==.85 and
     opt.glow.pre4==.85)
 assert(opt.track.alpha==155 and opt.bar.x==466,
     'Glow-only reset must not change track/positions')
-local mask=opt.glow.levels
-run('glow','levels','135') assert(opt.glow.levels==mask)
+opt.glow.levels=34
+opt.glow.level_mask=nil
+assert(run('glow'):find('Glow levels 34',1,true))
+run('glow','levels','12')
+assert(opt.glow.level_mask=='L1,L2')
+opt.glow.levels='off'
+assert(run('glow'):find('Glow levels L1,L2',1,true))
+local mask=opt.glow.level_mask
+run('glow','levels','135') assert(opt.glow.level_mask==mask)
 run('glow','l4','gold') assert(opt.glow.l4=='gold')
 run('glow','l4','white') assert(opt.glow.l4=='white')
 run('glow','l4','whitegold') assert(opt.glow.l4=='whitegold')
