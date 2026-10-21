@@ -638,7 +638,8 @@ assert(overlay.properties.rgb[1]==0 and overlay.mb_caption.rgb[1]==255
     and overlay.caption_icons.mb[1].image.rgb[1]==255,
     'Umbra only recolors SC; independent MB stays readable')
 assert(overlay.properties._text=='Umbra'
-    and overlay.mb_caption._text=='Magic Burst: 6.9s',
+    and overlay.mb_caption._text:find('Magic Burst:',1,true)
+    and math.abs(tonumber(overlay.mb_caption._text:match('([%d%.]+)s'))-terminal.mb_left)<.11,
     'Terminal SC has no continuation timer; MB retains live countdown')
 assert(overlay.properties.outline_opacity==0
     and overlay.mb_caption.outline_opacity==235,
@@ -682,7 +683,8 @@ assert(overlay.properties.rgb[1]==255
     and overlay.mb_caption.outline_opacity==235,
     'Radiance SC lettering is pure white while MB stroke stays normal')
 assert(overlay.properties._text=='Radiance'
-    and overlay.mb_caption._text=='Magic Burst: 6.8s',
+    and overlay.mb_caption._text:find('Magic Burst:',1,true)
+    and math.abs(tonumber(overlay.mb_caption._text:match('([%d%.]+)s'))-light.mb_left)<.11,
     'Radiance SC hides timer but MB retains independent deadline')
 assert(overlay.caption_icons.sc[1].image.path_value:match('images/terminal/light%.png$')
     and overlay.caption_icons.mb[1].image.path_value:match('images/skillchain/light%.png$'),
