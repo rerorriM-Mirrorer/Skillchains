@@ -46,6 +46,34 @@ function M.new(settings,defaults,save,say)
             say('See //tsc help for discs on/off, opacity, outline, style, height, speed and slowdown.')
         end
     end
+    local function opener(args,value)
+        if value=='gap'then
+            local v=(args[2]or ''):lower()
+            numeric('opener_gap',v=='on'and '12'or v=='off'and '0'or v,{0,60},'opener gap')
+        elseif value=='glow'then
+            local mode=(args[2]or ''):lower()
+            if mode~='color'and mode~='black'and mode~='off'then
+                say('Use //tsc opener glow color|black|off.');return
+            end
+            settings.opener_glow=mode;save(settings);say('Opener glow '..mode..'.')
+        elseif value=='muted'then
+            if not toggle('opener_muted',(args[2]or ''):lower(),'Opener muted colors')then
+                say('Use //tsc opener muted [on|off].')
+            end
+        elseif value=='preset'then
+            local name=(args[2]or ''):lower()
+            local choices={original={0,'color',false},gap={12,'color',false},
+                black={0,'black',false},muted={0,'color',true},
+                combined={12,'black',true},quiet={12,'off',true}}
+            local values=choices[name]
+            if not values then say('Use //tsc opener preset original|gap|black|muted|combined|quiet.');return end
+            settings.opener_gap,settings.opener_glow,settings.opener_muted=unpack(values)
+            save(settings);say('Opener preset '..name..'. Other visual settings preserved.')
+        else
+            say(('Opener gap=%.1f degrees; glow=%s; muted=%s. See //tsc help.'):format(
+                settings.opener_gap,settings.opener_glow,tostring(settings.opener_muted)))
+        end
+    end
     return function(command,args)
         local value=(args[1]or ''):lower()
         local group=groups[command]
@@ -53,6 +81,7 @@ function M.new(settings,defaults,save,say)
         elseif group then
             if group.values[value]then numeric(group.prefix..value,args[2],group.values[value],command..' '..value)
             else say('See //tsc help for '..command..' controls.')end
+        elseif command=='opener'then opener(args,value)
         elseif command=='discs'then discs(args,value)
         elseif command=='awakening'then
             if value=='opacity'then numeric('awakening_opacity',args[2],{0,1},'awakening opacity')

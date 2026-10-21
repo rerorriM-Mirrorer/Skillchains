@@ -1,5 +1,97 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.4.0 Test4 — opener comparisons and opposed L2 halves (2026-10-21)
+
+**Branch:** `development/targetsc-opener-options`. Baseline: current Skillchains
+pulse/pre2 commit `0b1c6c7`; retain the user-approved traced glyph from `d981e9d7`.
+User confirmed the traced design looks awesome in FFXI and now prefers ground
+height .39. That is visual acceptance of the glyph, not all combat/lifecycle tests.
+
+**Install patch:** Close ALL FFXI clients; back up TargetSC and preserve data/.
+Merge `TargetSC/` from `TargetSC-0.4.0-Test4-Opener-Options-Patch.zip` into
+Windower/addons. Four runtime files change together: TargetSC.lua,
+resonance_controls.lua, resonance_motion.lua and libs/_TargetSC.dll.
+No Skillchains files or settings are shipped in this patch. New Lua/native
+API 0.4.0 must match. Status reports 0.4.0-test4/native 0.4.0, glyph=traced.
+Bridge v1 and SceneHook ABI 2 are unchanged; latest HUD runtime is preserved.
+
+**New settings:** opener_gap=12 degrees, opener_glow=black, opener_muted=true
+are the initial combined treatment. Existing height, glyph opacity, movement
+and other saved tuning survive. No global preset is needed for installation.
+`//tsc opener preset original|gap|black|muted|combined|quiet` changes only these
+three opener controls; original restores the prior opener treatment. Individual
+controls: `//tsc opener gap 12` (on=12, off=0, numeric range 0–60),
+`//tsc opener glow color|black|off`, `//tsc opener muted [on|off]` (bare toggles).
+They save immediately and affect active previews/live openers. Global glow 0
+still suppresses all surrounds, including black; preset black does not raise it.
+
+Gap applies only to opener ground/sky rings and their surrounds, rotating with
+them. Native geometry emits 64 segments over 348 degrees, using exact 6-degree
+and 354-degree endpoints at gap=12; no closing segment bridges the gap.
+Glyph rims, awakening, MB reminder and burst effects remain complete circles.
+Black surround uses normal source-alpha blending, behind the core; it darkens
+background rather than automatically desaturating the colored core. Muted
+colors preserve hue with 75% saturation and 82% value, on opener rings and
+colored disc fills. The white activation transition and white glyph lines stay.
+
+**L2:** Fusion/Fragmentation/Distortion/Gravitation each draw two vertically
+stacked rings on ground AND sky, every ring split into the full two-element
+palette, second ring reversed. Both remain present from initial white charge
+through countdown/fade; ring offsets, motion and source clocks are preserved.
+
+**Comparison:** Select a living target; `//tsc preview opener Fusion`, then
+switch opener presets while visible (replay preview if it expires). Compare
+`original`, each individual option, `combined`, and `quiet`. Ground .39 remains
+saved. `//tsc preview chain Fusion 2` compares opposed halves; repeat with
+Fragmentation, Distortion and Gravitation, then `//tsc preview demo` for all
+levels and `//tsc preview off` for live state. Check a real opener/extension,
+both load orders, reloads and multiclient frame pacing. `//sc targetsc` and
+`//tsc status` should retain subscribed/synced. Synthetic HUD and TargetSC demos
+remain independently launched; no new demo synchronization is implied.
+
+**Completed host checks:** Lua 5.1 parse; actual addon commands/settings with
+invalid-input guards and selective presets; all 12 opener combinations;
+all four L2 opposed palettes at registration/charge/countdown/fade;
+existing motion sweep/deadlines/demo/lifecycle; current Skillchains HUD command,
+FX, learning and demo tests; actual-handler bridge load orders/reload/unsubscribe;
+portable geometry with exact 12-degree endpoints; warning-clean x86 DLL build.
+These are static/simulated: new appearance, dark surround/readability and
+in-game/multibox performance remain pending. Native storage remains 18,048
+vertices and one draw call. Package BUILD_INFO records source and DLL hash.
+
+---
+
+## Traced disc glyph patch — 2026-10-20 (A)
+
+User selected the exact merged-outline preview: diagonal star (45 degrees),
+cross width .24, central square half-size .15, and existing outer circle.
+Native geometry now traces the 20-edge exterior plus four square edges;
+internal cross/star overlap lines are removed. Both stationary and rotating
+copies use it. The colored disc fill remains the existing full property disc.
+
+Runtime installation is DLL-only over working TargetSC 0.3.0 Test3, including
+its Animation8.1 paired installation. Close ALL FFXI clients, back up
+`TargetSC/libs/_TargetSC.dll`, then merge this patch's TargetSC folder into
+`Windower/addons/`. Keep existing Lua, Skillchains and data/settings.
+The native API stays 0.3.0; `//tsc status` includes `glyph=traced` in native
+status to identify this build. Use `//tsc discs style glyph` (or `outline`),
+select a living enemy and run `//tsc preview opener Fragmentation`.
+Check diagonal points, wide arms, square opening, stationary/spinning copies,
+then `//tsc preview off` and a real chain. Saved ground height .33 is retained.
+
+Host checks passed: portable geometry (closure, diagonal tips, square, radius,
+sector coverage), warning-clean x86 DLL build, actual-handler paired bridge
+transport, TargetSC lifecycle/commands and full motion sweep, Animation8.1 HUD
+simulation. Live rendering and gameplay verification remain pending.
+Working baseline: paired commit 721242f. Skillchains and all TargetSC Lua are
+byte-identical to that baseline. Source/portable test accompany the DLL;
+README/WORKFLOW/TESTING are included. Package BUILD_INFO identifies source
+commit and DLL hash. Native maximum storage decreases to 18,048 vertices.
+
+---
+
+
+
 ## Current Development Status — Animation8.4 glow-tier progression (2026-10-20)
 
 **Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-glow-tier-shift`; starting baseline `c6b05a7` (Animation8.3 standalone Umbra HUD demo with user feedback that the synchronized demo looks great). TargetSC companion Test3 `0.3.0`, native DLL, its preview, and working `lua c` bridge remain unchanged.

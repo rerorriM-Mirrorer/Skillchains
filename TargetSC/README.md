@@ -1,5 +1,39 @@
 # TargetSC — elemental resonance
 
+## 0.4.0 Test4 — optional opener treatments and paired L2 colors
+
+Install the patch over working TargetSC; close every FFXI client before replacing
+the DLL. Lua 0.4.0-test4 requires native 0.4.0. Preserve data/settings and your
+installed Skillchains. The approved traced glyph is retained on both layers.
+Initial opener options are combined: 12-degree gap, black surround, muted hue.
+
+| Command | Comparison |
+| --- | --- |
+| `//tsc opener preset original` | Full rings, elemental glow, ordinary colors |
+| `//tsc opener preset gap` | Only a 12-degree opener gap |
+| `//tsc opener preset black` | Only a black opener surround |
+| `//tsc opener preset muted` | Only quieter opener colors |
+| `//tsc opener preset combined` | Gap, black surround and muted colors |
+| `//tsc opener preset quiet` | Gap, no surround and muted colors |
+| `//tsc opener gap 12` / `on` / `off` | Exact gap degrees (0–60); on=12, off=0 |
+| `//tsc opener glow color` / `black` / `off` | Surround choice; global glow strength still applies |
+| `//tsc opener muted on` / `off` | Same hues, reduced saturation/brightness; bare toggles |
+
+Opener presets change only the three opener controls; saved height, motion,
+glyph opacity and all other settings survive. Compare on a living target with
+`//tsc preview opener Fusion`. Controls update the active drawing immediately.
+The gap rotates with opener ground/sky rings and applies to their surrounds;
+disc rims and activation/MB/burst effects remain complete circles. Muting also
+affects opener disc fills, while glyph lines and activation white stay white.
+Black is normal alpha transparency: a dark surround behind the narrow core.
+
+L2 ground and sky pairs each show both elements with reversed halves. Both rings
+remain present during white charge, then reveal their two-color palettes.
+Try `//tsc preview chain Fusion 2` and the other three L2 properties.
+`//tsc preview off` restores live display. Check bridge with `//tsc status`.
+See TESTING.md for completed checks and pending FFXI comparisons.
+
+
 ## Skillchains Animation8.2 — paired configuration update
 
 Skillchains' `glow.levels` numeric/string merge warning has been addressed at its config default and save command. Existing settings survive. TargetSC 0.3.0 Test3 Lua, DLL, rings and `lua c` synchronization remain unchanged. If Test3 is already installed, update Skillchains only; check `//sc targetsc` and `//tsc status` after reload. New build needs live verification.
@@ -552,3 +586,7 @@ inside its own folder.
   burst shimmer/ripple, L1–L4 palettes, preview, settings and diagnostics.
 - Windows i386 cross-compilation and simulated/static checks completed;
   Windower loading, visual quality and multibox performance remain live tests.
+
+### 2026-10-21 — 0.4.0 Test4 (A)
+
+Optional exact opener gap, black/colored/no surround, muted hue-preserving colors, selective comparison presets; complete reversed L2 palettes on ground/sky. Retain user-approved traced glyph from d981e9d7. Native/Lua API 0.4.0; current Skillchains/bridge unchanged.

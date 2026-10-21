@@ -1,4 +1,4 @@
-// TargetSC 0.3.0 — Author: A.
+// TargetSC 0.4.0 — Author: A.
 // Device discovery, projection and model following adapted from Broguypal's
 // TargetRing (BSD-3-Clause); see licenses/ and THIRD_PARTY_NOTICES.md.
 // SceneHook.h is deliberately byte-identical to both reference addons.
@@ -72,7 +72,7 @@ constexpr std::uintptr_t kEntityTargetType=0x0EE;
 constexpr unsigned char kTargetTypeObject=3;
 int g_object_mode=0;
 struct Ring {float radius=0, offset=0, width=0; DWORD color=0; float pixels=0;
-    int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0;};
+    int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0,gap=0;};
 struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     DWORD outline=0;int sectors=1;DWORD color2=0,color3=0,color4=0;};
 struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0;
@@ -703,7 +703,7 @@ bool project(Position const& p,D3DVIEWPORT8 const& v, DrawVertex& out,DWORD colo
 // Bounded storage reused by the render thread: no per-frame allocations.
 constexpr int kMaxVertices=(kMaxRings+kMaxDiscs)*ring_slices_*6+
     kMaxDiscs*(ring_slices_*3+targetsc::kGlyphLines*6);
-static_assert(kMaxVertices==18240,"Review bounded storage when glyph complexity changes");
+static_assert(kMaxVertices==18048,"Review bounded storage when glyph complexity changes");
 DrawVertex g_vertices[kMaxVertices]{};
 unsigned g_vertex_count=0;
 void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
@@ -711,11 +711,15 @@ void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
     g_vertices[g_vertex_count++]=a;g_vertices[g_vertex_count++]=b;g_vertices[g_vertex_count++]=c;
 }
 void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewport) {
-    DrawVertex points[ring_slices_]{};bool valid[ring_slices_]{};
-    float widths[ring_slices_]{};
+    const bool open=ring.gap>0;
+    const int point_count=ring_slices_+(open?1:0);
+    DrawVertex points[ring_slices_+1]{};bool valid[ring_slices_+1]{};
+    float widths[ring_slices_+1]{};
     const float cr=std::cos(ring.rotation),sr=std::sin(ring.rotation);
-    for(int i=0;i<ring_slices_;++i) {
-        const float x=ring_cos_[i]*cr-ring_sin_[i]*sr,y=ring_sin_[i]*cr+ring_cos_[i]*sr;
+    for(int i=0;i<point_count;++i) {
+        const float angle=targetsc::ring_angle(i,ring_slices_,ring.gap);
+        const float ca=open?std::cos(angle):ring_cos_[i],sa=open?std::sin(angle):ring_sin_[i];
+        const float x=ca*cr-sa*sr,y=sa*cr+ca*sr;
         Position p{base.east+ring.radius*x,base.north+ring.radius*y,base.height-ring.offset};
         valid[i]=project(p,viewport,points[i],ring.color);
         DrawVertex inner{},outer{};
@@ -725,10 +729,11 @@ void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewpor
             ? std::hypot(outer.x-inner.x,outer.y-inner.y):0.f;
         widths[i]=targetsc::visible_width(natural,ring.pixels);
     }
-    DrawVertex inside[ring_slices_]{},outside[ring_slices_]{};
-    for(int i=0;i<ring_slices_;++i) {
+    DrawVertex inside[ring_slices_+1]{},outside[ring_slices_+1]{};
+    for(int i=0;i<point_count;++i) {
         if(!valid[i])continue;
-        int prev=(i+ring_slices_-1)%ring_slices_,next=(i+1)%ring_slices_;
+        const int prev=open?std::max(0,i-1):(i+ring_slices_-1)%ring_slices_;
+        const int next=open?std::min(point_count-1,i+1):(i+1)%ring_slices_;
         auto const& p=points[i];
         auto const& a=valid[prev]?points[prev]:p;
         auto const& b=valid[next]?points[next]:p;
@@ -739,7 +744,7 @@ void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewpor
         outside[i].x+=d.x;outside[i].y+=d.y;
     }
     for(int i=0;i<ring_slices_;++i) {
-        const int n=(i+1)%ring_slices_;
+        const int n=open?i+1:(i+1)%ring_slices_;
         if(!valid[i]||!valid[n])continue;
         const DWORD palette[]={ring.color,ring.color2,ring.color3,ring.color4};
         const DWORD color=palette[targetsc::sector_index(i,ring_slices_,ring.sectors)];
@@ -771,7 +776,7 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
     }
     if(!disc.glyph || !(disc.outline>>24))return;
     Ring rim{disc.radius,disc.offset,0,disc.outline,1.f};emit_ring(base,rim,viewport);
-    // Transparent glyph strokes: full cross, pointed star AND central square.
+    // Transparent strokes: traced diagonal star/wide cross and central square.
     static const auto lines=targetsc::property_glyph();
     for(auto const& line:lines) {
         auto point=[&](targetsc::GlyphPoint p) {
@@ -899,10 +904,12 @@ int __cdecl lua_ring(lua_State* L) {
     const double sectors=argc>=6?g_lua.tonumber(L,6):1;
     const double c2=argc>=7?g_lua.tonumber(L,7):c,c3=argc>=8?g_lua.tonumber(L,8):c,c4=argc>=9?g_lua.tonumber(L,9):c;
     const double angle=argc>=10?g_lua.tonumber(L,10):0;
+    const double gap=argc>=11?g_lua.tonumber(L,11):0;
+    if(!std::isfinite(gap)||gap<0||gap>60)return 0;
     if(!std::isfinite(sectors)||sectors<1||sectors>4||sectors!=std::floor(sectors)||!std::isfinite(angle)||std::fabs(angle)>1000000)return 0;
     for(double color:{c2,c3,c4})if(!std::isfinite(color)||color<0||color>4294967295.0)return 0;
     g_pending.rings[g_pending.count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(w),static_cast<DWORD>(c),static_cast<float>(pixels),
-        static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<float>(angle)};
+        static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<float>(angle),static_cast<float>(gap)};
     return 0;
 }
 int __cdecl lua_disc(lua_State* L) {
@@ -923,11 +930,11 @@ int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.3.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.4.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.3.0 %s; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.4.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;

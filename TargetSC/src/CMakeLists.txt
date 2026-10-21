@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(TargetSC VERSION 0.3.0 LANGUAGES CXX)
+project(TargetSC VERSION 0.4.0 LANGUAGES CXX)
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(FATAL_ERROR "TargetSC requires a 32-bit x86 compiler")
 endif()

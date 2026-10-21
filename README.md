@@ -1,5 +1,13 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## TargetSC Test4 companion patch (2026-10-21)
+
+TargetSC adds independently selectable opener gap, black/colored/no surround,
+muted hues and opposed two-color L2 ground/sky rings; see TargetSC/README.md.
+The TargetSC-only patch preserves this branch's current Skillchains runtime,
+HUD controls and working bridge. Native/Lua 0.4.0 must be installed together.
+
+
 ## Animation8.4 — L2 white shimmer, L3 gold electricity, L4 unchanged
 
 `//sc demo` still runs the five-stage Umbra HUD sequence. The glow tier progression now places the former L3 **white shimmer** on Level 2 and former L4 **gold electric flicker** on Level 3. Level 4's electric glow remains unchanged. Both promoted halos are present during the white refill/charge, **before** the real continuation clock begins to count down. Your optional `//sc anim fade on` gradient pulse is separate and unchanged.
@@ -654,3 +662,7 @@ eligible jobs.
   draggable scale edit, width, default, help, status.
 - Preserve manual selection: **no magic-job/subjob detection**.
 - Retain original action-packet detection and legacy useful suggestion filters.
+
+### 2026-10-21 — TargetSC Test4 companion (A)
+
+Optional opener presentation comparisons and full opposed L2 palettes; no Skillchains runtime changes.

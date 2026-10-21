@@ -1,3 +1,14 @@
+# Building and verifying TargetSC 0.4.0 / Test4
+
+Native API 0.4.0 adds an optional eleventh `ring` argument, gap degrees (0–60).
+New Lua requires this DLL; older Lua callers can still omit the argument.
+Open rings use 65 points/64 segments with exact endpoints and unjoined caps.
+Closed rings and glyph rims retain the original periodic path. Vertex storage
+remains bounded at 18,048 vertices, one draw call; SceneHook ABI 2 is unchanged.
+Native status retains `glyph=traced`. See TESTING.md for installation/comparisons.
+
+The following historical 0.3.0 API remains otherwise unchanged:
+
 # Building and verifying TargetSC 0.3.0 / Test3
 
 Author: A. The DLL is PE32/i386. Host compilation, Lua simulations and portable

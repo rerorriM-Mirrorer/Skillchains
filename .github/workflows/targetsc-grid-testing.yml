@@ -1,9 +1,9 @@
-name: Skillchains L2 white / L3 electric glow + paired TargetSC regression
+name: TargetSC Test4 opener options and opposed L2 palettes
 
 on:
   push:
     branches:
-      - development/skillchains-glow-tier-shift
+      - development/targetsc-opener-options
   workflow_dispatch:
 
 permissions:
@@ -55,14 +55,21 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.4-Glow-Tier-Shift-Paired-test
+          name: TargetSC-Test4-Opener-Options-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
       - name: Publish Skillchains-only testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.4-Glow-Tier-Shift-Solo-test
+          name: Skillchains-Current-HUD-Compatible-test
           path: dist/skillchains-demo-package/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish minimal TargetSC patch
+        uses: actions/upload-artifact@v4
+        with:
+          name: TargetSC-Test4-Opener-Options-Patch
+          path: dist/TargetSC-0.4.0-Test4-Opener-Options-Patch.zip
           if-no-files-found: error
           retention-days: 30

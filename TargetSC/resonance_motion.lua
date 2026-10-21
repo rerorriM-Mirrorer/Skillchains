@@ -10,8 +10,15 @@ M.defaults={opacity=.3,scale=2,height=1,intensity=1,motion='sine',layout='ground
     period=.09,amplitude=.3,damping=3,width=2,glow=1,brightness=4,discs=true,disc_opacity=.3,
     hum_amplitude=.018,hum_period=.12,hum_slowdown=1,hum_gain=.35,
     disc_outline=.45,disc_style='glyph',disc_height=.008,disc_speed=1,disc_slowdown=1,
-    awakening=true,awakening_opacity=.3,ground_height=.04,fade_duration=.8}
+    awakening=true,awakening_opacity=.3,ground_height=.04,fade_duration=.8,
+    opener_gap=12,opener_glow='black',opener_muted=true}
 local white,gold={255,255,255},{255,217,115}
+-- Mix toward the brightest channel before dimming: hue is preserved while
+-- saturation becomes 75% and value 82% of the ordinary elemental color.
+local function muted(c)
+    local value=max(c[1],c[2],c[3])
+    return {(.75*c[1]+.25*value)*.82,(.75*c[2]+.25*value)*.82,(.75*c[3]+.25*value)*.82}
+end
 local function option(opts,k)
     if opts and opts[k]~=nil then return opts[k]end
     return M.defaults[k]
@@ -110,7 +117,11 @@ local function specifications(s,context)
     else
         local colors=context.palette(s)
         for j,c in ipairs(colors)do
-            result[#result+1]={colors={c},radial=s.level>=4 and 1+(j-(#colors+1)/2)*.075 or 1,
+            local palette={c}
+            if s.level==2 and #colors==2 then
+                palette=j==1 and {colors[1],colors[2]}or {colors[2],colors[1]}
+            end
+            result[#result+1]={colors=palette,radial=s.level>=4 and 1+(j-(#colors+1)/2)*.075 or 1,
                 stack=(s.level==2 or s.level==3)and (j-1)*.035 or 0}
         end
     end
@@ -140,10 +151,16 @@ function M.frame(model,s,now,radius,height,opts,context)
         if a<=.002 or r<.01 then return end
         local p=packed(colors,a)
         out[#out+1]={radius=r,offset=h,width=0,pixels=pixels,color=p[1],colors=p,
-            rotation=rotation or 0,role=role,part=part,strand=strand}
+            rotation=rotation or 0,role=role,part=part,strand=strand,
+            gap=opener and (part=='ground'or part=='sky')and option(opts,'opener_gap')or 0}
     end
     local function ring(r,h,colors,a,part,strand,rotation,light)
-        if glow>0 and light~=false then band(r,h,colors,a*.24*glow,px+4*min(glow,3),'glow',part,strand,rotation)end
+        local opening=opener and (part=='ground'or part=='sky')
+        local mode=opening and option(opts,'opener_glow')or 'color'
+        if glow>0 and light~=false and mode~='off'then
+            local surround=mode=='black'and {{0,0,0}}or colors
+            band(r,h,surround,a*.24*glow,px+4*min(glow,3),'glow',part,strand,rotation)
+        end
         band(r,h,colors,a,px,'core',part,strand,rotation)
     end
     local function disc(r,h,angle,colors,a,glyph,outline,role)
@@ -157,13 +174,16 @@ function M.frame(model,s,now,radius,height,opts,context)
     elseif not opener and s.level>=4 then electric=(.37+.63*sin(age*23)^2)*(.72+.28*sin(age*28)^2)end
     if phase~='mb-only'then
         local specs=specifications(s,context)
-        if not opener and age<.16 then specs={{colors={white},radial=1,stack=0}}end
+        if not opener and s.level~=2 and age<.16 then specs={{colors={white},radial=1,stack=0}}end
         out.strands=#specs
         local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*fade
         if s.level>=3 and not opener then alpha=alpha*(.72+.28*electric)end
         for j,spec in ipairs(specs)do
             local colors={}
-            for _,c in ipairs(spec.colors)do colors[#colors+1]=mix(mix(white,c,color_t),white,flash)end
+            for _,c in ipairs(spec.colors)do
+                local target=opener and option(opts,'opener_muted')and muted(c)or c
+                colors[#colors+1]=mix(mix(white,target,color_t),white,flash)
+            end
             local r=radius*spec.radial
             local rotation=opener and M.rotation(s,now,opts)or 0
             for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
@@ -194,6 +214,9 @@ function M.frame(model,s,now,radius,height,opts,context)
             local properties=opener and s.properties or {s.properties[1]}
             for j,p in ipairs(properties)do
                 local colors=property_palette(p,context)
+                if opener and option(opts,'opener_muted')then
+                    for i,c in ipairs(colors)do colors[i]=muted(c)end
+                end
                 if not opener then
                     if s.level>=4 then colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
                     else for i,c in ipairs(colors)do colors[i]=mix(white,c,color_t)end end

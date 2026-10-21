@@ -90,6 +90,55 @@ for level,p in ipairs({'Liquefaction','Fragmentation','Darkness','Umbra'})do
         near(speed(109.1),0)
     else near(Motion.rotation(s,107,opts),0)end
 end
+-- All eight combinations are independently viewable and presentation-only.
+local function glows(f,part)
+    local r={}for _,b in ipairs(f)do if b.role=='glow'and b.part==part then r[#r+1]=b end end return r
+end
+s=state('Fusion',2,1);m.states[71]=s
+local original=copy(opts);original.opener_gap=0;original.opener_glow='color';original.opener_muted=false
+local original_frame=frame(104,original)
+for _,gap in ipairs({0,12})do
+ for _,mode in ipairs({'color','black','off'})do
+  for _,muted in ipairs({false,true})do
+    o=copy(original);o.opener_gap=gap;o.opener_glow=mode;o.opener_muted=muted
+    local current=frame(104,o)
+    near(current.ground,original_frame.ground);near(current.sky,original_frame.sky)
+    near(current.remaining,original_frame.remaining)
+    for _,part in ipairs({'ground','sky'})do
+        local core=cores(current,part)[1];assert(core.gap==gap and #core.colors==2)
+        local glow=glows(current,part)
+        if mode=='off'then assert(#glow==0)
+        else
+            assert(#glow==1 and glow[1].gap==gap and glow[1].rotation==core.rotation)
+            if mode=='black'then assert(glow[1].color%16777216==0 and glow[1].color>=16777216)
+            else assert(glow[1].color==core.color-(math.floor(core.color/16777216)-math.floor(glow[1].color/16777216))*16777216)end
+        end
+    end
+    if muted then assert(cores(current,'ground')[1].color%16777216~=cores(original_frame,'ground')[1].color%16777216)end
+  end
+ end
+end
+-- Every L2 property has both palettes on each vertically stacked ring,
+-- in reverse order, from the initial white charge through countdown/fade.
+for _,property in ipairs({'Fusion','Fragmentation','Distortion','Gravitation'})do
+ s=state(property,2,3);m.states[71]=s
+ for _,at in ipairs({100,100.1,102.9,103,104,109.2})do
+  local current=frame(at)
+  for _,part in ipairs({'ground','sky'})do
+   local pair=cores(current,part);assert(#pair==2 and #pair[1].colors==2 and #pair[2].colors==2)
+   assert(pair[1].colors[1]==pair[2].colors[2]and pair[1].colors[2]==pair[2].colors[1])
+   assert(pair[1].gap==0 and pair[2].gap==0 and pair[1].rotation==pair[2].rotation)
+   assert(pair[1].offset<pair[2].offset)
+  end
+ end
+ -- Opener toggles cannot alter a completed chain or its discs.
+ assert(require('resonance_motion').phase(s,104)=='countdown')
+ o=copy(opts);o.opener_gap=0;o.opener_glow='off';o.opener_muted=false
+ local a,b=frame(104),frame(104,o)
+ for i,band in ipairs(a)do assert(band.color==b[i].color and band.gap==b[i].gap)end
+ for i,d in ipairs(a.discs)do assert(d.color==b.discs[i].color and d.outline==b.discs[i].outline)end
+end
+print('PASS opener comparisons: all 12 combinations, exact gap metadata, black/off/color surround, preserved motion and completed chains; all four L2 opposed palettes on ground/sky from charge through fade')
 -- A normal expiry fades exactly the existing geometry, with no white flash.
 s=state('Liquefaction',1,1);m.states[71]=s
 local end_frame=frame(110);local faded=frame(110.3)
