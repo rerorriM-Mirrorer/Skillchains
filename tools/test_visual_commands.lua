@@ -112,11 +112,13 @@ assert(opt.track.alpha==155 and opt.bar.x==466,
     'Glow-only reset must not change track/positions')
 opt.glow.levels=34
 opt.glow.level_mask=nil
-assert(run('glow'):find('Glow levels 34',1,true))
+run('glow')
+assert(messages[#messages-1]:find('Glow levels 34',1,true))
 run('glow','levels','12')
 assert(opt.glow.level_mask=='L1,L2')
 opt.glow.levels='off'
-assert(run('glow'):find('Glow levels L1,L2',1,true))
+run('glow')
+assert(messages[#messages-1]:find('Glow levels L1,L2',1,true))
 local mask=opt.glow.level_mask
 run('glow','levels','135') assert(opt.glow.level_mask==mask)
 run('glow','l4','gold') assert(opt.glow.l4=='gold')
