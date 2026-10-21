@@ -1,9 +1,9 @@
-name: Skillchains L2 white / L3 electric glow + paired TargetSC regression
+name: Skillchains pulse tempo L2 prewindow terminal FX + TargetSC regression
 
 on:
   push:
     branches:
-      - development/skillchains-glow-tier-shift
+      - development/skillchains-pulse-terminal-fx
   workflow_dispatch:
 
 permissions:
@@ -55,14 +55,14 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.4-Glow-Tier-Shift-Paired-test
+          name: Skillchains-Animation8.5-Pulse-Terminal-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
       - name: Publish Skillchains-only testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.4-Glow-Tier-Shift-Solo-test
+          name: Skillchains-Animation8.5-Pulse-Terminal-Solo-test
           path: dist/skillchains-demo-package/
           if-no-files-found: error
           retention-days: 30

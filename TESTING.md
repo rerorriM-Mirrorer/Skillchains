@@ -1,5 +1,21 @@
 # TESTING.md — Skillchains Resonance UI
 
+## Current Development Status — Animation8.5 terminal and pulse timing (2026-10-21)
+
+**Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-pulse-terminal-fx`, based on `6a0d623` (Animation8.4, user says dramatically improved). Skillchains version `2.20.08.25-resonance.7-animation.8.5`. TargetSC Test3 0.3.0 native DLL/Lua/bridge unchanged.
+
+**Latest feedback:** User restored `glow level2 .7` and `glow level3 1`, likes synchronized visual demos, but L2 white pre-window halo looked absent. User wants a configurable SC fill pulse near TargetSC floor ring vibration, and whimsical all-elements Umbra-black / light-side Radiance-white terminal fade. Asks whether L1 glow exists: yes, L1 already has muted property-color halo but is excluded by global mask 234.
+
+**Code changes:** `//sc anim fade period <0.08..5 seconds>` changes sin² waveform cycle (default legacy ≈0.417s, recommended near TSC hum 0.24s); period anchored to current SC created clock. TargetSC ground hum uses `hum_period=.12` half-period plus per-level `hum_gain=.35` and countdown `hum_slowdown=1`. Matching 0.24s is approximate only: no live phase lock or changed TargetSC settings. A separate `pre2=.85` raises early white halo visibility; existing pre3 remains legacy. Real closed L4 receives a visible SC bar during the source's real 3-second preparation, then 0.8s terminal overlay whose SC/MB bar fills and backgrounds, text, icons and perimeter glow take black for Umbra, white for Radiance/Lux, fade and return MB to normal. No mutation of combat state or source clocks. `//sc anim preview umbra|radiance|lux` offers local visual test.
+
+**Protection:** No TargetSC, `targetsc_bridge.lua`, skillchain ability parser, UI assets, HUD layout or user data modifications; keep complete cumulative source history below. No real auto-launch of dual demonstrations is added.
+
+**Testing:** Lua 5.1 compile, command handler simulation for fade period/on/off and `pre2`, renderer tests for early L2 alpha, exact pulse change, closed black/white color/alpha of SC and MB bars/captions/icons, terminal effect end with continuing MB, existing 40s standalone demo and TargetSC command transport, native build and package manifests. Check latest CI outcome before claiming a pass. **In-game visual performance has not been confirmed.**
+
+**Install and live checks:** Install only the Skillchains artifact, preserve `Skillchains/data/` and existing TargetSC Test3. `//lua reload Skillchains`; `//sc glow levels 234`; `//sc glow pre2 0.85`; `//sc anim fade on`; `//sc anim fade period 0.24`; `//sc demo`. Compare L2 white-charge glow at 17–20s, L3 charge at 24–27s, Umbra black fade from 33s, MB color recovery afterward. Run `//sc anim preview radiance` for white version; `//sc anim preview umbra` for black. `//sc targetsc`/`//tsc status` must still sync. No FFXI testing done by assistant.
+
+---
+
 ## Current Development Status — Animation8.4 glow-tier progression (2026-10-20)
 
 **Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-glow-tier-shift`; starting baseline `c6b05a7` (Animation8.3 standalone Umbra HUD demo with user feedback that the synchronized demo looks great). TargetSC companion Test3 `0.3.0`, native DLL, its preview, and working `lua c` bridge remain unchanged.

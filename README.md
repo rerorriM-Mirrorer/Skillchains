@@ -1,5 +1,13 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## Animation8.5 — rhythmic countdown, L2 charge, black/white terminal finish
+
+**Skillchains-only.** Run `//sc anim fade on` and `//sc anim fade period 0.24` to set the colored countdown's opacity pulse near the default TargetSC ground-hum cycle (0.24 seconds at Level 1). Period is adjustable from 0.08 to 5 seconds and stored independently of the on/off toggle. TargetSC's actual floor-hum frequency also varies with skillchain level and slows to rest, so this is a *tempo match*, not a locked phase handshake. The existing 0.417-second pulse period remains the default for older saves. The white refill pre-window deliberately does not pulse the fill.
+
+Level 2's white halo uses `pre2=0.85` (previous inherited 0.38 was difficult to see during white refill), adjustable by `//sc glow pre2 0.85`. `//sc glow levels 234` includes L2; L1 has a separate, softer property-colored halo available via `//sc glow levels 1234` and `//sc glow level1`.
+
+**Terminal results:** Real Umbra and Radiance (also called *Lux* in the preview commands) keep their three-second charge, then recolor the SC bar, bar background, glow, icon and text, and accompanying MB visuals black or white respectively; the collective 0.8-second fade resolves and the independent Magic Burst timer returns to its usual appearance. Preview `//sc anim preview umbra` or `//sc anim preview radiance` / `lux`, or watch the normal `//sc demo` end in Umbra. No game action is issued; source SC/MB deadlines, TargetSC native/bridge and personal saved positions are unchanged.
+
 ## Animation8.4 — L2 white shimmer, L3 gold electricity, L4 unchanged
 
 `//sc demo` still runs the five-stage Umbra HUD sequence. The glow tier progression now places the former L3 **white shimmer** on Level 2 and former L4 **gold electric flicker** on Level 3. Level 4's electric glow remains unchanged. Both promoted halos are present during the white refill/charge, **before** the real continuation clock begins to count down. Your optional `//sc anim fade on` gradient pulse is separate and unchanged.
@@ -506,6 +514,12 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-21 — Animation8.5 countdown + terminal visuals (A)
+- Expose adjustable `//sc anim fade period 0.24` while retaining legacy pulse by default; period is approximate TargetSC floor hum and does not transmit synchronization.
+- Improve Level 2 pre-window halo via independent `pre2`; keep optional L1 glow and saved masks.
+- Black Umbra and white Radiance/Lux briefly recolor the entire active HUD presentation and fade after the three-second charge; MB timer carries on, unaffected chronologically.
+- Keep standalone Umbra HUD demo, TargetSC bridge/DLL, all user layouts and gameplay packet processing intact. New visual behavior requires in-game verification.
 
 ### 2026-10-20 — Animation8.4 glow tier progression (A)
 - Promote old L3 white flicker and halo class to Level 2, including active pre-window charge. Promote old L4 gold electric flicker to Level 3; preserve L4.

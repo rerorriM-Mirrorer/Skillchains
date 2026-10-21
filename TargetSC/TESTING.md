@@ -1,5 +1,11 @@
 # TargetSC TESTING.md — start here
 
+## Skillchains Animation8.5 companion — 2026-10-21
+
+No TargetSC source/native changes, no bridge protocol changes or synthesized game events. Skillchains adds a separately adjustable countdown fade period (`//sc anim fade period 0.24` approximately matches TargetSC default `hum_period=.12`; not phase-locking), stronger L2 pre-window border glow, black Umbra / white Radiance terminal HUD fade and local preview. The current real FFXI TargetSC ring timing remains unaltered. Existing companion `//tsc preview demo` also remains independent. Keep TargetSC and its DLL installed as-is; only Skillchains-only folder needs update, and keep character `data/`. Check in-game bridge and visuals.
+
+---
+
 ## Companion Skillchains Animation8.4 visual tiers (2026-10-20)
 
 Skillchains promotes its white border shimmer to L2 and gold electrical glow to L3 (immediate pre-window appearance) while keeping L4 unchanged. **TargetSC Test3 Lua, native DLL, 3D rings, preview demo, source deadlines and `lua c` bridge are not modified.** The standalone `//sc demo` remains independent; do not assume a synchronized startup handshake has been added. Test `//sc targetsc`/`//tsc status` after installing the Skillchains-only folder, preserving `data/`. Host regression is separate from the pending live visuals.

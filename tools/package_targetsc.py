@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-Animation8.4-Glow-Tier-Shift-Paired-Full'
+NAME = 'Skillchains-Animation8.5-Pulse-Terminal-Paired-Full'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skillchains_demo.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
@@ -39,11 +39,14 @@ def main():
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
     # Unchanged Animation8.1 HUD/combat/assets are protected, except mask-loading Lua.
     # The publisher must still retain Test3's corrected lua c transport.
-    guarded = ('skills.lua','resonance_ui.lua',
-               'learning_ui.lua','images')
+    guarded = ('skills.lua','learning_ui.lua','images')
     assert not git('diff',HUD_BASELINE,'--',*guarded), 'HUD/assets changed'
     changed=set(git('diff','--name-only',HUD_BASELINE,'--','Skillchains.lua','resonance_fx.lua').splitlines())
-    assert changed=={'Skillchains.lua','resonance_fx.lua'}, 'Unexpected source baseline differences'
+    assert changed=={'Skillchains.lua','resonance_fx.lua'}, 'Unexpected runtime differences'
+    # Only Skillchains HUD and FX files are intentionally changed since 8.4.
+    assert not git('diff','6a0d6231b2633c47ebf8ec68e6d40bc76d8239d2','--',
+        'skills.lua','targetsc_bridge.lua','skillchains_demo.lua',
+        'learning_ui.lua','images','TargetSC'), 'Unexpected gameplay/TargetSC changes'
     # The new demo module is mandatory; TargetSC is never the HUD's runtime source.
     demo=(ROOT/'skillchains_demo.lua').read_text()
     assert 'require(\'resonance_preview\')' not in demo
@@ -55,7 +58,7 @@ def main():
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains Animation8.4 L2 shimmer L3 electric L4 preserved / TargetSC Test3 untouched', 'author': 'A.',
+    info = {'batch': 'Skillchains Animation8.5 pulse-period L2 visible charge Umbra black/Radiance white terminal fade / TargetSC unchanged', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': HUD_BASELINE,
