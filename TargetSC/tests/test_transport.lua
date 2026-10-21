@@ -48,6 +48,7 @@ local function run(source_first)
         e.require=function(module)
             if module=='config'then return e.config end
             if module=='resonance_ui'then return {new=function()return{hide=function()end,destroy=function()end}end}end
+            if module=='skillchains_demo'then return require('skillchains_demo')end
             if module=='targetsc_bridge'then return setfenv(assert(loadfile('targetsc_bridge.lua')),e)()end
             if module=='skills'then return require('skills')end
             if module=='resonance'then
@@ -92,6 +93,10 @@ local function run(source_first)
     now=105;tsc.events['addon command']('sync');drain()
     assert(model.synced and model.states[71].created==104 and model.states[71].sc_close==113,
         'snapshot must retain exact source age/deadlines')
+    local no_demo_messages=#traffic
+    sc.events['addon command']('demo');drain()
+    assert(#traffic==no_demo_messages,'HUD-only demo must never publish a TargetSC event')
+    sc.events['addon command']('demo','off');drain()
     local count=#traffic;now=106
     tsc.events['addon command']('status');drain();assert(#traffic==count,'status must not poll')
     sc.events.unload();drain();assert(not model.connected and not next(model.states))

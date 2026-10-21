@@ -3,6 +3,7 @@
 string.ucfirst=function(s)return s:sub(1,1):upper()..s:sub(2)end
 local function harness()
     local clock,events,renders=100,{},{},{}
+    local sent={}
     local raw_deadlines={}
     local env=setmetatable({_addon={},res={spells={[144]={element=0}},jobs={}}},{__index=_G})
     env.os=setmetatable({clock=function() return clock end},{__index=os})
@@ -27,7 +28,7 @@ local function harness()
     local target={id=71,index=12,hpp=100}
     local messages={}
     env.windower={register_event=function(name,fn)events[name]=fn end,
-        send_command=function()end,add_to_chat=function(_,msg)messages[#messages+1]=msg end,
+        send_command=function(line)sent[#sent+1]=line end,add_to_chat=function(_,msg)messages[#messages+1]=msg end,
         ffxi={get_info=function()return {logged_in=true}end,
             get_player=function()return player end,get_mob_by_target=function()return target end,
             get_abilities=function()return {weapon_skills={},job_abilities={}}end,
@@ -37,6 +38,7 @@ local function harness()
             render=function(_,frame)renders[#renders+1]=copy(frame or {hidden=true})end,
             hide=function()end,destroy=function()end}end} end
         if name=='targetsc_bridge' then return assert(setfenv(assert(loadfile('targetsc_bridge.lua')),env))() end
+        if name=='skillchains_demo' then return assert(loadfile('skillchains_demo.lua'))() end
         if name=='skills' then return assert(loadfile('skills.lua'))() end
         return {}
     end
@@ -48,10 +50,11 @@ local function harness()
             get_targets=function()return function()return t end end}
     end}
     setfenv(assert(loadfile('Skillchains.lua')),env)()
-    return events['addon command'],env,messages,function()return saves end
+    return events['addon command'],env,messages,function()return saves end,
+        function(now)clock=now end,events,renders,sent
 end
 
-local command,env,messages,saves=harness()
+local command,env,messages,saves,set_clock,events,renders,sent=harness()
 local opt=env.settings.Resonance
 local function run(cmd,...)
     command(cmd,...)
@@ -138,3 +141,36 @@ assert(run('glow'):find('//sc glow levels',1,true))
 assert(run('transition'):find('Transition',1,true))
 assert(saves()>10,'Settings changes should save')
 print('PASS visual commands: cap presets, prewindow electricity, per-level glow, track RGB/alpha, selective resets and validation')
+
+
+-- A standalone demo must use the same main HUD renderer and never inject
+-- transport messages, change tracked combat states, or touch saved settings.
+local saved_before=saves()
+local sent_before=#sent
+run('demo')
+assert(#sent==sent_before and saves()==saved_before)
+events.prerender()
+assert(renders[#renders].step==1 and renders[#renders].active[1]=='Scission')
+set_clock(109);events.prerender()
+assert(renders[#renders].step==2 and renders[#renders].active[1]=='Detonation')
+set_clock(117);events.prerender()
+assert(renders[#renders].step==3 and renders[#renders].active[1]=='Gravitation')
+set_clock(124);events.prerender()
+assert(renders[#renders].step==4 and renders[#renders].active[1]=='Darkness')
+set_clock(130);events.prerender()
+assert(renders[#renders].step==5 and renders[#renders].active[1]=='Umbra'
+    and not renders[#renders].closed,'Terminal Level 4 charge is visible')
+set_clock(133);events.prerender()
+assert(renders[#renders].closed and renders[#renders].mb_left==7)
+assert(run('demo','status'):find('Umbra HUD demo:',1,true))
+assert(#sent==sent_before and saves()==saved_before,
+    'The demo must not alter TargetSC transport or settings')
+run('demo','off')
+assert(run('demo','status'):find('idle',1,true))
+set_clock(134);events.prerender()
+assert(renders[#renders].hidden,'Normal empty HUD restored after demo off')
+set_clock(200);run('demo');events.prerender()
+set_clock(240.1);events.prerender()
+assert(renders[#renders].hidden,'Demo expires after independent MB tail')
+assert(#sent==sent_before,'No fake TargetSC actions from any demo frame')
+print('PASS Skillchains demo integration: actual handler, HUD frames, stop, auto-end, no transport/settings')

@@ -29,7 +29,7 @@ for i=1,5 do
     if i>1 then
         assert(step.created==demo.stages[i-1].times-1)
         assert(frame.from_active[1]==results[i-1])
-        assert(math.abs(frame.from_fraction-1/(9-(i-1)))<1e-8)
+        assert(math.abs(frame.from_fraction-1/(9-i))<1e-8)
     end
 end
 
