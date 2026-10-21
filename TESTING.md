@@ -1,5 +1,39 @@
 # TESTING.md — Skillchains Resonance UI
 
+## Current Development Status — Skillchains HUD demo (2026-10-20)
+
+**Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-umbra-hud-demo`. Based on committed/pushed and CI-passing Animation8.2 `db8e919`; earlier paired Animation8.1+TargetSC Test3 synchronization was user-confirmed in game. **Skillchains** `resonance.7-animation.8.3`; **TargetSC** `0.3.0-test3` / native `0.3.0` unchanged.
+
+**Present work:** Standalone `//sc demo` for the same five-step progression and absolute-derived clocks as TargetSC's Test3 Umbra visual demo, but running entirely in the Skillchains HUD. It temporarily takes over HUD presentation without modifying real combat or publishing bridge events. Demo ends automatically or via `//sc demo off`.
+
+**Checks:** host tests include exact timeline vs TargetSC, Skillchains command dispatch/render and absence of bridge traffic, existing Lua 5.1 and FX regression, TargetSC Test3 handshake/native build and package checks. **CI outcome and live in-game visuals require confirmation.**
+
+**Next test:** Backup and preserve Skillchains/data; install the Skillchains-only folder; `//lua reload Skillchains`; `//sc status` expected 8.3. For an independent MB tail run `//sc display both`, then `//sc demo` and observe milestones, L4 charge through 33 s and MB expiry at 40 s; `//sc demo off` cancels. Restore `//sc display sc` if desired. Verify `//sc targetsc` and `//tsc status` still connected and that live WS actions render normally afterward. No real weaponskills are executed by the demo.
+
+---
+
+## Skillchains Animation8.3 — standalone Umbra HUD demo (2026-10-20; LIVE PENDING)
+
+**Command:** `//sc demo` or `//sc demo start` begins a local **40-second visual demonstration** using Skillchains' regular HUD renderer; `//sc demo status` reports progress and `//sc demo off` restores live display. The existing `//sc anim preview opener|level1|level2|level3|level4|off` commands still work independently. Starting the full demo cancels the single-scene HUD preview; starting a single-scene preview cancels the full demo.
+
+| Demo elapsed | Weaponskill | HUD result |
+| --- | --- | --- |
+| 0 s | Fast Blade | Scission opener |
+| 9 s | Gust Slash | Detonation L1 |
+| 17 s | Nightmare Scythe | Gravitation L2 |
+| 24 s | Rudra's Storm | Darkness L3 |
+| 30 s | Entropy (Anguta + qualifying Aeonic Aftermath) | Umbra L4 |
+
+**Same timing source math as TargetSC Test3:** every next weaponskill occurs one second before its predecessor's `created + 3 + 8 - step` continuation deadline. Individual wait times remain three seconds. Umbra's terminal charge is visible from 30–33 s, after which no further SC continuation is presented; the independent MB timer expires at 40 s. No confirmed Magic Burst or game action is invented. With `//sc display both`, the MB tail is visible; `display sc` keeps the user's existing visibility choice and may appear blank after the terminal charge.
+
+**Isolation:** No fake action packets, no changes to `resonating`, no TargetSC `_event` sends or bridge calls, no configuration saves and no changes to source SC/MB deadlines. Real packet observation and TargetSC synchronization continue in the background; while the demo runs, its synthetic frames temporarily replace live HUD frames only. Both return to live display after `off` or expiry. Zone/logout cancel the demo.
+
+**Install:** Solo Skillchains package contains `Skillchains/` with all required runtime Lua/images plus README.md, WORKFLOW.md and cumulative TESTING.md; no DLL and no TargetSC folder. Back up `Skillchains/` and preserve `Skillchains/data/`, merge the included folder into `Windower/addons/`, `//lua reload Skillchains`. Existing TargetSC Test3 is untouched, and `//sc targetsc`/`//tsc status` must retain subscribed/synced. User can run `//sc demo` even when TargetSC is not loaded.
+
+**Verification:** GitHub Actions' Lua 5.1 parser, new standalone timeline/parity tests against TargetSC's reference sequence, real Skillchains command/render smoke tests, existing FX/learning regression, and TargetSC transport/native/build/package checks. All are static/simulated; **no live FFXI demo visual/fps or timing check yet**.
+
+---
+
 ## Current Development Status — Animation8.2 glow configuration (2026-10-20)
 
 **Repository:** `rerorriM-Mirrorer/Skillchains`; branch `development/skillchains-glow-config-schema-fix`. Source checkpoint: `721242f` paired Animation8.1 + TargetSC Test3, confirmed in-game by user to synchronize. **Runtime:** Skillchains `2.20.08.25-resonance.7-animation.8.2`; TargetSC `0.3.0-test3` / native `0.3.0`, unchanged.

@@ -132,6 +132,16 @@ def main():
             checks = json.loads(z.read(folder + '/SHA256SUMS.json'))
             for name, expected in checks.items():
                 assert hashlib.sha256(z.read(folder + '/' + name)).hexdigest() == expected
+    # Offer a Skillchains-only installable artifact: no DLL or TargetSC files.
+    solo = DIST / 'skillchains-demo-package'
+    if solo.exists():
+        shutil.rmtree(solo)
+    shutil.copytree(STAGE / 'Skillchains', solo / 'Skillchains')
+    assert (solo / 'Skillchains/skillchains_demo.lua').is_file()
+    assert set(p.name for p in solo.iterdir()) == {'Skillchains'}
+    assert not any('TargetSC' in str(p.relative_to(solo))
+                   for p in solo.rglob('*') if p.is_file())
+    print('Skillchains-only installation staged:', solo)
     print(json.dumps({'archive': str(archive), 'commit': commit, 'branch': branch,
                       'files': len(files), 'dll_sha256': dll_hash, 'crc_manifest_checks': 'PASS'}, indent=2))
 

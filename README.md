@@ -1,5 +1,9 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## Animation8.3 — standalone Skillchains Umbra demo
+
+Run `//sc demo` to preview the full Fast Blade → Gust Slash → Nightmare Scythe → Rudra's Storm → Entropy progression in the **Skillchains HUD alone**. The five stages occur at 0, 9, 17, 24 and 30 seconds; the terminal Umbra charge ends at 33 seconds and the independent Magic Burst reminder ends at 40 seconds. No game action, TargetSC event, preset change or new dependency. `//sc demo off` stops it; `//sc demo status` reports progress. Enable `//sc display both` to see the full MB tail, then restore your previous choice if preferred. The current standalone demo does **not** trigger or sync TargetSC's own demo. Preserve all `data/` settings when installing. TargetSC Test3 bridge and native code unchanged. See TESTING.md for complete checks.
+
 ## Animation8.2 — no more regenerated glow settings warnings
 
 Windower converted Skillchains' old default string `'34'` into numeric `34` when automatically creating settings.xml, producing warnings even after deleting the file. Animation8.2 removes this conflicting typed default, accepts prior numeric/text masks, and saves new level choices under a nonnumeric `glow.level_mask` key. Keep existing settings and positions. The corrected TargetSC Test3 bridge, native DLL and 3D presentation are unchanged; update Skillchains only if already on the matched paired build. See TESTING.md for checks.
@@ -496,6 +500,12 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-20 — Animation8.3 standalone Umbra HUD demo (A)
+- Add `//sc demo [start|status|off]`: five authentic progression labels with absolute 0/9/17/24/30-second milestones, terminal three-second charge and 40-second MB tail.
+- Keep the local preview isolated from live `resonating` packets, TargetSC publisher/consumer commands and saved user settings.
+- Add exact reference-parity timeline tests and command-handler HUD simulations; keep TargetSC Test3 Lua, native DLL, and protocol unchanged.
+- Ship a solo Skillchains install folder alongside the existing paired regression artifact; in-game visual verification is pending.
 
 ### 2026-10-20 — Animation8.2 glow default schema (A)
 - Avoid numeric-looking mask in typed defaults; no startup warnings from regenerated settings.

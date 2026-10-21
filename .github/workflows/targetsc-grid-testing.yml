@@ -59,3 +59,10 @@ jobs:
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
+      - name: Publish Skillchains-only testing package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Skillchains-Animation8.3-Umbra-HUD-Demo-Solo-test
+          path: dist/skillchains-demo-package/
+          if-no-files-found: error
+          retention-days: 30

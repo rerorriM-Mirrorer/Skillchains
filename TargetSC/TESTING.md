@@ -1,5 +1,11 @@
 # TargetSC TESTING.md — start here
 
+## Independent Skillchains Animation8.3 HUD demo (2026-10-20)
+
+Skillchains adds `//sc demo`, a **local HUD-only** five-stage sequence matching TargetSC Test3's `//tsc preview demo` timeline. There is **no automatic launch, shared clock handshake or demo event traffic** in this batch; do not assume typing the two commands independently synchronizes them. TargetSC 0.3.0 Test3 Lua, native DLL, ring animation, source-clock and `lua c` publisher/consumer transport remain unchanged. Existing live Skillchains → TargetSC events still flow during the standalone HUD preview. The new parity/transport checks are host simulations; real FFXI confirmation is pending.
+
+---
+
 ## Skillchains Animation8.2 companion compatibility (2026-10-20; LIVE PENDING)
 
 Skillchains removes the ambiguous typed glow-level default and saves future selections under nonnumeric `level_mask`; legacy XML remains supported. TargetSC Lua Test3, native API/DLL 0.3.0, bridge-v1 protocol, `lua c` command transport, rings/discs and authoritative deadlines are **unchanged**. Existing Test3 users should update Skillchains only, preserving both `data` folders. Confirm `//sc status`, `//sc targetsc`, `//tsc status` and optionally `//tsc sync` on reload. New pairing requires live validation; CI is static/simulated.
