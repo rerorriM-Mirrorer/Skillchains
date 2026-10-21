@@ -229,8 +229,8 @@ function M.new(prefix)
         local border=dark
         local border_alpha=180
         if level==1 then border=c1;border_alpha=220
-        elseif level==2 then border=mix(c1,c2,.5);border_alpha=190
-        elseif level==3 then border=white;border_alpha=200
+        elseif level==2 then border=white;border_alpha=200
+        elseif level==3 then border=level4_color;border_alpha=220
         elseif level>=4 then border=level4_color;border_alpha=220 end
         if opener then
             -- Preserve the already gameplay-approved white opener.
@@ -275,31 +275,33 @@ function M.new(prefix)
         -- mirrored right arc. No overlapping vertical glow blobs.
         -- Windower config can deserialize the digit-only mask as a number
         -- (e.g. 34). Treat it as text before checking enabled levels.
-        local levels=tostring(glow_options.level_mask or glow_options.levels or 'L3,L4')
+        local levels=tostring(glow_options.level_mask or glow_options.levels or 'L2,L3,L4')
         if levels~='off' and level>=1 and level<=4
             and levels:find(tostring(level),1,true) then
-            local upper_tier=level>=3
+            -- L2 adopts the former L3 bright cap/rail treatment.
+            local upper_tier=level>=2
             local rail=max(0,tonumber(glow_options[upper_tier and 'rail34'
                 or 'rail12']) or (upper_tier and .75 or .30))
             local cap=max(0,tonumber(glow_options[upper_tier and 'cap34'
                 or 'cap12']) or (upper_tier and .85 or .35))
             local level_strength=max(0,tonumber(glow_options['level'..level])
                 or (level==3 and .7 or level==2 and .65 or 1))
-            local base=level>=4 and 72 or level==3 and 68 or 65
-            -- L3: slower white shimmer. L4: stronger 23/28-rad/s
-            -- flicker throughout the PRE-window and subsequent decay.
+            local base=level>=3 and 72 or level==2 and 68 or 65
+            -- L2: former L3 white shimmer; L3: former L4 electricity.
+            -- L4 remains untouched. Modulation begins during white refill.
             local electric=1
-            if level==3 then
+            if level==2 then
                 electric=.68+.32*sin(age*11)^2
-            elseif level>=4 then
+            elseif level>=3 then
                 electric=.37+.63*sin(age*23)^2
                 if age>=delay then
                     electric=electric*(.72+.28*sin(age*28)^2)
                 end
             end
-            local pre=level>=4 and
+            -- Move the pre-window energy with its style, before countdown start.
+            local pre=level>=3 and
                 max(0,tonumber(glow_options.pre4) or .85) or
-                (level==3 and max(0,tonumber(glow_options.pre3) or .38)
+                (level==2 and max(0,tonumber(glow_options.pre3) or .38)
                 or max(0,tonumber(glow_options.pre12) or .18))
             local charge=pre+(1-pre)*progress
             if opener then charge=0 end -- opener already looks right
@@ -307,8 +309,8 @@ function M.new(prefix)
             if style=='energized' and progress>0 and progress<1 then
                 charge=charge*(.82+.18*sin(age*31)^2)
             end
-            local glow_color=level>=4 and level4_color
-                or (level==3 and white or border)
+            local glow_color=level>=3 and level4_color
+                or (level==2 and white or border)
             local rail_alpha=base*gi*level_strength*rail*electric*charge
             local cap_alpha=base*gi*level_strength*cap*electric*charge
             local scale=max(.5,tonumber(bar.scale) or 1)

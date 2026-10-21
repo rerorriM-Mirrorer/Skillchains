@@ -64,7 +64,7 @@ assert(opt.glow.levels==nil and opt.glow.level_mask==nil,
     'No numeric-looking mask in Windower typed defaults')
 assert(opt.glow.rail34==.75 and opt.glow.cap34==.85)
 assert(opt.transition.duration==.30 and opt.transition.style=='energized')
-assert(run('glow','levels','1234'):find('default 34',1,true))
+assert(run('glow','levels','1234'):find('default 234',1,true))
 assert(opt.glow.level_mask=='L1,L2,L3,L4' and not tonumber(opt.glow.level_mask))
 run('glow','levels','42')
 assert(opt.glow.level_mask=='L2,L4','Canonicalize and sort level mask')
@@ -108,7 +108,7 @@ run('track','alpha','400') assert(opt.track.alpha==95)
 run('track','reset')
 assert(opt.track.alpha==155 and opt.track.color[1]==6)
 run('glow','reset')
-assert(opt.glow.level_mask=='L3,L4')
+assert(opt.glow.level_mask=='L2,L3,L4')
 assert(opt.glow.rail34==.75 and opt.glow.cap34==.85 and
     opt.glow.pre4==.85)
 assert(opt.track.alpha==155 and opt.bar.x==466,

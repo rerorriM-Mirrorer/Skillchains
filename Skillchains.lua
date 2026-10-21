@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.8.3'
+_addon.version = '2.20.08.25-resonance.7-animation.8.4'
 
 require('luau')
 require('pack')
@@ -58,7 +58,7 @@ default.Resonance = {
     -- Its XML reader turns string '34' into number 34 on every fresh load.
     -- Keep legacy masks and use a textual key for newly saved changes.
     glow={rail12=.30,cap12=.35,rail34=.75,cap34=.85,
-          level1=1,level2=.65,level3=.70,level4=1,
+          level1=1,level2=.70,level3=1,level4=1,
           pre12=.18,pre3=.38,pre4=.85,scale=1,l4='gold'},
     -- RGB controls the hue; alpha sets how much game scenery shows through.
     track={alpha=155,color={6,8,17}},
@@ -521,7 +521,7 @@ local function finite_nonnegative(s)
 end
 
 local function glow_levels(g)
-    return tostring(g.level_mask or g.levels or 'L3,L4')
+    return tostring(g.level_mask or g.levels or 'L2,L3,L4')
 end
 
 local function glow_setting(opts,key,value)
@@ -688,11 +688,11 @@ windower.register_event('addon command', function(cmd, ...)
                 g.level_mask='L'..table.concat(unique,',L')
             else
                 message('Glow levels: '..glow_levels(g)..
-                    ' (default 34). Use //sc glow levels 34|1234|off|<digits 1-4>.')
+                    ' (default 234). Use //sc glow levels 34|1234|off|<digits 1-4>.')
                 return
             end
             config.save(settings)
-            message('Glow levels '..glow_levels(g)..' (default 34).')
+            message('Glow levels '..glow_levels(g)..' (default 234).')
         elseif option=='rail12' or option=='rail34' or
             option=='cap12' or option=='cap34' or option=='scale' or
             option=='pre12' or option=='pre3' or option=='pre4' or
@@ -725,11 +725,11 @@ windower.register_event('addon command', function(cmd, ...)
         elseif option=='reset' then
             opts.glow={}
             for key,val in pairs(defs) do opts.glow[key]=val end
-            opts.glow.level_mask='L3,L4'
+            opts.glow.level_mask='L2,L3,L4'
             config.save(settings)
             message('Glow restored to Animation8 defaults (positions unchanged).')
         else
-            message(('Glow levels %s (default 34), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f; pre3 %.2f pre4 %.2f; scale %.2f L4 %s.'):format(
+            message(('Glow levels %s (default 234), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f; pre3 %.2f pre4 %.2f; scale %.2f L4 %s.'):format(
                 glow_levels(g),g.rail12,g.cap12,g.rail34,g.cap34,
                 g.pre3,g.pre4,g.scale,g.l4))
             message('Use //sc glow levels 34|1234|off; rail12|cap12|rail34|cap34|level1-4|pre12|pre3|pre4|scale <number>; preset balanced|capforward; l4 gold|whitegold|white; reset.')
@@ -882,8 +882,8 @@ windower.register_event('addon command', function(cmd, ...)
         opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
         opts.grid=10
         opts.animation={enabled=true,intensity=2,flare=2,glow=2,fade=false}
-        opts.glow={level_mask='L3,L4',rail12=.30,cap12=.35,rail34=.75,cap34=.85,
-                   level1=1,level2=.65,level3=.70,level4=1,
+        opts.glow={level_mask='L2,L3,L4',rail12=.30,cap12=.35,rail34=.75,cap34=.85,
+                   level1=1,level2=.70,level3=1,level4=1,
                    pre12=.18,pre3=.38,pre4=.85,scale=1,l4='gold'}
         opts.track={alpha=155,color={6,8,17}}
         opts.transition={duration=.30,style='energized'}

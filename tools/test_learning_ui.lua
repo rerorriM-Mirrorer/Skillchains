@@ -327,7 +327,7 @@ assert(prims.sc_resonance_fx_wash.x==opt.bar.x+1 and
     'White refill grows from left edge, not previous fill endpoint')
 assert(not overlay.fx.sprites.border_glow.visible and
     not overlay.fx.sprites.glow_cap_r.visible,
-    'Level 2 glow is disabled by default, even when white refill active')
+    'Existing legacy mask 34 still excludes L2')
 assert(overlay.fx.sprites.moving==nil,
     'No center flares on any successful level')
 chain.now=112.2;chain.sc_wait=.8
@@ -445,7 +445,7 @@ local lvl3={
 }
 opt.transition.style='uniform'
 overlay:render(lvl3)
-assert(left.visible and top.visible,'Level 3 retains continuous white glow')
+assert(left.visible and top.visible,'Level 3 remains luminous after effect promotion')
 opt.glow.levels=34
 overlay:render(lvl3)
 assert(left.visible and top.visible,
@@ -476,6 +476,49 @@ overlay:render(transient)
 assert(top.opacity~=energized_alpha,
     'Uniform fade and energized border coming-online remain distinct options')
 opt.transition.style='energized'
+-- Once explicitly enabled, both promoted classes glow during the white
+-- pre-window, before countdown decay begins. Old 34 masks remain unchanged.
+opt.glow.levels='234'
+opt.glow.level_mask=nil
+opt.glow.l4='gold'
+local shimmer={
+    now=501.1,created=501,sc_open=504,step=2,level=2,
+    active={'Fusion'},sc_wait=2.9,sc_left=6,sc_total=6,
+    from_fraction=.4,closed=false,groups=groups
+}
+overlay:render(shimmer)
+assert(top.visible and left.visible and top.opacity>0
+    and prims.sc_resonance_fx_wash.visible,
+    'L2 white shimmer visible during new skillchain white refill')
+assert(top.rgb[1]==255 and top.rgb[2]==255 and top.rgb[3]==255,
+    'L2 gets previous L3 halo white')
+local slow_alpha=top.opacity
+shimmer.now=501.17;shimmer.sc_wait=2.83
+overlay:render(shimmer)
+assert(top.opacity~=slow_alpha, 'L2 uses 11 rad/s shimmer')
+local charged={
+    now=601.1,created=601,sc_open=604,step=2,level=3,
+    active={'Darkness'},sc_wait=2.9,sc_left=6,sc_total=6,
+    from_fraction=.4,closed=false,groups=groups
+}
+overlay:render(charged)
+assert(top.visible and top.opacity>0
+    and prims.sc_resonance_fx_wash.visible,
+    'L3 gold electricity visible while white refill is active')
+assert(top.rgb[1]==249 and top.rgb[2]==207 and top.rgb[3]==103,
+    'L3 gets prior L4 golden halo')
+local fast_alpha=top.opacity
+charged.now=601.17;charged.sc_wait=2.83
+overlay:render(charged)
+assert(top.opacity~=fast_alpha, 'L3 uses former L4 23 rad/s electricity')
+-- Level 4 retains its original electric color and envelope.
+opt.glow.levels='34'
+opt.glow.level_mask=nil
+opt.glow.l4='gold'
+overlay:render(lvl4)
+assert(top.visible and left.visible and top.opacity>0
+    and top.rgb[1]==249 and top.rgb[2]==207 and top.rgb[3]==103,
+    'L4 terminal visual effect unchanged')
 opt.animation.enabled=false
 overlay:render(lvl3)
 assert(not left.visible and not top.visible,
