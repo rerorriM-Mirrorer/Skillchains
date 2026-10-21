@@ -751,6 +751,7 @@ function ui.new(settings, sc_info)
             if mx~=mb.x or my+28~=mb.y then
                 mb.x=self:anchor(mx,8,math.max(8,w-60))
                 mb.y=self:anchor(my+28,35,math.max(35,h-35))
+                mb.position='custom'
                 self.mb_handle:pos(mb.x,mb.y-28)
             end
             -- The edit guide is not the list itself. Track its movement
@@ -939,7 +940,7 @@ function ui.new(settings, sc_info)
             local mb_y=self:mb_ribbon_y(state)
             local mb_height=self:draw_mb_ribbon(mb_y,state,mb_palette)
             local mbcfg=opt.mb or {}
-            if opt.mode~='minimal' and mbcfg.text~='off' then
+            if opt.mode~='minimal' and (mbcfg.text~='off' or mbcfg.icon~='off') then
                 -- The MB deadline persists across the SC terminal finish.
                 local caption='Magic Burst: '..countdown(state.mb_left)
                 if caption~=self.mb_caption_cache then
@@ -963,7 +964,8 @@ function ui.new(settings, sc_info)
                 self.mb_caption:alpha(245)
                 self.mb_caption:stroke_alpha(235)
                 self.mb_caption:pos(bx+icon_w,by)
-                self.mb_caption:show()
+                if mbcfg.text~='off' then self.mb_caption:show()
+                else self.mb_caption:hide() end
             else
                 self:hide_caption_icons('mb')
                 self.mb_caption:hide()
