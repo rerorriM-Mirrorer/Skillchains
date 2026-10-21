@@ -1,6 +1,7 @@
 -- Simulate real Skillchains addon-command registration in Lua 5.1.
 -- FFXI rendering, TargetSC native DLL and game packets are NOT exercised.
 string.ucfirst=function(s)return s:sub(1,1):upper()..s:sub(2)end
+string.color=function(s,code)return '[c'..code..']'..s..'[/c]' end
 local function harness()
     local clock,events,renders=100,{},{},{}
     local sent={}
@@ -60,9 +61,24 @@ local function run(cmd,...)
     command(cmd,...)
     return messages[#messages] or ''
 end
+local original_n=#messages
+run()
+assert(#messages>original_n+20
+    and messages[original_n+1]:find('[c140]',1,true)
+    and messages[original_n+2]:find('[c167]',1,true),
+    'Bare //sc displays colored sectioned help')
+assert(table.concat(messages,' '):find('[c200]//sc ',1,true)
+    and table.concat(messages,' '):find('[c207]tip length',1,true))
+original_n=#messages
+run('not-a-command')
+assert(#messages>original_n+20,
+    'Unknown //sc command shows the full help')
 assert(opt.glow.levels==nil and opt.glow.level_mask==nil,
     'No numeric-looking mask in Windower typed defaults')
 assert(opt.glow.rail34==.75 and opt.glow.cap34==.85)
+assert(opt.tip.enabled and opt.tip.length==16 and opt.tip.opacity==.85)
+assert(opt.mb.position=='below' and opt.mb.gap==3
+    and opt.mb.height==2 and opt.mb.text=='on')
 assert(opt.transition.duration==.30 and opt.transition.style=='energized')
 assert(run('glow','levels','1234'):find('default 234',1,true))
 assert(opt.glow.level_mask=='L1,L2,L3,L4' and not tonumber(opt.glow.level_mask))
@@ -98,6 +114,17 @@ local saved=opt.glow.scale
 run('glow','scale','-1') assert(opt.glow.scale==saved)
 run('glow','scale','1e999') assert(opt.glow.scale==saved)
 run('glow','scale','nan') assert(opt.glow.scale==saved)
+run('tip','length','20');assert(opt.tip.length==20)
+run('tip','opacity','.6');assert(opt.tip.opacity==.6)
+run('tip','off');assert(not opt.tip.enabled)
+run('tip','on');assert(opt.tip.enabled)
+run('tip','length','800');assert(opt.tip.length==20)
+run('mb','gap','5');assert(opt.mb.gap==5)
+run('mb','height','3');assert(opt.mb.height==3)
+run('mb','position','above');assert(opt.mb.position=='above')
+run('mb','text','off');assert(opt.mb.text=='off')
+run('mb','text','on');assert(opt.mb.text=='on')
+run('mb','height','0');assert(opt.mb.height==3)
 assert(run('track','alpha','95'):find('default 155',1,true))
 assert(opt.track.alpha==95)
 run('track','rgb','3','5','9')
