@@ -1,5 +1,21 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC Test3 + Skillchains Animation8.1 paired repair (2026-10-20; LIVE SYNC PENDING)
+
+**Branch:** `development/targetsc-test3-animation8.1-paired`, based on published Test3 `c18f262`.
+**Paired versions:** Skillchains `2.20.08.25-resonance.7-animation.8.1` and TargetSC `0.3.0-test3` / native `0.3.0`.
+**Why:** The separate Animation8.1 branch still had legacy `lua i TargetSC` commands; installing it over Test3's Skillchains bridge reverted Test3's crucial `lua c` addon-command transport correction, so TargetSC could not subscribe to real Skillchains updates. The numeric `glow.levels` loader warnings in the user's submitted XML are unrelated to bridge transport.
+
+**Minimal integration:** Use the exact Animation8.1 `Skillchains.lua` and `resonance_fx.lua` blobs plus the added numeric-mask simulation from the Animation8.1 branch. Preserve Test3's already fixed `targetsc_bridge.lua` (`lua c TargetSC`) and its newer TargetSC driver, native DLL, geometry and previews without alteration. The package guard now compares all protected Skillchains HUD sources/images against the known Animation8.1 commit `d13f9c2` and checks the publisher is the same bridge with only `lua i` → `lua c` transport corrections.
+
+**User data:** User supplied Cioara Skillchains `settings(20261021-002422).xml` for optional shared visuals. Preserve the original `data/settings.xml` in every client; don't put character-specific settings into published Git or overwrite differing viewport coordinates. The XML includes `<levels>34</levels>`; the renderer now tolerates this numeric value but config.load may still emit type-merge warnings at startup. Separate schema cleanup remains pending. Optional shared-profile export is delivered privately to the user, outside the tracked testing package.
+
+**Available checks:** Lua 5.1 parse, simulated HUD numeric glow masks, actual-handler transport simulation (load orders/reload/unsubscribe/snapshot), TargetSC preview/state regressions, native cross-build and deterministic DLL checks, snapshot baseline, curated two-folder package and manifest. GitHub Actions outcome to be verified. These are static/simulated, not gameplay.
+
+**In-game verification:** Close all FFXI clients before replacing TargetSC's DLL; back up both addon folders and preserve `data/`. Install both folders together. Load Skillchains then TargetSC. Run `//sc status` (Animation8.1), `//tsc status` (0.3.0-test3, source Skillchains v1, synced=true), `//sc targetsc` (subscribed=true, send failures=0). Retry `//tsc sync` if needed. Check `//lua reload Skillchains` while TargetSC stays loaded, and verify it reconnects without resetting absolute deadlines. Compare real opener/extension and `//tsc preview opener Fragmentation`; synthetic `//sc anim preview` deliberately does NOT drive TargetSC. Record exact statuses if it fails.
+
+---
+
 ## Test3 published and first preview feedback — 2026-10-19
 
 User explicitly authorized publishing and described the Test3 preview as beautiful.

@@ -1,9 +1,9 @@
-name: TargetSC 0.3.0 Test3 + preserved Animation8 HUD
+name: TargetSC Test3 + Skillchains Animation8.1 paired sync
 
 on:
   push:
     branches:
-      - development/targetsc-resonance-test3
+      - development/targetsc-test3-animation8.1-paired
   workflow_dispatch:
 
 permissions:
@@ -54,7 +54,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-0.3.0-Test3-Animation8-test
+          name: TargetSC-0.3.0-Test3-Animation8.1-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30

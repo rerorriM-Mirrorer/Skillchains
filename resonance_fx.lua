@@ -273,7 +273,9 @@ function M.new(prefix)
 
         -- Tight capsule perimeter halo: left arc | twin-strip rail |
         -- mirrored right arc. No overlapping vertical glow blobs.
-        local levels=glow_options.levels or '34'
+        -- Windower config can deserialize the digit-only mask as a number
+        -- (e.g. 34). Treat it as text before checking enabled levels.
+        local levels=tostring(glow_options.levels or '34')
         if levels~='off' and level>=1 and level<=4
             and levels:find(tostring(level),1,true) then
             local upper_tier=level>=3

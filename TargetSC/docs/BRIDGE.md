@@ -1,5 +1,11 @@
 # Skillchains → TargetSC interface v1
 
+## Paired Animation8.1 compatibility (2026-10-20)
+
+The published TargetSC Test3 bridge uses `lua c`. The separate standalone Skillchains Animation8.1 hotfix branch had not imported that transport correction; copying it over Test3 reintroduced broken `lua i` commands. The paired Test3/Animation8.1 development branch imports only the exact Animation8.1 HUD source fix and numeric-mask test into the **Test3 transport-corrected tree**, preserving all five subscriber/publisher command routes, protocol v1 and independent SC/MB clocks. Verify both statuses, source reload and actual live events in FFXI.
+
+---
+
 ## Test3 transport correction (2026-10-19)
 
 All subscription, event, readiness and unsubscribe commands now use

@@ -1,5 +1,13 @@
 # TargetSC TESTING.md — start here
 
+## Paired repair — TargetSC Test3 with Skillchains Animation8.1 (2026-10-20; LIVE PENDING)
+
+Use the complete **TargetSC-0.3.0-Test3-Animation8.1-Paired-Full** package. TargetSC Lua, native 0.3.0 DLL, ring/disc presentation, source deadline handling and `lua c` subscriber are unchanged from published Test3. Skillchains Lua/HUD uses exact Animation8.1, while **its publisher must retain Test3's `lua c TargetSC` delivery**. Installing standalone Animation8.1 over the pair can silently revert the bridge to `lua i` and break synchronization. This new pairing makes that compatibility explicit and tests it through the existing real-handler transport suite.
+
+Back up and preserve both `data/` directories. Close every game client before changing `_TargetSC.dll`. After installing, run `//sc status`, `//tsc sync`, `//sc targetsc`, and `//tsc status`. Expect Animation8.1, TargetSC 0.3.0-test3/native 0.3.0, subscribed=true, synced=true, send failures=0. No FFXI in-game validation of the *new pairing* yet. Skillchains' numeric glow-level mask errors were corrected in 8.1 but its startup config type warnings may still appear; they do not drive TargetSC transport. User's private Cioara XML is not included in the public archive.
+
+---
+
 ## Test3 published and first preview feedback — 2026-10-19
 
 User explicitly authorized publishing and described the Test3 preview as beautiful.

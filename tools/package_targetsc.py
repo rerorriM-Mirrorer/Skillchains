@@ -11,8 +11,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'TargetSC-0.3.0-Test3-Animation8-Full'
-HUD_BASELINE = 'e3a8b632e29eeebdbd4455da470810a9574a7ddd'
+NAME = 'TargetSC-0.3.0-Test3-Animation8.1-Paired-Full'
+HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
 BASELINE = 'e095657a2e7ecc5a49d05e96c1b78523a4860af5'
@@ -37,7 +37,7 @@ def verify_dll(path):
 def main():
     assert not git('status', '--porcelain', '--untracked-files=normal'), 'Commit work before packaging'
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
-    # User-accepted Animation8 HUD/combat/assets are byte-for-byte protected.
+    # User-accepted Animation8.1 HUD/combat/assets are byte-for-byte protected.
     # The ONLY publisher change allowed is the two documented dispatch fixes.
     guarded = ('Skillchains.lua','skills.lua','resonance_ui.lua',
                'learning_ui.lua','resonance_fx.lua','images')
@@ -45,7 +45,7 @@ def main():
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'TargetSC 0.3.0 Test3 / Animation8 HUD preserved, bridge dispatch fixed', 'author': 'A.',
+    info = {'batch': 'TargetSC 0.3.0 Test3 / Animation8.1 HUD + numeric glow fix, bridge dispatch fixed', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': HUD_BASELINE,

@@ -426,6 +426,12 @@ local lvl1={
 overlay:render(lvl1)
 assert(left.visible and top.visible and top.opacity>0,
     'Glow is optionally enabled for level 1')
+-- A real saved Windower settings.xml can load a digit-only mask as a number.
+-- Rendering must tolerate that value on every frame without throwing.
+opt.glow.levels=1234
+overlay:render(lvl1)
+assert(left.visible and top.visible,
+    'Numeric saved glow mask 1234 renders enabled level 1')
 local low_alpha=top.opacity
 opt.glow.level1=2
 overlay:render(lvl1)
@@ -440,6 +446,10 @@ local lvl3={
 opt.transition.style='uniform'
 overlay:render(lvl3)
 assert(left.visible and top.visible,'Level 3 retains continuous white glow')
+opt.glow.levels=34
+overlay:render(lvl3)
+assert(left.visible and top.visible,
+    'Numeric saved glow mask 34 renders enabled level 3 without a Lua error')
 opt.transition.style='energized'
 local transient={
     now=302.96,created=300,sc_open=303,step=2,level=3,

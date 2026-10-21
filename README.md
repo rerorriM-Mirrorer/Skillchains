@@ -1,5 +1,9 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## Paired Skillchains Animation8.1 + TargetSC 0.3.0 Test3 (2026-10-20)
+
+Install **both** addon folders from the matched pairing, not standalone Animation8.1 over Test3. Skillchains reports `2.20.08.25-resonance.7-animation.8.1`, TargetSC reports `0.3.0-test3` with native `0.3.0`. The companion bridge uses Windower `lua c` commands in both directions (subscription, readiness, events, unsubscribe). The prior standalone Animation8.1 publisher contains `lua i` and cannot synchronize with Test3 if copied over the fixed publisher. The renderer tolerates numeric `glow.levels`, but saved XML may still trigger harmless load-time schema warnings. Preserve both `data/` folders and close FFXI before replacing TargetSC's DLL. Verify with `//sc status`, `//tsc sync`, `//sc targetsc`, `//tsc status`; see TESTING.md.
+
 A standalone FFXI Windower 4 addon based on Ivaar's original Skillchains, updated by posimagi.
 This test branch adds a restrained, FFXI-inspired visual layer without modifying EnemyBar2 or XIVCrossbar.
 
