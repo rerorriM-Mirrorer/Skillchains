@@ -109,7 +109,7 @@ def main():
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file, dest)
     ghostflare=ROOT/'images/resonance/ghost_flare.png'
-    assert ghostflare.read_bytes().startswith(b'\\x89PNG\\r\\n\\x1a\\n')
+    assert ghostflare.read_bytes().startswith(bytes.fromhex('89504e470d0a1a0a'))
     dest=STAGE/'Skillchains/images/resonance/ghost_flare.png'
     dest.parent.mkdir(parents=True,exist_ok=True)
     shutil.copy2(ghostflare,dest)
