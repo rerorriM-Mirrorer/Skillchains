@@ -201,6 +201,55 @@ function ui.new(settings, sc_info)
     -- Effects are created AFTER the SC bar prims so their softened sprites
     -- can bloom over the gauge. Their alpha textures contain no hard boxes.
     self.fx=resonance_fx.new('sc_resonance_fx_')
+    -- User's 64x16 ghost-flare, kept intact; only its length/opacity and
+    -- subtle hue change. It follows the shrinking SC fill, never gameplay.
+    self.tip=images.new('',{pos={x=0,y=0},visible=false,draggable=false,
+        size={width=16,height=8},color={alpha=195,red=255,green=255,blue=255},
+        texture={path=windower.addon_path..'images/resonance/ghost_flare.png',fit=false}})
+    self.tip_visible=false
+    create_prim('sc_resonance_tip_core',220,255,255,255)
+    self.mb_glow_id='sc_resonance_mb_ribbon_glow'
+    create_prim(self.mb_glow_id,50,255,255,255)
+    function self:hide_tip()
+        if self.tip_visible then self.tip:hide();self.tip_visible=false end
+        windower.prim.set_visibility('sc_resonance_tip_core',false)
+    end
+    function self:draw_tip(s,y,fraction,stops,shake)
+        local cfg=self.options.tip or {}
+        if cfg.enabled==false or not s or (s.sc_wait or 0)>0
+            or s.closed or self.terminal_color or (s.sc_left or 0)<=0
+            or fraction<=.015 or fraction>=.995 then
+            self:hide_tip();return
+        end
+        local scale=self.options.scale or 1
+        local now=(s.now or 0)-(s.created or 0)
+        local width=math.max(7,math.floor((tonumber(cfg.length) or 16)*scale
+            *(0.9+.1*math.sin(now*19)^2)+.5))
+        local height=math.max(5,math.floor(8*scale+.5))
+        local bar_x=math.floor(self.options.bar.x+(shake or 0)+.5)
+        local fill=math.floor(clamp(fraction,0,1)*
+            (self.options.bar.width-2)+.5)
+        local tip_x=bar_x+1+fill
+        local bar_h=math.max(3,math.floor(5*scale+.5))
+        local tip_y=math.floor(y+(bar_h-height)/2+.5)
+        local c=stops[#stops] or white -- Second element on dual-property chains
+        -- The bright white center stays visible against dark properties.
+        local color={math.floor(255*.84+c[1]*.16+.5),
+            math.floor(255*.84+c[2]*.16+.5),
+            math.floor(255*.84+c[3]*.16+.5)}
+        local alpha=clamp(tonumber(cfg.opacity) or .85,0,1)*
+            (170+35*math.sin(now*13)^2)
+        self.tip:size(width,height)
+        self.tip:pos(tip_x-width+2,tip_y)
+        self.tip:color(color[1],color[2],color[3])
+        self.tip:alpha(math.floor(alpha+.5))
+        self.tip:show();self.tip_visible=true
+        windower.prim.set_position('sc_resonance_tip_core',tip_x, y+1)
+        windower.prim.set_size('sc_resonance_tip_core',1,bar_h)
+        windower.prim.set_color('sc_resonance_tip_core',math.floor(alpha*.85+.5),
+            255,255,255)
+        windower.prim.set_visibility('sc_resonance_tip_core',true)
+    end
 
     -- EnemyBar2 target names use Arial, bold, italic, and a dark stroke.
     -- The smaller label is attached to the bar, not the draggable learning panel.
@@ -330,6 +379,8 @@ function ui.new(settings, sc_info)
         self.mb_caption:hide()
         for kind in pairs(self.names) do self:hide_bar(kind) end
         self.fx:hide()
+        self:hide_tip()
+        windower.prim.set_visibility(self.mb_glow_id,false)
     end
 
     function self:hide()
@@ -639,6 +690,7 @@ function ui.new(settings, sc_info)
         -- Avoid hiding the active bar between frames; this also eliminates
         -- repeated visibility flicker at higher redraw rates.
         if not sc_alive then
+            self:hide_tip()
             self.fx:hide()
             self:hide_caption_icons('sc')
             self:hide_bar('sc')
@@ -692,6 +744,7 @@ function ui.new(settings, sc_info)
                 height=math.max(3,math.floor(5*opt.scale+.5))+2,
                 fill=fill,frame=self.names.sc,scale=opt.scale},
                 result_color,bar_color,opt.glow,opt.transition)
+            self:draw_tip(state,y,fraction,bar_color,shake)
             y=y+bar_height
             local reveal=self.fx:label_alpha(state,effects)
             if opt.mode~='minimal' and opt.names~='off' then
@@ -822,6 +875,10 @@ function ui.new(settings, sc_info)
         for _,slots in pairs(self.caption_icons) do
             for _,slot in ipairs(slots) do slot.image:destroy() end
         end
+        self:hide_tip()
+        self.tip:destroy()
+        windower.prim.delete('sc_resonance_tip_core')
+        windower.prim.delete(self.mb_glow_id)
         self.fx:destroy()
         self.learning:destroy()
         self.properties:destroy()

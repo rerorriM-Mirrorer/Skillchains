@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.8.5'
+_addon.version = '2.20.08.25-resonance.7-animation.8.7'
 
 require('luau')
 require('pack')
@@ -63,6 +63,7 @@ default.Resonance = {
     -- RGB controls the hue; alpha sets how much game scenery shows through.
     track={alpha=155,color={6,8,17}},
     transition={duration=.30,style='energized'},
+    tip={enabled=true,length=16,opacity=.85},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=5,y=-9},
     -- Additional positioning applies only to SC property icons.
@@ -900,6 +901,7 @@ windower.register_event('addon command', function(cmd, ...)
                    pre12=.18,pre2=.85,pre3=.38,pre4=.85,scale=1,l4='gold'}
         opts.track={alpha=155,color={6,8,17}}
         opts.transition={duration=.30,style='energized'}
+        opts.tip={enabled=true,length=16,opacity=.85}
         opts.name_offset.x,opts.name_offset.y=5,-9
         opts.icon_offset=opts.icon_offset or {x=0,y=0}
         opts.icon_offset.x,opts.icon_offset.y=0,0
