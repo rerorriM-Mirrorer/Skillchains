@@ -842,7 +842,9 @@ windower.register_event('addon command', function(cmd, ...)
             local kind=args[2] and args[2]:lower() or 'opener'
             local examples={opener={1,0,{'Liquefaction','Detonation'}},
                 level1={2,1,{'Liquefaction'}},level2={2,2,{'Fusion'}},
-                level3={2,3,{'Light'}},level4={2,4,{'Radiance'}}}
+                level3={2,3,{'Light'}},level4={2,4,{'Radiance'}},
+                radiance={2,4,{'Radiance'},true},lux={2,4,{'Radiance'},true},
+                umbra={2,4,{'Umbra'},true}}
             if kind=='off' then
                 animation_preview=nil;overlay:hide()
                 message('Animation preview off.')
@@ -852,20 +854,20 @@ windower.register_event('addon command', function(cmd, ...)
                 local clock=os.clock()
                 animation_preview={
                     created=clock,delay=clock+3,times=clock+3+(8-example[1]),
-                    ends=clock+3+(8-example[1])+.35,
+                    ends=example[4] and clock+3+.85 or clock+3+(8-example[1])+.35,
                     step=example[1],level=example[2],active=example[3],
                     -- Preview deliberately shows the provisional level-4
                     -- border on a mock bar. Real Radiance/Umbra remain closed.
-                    closed=false
+                    closed=example[4] or false
                 }
                 message('Local HUD preview: '..kind..'. No combat or TargetSC event sent.')
             else
-                message('Use //sc anim preview opener|level1|level2|level3|level4|off.')
+                message('Use //sc anim preview opener|level1|level2|level3|level4|radiance|umbra|lux|off.')
             end
         else
-            message(('Animations %s, intensity %.2f, flare %.2f, glow %.2f, opacity wave %s; //sc anim preview opener|level1|level2|level3|level4|off'):format(
+            message(('Animations %s, intensity %.2f, flare %.2f, glow %.2f, opacity wave %s (period %.3fs); //sc anim preview opener|level1|level2|level3|level4|radiance|umbra|lux|off'):format(
                 a.enabled and 'on' or 'off',a.intensity or 1,
-                a.flare or 1,a.glow or 1,a.fade and 'on' or 'off'))
+                a.flare or 1,a.glow or 1,a.fade and 'on' or 'off',a.fade_period or 1/2.4))
         end
     elseif cmd=='grid' then
         local grid=tonumber(option)
@@ -933,7 +935,7 @@ windower.register_event('addon command', function(cmd, ...)
             (opts.animation or {}).intensity or 1,
             overlay.editing and 'on' or 'off'))
     elseif cmd=='help' then
-        message('demo [start|status|off] (standalone Umbra HUD sequence); display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; glow [levels 34|off|1234|rail12|cap12|rail34|cap34|level1-4|scale|l4|preset]; transition [seconds|style energized|uniform]; anim [on|off|intensity <number>|flare <number>|glow <number>|fade on|off|period <seconds>|preview <opener|level1|level2|level3|level4|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
+        message('demo [start|status|off] (standalone Umbra HUD sequence); display sc|mb|both; mode learn|compact|minimal; names full|short|off|offset <x> <y>; icons offset <x> <y>; edit [on|off] (Ctrl snaps); grid [pixels]; glow [levels 34|off|1234|rail12|cap12|rail34|cap34|level1-4|scale|l4|preset]; transition [seconds|style energized|uniform]; anim [on|off|intensity <number>|flare <number>|glow <number>|fade on|off|period <seconds>|preview <opener|level1|level2|level3|level4|radiance|umbra|off>]; center; pos [x y]; scale [.5-2.5|edit]; width [pixels]; default; save [all]; status')
     else
         message('Unknown command. Use //sc help.')
     end
