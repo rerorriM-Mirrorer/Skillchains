@@ -370,6 +370,7 @@ function ui.new(settings, sc_info)
             windower.prim.set_visibility(bar.slices[i],false)
         end
         bar.hidden=true
+        if kind=='mb' then windower.prim.set_visibility(self.mb_glow_id,false) end
     end
 
     function self:hide_bars()
@@ -497,6 +498,85 @@ function ui.new(settings, sc_info)
             end
         end
         return height+2
+    end
+
+    -- MB is a distinct opportunity, with a distinct source deadline.
+    -- Test8's enduring property disc suggests a small luminous companion:
+    -- fill-only, no SC-style track or perimeter, pooled primitives and
+    -- independent soft 2s breathing / .6s three-pulse expiration.
+    function self:draw_mb_ribbon(y,s,stops)
+        local bar=self.names.mb
+        local cfg=self.options.mb or {}
+        local x=math.floor(self.options.bar.x+.5)
+        local width=math.max(24,math.floor(self.options.bar.width+.5))
+        local scale=self.options.scale or 1
+        local height=math.max(1,math.floor((tonumber(cfg.height) or 2)*scale+.5))
+        local fraction=clamp((s.mb_left or 0)/
+            math.max(.1,s.mb_total or 10),0,1)
+        local fill=math.floor(fraction*(width-2)+.5)
+        local age=math.max(0,(s.now or 0)-(s.created or 0))
+        -- Compare with TargetSC's independent MB breathing and closing
+        -- resonance, but leave its ring timing and visuals untouched.
+        local breath=.82+.18*math.sin(math.pi*age/2)^2
+        if (s.mb_left or 0)<.6 then
+            local phase=clamp(1-(s.mb_left or 0)/.6,0,1)
+            breath=breath*(.86+.14*math.sin(3*math.pi*phase)^2)
+        end
+        local alpha=math.floor(225*breath*(self.terminal_mult or 1)+.5)
+        -- Keep the distinct MB identity even when the source palette is dark.
+        -- During Radiance/Umbra terminal punctuation colors remain exact.
+        local function tint(c)
+            if self.terminal_color then return self.terminal_color end
+            return {math.floor(c[1]*.72+255*.28+.5),
+                    math.floor(c[2]*.72+255*.28+.5),
+                    math.floor(c[3]*.72+255*.28+.5)}
+        end
+        for _,id in ipairs({bar.frame,bar.frame_bottom,bar.base,
+            bar.cap_l,bar.cap_r}) do
+            windower.prim.set_visibility(id,false)
+        end
+        local center=tint(stops[#stops] or white)
+        windower.prim.set_position(self.mb_glow_id,x+1,y-1)
+        windower.prim.set_size(self.mb_glow_id,math.max(1,fill),height+2)
+        windower.prim.set_color(self.mb_glow_id,
+            math.floor(56*breath*(self.terminal_mult or 1)+.5),
+            center[1],center[2],center[3])
+        windower.prim.set_visibility(self.mb_glow_id,fill>0)
+        for i,id in ipairs(bar.slices) do
+            local first=math.floor((i-1)*fill/segments)
+            local last=math.floor(i*fill/segments)
+            local span=last-first
+            if span>0 then
+                local c=tint(interpolate(stops,(i-.5)/segments))
+                windower.prim.set_color(id,alpha,c[1],c[2],c[3])
+                windower.prim.set_position(id,x+1+first,y)
+                windower.prim.set_size(id,span,height)
+                windower.prim.set_visibility(id,true)
+            else
+                windower.prim.set_visibility(id,false)
+            end
+        end
+        -- A soft ribbon has no border/endcaps; don't accidentally inherit
+        -- those details from earlier full MB-bar draws.
+        for _,id in ipairs({bar.fill_l,bar.fill_r}) do
+            windower.prim.set_visibility(id,false)
+        end
+        bar.hidden=false;bar.visual_hidden=false
+        return height
+    end
+
+    function self:mb_ribbon_y(state)
+        local cfg=self.options.mb or {}
+        local gap=clamp(tonumber(cfg.gap) or 3,0,32)
+        local height=math.max(1,math.floor((tonumber(cfg.height) or 2)*
+            (self.options.scale or 1)+.5))
+        local y=math.floor(self.options.bar.y+.5)
+        if cfg.position=='above' then return y-height-gap-1 end
+        local show_sc=self.options.display=='sc' or self.options.display=='both'
+        if show_sc then
+            y=y+math.max(3,math.floor(5*(self.options.scale or 1)+.5))+2+gap
+        end
+        return y
     end
 
     -- A saved position from a larger client may put every drag handle beyond
@@ -798,8 +878,8 @@ function ui.new(settings, sc_info)
             local total=math.max(.1,state.mb_total or 10)
             local mb_palette=self.terminal_color and {self.terminal_color}
                 or palette(state,self.sc_info,true)
-            local mb_height=self:draw_bar('mb',y,state.mb_left/total,false,
-                mb_palette)
+            local mb_y=self:mb_ribbon_y(state)
+            local mb_height=self:draw_mb_ribbon(mb_y,state,mb_palette)
             if opt.mode~='minimal' then
                 -- No numerical timer during the monochrome end punctuation.
                 -- Restore the true independent MB countdown after it fades.
@@ -813,7 +893,7 @@ function ui.new(settings, sc_info)
                 local gap=math.max(1,math.floor(2*opt.scale+.5))
                 local inset=math.max(2,math.floor(3*opt.scale+.5))
                 local bx=math.floor(opt.bar.x+inset+offset.x+.5)
-                local by=y+mb_height+gap+offset.y
+                local by=mb_y+mb_height+gap+offset.y
                 local icon_w=self:place_caption_icons('mb',
                     {state.active and state.active[1] or 'Light'},bx,by,opt.scale)
                 local tint=self.terminal_color or white
