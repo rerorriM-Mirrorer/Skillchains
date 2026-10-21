@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-Animation8.3-Umbra-HUD-Demo-Paired-Full'
+NAME = 'Skillchains-Animation8.4-Glow-Tier-Shift-Paired-Full'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skillchains_demo.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
@@ -55,7 +55,7 @@ def main():
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains Animation8.3 local Umbra HUD demo / TargetSC 0.3.0 Test3 unchanged', 'author': 'A.',
+    info = {'batch': 'Skillchains Animation8.4 L2 shimmer L3 electric L4 preserved / TargetSC Test3 untouched', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': HUD_BASELINE,

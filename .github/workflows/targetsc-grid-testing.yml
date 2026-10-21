@@ -1,9 +1,9 @@
-name: Skillchains standalone Umbra HUD demo + TargetSC Test3 regression
+name: Skillchains L2 white / L3 electric glow + paired TargetSC regression
 
 on:
   push:
     branches:
-      - development/skillchains-umbra-hud-demo
+      - development/skillchains-glow-tier-shift
   workflow_dispatch:
 
 permissions:
@@ -55,14 +55,14 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.3-Umbra-HUD-Demo-Paired-test
+          name: Skillchains-Animation8.4-Glow-Tier-Shift-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
       - name: Publish Skillchains-only testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.3-Umbra-HUD-Demo-Solo-test
+          name: Skillchains-Animation8.4-Glow-Tier-Shift-Solo-test
           path: dist/skillchains-demo-package/
           if-no-files-found: error
           retention-days: 30

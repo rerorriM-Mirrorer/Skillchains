@@ -1,5 +1,11 @@
 # TargetSC TESTING.md — start here
 
+## Companion Skillchains Animation8.4 visual tiers (2026-10-20)
+
+Skillchains promotes its white border shimmer to L2 and gold electrical glow to L3 (immediate pre-window appearance) while keeping L4 unchanged. **TargetSC Test3 Lua, native DLL, 3D rings, preview demo, source deadlines and `lua c` bridge are not modified.** The standalone `//sc demo` remains independent; do not assume a synchronized startup handshake has been added. Test `//sc targetsc`/`//tsc status` after installing the Skillchains-only folder, preserving `data/`. Host regression is separate from the pending live visuals.
+
+---
+
 ## Independent Skillchains Animation8.3 HUD demo (2026-10-20)
 
 Skillchains adds `//sc demo`, a **local HUD-only** five-stage sequence matching TargetSC Test3's `//tsc preview demo` timeline. There is **no automatic launch, shared clock handshake or demo event traffic** in this batch; do not assume typing the two commands independently synchronizes them. TargetSC 0.3.0 Test3 Lua, native DLL, ring animation, source-clock and `lua c` publisher/consumer transport remain unchanged. Existing live Skillchains → TargetSC events still flow during the standalone HUD preview. The new parity/transport checks are host simulations; real FFXI confirmation is pending.

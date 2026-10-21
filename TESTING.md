@@ -1,5 +1,19 @@
 # TESTING.md — Skillchains Resonance UI
 
+## Current Development Status — Animation8.4 glow-tier progression (2026-10-20)
+
+**Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-glow-tier-shift`; starting baseline `c6b05a7` (Animation8.3 standalone Umbra HUD demo with user feedback that the synchronized demo looks great). TargetSC companion Test3 `0.3.0`, native DLL, its preview, and working `lua c` bridge remain unchanged.
+
+**Request:** Promote L3's white shimmer/border to L2 and L4's strong electric flicker/border to L3. Keep L4 terminal presentation unchanged. Make the promoted halos visible immediately on new chain registration, during the 3-second white refill/hold before the countdown. Do not change skillchain clocks, HUD fill pulse, TSC, saved user locations or per-character settings.
+
+**Implementation:** Source FX code maps L2 to former L3 white halo/pulse (11-rad/s, stronger 34 rail/cap profile, `pre3` white-window energy), L3 to former L4 gold halo/electric envelope (23/28-rad/s, `pre4` pre-window energy), while L4 uses the same previous gold flicker. L2/L3 solid perimeter colors follow the corresponding styles while the white-fill transition stays otherwise intact. New global defaults enable 2,3,4 and suggest `level2=.70`, `level3=1`. **Existing saved level masks are not rewritten.** Previously selected `34` disables L2 until the user runs `//sc glow levels 234`; old customized `level2`/`level3` brightness values are respected.
+
+**Verification:** Modified `resonance_fx.lua` and only its Skillchains version/default mask in `Skillchains.lua`. Existing animation demo, TargetSC event publisher, native renderer and timing source remain unchanged. Tests cover L2/L3 color and opacity while white fill is still active, their independent flicker, unchanged L4 behavior, legacy masks, Lua 5.1 parsing, actual-handler TargetSC regression, native build and complete/solo packaging. **New in-game rendering remains to be checked**; refer to current GitHub Actions result before claiming automated pass.
+
+**Suggested in-game checks:** Back up `Skillchains/data/`; merge the new **Skillchains-only** addon files; `//lua reload Skillchains`, `//sc glow levels 234`, `//sc demo`. Observe Fusion L2 white shimmer beginning at 17 s, Darkness L3 gold electricity beginning at 24 s, unchanged Umbra L4 at 30 s. Compare `//sc anim preview level2`, `//sc anim preview level3`, `//sc anim preview level4`, and check `//sc targetsc`/`//tsc status`. Keep `//sc anim fade on` for the independently pulsing countdown fill if desired. No TargetSC changes in this batch.
+
+---
+
 ## Current Development Status — Skillchains HUD demo (2026-10-20)
 
 **Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-umbra-hud-demo`. Based on committed/pushed and CI-passing Animation8.2 `db8e919`; earlier paired Animation8.1+TargetSC Test3 synchronization was user-confirmed in game. **Skillchains** `resonance.7-animation.8.3`; **TargetSC** `0.3.0-test3` / native `0.3.0` unchanged.

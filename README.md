@@ -1,5 +1,11 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## Animation8.4 — L2 white shimmer, L3 gold electricity, L4 unchanged
+
+`//sc demo` still runs the five-stage Umbra HUD sequence. The glow tier progression now places the former L3 **white shimmer** on Level 2 and former L4 **gold electric flicker** on Level 3. Level 4's electric glow remains unchanged. Both promoted halos are present during the white refill/charge, **before** the real continuation clock begins to count down. Your optional `//sc anim fade on` gradient pulse is separate and unchanged.
+
+New defaults enable levels 2, 3 and 4. Existing files/settings are **never silently overwritten**: if you previously ran `//sc glow levels 34`, run `//sc glow levels 234` to enable L2. Saved per-level brightness and user widget locations are preserved. The same `rail34`/`cap34` controls tune all three bright tiers; `pre3` now governs L2's white-shimmer pre-window, `pre4` powers L3 and L4 electric pre-windows. TargetSC 0.3.0 Test3 native DLL, ring demo and synchronization bridge are unchanged; install the Skillchains-only package and keep `Skillchains/data/`.
+
 ## Animation8.3 — standalone Skillchains Umbra demo
 
 Run `//sc demo` to preview the full Fast Blade → Gust Slash → Nightmare Scythe → Rudra's Storm → Entropy progression in the **Skillchains HUD alone**. The five stages occur at 0, 9, 17, 24 and 30 seconds; the terminal Umbra charge ends at 33 seconds and the independent Magic Burst reminder ends at 40 seconds. No game action, TargetSC event, preset change or new dependency. `//sc demo off` stops it; `//sc demo status` reports progress. Enable `//sc display both` to see the full MB tail, then restore your previous choice if preferred. The current standalone demo does **not** trigger or sync TargetSC's own demo. Preserve all `data/` settings when installing. TargetSC Test3 bridge and native code unchanged. See TESTING.md for complete checks.
@@ -500,6 +506,11 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-20 — Animation8.4 glow tier progression (A)
+- Promote old L3 white flicker and halo class to Level 2, including active pre-window charge. Promote old L4 gold electric flicker to Level 3; preserve L4.
+- Default newly initialized masks to 234 without rewriting saved 34 selections. Keep independent per-level strength, white fill/pulsing fade, and timelines.
+- Preserve the existing 40-second demo and TargetSC Test3 sync/native binary; add standalone FX early-charge regression and paired checks; live confirmation pending.
 
 ### 2026-10-20 — Animation8.3 standalone Umbra HUD demo (A)
 - Add `//sc demo [start|status|off]`: five authentic progression labels with absolute 0/9/17/24/30-second milestones, terminal three-second charge and 40-second MB tail.
