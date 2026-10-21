@@ -19,7 +19,7 @@ jobs:
       - name: Install Lua 5.1 and MinGW-w64
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq lua5.1 g++-mingw-w64-i686
+          sudo apt-get install -y -qq lua5.1 g++-mingw-w64-i686 python3-pil
       - name: Build native x86 source and test portable stroke math
         run: |
           i686-w64-mingw32-g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror -shared -static -static-libgcc -static-libstdc++ -Wl,--no-insert-timestamp -o /tmp/_TargetSC.dll TargetSC/src/TargetSC.cpp TargetSC/src/exports.def -ld3d8
