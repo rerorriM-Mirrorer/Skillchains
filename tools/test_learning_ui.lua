@@ -535,6 +535,79 @@ assert(top.visible and left.visible and top.opacity>0
     'L4 terminal visual effect unchanged')
 opt.animation.intensity=1
 opt.animation.glow=1
+-- The countdown fade pulse period is independently configurable.
+local pulse={
+    now=801.12,created=801,sc_open=801,step=2,level=2,
+    active={'Fusion'},sc_wait=0,sc_left=4,sc_total=6,
+    mb_left=5,mb_total=10,closed=false,groups={}
+}
+opt.animation.fade=true
+opt.animation.fade_period=.24
+local pulse_a=overlay.fx:opacity(pulse,opt.animation)
+opt.animation.fade_period=.42
+local pulse_b=overlay.fx:opacity(pulse,opt.animation)
+assert(math.abs(pulse_a-pulse_b)>.01,
+    'Countdown opacity wave reacts to the configurable period')
+opt.animation.fade=false
+
+-- A real terminal arrives with closed=true already set from the WS packet.
+-- Three-second charge must show despite closed, then ALL HUD elements
+-- monochrome-fade together; MB still uses its own independent deadline.
+local terminal={
+    now=903.15,created=900,sc_open=903,step=5,level=4,
+    active={'Umbra'},closed=true,sc_wait=0,
+    sc_left=2.85,sc_total=3,mb_left=6.85,mb_total=10,
+    from_fraction=.5,from_active={'Darkness'},groups={}
+}
+opt.glow.levels='234'
+opt.glow.level_mask=nil
+opt.mode='learn';opt.display='both';opt.names='full'
+overlay:render(terminal)
+assert(prims.sc_resonance_sc_base.visible,
+    'Closed terminal SC bar remains visible during .8s end effect')
+assert(prims.sc_resonance_sc_base.color[1]==0
+    and prims.sc_resonance_sc_base.color[2]==0,
+    'Umbra recolors the SC track black')
+assert(prims.sc_resonance_mb_base.color[1]==0,
+    'Umbra also recolors the MB bar backdrop')
+assert(overlay.properties.rgb[1]==0 and
+    overlay.caption_icons.sc[1].image.rgb[1]==0
+    and overlay.mb_caption.rgb[1]==0 and
+    overlay.caption_icons.mb[1].image.rgb[1]==0,
+    'Umbra recolors caption lettering and both icon sets black')
+local black_alpha=prims.sc_resonance_sc_base.alpha
+terminal.now=903.55;terminal.mb_left=6.45
+overlay:render(terminal)
+assert(prims.sc_resonance_sc_base.alpha<black_alpha,
+    'Entire terminal HUD fades out after monochrome conversion')
+terminal.now=903.9;terminal.mb_left=6.1
+overlay:render(terminal)
+assert(not prims.sc_resonance_sc_base.visible
+    and prims.sc_resonance_mb_base.visible
+    and prims.sc_resonance_mb_base.color[1]==6,
+    'Terminal SC vanishes but MB reverts to its normal look and lives on')
+assert(overlay.caption_icons.mb[1].image.rgb[1]==255,
+    'MB icon tint returns to white after terminal fade')
+local light={
+    now=1003.2,created=1000,sc_open=1003,step=5,level=4,
+    active={'Radiance'},closed=true,sc_wait=0,
+    sc_left=2.8,sc_total=3,mb_left=6.8,mb_total=10,
+    from_fraction=.5,from_active={'Light'},groups={}
+}
+overlay:render(light)
+assert(prims.sc_resonance_sc_base.color[1]==255
+    and prims.sc_resonance_sc_base.color[2]==255
+    and prims.sc_resonance_mb_base.color[3]==255,
+    'Radiance/Lux recolors all bar backgrounds white')
+assert(overlay.properties.rgb[1]==255 and
+    overlay.caption_icons.sc[1].image.rgb[1]==255,
+    'Radiance/Lux text and icon are white')
+-- Terminal charge must be visible the instant its WS is registered.
+light.now=1000;light.sc_wait=3;light.mb_left=10
+overlay:render(light)
+assert(prims.sc_resonance_sc_base.visible and
+    overlay.fx.sprites.glow_cap_l.visible,
+    'Closed L4 chain appears during its initial white charge')
 opt.animation.enabled=false
 overlay:render(lvl3)
 assert(not left.visible and not top.visible,
