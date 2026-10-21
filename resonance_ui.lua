@@ -704,7 +704,7 @@ function ui.new(settings, sc_info)
                 local label_width=math.max(30,opt.bar.width-inset*2-icon_width)
                 -- A terminal result cannot be continued: never append the
                 -- SC timer during its charge, fade, or MB-only tail.
-                local sc_timer=terminal and nil or countdown(state.sc_left)
+                local sc_timer=not terminal and countdown(state.sc_left) or nil
                 local signature=table.concat(state.active or {},'|')
                     ..':'..tostring(label_width)..':'..tostring(opt.scale)
                     ..':'..tostring(opt.names or 'full')
