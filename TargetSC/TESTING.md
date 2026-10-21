@@ -1,5 +1,11 @@
 # TargetSC TESTING.md — start here
 
+## Companion Skillchains Animation8.8 (2026-10-21)
+
+Skillchains provides a *presentation-only* white introduction for new/replaced MB windows, and MB HUD gains independent position, scale, typography and icon settings. Unlike the prior shared terminal implementation, real Umbra/Radiance SC black/white fade does not modify MB. TargetSC Test8 rings, property-disc phases, MB visual endings, Lua/native DLL and unchanged bridge still drive their own views from the same real packet source clocks. No TargetSC code or data is modified by this batch. Confirm continued subscription status and compare the new Skillchains MB flash to the existing TargetSC animations in-game.
+
+---
+
 ## Companion Skillchains Animation8.7 (2026-10-21)
 
 This Skillchains-only visual pass uses TSC Test8's independent MB lifetime/slow breathing as a design reference. SC moving endpoint, fill-only MB ribbon, above/below MB spacing and BattleStations-style help do not alter TargetSC 0.8.0 Test8 Lua, native DLL 0.5, bridge v1 or source deadlines. There is no new coupling or TSC dependency. Install **Skillchains-only** folder, preserve both addons' `data/` and verify subscription. TSC Test8 itself still requires its own live visual acceptance.

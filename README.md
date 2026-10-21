@@ -1,5 +1,17 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## Skillchains Animation8.8 — independent Magic Burst widget and white introductions
+
+**Magic Burst now has its own saved position and presentation.** Existing Animation8.7 settings are migrated once on load to a nearby starting MB anchor; afterward, moving or scaling the SC bar does *not* move MB. Use `//sc edit on` and drag **MB RIBBON [drag separately]**, or `//sc mb pos <x> <y>`; hold Ctrl during dragging for shared screen-origin grid snapping. `//sc mb center` recovers an off-screen MB widget. `//sc mb position above|below` intentionally realigns MB beside the SC bar once; freely dragged MB becomes custom and remains independent. `//sc mb gap` controls this optional alignment, not a permanent constraint.
+
+MB settings are independent: `//sc mb width 220`, `//sc mb scale 1`, `//sc mb height 2`, `//sc mb fontsize 10`, `//sc mb iconsize 10`, `//sc mb text on|off` and `//sc mb icon on|off`. Text-only, icon-only, both, and completely bare luminous ribbon are supported without resetting any SC font, name offset, icon offset, position or animation settings. `//sc mb` reports current controls.
+
+A **brief white introduction** signals the *first* real MB opportunity and every *new/replaced* MB opportunity after a successful continuation: `//sc mb flash on|off`, `//sc mb flash duration 0.24` (0.05–1 second). The MB fill, faint glow and property icon turn white, then settle into their normal slightly brightened property palette as a direct function of the chain's source creation timestamp. All 14 original property icons retain their colored versions for ordinary display; separate build-generated true-white-alpha silhouettes are included in the test package (no Pillow needed at runtime). The flash does not invent a Magic Burst action, issue packets or reset either window's deadline. TargetSC Test8's independent MB lifetime and closing style inspired the visual vocabulary, not the timing implementation; it remains standalone.
+
+**Level 4 separation:** Umbra's black SC fade and Radiance's white SC fade now operate strictly on SC. Neither recolors nor dims the MB ribbon, icons, caption or ongoing numeric MB timer—even in compact mode, its MB timer remains readable. The established 0.24s SC countdown pulse, Level 1 glow opt-in, SC ghost tip, standard terminal visuals and TargetSC 0.8.0 Test8 / native DLL 0.5 / `lua c` bridge are preserved.
+
+**Test:** Preserve `Skillchains/data/`; merge only the Skillchains-only installation folder and `//lua reload Skillchains`. Run `//sc display both`, `//sc demo`, and observe the new MB white flash at 9/17/24/30 seconds, the independent MB ribbon while SC is preparing or finished, and unaltered MB during Umbra. `//sc edit on` exposes separate SC and MB draggable anchors; save with `//sc edit off`. Try `//sc mb text off`, `//sc mb icon off`, and independent MB font/icon sizing. Keep TargetSC loaded as-is and confirm `//sc targetsc` / `//tsc status` remain connected. **New appearances are host-simulated until actually tested in FFXI.**
+
 ## Skillchains Animation8.7 — moving SC ghost-tip and independent Magic Burst ribbon (2026-10-21)
 
 This is a Skillchains-only visual pass based on the latest TargetSC **0.8.0 Test8** (the sustained property-disc / bell and separate MB closing-effect work), while leaving TargetSC's native 0.5.0 DLL, Lua and synchronization bridge **untouched**. The input art `images/resonance/ghost_flare.png` is the user's own 64×16 horizontal ghostflare reference. A small white core and softly tinted ghost trail follow the live SC bar's shrinking endpoint, including dark Gravitation and Darkness. It flickers slightly in length and alpha, never during the three-second white refill or on terminal Umbra/Radiance and never after the SC window closes. `//sc tip on|off`, `//sc tip length 16`, `//sc tip opacity .85` tune it.
@@ -594,6 +606,12 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-21 — Skillchains Animation8.8 independent MB display (A)
+- Give MB its own draggable saved x/y anchor, width, scale, font size, icon size and optional text/icon; no SC bar-position inheritance after initial migration.
+- Add a short source-clock white MB window-introduction flash for first and replacement opportunities, generated white-alpha silhouettes for all property icons, and adjustable flash duration/toggle.
+- Isolate MB ribbon, icon, caption, timer and compact-mode MB status completely from Umbra/Radiance SC terminal tint, opacity and timer suppression; preserve MB source deadline.
+- Maintain ghost-tip, white refill, independent SC opacity pulse, Level 1 glow settings and TargetSC Test8 compatibility. New build requires in-game visual acceptance.
 
 ### 2026-10-21 — Skillchains Animation8.7 visual pass (A)
 - Add subtle user-supplied moving ghostflare at the SC fill endpoint: bright white, second-element-tinted halo, gentle length/alpha flicker and no fake pre-window or terminal timing.
