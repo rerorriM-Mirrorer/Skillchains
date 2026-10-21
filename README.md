@@ -1,5 +1,15 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## Skillchains Animation8.7 — moving SC ghost-tip and independent Magic Burst ribbon (2026-10-21)
+
+This is a Skillchains-only visual pass based on the latest TargetSC **0.8.0 Test8** (the sustained property-disc / bell and separate MB closing-effect work), while leaving TargetSC's native 0.5.0 DLL, Lua and synchronization bridge **untouched**. The input art `images/resonance/ghost_flare.png` is the user's own 64×16 horizontal ghostflare reference. A small white core and softly tinted ghost trail follow the live SC bar's shrinking endpoint, including dark Gravitation and Darkness. It flickers slightly in length and alpha, never during the three-second white refill or on terminal Umbra/Radiance and never after the SC window closes. `//sc tip on|off`, `//sc tip length 16`, `//sc tip opacity .85` tune it.
+
+Magic Burst now draws a **fill-only 2px ribbon**, no background or border, with gentle luminance and subtle 2s breathing, plus restrained fading pulses in the final 0.6s. It uses the existing absolute MB deadline even while the SC bar is still preparing, after continuation expires, and during closed Level 4 results. MB does **not** inherit SC continuation-window timing, its animation pulse or SC endpoint marker. `//sc display both` or `//sc display mb` enables it, subject to preserved existing display preferences. `//sc mb position above|below`, `//sc mb gap 3`, `//sc mb height 2`, and `//sc mb text on|off` tune position/thickness and optional label. The default places the ribbon immediately below the SC bar, not below its property text; when SC fades out the MB ribbon keeps its same anchor.
+
+`//sc help`, bare `//sc`, and unknown commands now show the BattleStations-style **chat-only** colored command guide (headings 167, separators 140, prefix/arrow 200, syntax 207, descriptions 0). `//sc status`, `//sc restart`, and `//sc unload` remain available. Existing `//sc demo`, 0.24s user-selected SC fade pulse, Level 1 opt-in `glow levels 1234`, terminal pure black/white finish and all layout coordinates are preserved.
+
+**Install/testing:** Back up `Skillchains/data/`; merge only the Skillchains-only test package; `//lua reload Skillchains`; `//sc display both`; `//sc demo`. Watch the tip on the dark Gravitation/Darkness countdowns (17s and 24s); no tip during the preceding white charge or on Umbra. Observe the ribbon still alive through the separate MB tail after SC closes, and compare `//sc mb position above` / `below` with `//sc mb gap 3`. Verify target sync with `//sc targetsc` and `//tsc status`. **All checks are host-side simulations until user tests in FFXI.**
+
 ## 0.8.0 Test8 — the last animation pass for now
 
 Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
@@ -584,6 +594,12 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-21 — Skillchains Animation8.7 visual pass (A)
+- Add subtle user-supplied moving ghostflare at the SC fill endpoint: bright white, second-element-tinted halo, gentle length/alpha flicker and no fake pre-window or terminal timing.
+- Replace MB's full track/frame with an independent fill-only luminous ribbon and closer adjustable above/below layout; preserve MB's own source deadline, terminal monochrome and existing 2.4Hz SC pulse setting.
+- Add `//sc tip`, `//sc mb`, and fully color-coded BattleStations chat-only help for bare, invalid and explicit commands; include restart/unload.
+- Keep TargetSC Test8 0.8.0, native 0.5.0, live event bridge, original artwork and user settings unchanged. New work pending in-game visual feedback.
 
 ### 2026-10-21 — Animation8.6 terminal clarity / true monochrome (A)
 - Display terminal Umbra/Radiance name without false SC continuation timer; hide MB numerical countdown only during the 0.8s terminal fade and restore its true count afterward.

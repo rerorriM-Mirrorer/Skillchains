@@ -1,5 +1,11 @@
 # TargetSC TESTING.md — start here
 
+## Companion Skillchains Animation8.7 (2026-10-21)
+
+This Skillchains-only visual pass uses TSC Test8's independent MB lifetime/slow breathing as a design reference. SC moving endpoint, fill-only MB ribbon, above/below MB spacing and BattleStations-style help do not alter TargetSC 0.8.0 Test8 Lua, native DLL 0.5, bridge v1 or source deadlines. There is no new coupling or TSC dependency. Install **Skillchains-only** folder, preserve both addons' `data/` and verify subscription. TSC Test8 itself still requires its own live visual acceptance.
+
+---
+
 ## TargetSC 0.8.0 Test8 — MB finish and sustained property glyph (2026-10-21)
 
 Branch `development/targetsc-mb-final-pass`, based on Test7 `649752f6`.

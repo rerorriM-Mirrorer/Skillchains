@@ -1,5 +1,21 @@
 # TESTING.md — Skillchains Resonance UI
 
+## Current development — Skillchains Animation8.7 Ghost tip / MB ribbon (2026-10-21)
+
+**Repo/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-ribbon-endpoint-test1`, based on newest TargetSC Test8 `fa295295`. This branch contains the latest TSC 0.8 Lua/native 0.5 baseline but has **not modified any TargetSC runtime or bridge files**. Starting Skillchains Animation8.6 code from `3d96aea`; new version `2.20.08.25-resonance.7-animation.8.7`.
+
+**User request and source basis:** Follow settled sequence: first small moving SC fill-end flare from supplied `ghost_flare.png` 64x16; then thin independent fill-only Magic Burst ribbon close to SC; then tune MB placement/text; redesign `//sc help` per WORKFLOW/BattleStations color standards. Latest TSC Test8 independently sustains property-disc lifetime through MB and gives MB its own slow breathing and closing signals. Use TSC for *visual vocabulary*, not reuse its world geometry or create dependencies. User likes Killala's 0.24s pulse, Level 1 glow, and terminal black/white finishes; preserve XML.
+
+**Runtime implementation:** Tip samples exact user PNG with a white 1px core at the true SC fill endpoint, lightly blended toward last element color (notably dual elements), and subtly varying length/opacity. Active SC countdown only; hidden in white pre-continuation charge, terminal fades, when SC expires or display is off. MB is a separate 2px gradient ribbon of original MB fractional countdown with faint underlying glow but **no track/frame**; 2s slow brightness breathing and soft small final 0.6s triple pulse inspired by TSC Test8, without changing source deadlines or requiring TSC to be loaded. Default ribbon immediately below bar, anchored independently of SC label height; configurable above/below, gap, height, text. Preserve old SC bar, fill shimmer, tip and MB positions as one draggable parent bar; retain all settings and not silently change `display sc` to `both`.
+
+**Commands:** `//sc tip on|off`, `//sc tip length <8..40>`, `//sc tip opacity <0..1>`; `//sc mb position above|below`, `//sc mb gap <0..32>`, `//sc mb height <1..6>`, `//sc mb text on|off`. Bare/invalid `//sc` now show chat-only color-coded help; `//sc status`, `//sc restart`, `//sc unload` are explicit. TargetSC commands unchanged.
+
+**Developer checks:** Run Lua5.1 parse, full `tools/test_learning_ui.lua` and `tools/test_visual_commands.lua` (including tip/MB-only, no background/SC timer borrowing and help colors), `tools/test_skillchains_demo.lua`, TargetSC Test8 `test_mb_finish` and all other TargetSC native/packet compatibility tests. Package Skillchains-only folder with user-supplied `images/resonance/ghost_flare.png`, README/WORKFLOW/TESTING docs inside folder. CI dependency now installs `python3-pil` because upstream Test8 workflow failed its own icon-generation check without Pillow. **No direct FFXI rendering test performed.**
+
+**In-game test request:** Back up `Skillchains/data/` and update only Skillchains folder. `//lua reload Skillchains`, `//sc display both`, `//sc demo`: verify SC ghost at endpoint on dark Gravitation/Darkness countdowns, but not during charge or on terminal Umbra; verify MB ribbon independently shrinking during SC prep and remaining for MB-only time; check `//sc mb position above` / `below` and small gap changes without moving the bar anchor. `//sc help` check colors and readability. Ensure `//sc targetsc`, `//tsc status` show sync; TSC Test8 ring/Magic Burst visuals should remain unchanged.
+
+---
+
 ## TargetSC 0.8.0 Test8 — MB finish and sustained property glyph (2026-10-21)
 
 Branch `development/targetsc-mb-final-pass`, based on Test7 `649752f6`.
