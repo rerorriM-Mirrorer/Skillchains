@@ -13,6 +13,9 @@ local elements = {
     Light={242,232,201}, Dark={78,63,111},
 }
 local fallback = {185,171,204}
+local black={0,0,0}
+local white={255,255,255}
+local terminal_fade=.8
 local segments = 24
 local bar_handle_offset = 34
 local scale_handle_offset = 62
@@ -248,7 +251,10 @@ function ui.new(settings, sc_info)
             end
             slot.image:size(icon_size,icon_size)
             slot.image:pos(x+(i-1)*(icon_size+gap),y)
-            slot.image:alpha(math.floor(240*clamp(opacity or 1,0,1)+.5))
+            slot.image:alpha(math.floor(240*clamp(opacity or 1,0,1)*
+                (self.terminal_mult or 1)+.5))
+            local tint=self.terminal_color or white
+            slot.image:color(tint[1],tint[2],tint[3])
             slot.image:show()
         end
         for i=#(properties or {})+1,#slots do slots[i].image:hide() end
@@ -385,10 +391,10 @@ function ui.new(settings, sc_info)
         -- The dark track is genuinely translucent OVER THE GAME now, not
         -- over a fully opaque bright rectangle. Never pulse its opacity.
         local track=opts.track or {}
-        local rgb=track.color or {6,8,17}
+        local rgb=self.terminal_color or track.color or {6,8,17}
         local track_alpha=clamp(tonumber(track.alpha) or 155,0,255)
         windower.prim.set_color(bar.base,math.floor(track_alpha*
-            clamp(self.base_opacity or 1,0,1)+.5),
+            clamp(self.base_opacity or 1,0,1)*(self.terminal_mult or 1)+.5),
             rgb[1] or 6,rgb[2] or 8,rgb[3] or 17)
         windower.prim.set_size(bar.base,width-2,height)
         windower.prim.set_visibility(bar.base,true)
@@ -398,7 +404,7 @@ function ui.new(settings, sc_info)
         -- Absolute deadline still controls LENGTH. The separate brightness
         -- tween is continuous across prewindow -> active-window transition.
         local alpha=230*clamp(self.bar_brightness or 1,0,1)*
-            clamp(self.bar_opacity or 1,0,1)
+            clamp(self.bar_opacity or 1,0,1)*(self.terminal_mult or 1)
         for i=1,segments do
             local id=bar.slices[i]
             local start=math.floor((i-1)*fill/segments)
@@ -595,7 +601,23 @@ function ui.new(settings, sc_info)
         local mode=opt.display
         local show_sc=(mode=='sc' or mode=='both')
         local show_mb=(mode=='mb' or mode=='both')
-        local sc_alive=show_sc and (state.sc_left or 0)>0 and not state.closed
+        -- A real L4 chain is marked closed immediately on registration.
+        -- Give its three-second white charge an SC bar, then fade the
+        -- terminal result in monochrome; MB continues on its own clock.
+        local prop=state.active and state.active[1]
+        local terminal=state.closed and (prop=='Umbra' or
+            prop=='Radiance' or prop=='Lux')
+        local elapsed=(state.now or 0)-(state.sc_open or 0)
+        local finale=terminal and elapsed>=0 and elapsed<terminal_fade
+        local terminal_sc=terminal and elapsed<terminal_fade
+        local finale_mult=finale and (1-(function(t)
+            t=clamp(t,0,1);return t*t*(3-2*t)
+        end)(elapsed/terminal_fade)) or 1
+        self.terminal_color=finale and
+            ((prop=='Umbra') and black or white) or nil
+        self.terminal_mult=finale_mult
+        local sc_alive=show_sc and
+            ((state.sc_left or 0)>0 and not state.closed or terminal_sc)
         local fading_opener=show_sc and state.step==1 and
             state.expire_age~=nil and state.expire_age<.35
         sc_alive=sc_alive or fading_opener
@@ -629,11 +651,16 @@ function ui.new(settings, sc_info)
                         interpolate(result_color,(i-.5)/segments)},tween)
                 end
             end
+            if finale then
+                bar_color={self.terminal_color}
+                result_color={self.terminal_color}
+                fraction=1
+            end
             self.bar_brightness=state.step==1 and
                 self.fx:open_brightness(state) or
                 self.fx:chain_brightness(state,opt.transition)
             local reveal=self.fx:bar_reveal(state,effects)
-            self.bar_opacity=self.fx:opacity(state,effects)*reveal
+            self.bar_opacity=finale and 1 or self.fx:opacity(state,effects)*reveal
             self.base_opacity=reveal
             self.bar_shake=self.fx:shake(state,effects)
             local shake=self.bar_shake
@@ -642,6 +669,9 @@ function ui.new(settings, sc_info)
             self.bar_shake,self.bar_opacity,self.bar_brightness,self.base_opacity=
                 0,1,1,1
             local fill=math.floor(clamp(fraction,0,1)*(opt.bar.width-2)+.5)
+            -- Source frame is presentation-only, not a mutable combat state.
+            state.finale_color=self.terminal_color
+            state.finale_alpha=finale_mult
             self.fx:render(state,effects,{
                 x=math.floor(opt.bar.x+shake+.5),y=y,
                 width=math.floor(opt.bar.width+.5),
@@ -673,8 +703,10 @@ function ui.new(settings, sc_info)
                 -- Icons occupy a small prefix, while names and timer wrap.
                 self.properties:pos(math.floor(opt.bar.x+inset+name_offset.x+icon_width+.5),
                     caption_y)
-                self.properties:alpha(math.floor(245*reveal+.5))
-                self.properties:stroke_alpha(math.floor(235*reveal+.5))
+                local tint=self.terminal_color or white
+                self.properties:color(tint[1],tint[2],tint[3])
+                self.properties:alpha(math.floor(245*reveal*finale_mult+.5))
+                self.properties:stroke_alpha(math.floor(235*reveal*finale_mult+.5))
                 self.properties:show()
                 -- Positive Y needs extra clearance for the optional MB bar;
                 -- negative Y does not collapse the normal safe spacing.
@@ -690,8 +722,10 @@ function ui.new(settings, sc_info)
         end
         if mb_alive then
             local total=math.max(.1,state.mb_total or 10)
+            local mb_palette=self.terminal_color and {self.terminal_color}
+                or palette(state,self.sc_info,true)
             local mb_height=self:draw_bar('mb',y,state.mb_left/total,false,
-                palette(state,self.sc_info,true))
+                mb_palette)
             if opt.mode~='minimal' then
                 local caption='Magic Burst: '..countdown(state.mb_left)
                 if caption~=self.mb_caption_cache then
@@ -705,6 +739,9 @@ function ui.new(settings, sc_info)
                 local by=y+mb_height+gap+offset.y
                 local icon_w=self:place_caption_icons('mb',
                     {state.active and state.active[1] or 'Light'},bx,by,opt.scale)
+                local tint=self.terminal_color or white
+                self.mb_caption:color(tint[1],tint[2],tint[3])
+                self.mb_caption:alpha(math.floor(245*finale_mult+.5))
                 self.mb_caption:pos(bx+icon_w,by)
                 self.mb_caption:show()
             else
