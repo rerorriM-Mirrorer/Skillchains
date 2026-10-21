@@ -28,16 +28,33 @@ local function harness()
     local player={main_job='WAR',id=1,status=0}
     local target={id=71,index=12,hpp=100}
     local messages={}
-    env.windower={register_event=function(name,fn)events[name]=fn end,
+    env.windower={get_windower_settings=function() return {ui_x_res=1280,ui_y_res=720} end,
+        register_event=function(name,fn)events[name]=fn end,
         send_command=function(line)sent[#sent+1]=line end,add_to_chat=function(_,msg)messages[#messages+1]=msg end,
         ffxi={get_info=function()return {logged_in=true}end,
             get_player=function()return player end,get_mob_by_target=function()return target end,
             get_abilities=function()return {weapon_skills={},job_abilities={}}end,
             get_items=function()return {}end}}
     env.require=function(name)
-        if name=='resonance_ui' then return {new=function()return {
-            render=function(_,frame)renders[#renders+1]=copy(frame or {hidden=true})end,
-            hide=function()end,destroy=function()end}end} end
+        if name=='resonance_ui' then return {new=function(opt)
+            local m=opt.mb
+            m.x=m.x or opt.bar.x
+            m.y=m.y or opt.bar.y+25
+            m.width=m.width or opt.bar.width
+            return {
+                render=function(_,frame)renders[#renders+1]=copy(frame or {hidden=true})end,
+                hide=function()end,destroy=function()end,
+                set_mb_position=function(_,x,y)m.x=math.floor(math.max(8,math.min(x,1220))+.5)
+                    m.y=math.floor(math.max(35,math.min(y,685))+.5)end,
+                mb_align=function(_,side)
+                    m.position=side;m.x=opt.bar.x
+                    m.y=side=='above' and opt.bar.y-(m.height or 2)*(m.scale or 1)-(m.gap or 3)-1
+                        or opt.bar.y+22*opt.scale+(m.gap or 3)
+                    m.x=math.floor(math.max(8,math.min(m.x,1220))+.5)
+                    m.y=math.floor(math.max(35,math.min(m.y,685))+.5)
+                end
+            }
+        end} end
         if name=='targetsc_bridge' then return assert(setfenv(assert(loadfile('targetsc_bridge.lua')),env))() end
         if name=='skillchains_demo' then return assert(loadfile('skillchains_demo.lua'))() end
         if name=='skills' then return assert(loadfile('skills.lua'))() end
@@ -78,7 +95,12 @@ assert(opt.glow.levels==nil and opt.glow.level_mask==nil,
 assert(opt.glow.rail34==.75 and opt.glow.cap34==.85)
 assert(opt.tip.enabled and opt.tip.length==16 and opt.tip.opacity==.85)
 assert(opt.mb.position=='below' and opt.mb.gap==3
-    and opt.mb.height==2 and opt.mb.text=='on')
+    and opt.mb.height==2 and opt.mb.text=='on'
+    and opt.mb.icon=='on' and opt.mb.scale==1
+    and opt.mb.fontsize==10 and opt.mb.iconsize==10
+    and opt.mb.flash=='on' and opt.mb.flash_duration==.24)
+assert(opt.mb.x==opt.bar.x and opt.mb.y==opt.bar.y+25,
+    'Legacy MB offset migrates once to independent saved coordinates')
 assert(opt.transition.duration==.30 and opt.transition.style=='energized')
 assert(run('glow','levels','1234'):find('default 234',1,true))
 assert(opt.glow.level_mask=='L1,L2,L3,L4' and not tonumber(opt.glow.level_mask))
@@ -125,6 +147,29 @@ run('mb','position','above');assert(opt.mb.position=='above')
 run('mb','text','off');assert(opt.mb.text=='off')
 run('mb','text','on');assert(opt.mb.text=='on')
 run('mb','height','0');assert(opt.mb.height==3)
+run('mb','pos','240','330')
+assert(opt.mb.x==240 and opt.mb.y==330 and opt.mb.position=='custom')
+run('mb','width','180');assert(opt.mb.width==180)
+run('mb','scale','1.6');assert(opt.mb.scale==1.6)
+run('mb','fontsize','14');assert(opt.mb.fontsize==14)
+run('mb','iconsize','18');assert(opt.mb.iconsize==18)
+run('mb','icon','off');assert(opt.mb.icon=='off')
+run('mb','icon','on');assert(opt.mb.icon=='on')
+run('mb','flash','off');assert(opt.mb.flash=='off')
+run('mb','flash','duration','.3');assert(opt.mb.flash_duration==.3)
+run('mb','flash','on');assert(opt.mb.flash=='on')
+run('mb','flash','duration','2');assert(opt.mb.flash_duration==.3)
+run('mb','scale','0');assert(opt.mb.scale==1.6)
+run('mb','gap','6')
+assert(opt.mb.x==240 and opt.mb.y==330,
+    'Changing gap cannot reattach user-positioned MB')
+local mb_save_x,mb_save_y=opt.mb.x,opt.mb.y
+run('pos','300','450')
+assert(opt.mb.x==mb_save_x and opt.mb.y==mb_save_y,
+    'Moving the SC bar must not move independent MB HUD')
+run('mb','position','below')
+assert(opt.mb.position=='below' and opt.mb.x==opt.bar.x,
+    'Explicit MB re-alignment may intentionally recouple once')
 assert(run('track','alpha','95'):find('default 155',1,true))
 assert(opt.track.alpha==95)
 run('track','rgb','3','5','9')
