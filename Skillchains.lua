@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _addon.author = 'Ivaar'
 _addon.command = 'sc'
 _addon.name = 'SkillChains'
-_addon.version = '2.20.08.25-resonance.7-animation.8.7'
+_addon.version = '2.20.08.25-resonance.7-animation.8.8'
 
 require('luau')
 require('pack')
@@ -65,7 +65,8 @@ default.Resonance = {
     track={alpha=155,color={6,8,17}},
     transition={duration=.30,style='energized'},
     tip={enabled=true,length=16,opacity=.85},
-    mb={position='below',gap=3,height=2,text='on'},
+    mb={position='below',gap=3,height=2,text='on',icon='on',
+        scale=1,fontsize=10,iconsize=10,flash='on',flash_duration=.24},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
     name_offset={x=5,y=-9},
     -- Additional positioning applies only to SC property icons.
@@ -564,10 +565,19 @@ local function show_help()
     line('tip on|off','Toggle moving bright SC endpoint')
     line('tip length <8-40>','Set ghostflare length in base UI pixels')
     line('tip opacity <0-1>','Set ghostflare brightness')
-    line('mb position above|below','Move independent fill-only MB ribbon')
-    line('mb gap <0-32>','Set SC-to-MB ribbon spacing')
-    line('mb height <1-6>','Set ribbon thickness before HUD scale')
-    line('mb text on|off','Toggle independent Magic Burst text')
+    line('mb pos <x> <y>','Move independent MB anchor in screen pixels')
+    line('mb position above|below','Align MB once relative to SC')
+    line('mb center','Recover MB ribbon near screen center')
+    line('mb width <40-1600>','Independent MB ribbon width')
+    line('mb scale <0.5-2.5>','Independent MB ribbon and icon scale')
+    line('mb gap <0-32>','MB alignment spacing for above/below')
+    line('mb height <1-6>','MB ribbon thickness')
+    line('mb fontsize <6-24>','Independent MB caption text size')
+    line('mb iconsize <6-32>','Independent MB property icon size')
+    line('mb text on|off','Show/hide MB timer text')
+    line('mb icon on|off','Show/hide MB property icon')
+    line('mb flash on|off','Flash MB white at new/replaced window')
+    line('mb flash duration <0.05-1>','White introduction duration')
     line('anim on|off','Enable/disable animated bar effects')
     line('anim fade on|off','Toggle SC countdown opacity pulse')
     line('anim fade period <seconds>','Set SC pulse rhythm (e.g. 0.24)')
@@ -580,11 +590,11 @@ local function show_help()
     line('glow l4 gold|whitegold|white','Terminal border palette')
     line('transition <seconds>','Window-opening color transition')
     heading('Layout and lifecycle')
-    line('edit on|off','Drag anchors; Ctrl snaps to grid')
+    line('edit on|off','Drag SC, MB and Learning handles; Ctrl snaps')
     line('scale <0.5-2.5>|edit','Scale HUD or edit scaling interactively')
     line('grid <pixels>','Ctrl-drag grid spacing')
-    line('pos <x> <y>','Position SC bar and companion ribbon')
-    line('width <pixels>','Width of SC bar and MB ribbon')
+    line('pos <x> <y>','Position SC bar only')
+    line('width <pixels>','Width of SC bar only')
     line('center','Recover HUD on screen')
     line('save [all]','Save settings')
     line('restart|unload','Reload or unload Skillchains')
@@ -650,39 +660,71 @@ windower.register_event('addon command', function(cmd, ...)
         message(('SC ghost tip %s; length %.1f, opacity %.2f.'):format(
             t.enabled~=false and 'on' or 'off',t.length or 16,t.opacity or .85))
     elseif cmd=='mb' then
-        opts.mb=opts.mb or {position='below',gap=3,height=2,text='on'}
+        opts.mb=opts.mb or {}
         local m=opts.mb
-        if option=='position' then
+        if option=='pos' then
+            local x,y=finite_nonnegative(args[2]),finite_nonnegative(args[3])
+            if not x or not y then
+                message(('MB position %d, %d. Use //sc mb pos <x> <y>.'):format(m.x,m.y))
+                return
+            end
+            overlay:set_mb_position(x,y)
+        elseif option=='center' then
+            local v=windower.get_windower_settings() or {}
+            local w,h=v.ui_x_res or v.x_res or 1280,v.ui_y_res or v.y_res or 720
+            overlay:set_mb_position(math.floor((w-(m.width or opts.bar.width))/2),
+                math.floor(h*.72))
+        elseif option=='position' then
             local v=(args[2] or ''):lower()
             if v~='above' and v~='below' then
                 message('Use //sc mb position above|below.')
                 return
             end
-            m.position=v
-        elseif option=='gap' or option=='height' then
+            overlay:mb_align(v)
+        elseif option=='gap' or option=='height' or option=='width'
+            or option=='scale' or option=='fontsize' or option=='iconsize' then
             local v=finite_nonnegative(args[2])
-            local lo=option=='height' and 1 or 0
-            local hi=option=='height' and 6 or 32
+            local limits={
+                gap={0,32},height={1,6},width={40,1600},
+                scale={.5,2.5},fontsize={6,24},iconsize={6,32}
+            }
+            local lo,hi=limits[option][1],limits[option][2]
             if not v or v<lo or v>hi then
-                message(('Use //sc mb %s <%.0f-%.0f>.'):format(option,lo,hi))
+                message(('Use //sc mb %s <%.1f-%.1f>.'):format(option,lo,hi))
                 return
             end
             m[option]=v
-        elseif option=='text' then
-            local v=(args[2] or ''):lower()
-            if v~='on' and v~='off' then
-                message('Use //sc mb text on|off.')
+            -- Gap means a one-time alignment adjustment; manually
+            -- positioned MB widgets remain independent afterward.
+            if option=='gap' and m.position~='custom' then
+                overlay:mb_align(m.position or 'below')
+            end
+        elseif option=='flash' and (args[2] or ''):lower()=='duration' then
+            local value=finite_nonnegative(args[3])
+            if not value or value<.05 or value>1 then
+                message('Use //sc mb flash duration <0.05-1>.')
                 return
             end
-            m.text=v
+            m.flash_duration=value
+        elseif option=='text' or option=='icon' or option=='flash' then
+            local value=(args[2] or ''):lower()
+            if value~='on' and value~='off' then
+                message('Use //sc mb '..option..' on|off.')
+                return
+            end
+            m[option]=value
         else
-            message(('MB ribbon %s, gap %.1fpx, height %.1fpx, text %s.'):format(
-                m.position or 'below',m.gap or 3,m.height or 2,m.text or 'on'))
+            message(('MB pos %d %d, width %d, scale %.2f, height %.1f, font %.1f, icon %.1f, text %s, icon %s, flash %s (%.2fs).'):format(
+                m.x,m.y,m.width or opts.bar.width,m.scale or 1,m.height or 2,
+                m.fontsize or 10,m.iconsize or 10,m.text or 'on',m.icon or 'on',
+                m.flash or 'on',m.flash_duration or .24))
             return
         end
+        if option=='pos' then m.position='custom' end
         config.save(settings)
-        message(('MB ribbon %s, gap %.1fpx, height %.1fpx, text %s.'):format(
-            m.position or 'below',m.gap or 3,m.height or 2,m.text or 'on'))
+        message(('MB ribbon at %d, %d, width %d, scale %.2f; text %s, icon %s, white intro %s.'):format(
+            m.x,m.y,m.width or opts.bar.width,m.scale or 1,
+            m.text or 'on',m.icon or 'on',m.flash or 'on'))
     elseif cmd=='display' then
         if option~='sc' and option~='mb' and option~='both' then
             message('Display: '..opts.display..'. Use sc, mb, or both.')
@@ -761,7 +803,7 @@ windower.register_event('addon command', function(cmd, ...)
         local active=overlay:edit(desired)
         config.save(settings)
         message('Edit '..(active and 'ON' or 'OFF')..
-            '. Drag the bar or learning handle; hold either Ctrl for grid snapping.')
+            '. Drag SC, MB, or learning separately; hold Ctrl to snap to grid.')
     elseif cmd=='scale' then
         if option=='edit' then
             local on=overlay:scale_edit()
@@ -1011,7 +1053,9 @@ windower.register_event('addon command', function(cmd, ...)
         opts.track={alpha=155,color={6,8,17}}
         opts.transition={duration=.30,style='energized'}
         opts.tip={enabled=true,length=16,opacity=.85}
-        opts.mb={position='below',gap=3,height=2,text='on'}
+        opts.mb={position='below',gap=3,height=2,text='on',icon='on',
+            scale=1,fontsize=10,iconsize=10,flash='on',flash_duration=.24,
+            x=opts.bar.x,y=opts.bar.y+25,width=opts.bar.width}
         opts.name_offset.x,opts.name_offset.y=5,-9
         opts.icon_offset=opts.icon_offset or {x=0,y=0}
         opts.icon_offset.x,opts.icon_offset.y=0,0
