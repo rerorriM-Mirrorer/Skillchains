@@ -16,7 +16,8 @@ M.defaults={opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='groun
     awakening=true,awakening_opacity=0.3,ground_height=0.39,fade_duration=0.8,
     opener_gap=12,opener_glow='black',opener_muted=true,
     display='both',sky_cutoff=.55,sky_curve=2,sky_hold=.5,disc_minimum=.5,
-    mb_duration=1.2,mb_effects=1,mb_ending=.6,mb_ending_style='soft',mb_overall=1}
+    mb_duration=1.2,mb_effects=1,mb_ending=.6,mb_ending_style='soft',mb_overall=1,
+    mb_intro=.24,mb_intro_flashes=2}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -184,6 +185,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     local mb_strength=not s.source_expired and s.mb_close>now and now>=s.created and clamp((s.mb_close-now)/10,0,1)or 0
     local mb_active=not s.source_expired and s.step>1 and now>=s.created and now<s.mb_close
     local mb_overall=option(opts,'mb_overall')
+    local intro=not response.ending and mb_overall>0 and (response.intro or 0)or 0
     out.mb_strength=mb_strength
     local bottom,top,remaining,details=M.positions(s,now,height,opts)
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
@@ -280,6 +282,11 @@ function M.frame(model,s,now,radius,height,opts,context)
             opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*response.rise
             opening.opacity=response.release
         end
+        if intro>0 then
+            role='mb-glyph';fill=0
+            color=mix(color,white,intro)
+            opening.opacity=opening.opacity+(1-opening.opacity)*intro
+        end
         if response.ending then
             -- A closing signal wins over a simultaneous hit's color/alpha,
             -- while an already rising glyph keeps its continuous trajectory.
@@ -307,20 +314,44 @@ function M.frame(model,s,now,radius,height,opts,context)
         local properties=opener and s.properties or {s.properties[1]}
         for j,p in ipairs(properties)do
             local colors=property_palette(p,context)
-            if not opener and s.level>=4 then
-                colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
+            local terminal=not opener and s.level>=4
+            local terminal_stroke=white
+            if terminal then
+                local dark=p=='Umbra'or p=='Darkness'
+                colors={dark and {0,0,0}or white}
+                terminal_stroke=dark and {255,242,204}or {0,0,0}
             end
             local flash=response.flash*option(opts,'mb_floor')
             if show_mb and s.step>1 then flash=flash*life end
             local disc_fill=fill+(max(fill,mb_overall*life)-fill)*flash
             local disc_outline=outline+(max(outline,mb_overall*life)-outline)*flash
             flash=flash*mb_overall
-            local stroke=response.element and mix(white,response.element,flash)or white
+            local stroke=response.element and mix(terminal_stroke,response.element,flash)or terminal_stroke
             if flash>0 then
                 for i,c in ipairs(colors)do colors[i]=mix(c,white,flash)end
             end
-            disc(radius*(.78-(j-1)*.11),base+.006+(j-1)*.008,M.disc_rotation(s,now,opts),
-                colors,disc_fill,flash>0 and 1 or glyph,disc_outline,'property',stroke)
+            if intro>0 then
+                disc_fill=disc_fill+(mb_overall-disc_fill)*intro
+                disc_outline=disc_outline+(mb_overall-disc_outline)*intro
+                stroke=mix(stroke,white,intro)
+                for i,c in ipairs(colors)do colors[i]=mix(c,white,intro)end
+            end
+            local angle=M.disc_rotation(s,now,opts)
+            local h=base+.006+(j-1)*.008
+            if terminal then
+                -- Both planes are just smaller than the .96 breathing glyph.
+                -- Fill first, then the same approved star .006 world units
+                -- above it: contrasting traces remain visible on either fill.
+                local r=radius*.92
+                local respond=flash>0 or intro>0
+                disc(r,h,angle,colors,(glyph==2 and not respond)and 0 or disc_fill,
+                    0,0,'property')
+                disc(r,h+.006,angle,{white},0,2,
+                    (glyph==0 and not respond)and 0 or disc_outline,'property-trace',stroke)
+            else
+                disc(radius*(.78-(j-1)*.11),h,angle,colors,disc_fill,
+                    (flash>0 or intro>0)and 1 or glyph,disc_outline,'property',stroke)
+            end
         end
     end
     -- MB ring remains tied to its original deadline; response overlays never
@@ -333,6 +364,10 @@ function M.frame(model,s,now,radius,height,opts,context)
         if response.element and strength>0 then
             color=mix(color,mix(response.element,white,response.flicker),strength)
             alpha=alpha+(1-alpha)*strength
+        end
+        if intro>0 then
+            color=mix(color,white,intro)
+            alpha=alpha+(1-alpha)*intro
         end
         if response.ending then
             color=mix(color,white,option(opts,'mb_effects'))

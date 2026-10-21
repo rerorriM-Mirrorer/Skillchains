@@ -15,6 +15,7 @@ local function layer(frame,kind,role,part)
     end
 end
 local opts=copy(R.defaults)
+opts.mb_intro=0 -- isolate pre-Test9 lifetime/closing assertions; intro has its own tests
 assert(opts.disc_speed==.1 and opts.ground_height==.39 and opts.mb_opacity==.39)
 opts.disc_minimum=0;opts.mb_ending=.15;opts.mb_opacity=1;opts.mb_idle=0 -- preserve the Test5 hidden-between-bursts comparison
 local m=R.new()

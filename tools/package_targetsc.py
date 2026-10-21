@@ -11,9 +11,9 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-Animation8.7-Tip-MB-Ribbon-TargetSC-Test8-Paired-Full'
+NAME = 'TargetSC-0.9.0-Test9-Terminal-Intro-Paired-Full'
 PATCH_BASE = '700bef129e9932dde996127813f6853e1227af7b'
-SC_CURRENT = '3d96aeac0b63dc5e1fbd61ca8bf576bb3758cada'
+SC_CURRENT = '1dfae131eb89285547350a340a2a77e3ca4d85aa'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
 SC_FILES = ('TESTING.md', 'WORKFLOW.md', 'README.md', 'AGENTS.md', 'Skillchains.lua',
             'targetsc_bridge.lua', 'skillchains_demo.lua', 'skills.lua', 'resonance_ui.lua', 'learning_ui.lua', 'resonance_fx.lua')
@@ -39,34 +39,20 @@ def verify_dll(path):
 def main():
     assert not git('status', '--porcelain', '--untracked-files=normal'), 'Commit work before packaging'
     commit, branch = git('rev-parse', 'HEAD'), git('branch', '--show-current')
-    # The HUD renderer, command help and new glyph are intentionally updated.
-    # Combat interpretation, native bridge, source clocks, existing artwork and
-    # all TargetSC Test8 source/native files stay exactly at their baseline.
+    # Freeze the latest Animation8.7 HUD, source bridge and artwork while
+    # changing only TargetSC's Lua presentation. Native geometry stays 0.5.0.
     assert not git('diff',SC_CURRENT,'--',
-        'skills.lua','learning_ui.lua','resonance_fx.lua',
-        'targetsc_bridge.lua','skillchains_demo.lua',
-        'images/skillchain','images/terminal',
-        'images/resonance/capsule_halo_l.png',
-        'images/resonance/capsule_halo_rail.png',
-        'images/resonance/capsule_halo_r.png'), 'Protected Skillchains runtime or artwork changed'
-    runtime=set(git('diff','--name-only',SC_CURRENT,'--',
-        'Skillchains.lua','resonance_ui.lua').splitlines())
-    assert runtime=={'Skillchains.lua','resonance_ui.lua'}, 'Unexpected HUD implementation changes'
-    assert (ROOT/'images/resonance/ghost_flare.png').is_file(), 'SC endpoint texture missing'
-    assert not git('diff','fa2952959c736a1f7cf605a0caa6dc83045c4146',
-        '--','TargetSC/src','TargetSC/libs','TargetSC/TargetSC.lua',
-        'TargetSC/resonance.lua','TargetSC/resonance_motion.lua',
-        'TargetSC/resonance_burst.lua','TargetSC/resonance_controls.lua',
-        'TargetSC/resonance_preview.lua','TargetSC/tests'), 'Latest TargetSC Test8 runtime changed'
+        'Skillchains.lua','skills.lua','resonance_ui.lua','learning_ui.lua',
+        'resonance_fx.lua','targetsc_bridge.lua','skillchains_demo.lua','images'), 'Current Skillchains runtime changed'
     assert not git('diff',PATCH_BASE,'--','TargetSC/libs','TargetSC/src'), 'Native API 0.5.0 renderer changed'
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'Skillchains Animation8.7 ghost endpoint and independent MB ribbon / TargetSC Test8 0.8.0 native 0.5.0 unchanged', 'author': 'A.',
+    info = {'batch': 'TargetSC Test9 terminal stars and synchronized MB introductions / Animation8.7 and native 0.5.0 preserved', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': SC_CURRENT,
-            'targetsc_test8_in_game_tested': False,
+            'targetsc_test9_in_game_tested': False,
             'skillchains_preview_user_confirmed': True,
             'targetsc_test1_render_user_confirmed': True,
             'targetsc_test2_previews_user_confirmed': True,
@@ -109,7 +95,7 @@ def main():
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file, dest)
     ghostflare=ROOT/'images/resonance/ghost_flare.png'
-    assert ghostflare.read_bytes().startswith(b'\\x89PNG\\r\\n\\x1a\\n')
+    assert ghostflare.read_bytes().startswith(bytes.fromhex('89504e470d0a1a0a'))
     dest=STAGE/'Skillchains/images/resonance/ghost_flare.png'
     dest.parent.mkdir(parents=True,exist_ok=True)
     shutil.copy2(ghostflare,dest)
@@ -161,14 +147,14 @@ def main():
     patch_paths=set(git('diff','--name-only',PATCH_BASE,'--','TargetSC').splitlines())
     assert not any(name.endswith('.dll')for name in patch_paths), 'Lua-only patch must not include DLL'
     patch_paths.update({'TargetSC/README.md','TargetSC/WORKFLOW.md','TargetSC/TESTING.md'})
-    patch = DIST / 'TargetSC-0.8.0-Test8-MB-Finish-Lua-Patch.zip'
+    patch = DIST / 'TargetSC-0.9.0-Test9-Terminal-Intro-Lua-Patch.zip'
     patch_checks={}
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED) as z:
         for name in sorted(patch_paths):
             data=(ROOT/name).read_bytes();z.writestr(name,data)
             patch_checks[name]=hashlib.sha256(data).hexdigest()
-        z.writestr('TargetSC/BUILD_INFO_TEST8.json',json.dumps(info,indent=2)+'\n')
-        z.writestr('TargetSC/SHA256SUMS_TEST8.json',json.dumps(patch_checks,indent=2)+'\n')
+        z.writestr('TargetSC/BUILD_INFO_TEST9.json',json.dumps(info,indent=2)+'\n')
+        z.writestr('TargetSC/SHA256SUMS_TEST9.json',json.dumps(patch_checks,indent=2)+'\n')
     with zipfile.ZipFile(patch) as z:
         assert z.testzip() is None
         assert all(name.startswith('TargetSC/')and '/data/'not in name for name in z.namelist())

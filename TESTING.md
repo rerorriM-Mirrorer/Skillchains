@@ -1,5 +1,71 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.9.0 Test9 — terminal stars and synchronized MB introductions (2026-10-21)
+
+Branch `development/targetsc-terminal-intro`, based on latest paired Skillchains
+Animation8.7 branch `1dfae131` (which retains TargetSC Test8 `fa295295`).
+A confirmed enjoying Test8 live, then requested contrasting terminal traces and
+brief synchronized white flashes introducing each new MB window/property change.
+Latest supplied tuning reference: settings(20261021-100005).xml. Preserve user
+settings; no preset reset, no personal XML modification or inclusion.
+
+Install TargetSC-0.9.0-Test9-Terminal-Intro-Lua-Patch.zip by merging TargetSC/
+into Windower/addons, preserving data/, then `//lua reload TargetSC`. Lua 0.9.0-test9;
+native remains 0.5.0. No DLL replacement or FFXI restart. The patch contains no
+Skillchains folder. Latest Animation8.7 runtime/artwork/source bridge stays
+byte-identical to 1dfae131; all combat clocks and interpretation stay untouched.
+
+Umbra now has a white-gold (#fff2cc) copy of the same approved traced star over
+its black fill. Radiance has the same star in black over white. Both fill and
+trace use radius .92 * model radius, just below the resting breathing glyph's
+.96 radius. Fill remains at the existing floor-property height; trace is emitted
+AFTER its fill, .006 world units higher, using the native outline-only path.
+Normal discs opacity/outline and global opacity remain respected. The standard
+fill-only / outline-only styles remain available. Existing level-four spin 0
+remains stationary; saved per-level speed overrides still work. Other levels'
+star, radius, colors and position are unchanged outside MB introductions/hits.
+
+Every real new MB window flashes the larger glyph, regular property fill/trace
+and middle ring white together. Default: two flashes over .24 seconds, with a
+brief full-strength plateau, quick fade and gap for each. The shared waveform
+is based on the source state's created timestamp, not an accumulated animation
+timer. At full mb_effects, all three peaks equal mb_overall; the property introduction
+reaches that peak instead of being limited by idle/global alpha. Lower effects
+values blend a weaker introduction over each layer's ordinary baseline.
+The master and effects settings can suppress the introduction. Normal baseline
+property opacity is preserved when the MB master is 0. Existing mb_floor/mb_ring
+controls continue to describe CONFIRMED burst responses, not fresh-window intro.
+
+`//tsc mb intro 0.24` controls the total intro duration (0–.6); 0 disables.
+`//tsc mb intro flashes 1|2` selects one or two flashes (default 2).
+Live skillchain switches restart this short white announcement before revealing
+the new palette. Authoritative reload/sync snapshots do not replay it, even if
+their source window is fresh. An opener alone never invents an MB introduction.
+Closing signals take priority over an intro if a very short window overlaps.
+The stationary breathing glyph's normal opacity/cycle does NOT gain a ramp.
+Test8 sustained floor lifetime, minimum spin, bell hold and synchronized endings
+remain intact. This is a targeted follow-up, not a visual preset reset.
+
+Host checks: Lua 5.1 parsing; all TargetSC simulations including the new
+terminal_intro test; actual addon-handler validation, source receiver/load-order
+transport, source combat-clock baseline comparison, eight MB elements, geometry
+sweeps, current Animation8.7 HUD/command/demo simulations. New tests check both
+terminal contrast palettes, equal fill/trace radius, smaller-than-breathing size,
+height/draw order, style choices, white peaks across five properties and both MB
+display modes, effect/master gating, live switch/pool reuse, no snapshot replay,
+local demo timing, source deadline preservation and command bounds/integer count.
+Package guards/CRC/SHA manifests verify current HUD/native preservation. Native
+DLL SHA remains bc841580e5110739759d3427e6f6975cd7c305363c480620120fc469d0e618f6.
+These are host checks; Test9 appearance still awaits live FFXI evaluation.
+
+The latest Animation8.7 tools/test_learning_ui.lua contained an unterminated
+assertion with a duplicated ~530-line test body inserted inside it. Repaired
+only this test harness by retaining each distinct scenario once and correctly
+joining the new ghostflare/ribbon assertions. Its full simulation now passes;
+no HUD runtime change was needed. Also corrected its package PNG signature
+check to compare actual PNG bytes rather than a double-escaped text literal.
+Prior testing history below is preserved.
+
 ## TargetSC 0.8.0 Test8 — MB finish and sustained property glyph (2026-10-21)
 
 Branch `development/targetsc-mb-final-pass`, based on Test7 `649752f6`.

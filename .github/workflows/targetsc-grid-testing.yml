@@ -1,9 +1,9 @@
-name: Skillchains Animation8.7 Ghost endpoint + MB ribbon / TargetSC Test8
+name: TargetSC Test9 terminal stars and MB introductions
 
 on:
   push:
     branches:
-      - development/skillchains-ribbon-endpoint-test1
+      - development/targetsc-terminal-intro
   workflow_dispatch:
 
 permissions:
@@ -51,6 +51,7 @@ jobs:
           lua5.1 TargetSC/tests/test_bell_burst.lua
           lua5.1 TargetSC/tests/test_display_bell.lua
           lua5.1 TargetSC/tests/test_mb_finish.lua
+          lua5.1 TargetSC/tests/test_terminal_intro.lua
           lua5.1 TargetSC/tests/test_transport.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
@@ -63,7 +64,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.7-MB-Ribbon-TargetSC-Test8-Paired-test
+          name: TargetSC-Test9-Terminal-Intro-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
@@ -77,7 +78,7 @@ jobs:
       - name: Publish minimal TargetSC patch
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test8-MB-Finish-Patch
-          path: dist/TargetSC-0.8.0-Test8-MB-Finish-Lua-Patch.zip
+          name: TargetSC-Test9-Terminal-Intro-Patch
+          path: dist/TargetSC-0.9.0-Test9-Terminal-Intro-Lua-Patch.zip
           if-no-files-found: error
           retention-days: 30

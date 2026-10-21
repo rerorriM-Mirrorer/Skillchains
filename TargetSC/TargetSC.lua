@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.8.0-test8'
+_addon.version='0.9.0-test9'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -92,6 +92,8 @@ local function help()
         {'mb ending <0.15-2>','Total closing interval before the MB deadline, including both styles when selected.'},
         {'mb ending style soft|hard|both|off','Strong/half/strong pulses, hard on/off flickers, or soft then hard.'},
         {'mb overall <0-1>','Master opacity for the middle ring, large MB glyph and MB flashes.'},
+        {'mb intro <0-0.6>','Fresh MB-window white transition duration; 0 disables (default .24s).'},
+        {'mb intro flashes 1|2','Synchronized property disc / large glyph / MB ring flashes (default 2).'},
         {'status','Report source, timing, tracking and native renderer state.'},
         {'preview [opener|pre|chain|window|expire|closed] [property] [level]','Run one explicit local scenario.'},
         {'preview burst [element]','Local MB response preview; no game actions or bridge events.'},
@@ -136,7 +138,7 @@ local function help()
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
     }
-    windower.add_to_chat(0,('TargetSC 0.8.0 — elemental resonance'):color(167))
+    windower.add_to_chat(0,('TargetSC 0.9.0 — elemental resonance'):color(167))
     for _,line in ipairs(lines) do
         windower.add_to_chat(0,('//tsc '):color(200)..line[1]:color(207)..(' -> '):color(200)..line[2]:color(0))
     end
@@ -166,6 +168,8 @@ local function status()
         settings.display,settings.sky_cutoff,settings.sky_curve,settings.mb_duration,settings.mb_effects,settings.mb_ending))
     say(('MB start=%.2f overall=%.2f ending style=%s; disc minimum=%.2f (before speed multiplier); sky hold=%.2fs'):format(
         settings.mb_opacity,settings.mb_overall,settings.mb_ending_style,settings.disc_minimum,settings.sky_hold))
+    say(('MB intro=%.2fs / %d flashes; terminal star=black on white / white-gold on black, lifted .006'):format(
+        settings.mb_intro,settings.mb_intro_flashes))
     local state=(preview and preview.model or model).states[selected_id]
     if state then say(('target revision=%d properties=%s; continuation=%.3fs (wait %.3fs); MB=%.3fs; closed=%s'):format(
         state.revision,table.concat(state.properties,'/'),state.closed and 0 or math.max(0,state.sc_close-math.max(now,state.sc_open)),math.max(0,state.sc_open-now),

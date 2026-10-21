@@ -4,6 +4,17 @@ local M={max_duration=4}
 function M.duration(opts)return opts.mb_duration or 1.2 end
 local function clamp(x)return math.max(0,math.min(1,x))end
 local function smooth(x)x=clamp(x)return x*x*(3-2*x)end
+-- Each fresh source MB window announces its palette with one or two short
+-- white flashes. Snapshots/reloads never replay an already active window.
+function M.introduction(state,now,duration,flashes)
+    local age=now-state.created
+    if state.suppress_impact or state.source_expired or state.step<=1 or
+        now>=state.mb_close or age<0 or duration<=0 or age>=duration then return 0 end
+    local within=(age/duration*flashes)%1
+    -- Brief full-strength plateau, quick fade, then a dark gap. The plateau
+    -- makes the peak legible even when a source event falls between frames.
+    return 1-smooth((within-.4)/.45)
+end
 -- The soft ending is strong / half-strength / strong. Hard uses three
 -- rectangular white on/off flashes. Both fit, in order, inside one interval.
 function M.ending(progress,style)
@@ -25,6 +36,7 @@ function M.sample(model,state,now,option)
     local active=not state.source_expired and left>0 and now>=state.created
     local out={idle=0,flash=0,rise=0,release=0,ring=0}
     if active then
+        out.intro=M.introduction(state,now,option('mb_intro'),option('mb_intro_flashes'))*effects
         local age=math.max(0,now-state.created)
         local breathe=.5-.5*math.cos(age*2*math.pi/option('mb_period'))
         out.idle=option('mb_idle')*breathe*smooth(left)*effects

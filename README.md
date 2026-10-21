@@ -1,5 +1,26 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## 0.9.0 Test9 — terminal stars and MB introductions
+
+Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
+then `//lua reload TargetSC`. Keep native 0.5.0 and your installed Skillchains.
+Saved settings stay intact; the latest paired Animation8.7 HUD is preserved.
+
+Umbra: white-gold star over black. Radiance: black star over white. Both use
+our existing traced design, enlarged to just below the breathing glyph's size,
+with the trace lifted slightly above a separate fill disc. Existing disc
+opacity/outline and style controls still apply.
+
+Each fresh MB window announces its property with synchronized white flashes
+on the large glyph, property disc and middle ring, bounded by mb overall.
+Normal breathing opacity and all Test8 timing controls stay unchanged.
+Reload/sync snapshots do not replay the announcement.
+
+- `//tsc mb intro 0.24`: total white introduction duration; 0 disables.
+- `//tsc mb intro flashes 2`: two quick flashes; 1 selects a single flash.
+- `//tsc preview Radiance 4` or `//tsc preview Umbra 4`: inspect terminal designs.
+- `//tsc preview demo`: inspect introductions through the full Umbra sequence.
+
 ## 0.8.0 Test8 — the last animation pass for now
 
 Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
@@ -762,3 +783,6 @@ Bell shape and closing motion, original low glyph anchor, coordinated MB respons
 
 
 2026-10-21 Test8: sustained MB property glyph, minimum spin, separate MB starting/master opacity, synchronized selectable endings and optional bell hold; preserved saved tuning. Author: A.
+
+
+2026-10-21 Test9: lifted black/white-gold terminal stars, larger terminal discs, synchronized source-driven MB white introductions; preserved Animation8.7 and native 0.5.0. Author: A.
