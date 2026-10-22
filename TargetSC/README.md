@@ -1,5 +1,53 @@
 # TargetSC — elemental resonance
 
+## 0.10.0 Test10 — expressive MB clapper and four-link MB demo
+
+Merge **TargetSC-0.10.0-Test10-Clapper-MB-Lua-Patch.zip** into Windower/addons, preserving TargetSC/data/, then `//lua reload TargetSC`. This is cumulative from Test5 through Test9; native 0.5.0 stays installed. No DLL replacement or game restart. Saved tuning is preserved; do not use a reset preset unless wanted. The paired full install includes the latest unchanged Skillchains Animation8.8.
+
+Select a living enemy and run **`//tsc preview mb`**. It reuses the original Fast Blade → Gust Slash → Nightmare Scythe → Rudra's Storm → Entropy/Anguta demo at 0/9/17/24/30 seconds. Four successful links receive Wind at 12.6s, Earth at 23.8s, Water at 29.8s, and Dark at 38.8s. Earth and Water intentionally precede the next link by .2s; watch the release meet the next window's white flash. Ends at 40s. These are local visuals only, without game actions or source events. `//tsc preview demo` still runs without bursts; `//tsc preview off` returns to live state.
+
+The new default `clapper` presentation lowers the MB ring halfway between the property trace and floor ring. Both MB shapes have a radius halfway between the property disc and main ring: .89R ordinarily and .96R at level four. The main rings gain .04 world units of clearance independently of the saved ground height. The breathing glyph keeps its low resting anchor, slowly turns backward at .025 turns/second, and shares its breathing phase with the MB ring. Level-two MB colors travel smoothly between both elements. Breathing never fully vanishes during ordinary idle: default trough 35% of peak; large-glyph peak is existing mb idle × gain 5 (default .30 before the master).
+
+A confirmed MB immediately strikes both glyphs and the property fill in its element color, peaking at mb overall. The property trace immediately lifts .12 world units; fill remains anchored. A damped shimmer reinforces the strike. After the MB ring flash (37.5% of mb duration, or mb hold if longer), a quintic smootherstep returns trace height, trace color and fill/trace opacity together over .85s. The large glyph keeps the existing rise/expand settings; its positive burst setting shapes the release tail while the initial strike reaches the master. Existing terminal black/white-gold traces return as they settle. Closing flashes still win at the real MB deadline; SC-only mode keeps its prior fading/spinning behavior.
+
+| Command | Default / purpose |
+| --- | --- |
+| `//tsc mb style clapper` | New arrangement; `classic` compares with Test9 |
+| `//tsc ground lift 0.04` | Extra main-ring clearance, 0–.3; 0 restores saved ground height |
+| `//tsc mb position 0.5` | Height between property trace (0) and floor ring (1) |
+| `//tsc mb size 0.5` | Radius between property disc (0) and main ring (1) |
+| `//tsc mb spin 0.025` | Reverse breathing-glyph turns/second, 0–.2 |
+| `//tsc mb breath min 0.35` | Idle breathing trough fraction, 0–1 |
+| `//tsc mb breath gain 5` | Large-glyph idle gain, 0–8; preserves saved mb idle |
+| `//tsc mb lift 0.12` | Immediate property-trace lift, 0–1 |
+| `//tsc mb hold 0.12` | Minimum strike hold, 0–.6 seconds |
+| `//tsc mb return 0.85` | Property return duration, .1–2 seconds |
+| `//tsc mb shimmer 1` | Damped strike glow strength, 0–2; 0 removes it |
+| `//tsc mb overall 1` | Master MB opacity, 0–1; property baseline keeps its own alpha |
+
+For a quieter comparison, try lift .04, shimmer .25 and breath gain 2. To restore the previous layout and ring height, use mb style classic and ground lift 0. Existing mb period, duration, effects, floor, ring, rise, expand and ending controls remain available; duration affects the rising release/ring, while return separately controls property settling. All effects remain bounded to the real source window; none extends combat timing. New appearances require in-game acceptance.
+
+## 0.9.0 Test9 — terminal stars and MB introductions
+
+Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
+then `//lua reload TargetSC`. Keep native 0.5.0 and your installed Skillchains.
+Saved settings stay intact; the latest paired Animation8.7 HUD is preserved.
+
+Umbra: white-gold star over black. Radiance: black star over white. Both use
+our existing traced design, enlarged to just below the breathing glyph's size,
+with the trace lifted slightly above a separate fill disc. Existing disc
+opacity/outline and style controls still apply.
+
+Each fresh MB window announces its property with synchronized white flashes
+on the large glyph, property disc and middle ring, bounded by mb overall.
+Normal breathing opacity and all Test8 timing controls stay unchanged.
+Reload/sync snapshots do not replay the announcement.
+
+- `//tsc mb intro 0.24`: total white introduction duration; 0 disables.
+- `//tsc mb intro flashes 2`: two quick flashes; 1 selects a single flash.
+- `//tsc preview Radiance 4` or `//tsc preview Umbra 4`: inspect terminal designs.
+- `//tsc preview demo`: inspect introductions through the full Umbra sequence.
+
 ## 0.8.0 Test8 — the last animation pass for now
 
 Merge the Lua patch's TargetSC/ folder into Windower/addons, preserve data/,
@@ -671,6 +719,10 @@ inside its own folder.
 
 ## Changelog
 
+### 2026-10-22 — 0.10.0 Test10 (A)
+
+Low clapper MB ring/glyph, shared nonzero breathing, L2 color cycling, independent reverse spin, immediate master-capped elemental strike/lift, damped shimmer and shared quintic return; configurable restraint and classic comparison; unchanged four-link timeline with valid local MBs. Preserve latest Skillchains Animation8.8 and native 0.5.0.
+
 ### 2026-10-19 — 0.3.0 Test3 (A)
 
 - Fix bidirectional command delivery; test real addon handlers in both load orders.
@@ -721,3 +773,6 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 
 
 2026-10-21 Test8: sustained MB property glyph, minimum spin, separate MB starting/master opacity, synchronized selectable endings and optional bell hold; preserved saved tuning. Author: A.
+
+
+2026-10-21 Test9: lifted black/white-gold terminal stars, larger terminal discs, synchronized source-driven MB white introductions; preserved Animation8.7 and native 0.5.0. Author: A.

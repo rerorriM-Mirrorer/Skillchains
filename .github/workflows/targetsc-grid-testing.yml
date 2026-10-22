@@ -1,9 +1,9 @@
-name: Skillchains Animation8.8 independent MB introduction / TargetSC Test8
+name: TargetSC Test10 clapper MB demo / Skillchains Animation8.8
 
 on:
   push:
     branches:
-      - development/skillchains-mb-independent-white-intro
+      - development/targetsc-clapper-burst
   workflow_dispatch:
 
 permissions:
@@ -55,6 +55,8 @@ jobs:
           lua5.1 TargetSC/tests/test_bell_burst.lua
           lua5.1 TargetSC/tests/test_display_bell.lua
           lua5.1 TargetSC/tests/test_mb_finish.lua
+          lua5.1 TargetSC/tests/test_terminal_intro.lua
+          lua5.1 TargetSC/tests/test_clapper.lua
           lua5.1 TargetSC/tests/test_transport.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
@@ -67,7 +69,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.8-MB-Intro-TargetSC-Test8-Paired-test
+          name: Skillchains-Animation8.8-TargetSC-Test10-Clapper-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
@@ -81,7 +83,7 @@ jobs:
       - name: Publish minimal TargetSC patch
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test8-MB-Finish-Patch
-          path: dist/TargetSC-0.8.0-Test8-MB-Finish-Lua-Patch.zip
+          name: TargetSC-Test10-Clapper-MB-Patch
+          path: dist/TargetSC-0.10.0-Test10-Clapper-MB-Lua-Patch.zip
           if-no-files-found: error
           retention-days: 30

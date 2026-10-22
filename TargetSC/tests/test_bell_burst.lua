@@ -10,6 +10,7 @@ local function layer(f,kind,role,part)
     end
 end
 local opts=copy(R.defaults)
+opts.mb_style='classic';opts.ground_lift=0
 local function model()
     local m=R.new()
     assert(m:receive({'1','bell','1','online','100'},100))

@@ -7,6 +7,7 @@ local Controls=require('resonance_controls')
 local function copy(t)local o={}for k,v in pairs(t)do o[k]=v end return o end
 local function near(a,b)assert(math.abs(a-b)<1e-7,tostring(a)..' ~= '..tostring(b))end
 local opts=copy(R.defaults)
+opts.mb_style='classic';opts.ground_lift=0
 local s={id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,step=2,level=2,properties={'Fusion'},elements=R.elements('Fusion')}
 local function model()local m=R.new();m.states[71]=copy(s);return m end
 local function layer(f,role,part)

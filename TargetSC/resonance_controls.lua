@@ -5,9 +5,11 @@ local direct={opacity={0,1},scale={.25,3},height={.25,3},intensity={0,4},width={
 local strike={prefix='',values={period={.05,.5},amplitude={0,1},damping={0,8}}}
 local groups={flutter=strike,strike=strike,
     hum={prefix='hum_',values={amplitude={0,.3},period={.05,1},slowdown={.1,4},gain={0,2}}},
-    mb={prefix='mb_',values={opacity={0,1},overall={0,1},duration={.2,4},effects={0,1},ending={.15,2},idle={0,1},burst={0,1},floor={0,1},ring={0,1},period={.2,6},rise={0,2},expand={0,2}}},
+    mb={prefix='mb_',values={opacity={0,1},overall={0,1},intro={0,.6},duration={.2,4},effects={0,1},ending={.15,2},idle={0,1},burst={0,1},floor={0,1},ring={0,1},period={.2,6},rise={0,2},expand={0,2},
+        size={0,1},position={0,1},spin={0,.2},hold={0,.6},['return']={.1,2},lift={0,1},shimmer={0,2}}},
+    breath={prefix='mb_breath_',values={min={0,1},gain={0,8}}},
     sky={prefix='sky_',values={expand={0,2},cutoff={.05,1},curve={1,8},hold={0,2}}},
-    ground={prefix='ground_',values={height={0,1}}},fade={prefix='fade_',values={duration={.1,1}}}}
+    ground={prefix='ground_',values={height={0,1},lift={0,.3}}},fade={prefix='fade_',values={duration={.1,1}}}}
 local disc_limits={opacity={0,1},outline={0,1},height={0,.5},speed={0,4},minimum={0,4},slowdown={.1,4}}
 local presets={default=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}
 function M.new(settings,defaults,save,say)
@@ -82,7 +84,20 @@ function M.new(settings,defaults,save,say)
     return function(command,args)
         local value=(args[1]or ''):lower()
         local group=groups[command]
-        if command=='mb'and value=='ending'and (args[2]or ''):lower()=='style'then
+        if command=='mb'and value=='style'then
+            local style=(args[2]or ''):lower()
+            if style~='classic'and style~='clapper'then say('Use //tsc mb style classic|clapper.');return true end
+            settings.mb_style=style;save(settings);say('MB style '..style..'.')
+        elseif command=='mb'and value=='breath'then
+            local name=(args[2]or ''):lower()
+            local range=groups.breath.values[name]
+            if not range then say('Use //tsc mb breath min <0-1> or gain <0-8>.');return true end
+            numeric('mb_breath_'..name,args[3],range,'mb breath '..name)
+        elseif command=='mb'and value=='intro'and (args[2]or ''):lower()=='flashes'then
+            local flashes=tonumber(args[3])
+            if flashes~=1 and flashes~=2 then say('Use //tsc mb intro flashes 1|2.');return true end
+            settings.mb_intro_flashes=flashes;save(settings);say('MB intro flashes '..flashes..'.')
+        elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='style'then
             local style=(args[3]or ''):lower()
             if not ({soft=true,hard=true,both=true,off=true})[style]then
                 say('Use //tsc mb ending style soft|hard|both|off.');return true

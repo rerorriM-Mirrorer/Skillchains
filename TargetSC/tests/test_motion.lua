@@ -5,6 +5,7 @@ local Motion=require('resonance_motion')
 local Preview=require('resonance_preview')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end
 local opts=copy(R.defaults)
+opts.mb_style='classic';opts.ground_lift=0 -- retain the historical geometry comparison
 local function near(a,b,epsilon)assert(math.abs(a-b)<(epsilon or 1e-8),tostring(a)..' ~= '..tostring(b))end
 local function state(p,level,step)
     return {id=71,revision=step,created=100,sc_open=103,sc_close=step==1 and 110 or 109,

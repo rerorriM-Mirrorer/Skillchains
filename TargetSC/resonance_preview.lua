@@ -22,6 +22,9 @@ function M.parse(args,resonance)
         if not element then return nil,'Use an element such as Wind, Fire, Ice, Water, Earth, Lightning, Light or Dark.'end
         return {kind='burst',properties={'Fragmentation'},level=2,element=element}
     end
+    if first=='mb'or first=='mbdemo'or (first=='demo'and (args[2]or ''):lower()=='mb')then
+        return {kind='mbdemo',properties={'Scission'},level=1}
+    end
     if first=='demo' or first=='umbra' or first=='full'then
         return {kind='umbra',properties={'Scission'},level=1}
     elseif examples[first] then kind='chain';prop=examples[first]
@@ -55,7 +58,7 @@ function M.new(spec,id,now,resonance,opts)
     end
     local kind=spec.kind
     local s
-    if kind=='opener' or kind=='pre' or kind=='umbra' then s=state(now,1,spec.properties,spec.level,false)
+    if kind=='opener' or kind=='pre' or kind=='umbra' or kind=='mbdemo' then s=state(now,1,spec.properties,spec.level,false)
     else s=state(now,2,spec.properties,spec.level,kind=='closed' or spec.level==4) end
     if kind=='window'or kind=='burst' then
         s=state(now-3,2,spec.properties,spec.level,false)
@@ -65,7 +68,7 @@ function M.new(spec,id,now,resonance,opts)
     if kind=='burst'then
         self.events[1]={at=now+.6,kind='burst',color=resonance.element_color(spec.element)}
     end
-    if kind=='umbra' then
+    if kind=='umbra'or kind=='mbdemo' then
         local prior=s
         self.stage='Fast Blade: Scission opener'
         for step=2,#M.umbra_sequence do
@@ -77,6 +80,16 @@ function M.new(spec,id,now,resonance,opts)
             prior=next_state
         end
         self.ends=prior.mb_close+.05
+        if kind=='mbdemo'then
+            -- Same four successful links and clocks; middle hits deliberately
+            -- overlap the next chain's white introduction.
+            local hits={{12.6,'Wind'},{23.8,'Earth'},{29.8,'Water'},{38.8,'Dark'}}
+            for _,hit in ipairs(hits)do
+                self.events[#self.events+1]={at=now+hit[1],kind='burst',element=hit[2],
+                    color=resonance.element_color(hit[2])}
+            end
+            table.sort(self.events,function(a,b)return a.at<b.at end)
+        end
     end
     function self:advance(clock)
         for _,event in ipairs(self.events)do
@@ -86,7 +99,7 @@ function M.new(spec,id,now,resonance,opts)
                     local bursts=self.model.bursts[self.id]or {}
                     bursts[#bursts+1]={at=event.at,color=event.color}
                     self.model.bursts[self.id]=bursts
-                    self.stage=spec.element..' burst (local visual preview)'
+                    self.stage=(event.element or spec.element)..' burst (local visual preview)'
                 elseif event.kind=='chain' then
                     local next_state=event.state
                     local previous=self.model.states[self.id]
@@ -101,7 +114,8 @@ function M.new(spec,id,now,resonance,opts)
         return clock>=self.ends
     end
     local relative_open=s.sc_open-now
-    self.description=kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or
+    self.description=kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or
+        kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or
         kind=='pre' and 'pre only: ground charge 0–3s; stops before countdown' or
         kind=='opener' and 'opener: ground charge 0–3s; sky enters/countdown 3–10s; no MB' or
         s.closed and 'closed: paired charge 0–3s, rings settle/fade in place; MB reminder until 10s; no continuation opportunity' or

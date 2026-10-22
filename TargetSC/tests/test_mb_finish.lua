@@ -15,6 +15,8 @@ local function opacity(f,role,part)
  local v=layer(f,role,part);return v and alpha(part and v.color or v.outline)or 0
 end
 local opts=copy(R.defaults)
+opts.mb_style='classic';opts.ground_lift=0
+opts.mb_intro=0 -- isolate pre-Test9 lifetime/closing assertions; intro has its own tests
 local s={id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,step=2,level=2,properties={'Fusion'},elements=R.elements('Fusion')}
 local function model()local m=R.new();m.states[71]=copy(s);return m end
 local function frame(t,o,m)return(m or model()):frame(71,t,2,4,o or opts)end

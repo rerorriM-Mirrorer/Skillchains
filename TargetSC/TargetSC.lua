@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.8.0-test8'
+_addon.version='0.10.0-test10'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -87,15 +87,28 @@ local function help()
         {'sky cutoff <0.05-1>','Descent fraction at which sky rings reach normal radius (default .55).'},
         {'sky curve <1-8>','Bell taper exponent (default 2).'},
         {'sky hold <0-2>','Seconds at full bell span after colors settle; 0 restores immediate descent.'},
-        {'mb duration <0.2-4>','Burst-response duration in seconds; does not change the MB window.'},
+        {'mb duration <0.2-4>','Rising glyph/ring response seconds; property return is separate; window unchanged.'},
         {'mb effects <0-1>','Overall MB animation strength; normal middle-ring opacity stays separate.'},
         {'mb ending <0.15-2>','Total closing interval before the MB deadline, including both styles when selected.'},
         {'mb ending style soft|hard|both|off','Strong/half/strong pulses, hard on/off flickers, or soft then hard.'},
         {'mb overall <0-1>','Master opacity for the middle ring, large MB glyph and MB flashes.'},
+        {'mb intro <0-0.6>','Fresh MB-window white transition duration; 0 disables (default .24s).'},
+        {'mb intro flashes 1|2','Synchronized property disc / large glyph / MB ring flashes (default 2).'},
         {'status','Report source, timing, tracking and native renderer state.'},
         {'preview [opener|pre|chain|window|expire|closed] [property] [level]','Run one explicit local scenario.'},
         {'preview burst [element]','Local MB response preview; no game actions or bridge events.'},
         {'preview demo','Five weaponskills: opener then L1/L2/L3/Umbra, no bursts.'},
+        {'preview mb','Same four links with Wind/Earth/Water/Dark bursts; includes late-link overlaps.'},
+        {'mb style clapper|classic','Low breathing clapper / Test9 presentation comparison.'},
+        {'ground lift <0-0.3>','Extra floor-ring clearance added to saved ground height (default .04).'},
+        {'mb position|size <0-1>','Position between property and floor rings / size between their radii (default .5).'},
+        {'mb breath min <0-1>','Breathing trough fraction of each layer peak (default .35).'},
+        {'mb breath gain <0-8>','Large glyph breathing gain over saved idle opacity (default 5).'},
+        {'mb spin <0-0.2>','Reverse large-glyph turns/sec, independent of disc speed (default .025).'},
+        {'mb hold <0-0.6>','Burst glyph color hold in seconds (default .12).'},
+        {'mb return <0.1-2>','Shared property-trace height/color/opacity return after ring flashes (default .85s).'},
+        {'mb lift <0-1>','Immediate property-trace lift in world units (default .12).'},
+        {'mb shimmer <0-2>','Damped elemental glow strength; 0 disables (default 1).'},
         {'preview opener Liquefaction,Impaction','Compare multiple opening properties.'},
         {'motion flutter|sine|legacy','Select discrete, smooth or original motion.'},
         {'layout grounded|symmetric|center','Choose how the pair moves.'},
@@ -119,7 +132,7 @@ local function help()
         {'discs minimum <0-4>','MB-enabled property-disc idle spin before the global multiplier; default .5.'},
         {'discs speed opener|level1|level2|level3|level4 <0-4>','Initial turns/sec before the global speed multiplier.'},
         {'mb opacity <0-1>','Middle-ring starting opacity; grows toward full strength within mb overall.'},
-        {'mb idle|burst <0-1>','Large glyph breathing / burst opacity; closing flashes use mb overall.'},
+        {'mb idle|burst <0-1>','Breathing base / release tail; clapper strike peaks at mb overall.'},
         {'mb floor|ring <0-1>','Confirmed-burst flash strength for floor disc / middle MB ring.'},
         {'mb period <0.2-6>','Large glyph full breathing cycle in seconds (default 2).'},
         {'mb rise|expand <0-2>','Burst glyph rise as model-height fraction / extra radial growth.'},
@@ -136,7 +149,7 @@ local function help()
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
     }
-    windower.add_to_chat(0,('TargetSC 0.8.0 — elemental resonance'):color(167))
+    windower.add_to_chat(0,('TargetSC 0.10.0 — elemental resonance'):color(167))
     for _,line in ipairs(lines) do
         windower.add_to_chat(0,('//tsc '):color(200)..line[1]:color(207)..(' -> '):color(200)..line[2]:color(0))
     end
@@ -166,6 +179,12 @@ local function status()
         settings.display,settings.sky_cutoff,settings.sky_curve,settings.mb_duration,settings.mb_effects,settings.mb_ending))
     say(('MB start=%.2f overall=%.2f ending style=%s; disc minimum=%.2f (before speed multiplier); sky hold=%.2fs'):format(
         settings.mb_opacity,settings.mb_overall,settings.mb_ending_style,settings.disc_minimum,settings.sky_hold))
+    say(('MB intro=%.2fs / %d flashes; terminal star=black on white / white-gold on black, lifted .006'):format(
+        settings.mb_intro,settings.mb_intro_flashes))
+    say(('MB style=%s size=%.2f position=%.2f reverse=%.3f turns/s breath min=%.2f gain=%.2f; floor lift=%.3f'):format(
+        settings.mb_style,settings.mb_size,settings.mb_position,settings.mb_spin,settings.mb_breath_min,settings.mb_breath_gain,settings.ground_lift))
+    say(('MB hold=%.2fs return=%.2fs trace lift=%.3f shimmer=%.2f; large release tail strength=%.2f'):format(
+        settings.mb_hold,settings.mb_return,settings.mb_lift,settings.mb_shimmer,settings.mb_burst))
     local state=(preview and preview.model or model).states[selected_id]
     if state then say(('target revision=%d properties=%s; continuation=%.3fs (wait %.3fs); MB=%.3fs; closed=%s'):format(
         state.revision,table.concat(state.properties,'/'),state.closed and 0 or math.max(0,state.sc_close-math.max(now,state.sc_open)),math.max(0,state.sc_open-now),

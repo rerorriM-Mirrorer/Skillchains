@@ -16,7 +16,10 @@ M.defaults={opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='groun
     awakening=true,awakening_opacity=0.3,ground_height=0.39,fade_duration=0.8,
     opener_gap=12,opener_glow='black',opener_muted=true,
     display='both',sky_cutoff=.55,sky_curve=2,sky_hold=.5,disc_minimum=.5,
-    mb_duration=1.2,mb_effects=1,mb_ending=.6,mb_ending_style='soft',mb_overall=1}
+    mb_duration=1.2,mb_effects=1,mb_ending=.6,mb_ending_style='soft',mb_overall=1,
+    mb_intro=.24,mb_intro_flashes=2,ground_lift=.04,
+    mb_style='clapper',mb_size=.5,mb_position=.5,mb_spin=.025,
+    mb_breath_min=.35,mb_breath_gain=5,mb_hold=.12,mb_return=.85,mb_lift=.12,mb_shimmer=1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -110,7 +113,7 @@ function M.positions(s,now,height,opts)
     local elapsed=max(0,at-s.sc_open)
     local remaining=at<s.sc_open and 1 or s.closed and 0 or
         clamp((s.sc_close-at)/max(.1,s.sc_close-s.sc_open),0,1)
-    local floor=option(opts,'ground_height')
+    local floor=option(opts,'ground_height')+option(opts,'ground_lift')
     local ground_wave,sky_wave,details=M.vibration(s,at,opts)
     details.ground_wave=ground_wave
     local paired=s.step>1 or phase~='pre'
@@ -184,8 +187,21 @@ function M.frame(model,s,now,radius,height,opts,context)
     local mb_strength=not s.source_expired and s.mb_close>now and now>=s.created and clamp((s.mb_close-now)/10,0,1)or 0
     local mb_active=not s.source_expired and s.step>1 and now>=s.created and now<s.mb_close
     local mb_overall=option(opts,'mb_overall')
+    local intro=not response.ending and mb_overall>0 and (response.intro or 0)or 0
     out.mb_strength=mb_strength
     local bottom,top,remaining,details=M.positions(s,now,height,opts)
+    local clapper=option(opts,'mb_style')=='clapper'
+    local terminal=s.step>1 and s.level>=4
+    local property_radius=radius*(terminal and .92 or .78)
+    local mb_radius=clapper and property_radius+(radius-property_radius)*option(opts,'mb_size')or radius
+    local property_top=option(opts,'disc_height')+details.ground_wave+(terminal and .012 or .006)
+    local mb_height=clapper and property_top+(bottom-property_top)*option(opts,'mb_position')or height*.49
+    local mb_colors=context.palette(s)
+    local mb_color=mb_colors[#mb_colors]
+    if clapper and s.level==2 and #mb_colors==2 then
+        local cycle=.5-.5*math.cos(age*pi/option(opts,'mb_period'))
+        mb_color=mix(mb_colors[1],mb_colors[2],smooth(cycle))
+    end
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
     local intensity,opacity=option(opts,'intensity'),option(opts,'opacity')
     local px,glow=max(1,option(opts,'width')),option(opts,'glow')
@@ -265,9 +281,11 @@ function M.frame(model,s,now,radius,height,opts,context)
             option(opts,'awakening_opacity')*opacity*(1-smooth((progress-1/3)*3))or 0
         local role='mb-glyph'
         local fill=0
-        local color=white
-        opening.radius=radius*.96
+        local color=clapper and s.level==2 and mb_color or white
+        local resting_radius=clapper and s.step>1 and mb_radius or radius*.96
+        opening.radius=resting_radius
         opening.offset=option(opts,'disc_height')
+        opening.rotation=clapper and -2*pi*option(opts,'mb_spin')*max(0,now-opening.created)or 0
         opening.opacity=response.idle
         if initial>0 then
             role='awakening';fill=initial
@@ -276,9 +294,14 @@ function M.frame(model,s,now,radius,height,opts,context)
         if response.responding then
             fill=0;role='mb-glyph'
             color=mix(response.element,white,response.white)
-            opening.radius=radius*.96*(1+option(opts,'mb_expand')*response.rise)
+            opening.radius=resting_radius*(1+option(opts,'mb_expand')*response.rise)
             opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*response.rise
             opening.opacity=response.release
+        end
+        if intro>0 then
+            role='mb-glyph';fill=0
+            color=mix(color,white,intro)
+            opening.opacity=opening.opacity+(1-opening.opacity)*intro
         end
         if response.ending then
             -- A closing signal wins over a simultaneous hit's color/alpha,
@@ -288,8 +311,12 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         if role=='mb-glyph'then opening.opacity=opening.opacity*mb_overall end
         out.awakening_glyph=opening
-        disc(opening.radius,opening.offset,0,{white},fill,fill>0 and 0 or 2,
+        disc(opening.radius,opening.offset,fill>0 and 0 or opening.rotation,{white},fill,fill>0 and 0 or 2,
             fill>0 and 0 or opening.opacity,role,color)
+        if clapper and response.element and (response.shimmer or 0)>0 then
+            band(opening.radius,opening.offset,{response.element},mb_overall*min(1,response.shimmer)*.65,
+                px+10,'burst-glow','mb-glyph',0,opening.rotation)
+        end
     end
     if option(opts,'discs')then
         local sc_life=(phase=='mb-only'or phase=='expired')and 0 or phase=='pre'and 1 or s.closed and fade or remaining
@@ -307,38 +334,77 @@ function M.frame(model,s,now,radius,height,opts,context)
         local properties=opener and s.properties or {s.properties[1]}
         for j,p in ipairs(properties)do
             local colors=property_palette(p,context)
-            if not opener and s.level>=4 then
-                colors={(p=='Umbra'or p=='Darkness')and {0,0,0}or white};glyph=0
+            local terminal=not opener and s.level>=4
+            local terminal_stroke=white
+            if terminal then
+                local dark=p=='Umbra'or p=='Darkness'
+                colors={dark and {0,0,0}or white}
+                terminal_stroke=dark and {255,242,204}or {0,0,0}
             end
             local flash=response.flash*option(opts,'mb_floor')
+            if clapper then flash=mb_overall>0 and (response.property or 0)*option(opts,'mb_floor')or 0 end
             if show_mb and s.step>1 then flash=flash*life end
             local disc_fill=fill+(max(fill,mb_overall*life)-fill)*flash
             local disc_outline=outline+(max(outline,mb_overall*life)-outline)*flash
-            flash=flash*mb_overall
-            local stroke=response.element and mix(white,response.element,flash)or white
+            if clapper then
+                disc_fill=fill+(mb_overall*life-fill)*flash
+                disc_outline=outline+(mb_overall*life-outline)*flash
+            else flash=flash*mb_overall end
+            local stroke=response.element and mix(terminal_stroke,response.element,flash)or terminal_stroke
             if flash>0 then
-                for i,c in ipairs(colors)do colors[i]=mix(c,white,flash)end
+                for i,c in ipairs(colors)do colors[i]=mix(c,clapper and response.element or white,flash)end
             end
-            disc(radius*(.78-(j-1)*.11),base+.006+(j-1)*.008,M.disc_rotation(s,now,opts),
-                colors,disc_fill,flash>0 and 1 or glyph,disc_outline,'property',stroke)
+            if intro>0 then
+                disc_fill=disc_fill+(mb_overall-disc_fill)*intro
+                disc_outline=disc_outline+(mb_overall-disc_outline)*intro
+                stroke=mix(stroke,white,intro)
+                for i,c in ipairs(colors)do colors[i]=mix(c,white,intro)end
+            end
+            local angle=M.disc_rotation(s,now,opts)
+            local h=base+.006+(j-1)*.008
+            if terminal or clapper then
+                -- Separate planes let a struck trace lift while its fill
+                -- remains anchored. Terminal traces keep their .006 clearance.
+                local r=terminal and radius*.92 or radius*(.78-(j-1)*.11)
+                local respond=flash>0 or intro>0
+                disc(r,h,angle,colors,(glyph==2 and not respond)and 0 or disc_fill,
+                    0,0,'property')
+                local trace_height=h+(terminal and .006 or 0)
+                if clapper and mb_overall>0 then
+                    trace_height=trace_height+(response.lift or 0)*option(opts,'mb_floor')
+                end
+                disc(r,trace_height,angle,{white},0,2,
+                    (glyph==0 and not respond)and 0 or disc_outline,'property-trace',stroke)
+                if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
+                    band(r,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
+                        px+12,'burst-glow','property-trace',0,angle)
+                end
+            else
+                disc(radius*(.78-(j-1)*.11),h,angle,colors,disc_fill,
+                    (flash>0 or intro>0)and 1 or glyph,disc_outline,'property',stroke)
+            end
         end
     end
     -- MB ring remains tied to its original deadline; response overlays never
     -- reset its fade, the continuation phase, or the property-disc rotation.
     if show_mb and mb_strength>0 then
-        local colors=context.palette(s)
-        local color=colors[#colors]
+        local color=mb_color
         local alpha=option(opts,'mb_opacity')+(1-option(opts,'mb_opacity'))*(1-mb_strength)
+        if clapper then alpha=alpha*(response.breath or 1)end
         local strength=response.ring*option(opts,'mb_ring')
         if response.element and strength>0 then
             color=mix(color,mix(response.element,white,response.flicker),strength)
             alpha=alpha+(1-alpha)*strength
         end
+        if intro>0 then
+            color=mix(color,white,intro)
+            alpha=alpha+(1-alpha)*intro
+        end
         if response.ending then
             color=mix(color,white,option(opts,'mb_effects'))
             alpha=alpha*(1-option(opts,'mb_effects'))+response.end_flash*option(opts,'mb_effects')
         end
-        ring(radius,height*.49,{color},alpha*mb_overall,'mb',0,0)
+        ring(mb_radius,mb_height,{color},alpha*mb_overall,'mb',0,0)
     end
     while #out>32 do table.remove(out,1)end
     return out

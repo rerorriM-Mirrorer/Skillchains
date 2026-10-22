@@ -1,5 +1,32 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## 0.10.0 Test10 — expressive MB clapper and four-link MB demo
+
+Merge **TargetSC-0.10.0-Test10-Clapper-MB-Lua-Patch.zip** into Windower/addons, preserving TargetSC/data/, then `//lua reload TargetSC`. This is cumulative from Test5 through Test9; native 0.5.0 stays installed. No DLL replacement or game restart. Saved tuning is preserved; do not use a reset preset unless wanted. The paired full install includes the latest unchanged Skillchains Animation8.8.
+
+Select a living enemy and run **`//tsc preview mb`**. It reuses the original Fast Blade → Gust Slash → Nightmare Scythe → Rudra's Storm → Entropy/Anguta demo at 0/9/17/24/30 seconds. Four successful links receive Wind at 12.6s, Earth at 23.8s, Water at 29.8s, and Dark at 38.8s. Earth and Water intentionally precede the next link by .2s; watch the release meet the next window's white flash. Ends at 40s. These are local visuals only, without game actions or source events. `//tsc preview demo` still runs without bursts; `//tsc preview off` returns to live state.
+
+The new default `clapper` presentation lowers the MB ring halfway between the property trace and floor ring. Both MB shapes have a radius halfway between the property disc and main ring: .89R ordinarily and .96R at level four. The main rings gain .04 world units of clearance independently of the saved ground height. The breathing glyph keeps its low resting anchor, slowly turns backward at .025 turns/second, and shares its breathing phase with the MB ring. Level-two MB colors travel smoothly between both elements. Breathing never fully vanishes during ordinary idle: default trough 35% of peak; large-glyph peak is existing mb idle × gain 5 (default .30 before the master).
+
+A confirmed MB immediately strikes both glyphs and the property fill in its element color, peaking at mb overall. The property trace immediately lifts .12 world units; fill remains anchored. A damped shimmer reinforces the strike. After the MB ring flash (37.5% of mb duration, or mb hold if longer), a quintic smootherstep returns trace height, trace color and fill/trace opacity together over .85s. The large glyph keeps the existing rise/expand settings; its positive burst setting shapes the release tail while the initial strike reaches the master. Existing terminal black/white-gold traces return as they settle. Closing flashes still win at the real MB deadline; SC-only mode keeps its prior fading/spinning behavior.
+
+| Command | Default / purpose |
+| --- | --- |
+| `//tsc mb style clapper` | New arrangement; `classic` compares with Test9 |
+| `//tsc ground lift 0.04` | Extra main-ring clearance, 0–.3; 0 restores saved ground height |
+| `//tsc mb position 0.5` | Height between property trace (0) and floor ring (1) |
+| `//tsc mb size 0.5` | Radius between property disc (0) and main ring (1) |
+| `//tsc mb spin 0.025` | Reverse breathing-glyph turns/second, 0–.2 |
+| `//tsc mb breath min 0.35` | Idle breathing trough fraction, 0–1 |
+| `//tsc mb breath gain 5` | Large-glyph idle gain, 0–8; preserves saved mb idle |
+| `//tsc mb lift 0.12` | Immediate property-trace lift, 0–1 |
+| `//tsc mb hold 0.12` | Minimum strike hold, 0–.6 seconds |
+| `//tsc mb return 0.85` | Property return duration, .1–2 seconds |
+| `//tsc mb shimmer 1` | Damped strike glow strength, 0–2; 0 removes it |
+| `//tsc mb overall 1` | Master MB opacity, 0–1; property baseline keeps its own alpha |
+
+For a quieter comparison, try lift .04, shimmer .25 and breath gain 2. To restore the previous layout and ring height, use mb style classic and ground lift 0. Existing mb period, duration, effects, floor, ring, rise, expand and ending controls remain available; duration affects the rising release/ring, while return separately controls property settling. All effects remain bounded to the real source window; none extends combat timing. New appearances require in-game acceptance.
+
 ## Skillchains Animation8.8 — independent Magic Burst widget and white introductions
 
 **Magic Burst now has its own saved position and presentation.** Existing Animation8.7 settings are migrated once on load to a nearby starting MB anchor; afterward, moving or scaling the SC bar does *not* move MB. Use `//sc edit on` and drag **MB RIBBON [drag separately]**, or `//sc mb pos <x> <y>`; hold Ctrl during dragging for shared screen-origin grid snapping. `//sc mb center` recovers an off-screen MB widget. `//sc mb position above|below` intentionally realigns MB beside the SC bar once; freely dragged MB becomes custom and remains independent. `//sc mb gap` controls this optional alignment, not a permanent constraint.
@@ -606,6 +633,9 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-22 — TargetSC Test10 clapper MB pass (A)
+- Integrate Test9 terminal traces/white introductions with unchanged Skillchains Animation8.8; add expressive low clapper breathing, immediate elemental trace lift and shared quintic return, independent controls, and the four-link local MB demo. Native remains 0.5.0; live acceptance pending.
 
 ### 2026-10-21 — Skillchains Animation8.8 independent MB display (A)
 - Give MB its own draggable saved x/y anchor, width, scale, font size, icon size and optional text/icon; no SC bar-position inheritance after initial migration.
