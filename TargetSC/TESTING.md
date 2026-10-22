@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.11.0 Test11 — layered bloom and descent (2026-10-22)
+
+Branch `development/targetsc-bloom-descent`, based on Test10.1 `b4e29af`. A requests the complete effective global + Killala profile from settings(20261022-164147).xml as hardcoded visual defaults, and only two behavior changes: immediate full expansion/lift of the breathing glyph returning alongside the small trace, and signed SC descent shaping. Snapshot display is both, MB overall .66, opacity .27, MB expansion 0, rise .01, hold .6, return 2 and duration .9. Preserve even zero expansion; do not force an expansion override or reset any user's saved data. No personal XML shipped. Existing earlier snapshots/requests below remain historical.
+
+Large clapper glyph overlays the same property-response energy on its continuously running breath, rotation and base palette. Initial geometry reaches full configured rise/expand (subject to mb effects); hold is max(mb hold,.375×mb duration), followed by mb return. No fade-out/recovery replaces the underlying breath. Subsequent MBs re-strike the full peak; property switches retain the existing response timeline and white announcements. Classic keeps its earlier trajectory. Steady MB ring, property motion, flash/ending priority and source clocks are preserved.
+
+Signed sky descent -4..4 remaps normalized post-hold presentation time; positive fast/slow, negative slow/fast, zero exact old formula. Existing hold and source endpoints, short windows and terminal behavior stay unchanged; radius still follows height through the bell profile. No invented continuation time.
+
+Host verification includes dedicated Test11 tests for adopted values, peak geometry, shared quintic return, uninterrupted breath/rotation, repeated hits, property transitions, master/effects/burst suppression, floor independence, signed curve ordering/monotonicity/bounds, old-formula parity at 0, hold/endpoints/short windows and saved-command validation. Historical tests now use a pinned Test10.1 default fixture rather than silently assuming today's defaults; new addon tests and Test11 exercise current defaults. Run all Lua 5.1/native/transport/source-regression and package guard checks. Cumulative patch includes README/WORKFLOW/TESTING under TargetSC; DLL/native and Skillchains runtime stay byte-identical. Live FFXI appearance still needs acceptance.
+
 ## TargetSC 0.10.1 Test10.1 — steady MB ring (2026-10-22)
 
 Branch `development/targetsc-steady-mb-ring`, based on Test10 `4ff91e2`. A reports the clapper pass feels more coherent, and requests a vertically stationary MB ring even on property changes, leaving the property disc's motion unchanged. Ring height now uses nominal property/floor anchors, independent of all vibration, transition blending, SC layouts and trace lift. A common .006 property-plane offset avoids a terminal-level height step. No new controls, settings reset or opacity-default change; the proposed .6/.66 master remains tuning under consideration.

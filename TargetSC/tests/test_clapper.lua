@@ -11,7 +11,7 @@ local function layer(f,role,part)
  for _,v in ipairs(part and f or f.discs)do if v.role==role and(not part or v.part==part)then return v end end
 end
 local function alpha(c)return math.floor(c/16777216)end
-local o=copy(R.defaults);o.mb_intro=0;o.amplitude=0;o.hum_amplitude=0;o.mb_overall=.6
+local o=copy(require('tests.historical_defaults'));o.mb_intro=0;o.amplitude=0;o.hum_amplitude=0;o.mb_overall=.6
 local s={id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,
  step=2,level=2,properties={'Fusion'},elements=R.elements('Fusion')}
 local function model()local m=R.new();m.states[71]=copy(s);return m end
@@ -39,7 +39,7 @@ near(layer(frame(terminal,101),'core','mb').radius,2*.96)
 -- alternate SC layouts and an actual burst lifting only the property trace.
 for _,mode in ipairs({'both','mb'})do
  for _,layout in ipairs({'grounded','symmetric','center'})do
-  local moving=copy(R.defaults);moving.display=mode;moving.layout=layout;moving.mb_ending_style='off'
+  local moving=copy(require('tests.historical_defaults'));moving.display=mode;moving.layout=layout;moving.mb_ending_style='off'
   local demo=P.new(assert(P.parse({'mb'},R)),71,200,R,moving)
   local expected=(moving.disc_height+.006)*(1-moving.mb_position)+
    (moving.ground_height+moving.ground_lift)*moving.mb_position
@@ -89,11 +89,11 @@ local restraint=copy(o);restraint.mb_lift=0;restraint.mb_shimmer=0
 local hit=model();hit.bursts[71]={{at=104,color=R.element_color('Fire')}}
 f=frame(hit,104,restraint)
 near(layer(f,'property-trace').offset,base_trace.offset);assert(not layer(f,'burst-glow','property-trace'))
--- Release cache stays airborne when another hit arrives during the release.
+-- A new clapper strike immediately reaches the configured peak again.
 hit=model();hit.bursts[71]={{at=104,color=R.element_color('Fire')}}
-local before=layer(frame(hit,104.5),'mb-glyph').offset
+frame(hit,104.5)
 hit.bursts[71][2]={at=104.5,color=R.element_color('Light')}
-near(layer(frame(hit,104.5),'mb-glyph').offset,before)
+near(layer(frame(hit,104.5),'mb-glyph').offset,o.disc_height+4*o.mb_rise)
 local sc=copy(o);sc.display='sc';f=frame(hit,104.5,sc)
 assert(not layer(f,'mb-glyph')and not layer(f,'core','mb'))
 near(layer(f,'property-trace').offset,base_trace.offset)

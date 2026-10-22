@@ -14,7 +14,7 @@ end
 local function opacity(f,role,part)
  local v=layer(f,role,part);return v and alpha(part and v.color or v.outline)or 0
 end
-local opts=copy(R.defaults)
+local opts=copy(require('tests.historical_defaults'))
 opts.mb_style='classic';opts.ground_lift=0
 opts.mb_intro=0 -- isolate pre-Test9 lifetime/closing assertions; intro has its own tests
 local s={id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,step=2,level=2,properties={'Fusion'},elements=R.elements('Fusion')}

@@ -14,7 +14,7 @@ local function layer(frame,kind,role,part)
         if item.role==role and (not part or item.part==part)then return item end
     end
 end
-local opts=copy(R.defaults)
+local opts=copy(require('tests.historical_defaults'))
 opts.mb_style='classic';opts.ground_lift=0
 opts.mb_intro=0 -- isolate pre-Test9 lifetime/closing assertions; intro has its own tests
 assert(opts.disc_speed==.1 and opts.ground_height==.39 and opts.mb_opacity==.39)

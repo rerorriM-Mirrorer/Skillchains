@@ -101,7 +101,7 @@ function M.sample(model,state,now,option)
         end
     end
     local glyph=model.awakening_glyphs and model.awakening_glyphs[state.id]
-    if not out.responding and not out.ending and glyph and glyph.release_end then
+    if not clapper and not out.responding and not out.ending and glyph and glyph.release_end then
         out.idle=out.idle*smooth((now-glyph.release_end)/.5)
     end
     -- A selected ending extinguishes the MB presentation at its real deadline.

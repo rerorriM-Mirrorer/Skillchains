@@ -19,7 +19,7 @@ end
 local function frame(s,t,o)
  local m=R.new();m.states[71]=s;return m:frame(71,t,2,4,o or R.defaults)
 end
-local opts=copy(R.defaults);opts.mb_overall=.6;opts.disc_outline=.6
+local opts=copy(require('tests.historical_defaults'));opts.mb_overall=.6;opts.disc_outline=.6
 opts.mb_style='classic';opts.ground_lift=0
 local envelope=state('Fusion')
 near(Burst.introduction(envelope,100.03,.24,2),1)

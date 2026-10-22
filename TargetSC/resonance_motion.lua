@@ -5,21 +5,21 @@ local Burst=require('resonance_burst')
 local min,max,sin,exp,pi=math.min,math.max,math.sin,math.exp,math.pi
 local function clamp(v,a,b)return max(a,min(b,v))end
 local function smooth(v)v=clamp(v,0,1)return v*v*(3-2*v)end
--- Effective global + Killala profile from 2026-10-21 08:18:23 XML.
+-- Effective global + Killala profile from 2026-10-22 16:41:47 XML.
 -- Existing saved settings survive; preset default deliberately restores these.
-M.defaults={opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded',
+M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout='grounded',
     period=0.09,amplitude=0.3,damping=3,width=2,glow=1,brightness=4,discs=true,disc_opacity=1,
     hum_amplitude=0.018,hum_period=0.12,hum_slowdown=1,hum_gain=0.35,
-    disc_outline=0.3,disc_style='glyph',disc_height=0.06,disc_speed=0.1,disc_slowdown=1,
-    disc_speed_opener=2,disc_speed_level1=1,disc_speed_level2=2,disc_speed_level3=4,disc_speed_level4=0,mb_opacity=0.39,
-    mb_idle=0.06,mb_burst=1,mb_floor=1,mb_ring=1,mb_period=2,mb_rise=0.01,mb_expand=0.03,sky_expand=1,
-    awakening=true,awakening_opacity=0.3,ground_height=0.39,fade_duration=0.8,
+    disc_outline=0.6,disc_style='glyph',disc_height=0.06,disc_speed=0.1,disc_slowdown=3,
+    disc_speed_opener=4,disc_speed_level1=2,disc_speed_level2=3,disc_speed_level3=4,disc_speed_level4=0,mb_opacity=0.39,
+    mb_idle=0.1,mb_burst=0.6,mb_floor=1,mb_ring=1,mb_period=2,mb_rise=0.01,mb_expand=0,sky_expand=0.39,
+    awakening=true,awakening_opacity=0.3,ground_height=0.3,fade_duration=0.8,
     opener_gap=12,opener_glow='black',opener_muted=true,
-    display='both',sky_cutoff=.55,sky_curve=2,sky_hold=.5,disc_minimum=.5,
-    mb_duration=1.2,mb_effects=1,mb_ending=.6,mb_ending_style='soft',mb_overall=1,
-    mb_intro=.24,mb_intro_flashes=2,ground_lift=.04,
+    display='both',sky_cutoff=.5,sky_curve=3,sky_hold=.3,sky_descent=0,disc_minimum=.5,
+    mb_duration=0.9,mb_effects=1,mb_ending=2,mb_ending_style='soft',mb_overall=0.66,
+    mb_intro=.6,mb_intro_flashes=1,ground_lift=.04,
     mb_style='clapper',mb_size=.5,mb_position=.5,mb_spin=.025,
-    mb_breath_min=.35,mb_breath_gain=5,mb_hold=.12,mb_return=.85,mb_lift=.12,mb_shimmer=1}
+    mb_breath_min=.35,mb_breath_gain=3,mb_hold=.6,mb_return=2,mb_lift=.3,mb_shimmer=1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -78,9 +78,14 @@ end
 function M.descent_remaining(s,now,opts)
     local duration=max(.1,s.sc_close-s.sc_open)
     local hold=option(opts,'sky_hold')
-    if hold<=0 then return clamp((s.sc_close-now)/duration,0,1)end
-    local held=min(hold+.15,max(0,duration-.1))
-    return 1-smooth((now-s.sc_open-held)/max(.1,duration-held))
+    local held=hold>0 and min(hold+.15,max(0,duration-.1))or 0
+    local t=clamp((now-s.sc_open-held)/max(.1,duration-held),0,1)
+    -- Warp only presentation progress after the existing hold. Zero preserves
+    -- the old linear/no-hold or smooth/held curve, with exact source endpoints.
+    local curve=option(opts,'sky_descent')
+    if curve>0 then t=1-(1-t)^(1+curve)
+    elseif curve<0 then t=t^(1-curve)end
+    return 1-(hold>0 and smooth(t)or t)
 end
 local function wave(cycles,opts)
     if option(opts,'motion')=='flutter'then return math.floor(cycles*2+1e-9)%2 end
@@ -276,8 +281,8 @@ function M.frame(model,s,now,radius,height,opts,context)
             end
         end
     end
-    -- One pooled large glyph: filled opener, breathing outline, rising release.
-    -- It returns to its resting height only after the release is invisible.
+    -- One pooled large glyph: opener fill, continuous breath and layered MB
+    -- bloom. Clapper strikes contract/settle along the property return curve.
     if opening then
         local progress=clamp((now-opening.created)/max(.1,opening.open-opening.created),0,1)
         local grow=1-(1-clamp(progress*3,0,1))^3
@@ -297,10 +302,19 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         if response.responding then
             fill=0;role='mb-glyph'
-            color=mix(response.element,white,response.white)
-            opening.radius=resting_radius*(1+option(opts,'mb_expand')*response.rise)
-            opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*response.rise
-            opening.opacity=response.release
+            if clapper then
+                local energy=option(opts,'mb_burst')>0 and (response.property or 0)or 0
+                local strike=energy*(1+(option(opts,'mb_burst')-1)*(1-energy))
+                opening.radius=resting_radius*(1+option(opts,'mb_expand')*energy)
+                opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*energy
+                color=mix(color,response.element,strike)
+                opening.opacity=opening.opacity+(1-opening.opacity)*strike
+            else
+                color=mix(response.element,white,response.white)
+                opening.radius=resting_radius*(1+option(opts,'mb_expand')*response.rise)
+                opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*response.rise
+                opening.opacity=response.release
+            end
         end
         if intro>0 then
             role='mb-glyph';fill=0

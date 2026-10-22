@@ -9,7 +9,7 @@ local function layer(f,kind,role,part)
         if v.role==role and (not part or v.part==part)then return v end
     end
 end
-local opts=copy(R.defaults)
+local opts=copy(require('tests.historical_defaults'))
 opts.mb_style='classic';opts.ground_lift=0
 local function model()
     local m=R.new()

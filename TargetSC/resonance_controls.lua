@@ -8,7 +8,7 @@ local groups={flutter=strike,strike=strike,
     mb={prefix='mb_',values={opacity={0,1},overall={0,1},intro={0,.6},duration={.2,4},effects={0,1},ending={.15,2},idle={0,1},burst={0,1},floor={0,1},ring={0,1},period={.2,6},rise={0,2},expand={0,2},
         size={0,1},position={0,1},spin={0,.2},hold={0,.6},['return']={.1,2},lift={0,1},shimmer={0,2}}},
     breath={prefix='mb_breath_',values={min={0,1},gain={0,8}}},
-    sky={prefix='sky_',values={expand={0,2},cutoff={.05,1},curve={1,8},hold={0,2}}},
+    sky={prefix='sky_',values={expand={0,2},cutoff={.05,1},curve={1,8},hold={0,2},descent={-4,4}}},
     ground={prefix='ground_',values={height={0,1},lift={0,.3}}},fade={prefix='fade_',values={duration={.1,1}}}}
 local disc_limits={opacity={0,1},outline={0,1},height={0,.5},speed={0,4},minimum={0,4},slowdown={.1,4}}
 local presets={default=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}

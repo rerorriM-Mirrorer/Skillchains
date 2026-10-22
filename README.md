@@ -1,5 +1,19 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## 0.11.0 Test11 — Killala defaults, layered MB bloom and signed SC descent
+
+Merge **TargetSC-0.11.0-Test11-Bloom-Descent-Lua-Patch.zip** into Windower/addons, preserve TargetSC/data/, then `//lua reload TargetSC`. Cumulative Lua-only patch over Test5–10.1; native 0.5.0 and latest Skillchains Animation8.8 are unchanged. Existing saved settings are preserved. `//tsc preset default` deliberately resets all visual values to the effective global + Killala profile in **settings(20261022-164147).xml**, including display both, global opacity .27, height .66, ground height .3 plus lift .04, trace opacity .6, disc slowdown 3, speeds opener/L1/L2/L3/L4 = 4/2/3/4/0 at multiplier .1, MB master .66, idle .1 × gain 3, MB duration .9, hold .6, return 2, ending soft/2s, introduction one flash/.6s, rise .01, expansion 0, property lift .3 and shimmer 1. No personal XML is modified or included.
+
+On a confirmed MB, the existing large breathing glyph immediately reaches its full configured **mb expand** and **mb rise** offsets, holds alongside the small trace, then contracts and settles along the same quintic return. It keeps its underlying opacity breath and reverse rotation; the burst brightening and elemental color blend return to that continuing breath instead of fading the glyph away and recovering later. Positive mb burst keeps a full initial strike and shapes the return strength; 0 disables the large-glyph strike. Further bursts immediately re-strike the full configured peak. The large glyph remains independent of mb floor, which can disable the small trace response. Master/effects settings and real-window endings still apply; classic style retains its earlier rising/fading comparison.
+
+Shared hold = maximum of **mb hold** and **37.5% of mb duration** (the ring's hit-flash interval), followed by **mb return** seconds. Killala's defaults therefore hold .6s and return over 2s. Expansion 0 is faithfully preserved: to see a size bloom, try `//tsc mb expand 0.2`; `//tsc mb rise 0.01` remains the saved lift fraction of calculated effect height. `mb lift` remains the separate small-trace world-space offset. The MB ring stays vertically steady.
+
+`//tsc sky descent <-4..4>` shapes only the SC pair's descent after the existing top hold. **0 preserves the exact previous curve**; positive values move farther early then slow toward the close, negative values linger higher early then accelerate. Try `//tsc sky descent 1`, `2`, `-1`, and `0`. No hold, deadline, color timing, disc spin or vibration clock is changed. The sky radius continues following actual separation through the existing bell profile, so a faster initial descent also brings its wide bell radius inward sooner. Closed level-four results have no continuation descent and retain their terminal animation. MB-only mode hides the SC pair as before.
+
+For normalized post-hold time t, the new control k remaps time to 1−(1−t)^(1+k) when k>0, t^(1−k) when k<0, or t when k=0. The previous held smoothstep (or no-hold linear curve) then uses that time. Both endpoints remain exact, including shortened source windows. New control defaults to 0.
+
+Use `//tsc preview mb` to compare overlapping bursts and property changes; use `//tsc preview demo` with display both/sc to inspect descent. Host simulations are not live FFXI visual acceptance.
+
 ## 0.10.1 Test10.1 — vertically steady MB ring
 
 The MB ring now stays at a fixed height in both `display mb` and `display both`, including during property changes and confirmed MBs. `mb position` interpolates between the nominal property plane (`discs height + .006`) and nominal floor-ring anchor (`ground height + ground lift`), without inheriting vibration, SC descent, transition blending or the property trace's burst lift. The same plane is used at all levels, so terminal properties do not cause a small height jump. The property disc keeps its existing wobble and MB lift/return; the large glyph retains its resting height and burst rise. Ring breathing, colors, flashes and endings remain intact. No new setting or opacity-default change.
@@ -639,6 +653,10 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-22 — TargetSC 0.11.0 Test11 (A)
+
+Adopt the complete effective Killala 16:41:47 profile as visual defaults; layer immediate full MB bloom/lift and shared trace return over continuous breathing; add signed -4..4 post-hold SC descent with exact old motion at 0. Preserve saved settings, steady MB ring, source clocks and native/HUD runtime.
 
 ### 2026-10-22 — TargetSC 0.10.1 Test10.1 (A)
 

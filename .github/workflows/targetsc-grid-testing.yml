@@ -1,9 +1,9 @@
-name: TargetSC Test10.1 steady MB ring / Skillchains Animation8.8
+name: TargetSC Test11 bloom and signed descent / Skillchains Animation8.8
 
 on:
   push:
     branches:
-      - development/targetsc-steady-mb-ring
+      - development/targetsc-bloom-descent
   workflow_dispatch:
 
 permissions:
@@ -57,6 +57,7 @@ jobs:
           lua5.1 TargetSC/tests/test_mb_finish.lua
           lua5.1 TargetSC/tests/test_terminal_intro.lua
           lua5.1 TargetSC/tests/test_clapper.lua
+          lua5.1 TargetSC/tests/test_bloom_descent.lua
           lua5.1 TargetSC/tests/test_transport.lua
           lua5.1 TargetSC/tests/test_resonance.lua
           lua5.1 TargetSC/tests/test_addon.lua
@@ -69,7 +70,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.8-TargetSC-Test10.1-Steady-MB-Paired-test
+          name: Skillchains-Animation8.8-TargetSC-Test11-Bloom-Descent-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
@@ -83,7 +84,7 @@ jobs:
       - name: Publish minimal TargetSC patch
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test10.1-Steady-MB-Patch
-          path: dist/TargetSC-0.10.1-Test10.1-Steady-MB-Lua-Patch.zip
+          name: TargetSC-Test11-Bloom-Descent-Patch
+          path: dist/TargetSC-0.11.0-Test11-Bloom-Descent-Lua-Patch.zip
           if-no-files-found: error
           retention-days: 30
