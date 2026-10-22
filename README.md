@@ -1,5 +1,11 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## 0.11.1 Test11.1 — white breathing glyph restored
+
+The large glyph's ordinary breathing outline is white again at every level. The level-two MB ring still cycles its property colors; confirmed MBs still tint the glyph in their element and run the existing bloom/return. Killala defaults, breathing opacity, rotation and all other motion controls are preserved.
+
+Merge **TargetSC-0.11.1-Test11.1-White-Breath-Lua-Patch.zip** into Windower/addons, preserve TargetSC/data/, then `//lua reload TargetSC`. Cumulative Lua-only patch; native 0.5.0 stays installed. Use `//tsc preview demo` and inspect Gravitation at 17–24 seconds, then `//tsc preview mb` to compare elemental responses. Host verification is separate from live FFXI acceptance.
+
 ## 0.11.0 Test11 — Killala defaults, layered MB bloom and signed SC descent
 
 Merge **TargetSC-0.11.0-Test11-Bloom-Descent-Lua-Patch.zip** into Windower/addons, preserve TargetSC/data/, then `//lua reload TargetSC`. Cumulative Lua-only patch over Test5–10.1; native 0.5.0 and latest Skillchains Animation8.8 are unchanged. Existing saved settings are preserved. `//tsc preset default` deliberately resets all visual values to the effective global + Killala profile in **settings(20261022-164147).xml**, including display both, global opacity .27, height .66, ground height .3 plus lift .04, trace opacity .6, disc slowdown 3, speeds opener/L1/L2/L3/L4 = 4/2/3/4/0 at multiplier .1, MB master .66, idle .1 × gain 3, MB duration .9, hold .6, return 2, ending soft/2s, introduction one flash/.6s, rise .01, expansion 0, property lift .3 and shimmer 1. No personal XML is modified or included.
@@ -653,6 +659,10 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-22 — TargetSC 0.11.1 Test11.1 (A)
+
+Restore the large glyph's ordinary white breath at level two; retain MB ring color cycling and confirmed-burst elemental tint/bloom. No settings or other animation changes.
 
 ### 2026-10-22 — TargetSC 0.11.0 Test11 (A)
 

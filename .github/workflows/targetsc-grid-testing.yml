@@ -1,9 +1,9 @@
-name: TargetSC Test11 bloom and signed descent / Skillchains Animation8.8
+name: TargetSC Test11.1 white breathing glyph / Skillchains Animation8.8
 
 on:
   push:
     branches:
-      - development/targetsc-bloom-descent
+      - development/targetsc-white-breath
   workflow_dispatch:
 
 permissions:
@@ -70,7 +70,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.8-TargetSC-Test11-Bloom-Descent-Paired-test
+          name: Skillchains-Animation8.8-TargetSC-Test11.1-White-Breath-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
@@ -84,7 +84,7 @@ jobs:
       - name: Publish minimal TargetSC patch
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test11-Bloom-Descent-Patch
-          path: dist/TargetSC-0.11.0-Test11-Bloom-Descent-Lua-Patch.zip
+          name: TargetSC-Test11.1-White-Breath-Patch
+          path: dist/TargetSC-0.11.1-Test11.1-White-Breath-Lua-Patch.zip
           if-no-files-found: error
           retention-days: 30

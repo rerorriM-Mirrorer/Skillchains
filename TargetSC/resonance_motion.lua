@@ -290,7 +290,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             option(opts,'awakening_opacity')*opacity*(1-smooth((progress-1/3)*3))or 0
         local role='mb-glyph'
         local fill=0
-        local color=clapper and s.level==2 and mb_color or white
+        local color=white -- steady neutral breath; only confirmed MBs tint it
         local resting_radius=clapper and s.step>1 and mb_radius or radius*.96
         opening.radius=resting_radius
         opening.offset=option(opts,'disc_height')

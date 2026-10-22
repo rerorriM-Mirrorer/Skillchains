@@ -1,5 +1,11 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.11.1 Test11.1 — white breathing glyph (2026-10-22)
+
+Branch `development/targetsc-white-breath`, based on Test11 `0ba8176`. A reports the large breathing glyph gets lost during demo level-two Gravitation. Diagnosis: Test10 extended the requested MB ring color cycling to the glyph too; its dark-purple/earth palette combined with roughly 7–20% breathing opacity and overlaid property fill makes it hard to see. A asks to revert only the large glyph's ordinary color. Restore white between confirmed bursts at all levels; preserve MB ring palette cycling, elemental MB overlays, bloom/return, rotation, opacity and all Killala defaults. No new setting or user-data change.
+
+Host checks: existing Lua 5.1 bloom/descent, clapper and addon simulations; direct four-level-two-property frame checks confirm white idle outlines, continued MB ring cycling and full elemental strike/white return. Cumulative Lua patch includes WORKFLOW/TESTING/README inside TargetSC and needs only a reload. Package guards protect native 0.5.0/HUD bytes. Live appearance needs in-game confirmation; previous testing history follows.
+
 ## TargetSC 0.11.0 Test11 — layered bloom and descent (2026-10-22)
 
 Branch `development/targetsc-bloom-descent`, based on Test10.1 `b4e29af`. A requests the complete effective global + Killala profile from settings(20261022-164147).xml as hardcoded visual defaults, and only two behavior changes: immediate full expansion/lift of the breathing glyph returning alongside the small trace, and signed SC descent shaping. Snapshot display is both, MB overall .66, opacity .27, MB expansion 0, rise .01, hold .6, return 2 and duration .9. Preserve even zero expansion; do not force an expansion override or reset any user's saved data. No personal XML shipped. Existing earlier snapshots/requests below remain historical.
