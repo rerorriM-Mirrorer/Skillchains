@@ -1,5 +1,11 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## 0.10.1 Test10.1 — vertically steady MB ring
+
+The MB ring now stays at a fixed height in both `display mb` and `display both`, including during property changes and confirmed MBs. `mb position` interpolates between the nominal property plane (`discs height + .006`) and nominal floor-ring anchor (`ground height + ground lift`), without inheriting vibration, SC descent, transition blending or the property trace's burst lift. The same plane is used at all levels, so terminal properties do not cause a small height jump. The property disc keeps its existing wobble and MB lift/return; the large glyph retains its resting height and burst rise. Ring breathing, colors, flashes and endings remain intact. No new setting or opacity-default change.
+
+Merge **TargetSC-0.10.1-Test10.1-Steady-MB-Lua-Patch.zip** into Windower/addons, preserve `TargetSC/data/`, then `//lua reload TargetSC`. Cumulative Lua-only patch; native 0.5.0 and Skillchains remain unchanged. Try `//tsc preview mb` in `display mb` or `display both`. Live visual acceptance pending.
+
 ## 0.10.0 Test10 — expressive MB clapper and four-link MB demo
 
 Merge **TargetSC-0.10.0-Test10-Clapper-MB-Lua-Patch.zip** into Windower/addons, preserving TargetSC/data/, then `//lua reload TargetSC`. This is cumulative from Test5 through Test9; native 0.5.0 stays installed. No DLL replacement or game restart. Saved tuning is preserved; do not use a reset preset unless wanted. The paired full install includes the latest unchanged Skillchains Animation8.8.
@@ -633,6 +639,10 @@ list of usable burst spells. This build does not add burst spell suggestions;
 eligible jobs.
 
 ## Changelog (cumulative)
+
+### 2026-10-22 — TargetSC 0.10.1 Test10.1 (A)
+
+Keep the MB ring vertically steady through idle hum, property transitions and burst responses, using nominal anchors at every level. Preserve property-disc wobble/lift and all other animation/settings. Host simulation; live acceptance pending.
 
 ### 2026-10-22 — TargetSC Test10 clapper MB pass (A)
 - Integrate Test9 terminal traces/white introductions with unchanged Skillchains Animation8.8; add expressive low clapper breathing, immediate elemental trace lift and shared quintic return, independent controls, and the four-link local MB demo. Native remains 0.5.0; live acceptance pending.

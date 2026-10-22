@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 STAGE = DIST / 'targetsc-package'
-NAME = 'Skillchains-Animation8.8-TargetSC-Test10-Clapper-Paired-Full'
+NAME = 'Skillchains-Animation8.8-TargetSC-Test10.1-Steady-MB-Paired-Full'
 PATCH_BASE = '700bef129e9932dde996127813f6853e1227af7b'
 SC_CURRENT = '010c93be0404aeba4b5702187fd740056d50bef4'
 HUD_BASELINE = 'd13f9c20eff5ad927e92b3d9dd781904cf49dec7'
@@ -54,7 +54,7 @@ def main():
     original_bridge = subprocess.check_output(['git','-C',str(ROOT),'show',HUD_BASELINE+':targetsc_bridge.lua'])
     assert (ROOT/'targetsc_bridge.lua').read_bytes() == original_bridge.replace(b'lua i TargetSC',b'lua c TargetSC'), 'Unexpected bridge change'
     dll_hash = verify_dll(ROOT / 'TargetSC/libs/_TargetSC.dll')
-    info = {'batch': 'TargetSC Test10 expressive clapper, immediate elemental strike and MB demo / Skillchains Animation8.8 unchanged', 'author': 'A.',
+    info = {'batch': 'TargetSC Test10.1 vertically steady MB ring / Skillchains Animation8.8 unchanged', 'author': 'A.',
             'repository': 'rerorriM-Mirrorer/Skillchains', 'branch': branch,
             'source_commit': commit, 'skillchains_baseline': BASELINE,
             'hud_reference_commit': SC_CURRENT,
@@ -164,14 +164,14 @@ def main():
     patch_paths=set(git('diff','--name-only',PATCH_BASE,'--','TargetSC').splitlines())
     assert not any(name.endswith('.dll')for name in patch_paths), 'Lua-only patch must not include DLL'
     patch_paths.update({'TargetSC/README.md','TargetSC/WORKFLOW.md','TargetSC/TESTING.md'})
-    patch = DIST / 'TargetSC-0.10.0-Test10-Clapper-MB-Lua-Patch.zip'
+    patch = DIST / 'TargetSC-0.10.1-Test10.1-Steady-MB-Lua-Patch.zip'
     patch_checks={}
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED) as z:
         for name in sorted(patch_paths):
             data=(ROOT/name).read_bytes();z.writestr(name,data)
             patch_checks[name]=hashlib.sha256(data).hexdigest()
-        z.writestr('TargetSC/BUILD_INFO_TEST10.json',json.dumps(info,indent=2)+'\n')
-        z.writestr('TargetSC/SHA256SUMS_TEST10.json',json.dumps(patch_checks,indent=2)+'\n')
+        z.writestr('TargetSC/BUILD_INFO_TEST10_1.json',json.dumps(info,indent=2)+'\n')
+        z.writestr('TargetSC/SHA256SUMS_TEST10_1.json',json.dumps(patch_checks,indent=2)+'\n')
     with zipfile.ZipFile(patch) as z:
         assert z.testzip() is None
         assert all(name.startswith('TargetSC/')and '/data/'not in name for name in z.namelist())

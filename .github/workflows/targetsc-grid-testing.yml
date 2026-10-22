@@ -1,9 +1,9 @@
-name: TargetSC Test10 clapper MB demo / Skillchains Animation8.8
+name: TargetSC Test10.1 steady MB ring / Skillchains Animation8.8
 
 on:
   push:
     branches:
-      - development/targetsc-clapper-burst
+      - development/targetsc-steady-mb-ring
   workflow_dispatch:
 
 permissions:
@@ -69,7 +69,7 @@ jobs:
       - name: Publish complete testing package
         uses: actions/upload-artifact@v4
         with:
-          name: Skillchains-Animation8.8-TargetSC-Test10-Clapper-Paired-test
+          name: Skillchains-Animation8.8-TargetSC-Test10.1-Steady-MB-Paired-test
           path: dist/targetsc-package/
           if-no-files-found: error
           retention-days: 30
@@ -83,7 +83,7 @@ jobs:
       - name: Publish minimal TargetSC patch
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Test10-Clapper-MB-Patch
-          path: dist/TargetSC-0.10.0-Test10-Clapper-MB-Lua-Patch.zip
+          name: TargetSC-Test10.1-Steady-MB-Patch
+          path: dist/TargetSC-0.10.1-Test10.1-Steady-MB-Lua-Patch.zip
           if-no-files-found: error
           retention-days: 30

@@ -1,5 +1,11 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.10.1 Test10.1 — steady MB ring (2026-10-22)
+
+Branch `development/targetsc-steady-mb-ring`, based on Test10 `4ff91e2`. A reports the clapper pass feels more coherent, and requests a vertically stationary MB ring even on property changes, leaving the property disc's motion unchanged. Ring height now uses nominal property/floor anchors, independent of all vibration, transition blending, SC layouts and trace lift. A common .006 property-plane offset avoids a terminal-level height step. No new controls, settings reset or opacity-default change; the proposed .6/.66 master remains tuning under consideration.
+
+Host checks: extended clapper test sweeps 18,546 frames across MB/both display and three SC layouts, including fresh-window strikes, sustained hum, four property transitions, late confirmed bursts and terminal Umbra. Assert steady MB-ring height while property disc continues moving. Existing clapper response, demo, addon lifecycle, motion, transport and Lua 5.1 checks remain required; package guards preserve HUD/native source and DLL. Native API remains 0.5.0. Cumulative Test10.1 Lua patch: merge TargetSC/ into addons, preserve data/, reload TargetSC. Live check: preview mb, watch fixed-height MB ring against moving property disc; verify breathing, flashes and endings still animate. No direct FFXI rendering test performed.
+
 ## TargetSC 0.10.0 Test10 — clapper response and MB demo (2026-10-22)
 
 Development branch `development/targetsc-clapper-burst`, based on latest Skillchains Animation8.8 `010c93be`, incorporating TargetSC Test9 `4894b49f`. Author: A. Saved personal settings/data remain untouched. User requested expressive defaults with restraint controls, low MB clapper placement, synchronized nonzero breathing, slow reverse glyph rotation, immediate elemental strike/lift and a shared mathematical return; then requested the original four-link demo with one appropriate MB per window.

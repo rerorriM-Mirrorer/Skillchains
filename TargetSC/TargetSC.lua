@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.10.0-test10'
+_addon.version='0.10.1-test10.1'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -149,7 +149,7 @@ local function help()
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
     }
-    windower.add_to_chat(0,('TargetSC 0.10.0 — elemental resonance'):color(167))
+    windower.add_to_chat(0,('TargetSC 0.10.1 — elemental resonance'):color(167))
     for _,line in ipairs(lines) do
         windower.add_to_chat(0,('//tsc '):color(200)..line[1]:color(207)..(' -> '):color(200)..line[2]:color(0))
     end

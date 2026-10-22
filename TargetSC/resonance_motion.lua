@@ -194,8 +194,12 @@ function M.frame(model,s,now,radius,height,opts,context)
     local terminal=s.step>1 and s.level>=4
     local property_radius=radius*(terminal and .92 or .78)
     local mb_radius=clapper and property_radius+(radius-property_radius)*option(opts,'mb_size')or radius
-    local property_top=option(opts,'disc_height')+details.ground_wave+(terminal and .012 or .006)
-    local mb_height=clapper and property_top+(bottom-property_top)*option(opts,'mb_position')or height*.49
+    -- The MB ring shares the large glyph's steady vertical reference. Use
+    -- nominal anchors, never SC vibration, descent or property-transition
+    -- blending. A common property plane also avoids a height step at level 4.
+    local property_top=option(opts,'disc_height')+.006
+    local floor_anchor=option(opts,'ground_height')+option(opts,'ground_lift')
+    local mb_height=clapper and property_top+(floor_anchor-property_top)*option(opts,'mb_position')or height*.49
     local mb_colors=context.palette(s)
     local mb_color=mb_colors[#mb_colors]
     if clapper and s.level==2 and #mb_colors==2 then

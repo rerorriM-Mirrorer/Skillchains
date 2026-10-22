@@ -34,6 +34,27 @@ assert(alpha(layer(trough,'core','mb').color)>0)
 assert(layer(frame(m,102),'core','mb').color%16777216~=layer(frame(m,104),'core','mb').color%16777216)
 local terminal=model();terminal.states[71].level=4;terminal.states[71].properties={'Umbra'};terminal.states[71].closed=true
 near(layer(frame(terminal,101),'core','mb').radius,2*.96)
+-- MB ring stays vertically steady while the property disc still wobbles:
+-- new-window strike, ongoing hum, real link blending, level-four result,
+-- alternate SC layouts and an actual burst lifting only the property trace.
+for _,mode in ipairs({'both','mb'})do
+ for _,layout in ipairs({'grounded','symmetric','center'})do
+  local moving=copy(R.defaults);moving.display=mode;moving.layout=layout;moving.mb_ending_style='off'
+  local demo=P.new(assert(P.parse({'mb'},R)),71,200,R,moving)
+  local expected=(moving.disc_height+.006)*(1-moving.mb_position)+
+   (moving.ground_height+moving.ground_lift)*moving.mb_position
+  local changed=false;local old_fill
+  for i=900,3990 do
+   local t=200+i/100;demo:advance(t)
+   local sample=demo.model:frame(71,t,2,4,moving)
+   local mb=assert(layer(sample,'core','mb'));near(mb.offset,expected)
+   local property=assert(layer(sample,'property'))
+   if old_fill and math.abs(property.offset-old_fill)>1e-5 then changed=true end
+   old_fill=property.offset
+  end
+  assert(changed,'property disc must retain its vertical motion')
+ end
+end
 -- Immediate elemental flash/lift, a full hold through ring flashing, then
 -- one quintic energy drives height, color and alpha back to the foundation.
 m=model();m.bursts[71]={{at=104,color=R.element_color('Fire')}}
