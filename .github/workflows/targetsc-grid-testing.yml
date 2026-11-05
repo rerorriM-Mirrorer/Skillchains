@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - development/targetsc-white-breath
+      - development/skillchains-cioara-defaults
   workflow_dispatch:
 
 permissions:
