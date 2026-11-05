@@ -1,5 +1,19 @@
 # TESTING.md — Skillchains Resonance UI
 
+## Skillchains Animation8.8 — Cioara-based built-in defaults (2026-11-05; LIVE PENDING)
+
+**Repository/branch:** `rerorriM-Mirrorer/Skillchains`, `development/skillchains-cioara-defaults`, based on `development/targetsc-white-breath` at `6bfbc7b1`. **Scope:** Skillchains defaults/commands, resonance fallback, one host-simulation test and cumulative documentation. All TargetSC files/native assets must remain unchanged.
+
+**User source:** `settings(20261105-105912).xml`, effective `global` + `cioara` values. Default display both; bar x1060/y2100 width550; learning list x1060/y2090; custom MB x1060/y2120 width310; names offset (+6,-9); glow fallback levels 3/4 with L2 .65 and L3 .70. Other global settings (animation/tip/track/MB switches/job filters) match the preexisting typed defaults. The original XML is not shipped.
+
+**Compatibility:** Keep typed glow mask absent so old saved numeric `glow.levels` masks are still honored. Renderer/command fallback now use L3/L4; selective `//sc glow reset` and full `//sc default` align with these values. Reset deep-copies typed settings and refreshes positions; saved character overrides are not automatically touched. These coordinates are tuned to 3840×2160, so smaller clients may need edit/center recovery.
+
+**Host checks:** Lua 5.1 parsing, `tools/test_visual_commands.lua` with fresh and reset profile assertions, legacy glow mask, selective resets, independent MB anchor, demo lifecycle and unchanged other suites/TargetSC binary. Host checks do not count as live FFXI.
+
+**Live checklist:** Preserve all `Skillchains/data/`. Install only changed Skillchains Lua files and reload; leave TargetSC DLL untouched. With current saved Cioara settings compare `//sc status`, `//sc glow`, `//sc mb`. Only deliberately use `//sc default` when testing a reset. On a fresh/sandbox profile check both bars, SC 550px and MB 310px anchors, L3/L4 glow, independent MB movement, and a real SC/MB countdown. Check a small client's edit/center recovery. **Live testing pending.**
+
+---
+
 ## TargetSC 0.11.1 Test11.1 — white breathing glyph (2026-10-22)
 
 Branch `development/targetsc-white-breath`, based on Test11 `0ba8176`. A reports the large breathing glyph gets lost during demo level-two Gravitation. Diagnosis: Test10 extended the requested MB ring color cycling to the glyph too; its dark-purple/earth palette combined with roughly 7–20% breathing opacity and overlaid property fill makes it hard to see. A asks to revert only the large glyph's ordinary color. Restore white between confirmed bursts at all levels; preserve MB ring palette cycling, elemental MB overlays, bloom/return, rotation, opacity and all Killala defaults. No new setting or user-data change.

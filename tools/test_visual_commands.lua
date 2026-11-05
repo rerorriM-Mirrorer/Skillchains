@@ -28,7 +28,7 @@ local function harness()
     local player={main_job='WAR',id=1,status=0}
     local target={id=71,index=12,hpp=100}
     local messages={}
-    env.windower={get_windower_settings=function() return {ui_x_res=1280,ui_y_res=720} end,
+    env.windower={get_windower_settings=function() return {ui_x_res=3840,ui_y_res=2160} end,
         register_event=function(name,fn)events[name]=fn end,
         send_command=function(line)sent[#sent+1]=line end,add_to_chat=function(_,msg)messages[#messages+1]=msg end,
         ffxi={get_info=function()return {logged_in=true}end,
@@ -44,6 +44,10 @@ local function harness()
             return {
                 render=function(_,frame)renders[#renders+1]=copy(frame or {hidden=true})end,
                 hide=function()end,destroy=function()end,
+                scale=function(_,scale)opt.scale=scale end,
+                edit=function()end,rescue=function()end,
+                handle={pos=function()end},mb_handle={pos=function()end},
+                panel={pos=function()end},
                 set_position=function(_,x,y)opt.bar.x=x;opt.bar.y=y end,
                 set_mb_position=function(_,x,y)m.x=math.floor(math.max(8,math.min(x,1220))+.5)
                     m.y=math.floor(math.max(35,math.min(y,685))+.5)end,
@@ -95,15 +99,21 @@ assert(opt.glow.levels==nil and opt.glow.level_mask==nil,
     'No numeric-looking mask in Windower typed defaults')
 assert(opt.glow.rail34==.75 and opt.glow.cap34==.85)
 assert(opt.tip.enabled and opt.tip.length==16 and opt.tip.opacity==.85)
-assert(opt.mb.position=='below' and opt.mb.gap==3
+assert(opt.mb.position=='custom' and opt.mb.gap==3
     and opt.mb.height==2 and opt.mb.text=='on'
     and opt.mb.icon=='on' and opt.mb.scale==1
     and opt.mb.fontsize==10 and opt.mb.iconsize==10
     and opt.mb.flash=='on' and opt.mb.flash_duration==.24)
-assert(opt.mb.x==opt.bar.x and opt.mb.y==opt.bar.y+25,
-    'Legacy MB offset migrates once to independent saved coordinates')
+assert(opt.mb.x==1060 and opt.mb.y==2120 and opt.mb.width==310,
+    'Cioara default has an independent custom MB anchor')
+assert(opt.display=='both' and opt.bar.x==1060 and opt.bar.y==2100
+    and opt.bar.width==550 and opt.list.x==1060 and opt.list.y==2090
+    and opt.name_offset.x==6 and opt.name_offset.y==-9,
+    'Fresh profile uses Cioara layout and both bars')
+assert(opt.glow.level2==.65 and opt.glow.level3==.70,
+    'Fresh profile uses effective glow strengths')
 assert(opt.transition.duration==.30 and opt.transition.style=='energized')
-assert(run('glow','levels','1234'):find('default 234',1,true))
+assert(run('glow','levels','1234'):find('default 34',1,true))
 assert(opt.glow.level_mask=='L1,L2,L3,L4' and not tonumber(opt.glow.level_mask))
 run('glow','levels','42')
 assert(opt.glow.level_mask=='L2,L4','Canonicalize and sort level mask')
@@ -181,7 +191,7 @@ run('track','alpha','400') assert(opt.track.alpha==95)
 run('track','reset')
 assert(opt.track.alpha==155 and opt.track.color[1]==6)
 run('glow','reset')
-assert(opt.glow.level_mask=='L2,L3,L4')
+assert(opt.glow.level_mask=='L3,L4')
 assert(opt.glow.rail34==.75 and opt.glow.cap34==.85 and
     opt.glow.pre4==.85)
 assert(opt.track.alpha==155 and opt.bar.x==300,
@@ -262,3 +272,24 @@ set_clock(240.1);events.prerender()
 assert(renders[#renders].hidden,'Demo expires after independent MB tail')
 assert(#sent==sent_before,'No fake TargetSC actions from any demo frame')
 print('PASS Skillchains demo integration: actual handler, HUD frames, stop, auto-end, no transport/settings')
+
+-- //sc default must match the same profile used at first load and not leak
+-- nested user edits into typed defaults.
+local before_default=saves()
+run('default')
+assert(saves()==before_default+1,'//sc default saves a deliberate reset')
+assert(opt.display=='both' and opt.mode=='learn' and opt.names=='full')
+assert(opt.bar.x==1060 and opt.bar.y==2100 and opt.bar.width==550)
+assert(opt.list.x==1060 and opt.list.y==2090)
+assert(opt.mb.position=='custom' and opt.mb.x==1060 and opt.mb.y==2120
+    and opt.mb.width==310)
+assert(opt.name_offset.x==6 and opt.name_offset.y==-9)
+assert(opt.glow.levels==nil and opt.glow.level_mask==nil
+    and opt.glow.level2==.65 and opt.glow.level3==.70,
+    'No typed mask, fallback L3/L4; Cioara glow strength retained')
+run('glow','levels','12')
+assert(opt.glow.level_mask=='L1,L2')
+run('default')
+assert(opt.glow.level_mask==nil and env.default.Resonance.glow.level_mask==nil,
+    'Mutable settings must not change typed defaults')
+print('PASS Cioara effective defaults, explicit reset and mask compatibility')

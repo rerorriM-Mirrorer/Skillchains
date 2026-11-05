@@ -1,5 +1,22 @@
 # Skillchains — Resonance HUD Animation8 test build
 
+## 2026-11-05 — Cioara's effective settings are the built-in Skillchains defaults
+
+Fresh Skillchains configurations and `//sc default` now use Cioara's effective
+global-plus-character profile. SC bar (1060, 2100), width 550; learning
+list anchor (1060, 2090); independent MB ribbon at (1060, 2120),
+width 310 and custom placement. Default display is `both`, property
+name offset (+6, -9), glowing levels L3/L4 with level-2 strength 0.65
+and level-3 strength 0.70; all remaining global animation, track,
+tip, MB controls and job filters retain their effective values.
+
+This was tuned on a 3840×2160 client. Smaller windows may need
+`//sc edit on`, `//sc center`, and `//sc mb center` for recovery.
+Existing saved per-character/global settings continue to take precedence;
+the addon does not erase `data/settings.xml`. Legacy numeric saved
+glow masks are still respected.
+
+
 ## 0.11.1 Test11.1 — white breathing glyph restored
 
 The large glyph's ordinary breathing outline is white again at every level. The level-two MB ring still cycles its property colors; confirmed MBs still tint the glyph in their element and run the existing bloom/return. Killala defaults, breathing opacity, rotation and all other motion controls are preserved.
@@ -864,3 +881,9 @@ Bell shape and closing motion, original low glyph anchor, coordinated MB respons
 
 
 2026-10-21 Test8: sustained MB property glyph, minimum spin, separate MB starting/master opacity, synchronized selectable endings and optional bell hold; preserved saved tuning. Author: A.
+
+### 2026-11-05 — Cioara profile adopted as typed defaults (Animation8.8)
+- Promote the effective global + Cioara visual profile to new-install defaults while leaving existing saved user configurations alone.
+- Make `//sc default` deep-copy the same configuration and refresh drag-handle positions through viewport recovery rather than reset with duplicated literals.
+- Retain compatibility with legacy `glow.levels` values by using L3/L4 only as the fallback when a saved mask is absent.
+- Extend simulated command tests for initialization and explicit reset; live FFXI checks remain pending.

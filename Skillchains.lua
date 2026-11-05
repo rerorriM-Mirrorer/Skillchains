@@ -47,10 +47,10 @@ default.UpdateFrequency = 0.2
 default.aeonic = false
 default.color = false
 default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true}}
--- The UI is independent of EnemyBar2. The initial position suits a small
--- client; //sc edit can relocate the bar and learning panel separately.
+-- The UI is independent of EnemyBar2. Defaults reproduce Cioara's effective
+-- 3840x2160 profile; use //sc edit or //sc center on smaller clients.
 default.Resonance = {
-    mode='learn', display='sc', names='full', scale=1, grid=10,
+    mode='learn', display='both', names='full', scale=1, grid=10,
     animation={enabled=true,intensity=2.0,flare=2.0,glow=2.0,fade=false,fade_period=1/2.4},
     -- Rails + rounded ends share color/flicker. Tier mask defaults to L3/4.
     -- Strengths are multipliers, with no artificial upper bound. Actual
@@ -58,21 +58,24 @@ default.Resonance = {
     -- Do not type a numeric-looking level mask in Windower defaults.
     -- Its XML reader turns string '34' into number 34 on every fresh load.
     -- Keep legacy masks and use a textual key for newly saved changes.
+    -- An absent mask means L3/L4. Do not set level_mask here: doing so
+    -- would override legacy saved glow.levels values during config merge.
     glow={rail12=.30,cap12=.35,rail34=.75,cap34=.85,
-          level1=1,level2=.70,level3=1,level4=1,
+          level1=1,level2=.65,level3=.70,level4=1,
           pre12=.18,pre2=.85,pre3=.38,pre4=.85,scale=1,l4='gold'},
     -- RGB controls the hue; alpha sets how much game scenery shows through.
     track={alpha=155,color={6,8,17}},
     transition={duration=.30,style='energized'},
     tip={enabled=true,length=16,opacity=.85},
-    mb={position='below',gap=3,height=2,text='on',icon='on',
-        scale=1,fontsize=10,iconsize=10,flash='on',flash_duration=.24},
+    mb={position='custom',gap=3,height=2,text='on',icon='on',
+        scale=1,fontsize=10,iconsize=10,flash='on',flash_duration=.24,
+        x=1060,y=2120,width=310},
     -- Text offsets are relative to the SC bar, not absolute screen coordinates.
-    name_offset={x=5,y=-9},
+    name_offset={x=6,y=-9},
     -- Additional positioning applies only to SC property icons.
     icon_offset={x=0,y=0},
-    bar={x=466,y=696,width=310},
-    list={x=465,y=300},
+    bar={x=1060,y=2100,width=550},
+    list={x=1060,y=2090},
 }
 
 settings = config.load(default)
@@ -524,8 +527,15 @@ local function finite_nonnegative(s)
     return n
 end
 
+local function copy_default(value)
+    if type(value)~='table' then return value end
+    local result={}
+    for key,item in pairs(value) do result[key]=copy_default(item) end
+    return result
+end
+
 local function glow_levels(g)
-    return tostring(g.level_mask or g.levels or 'L2,L3,L4')
+    return tostring(g.level_mask or g.levels or 'L3,L4')
 end
 
 local function glow_setting(opts,key,value)
@@ -583,7 +593,7 @@ local function show_help()
     line('anim fade period <seconds>','Set SC pulse rhythm (e.g. 0.24)')
     line('anim preview opener|level1|level2|level3|level4|umbra|radiance|off',
          'Preview local visuals without sending game actions')
-    line('glow levels 1234|234|off','Choose enabled border-glow levels')
+    line('glow levels 1234|34|off','Choose enabled border-glow levels')
     line('glow level1|level2|level3|level4 <number>','Per-level glow strength')
     line('glow pre2|pre4 <number>','Pre-window glow strength')
     line('glow rail34|cap34 <number>','Bright-tier halo rail / cap power')
@@ -596,6 +606,7 @@ local function show_help()
     line('pos <x> <y>','Position SC bar only')
     line('width <pixels>','Width of SC bar only')
     line('center','Recover HUD on screen')
+    line('default','Restore Cioara-based built-in settings')
     line('save [all]','Save settings')
     line('restart|unload','Reload or unload Skillchains')
     line('help','Show this guide')
@@ -840,11 +851,11 @@ windower.register_event('addon command', function(cmd, ...)
                 g.level_mask='L'..table.concat(unique,',L')
             else
                 message('Glow levels: '..glow_levels(g)..
-                    ' (default 234). Use //sc glow levels 34|1234|off|<digits 1-4>.')
+                    ' (default 34). Use //sc glow levels 34|1234|off|<digits 1-4>.')
                 return
             end
             config.save(settings)
-            message('Glow levels '..glow_levels(g)..' (default 234).')
+            message('Glow levels '..glow_levels(g)..' (default 34).')
         elseif option=='rail12' or option=='rail34' or
             option=='cap12' or option=='cap34' or option=='scale' or
             option=='pre12' or option=='pre2' or option=='pre3' or option=='pre4' or
@@ -877,11 +888,11 @@ windower.register_event('addon command', function(cmd, ...)
         elseif option=='reset' then
             opts.glow={}
             for key,val in pairs(defs) do opts.glow[key]=val end
-            opts.glow.level_mask='L2,L3,L4'
+            opts.glow.level_mask='L3,L4'
             config.save(settings)
             message('Glow restored to Animation8 defaults (positions unchanged).')
         else
-            message(('Glow levels %s (default 234), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f; pre2 %.2f pre3 %.2f pre4 %.2f; scale %.2f L4 %s.'):format(
+            message(('Glow levels %s (default 34), rail12 %.2f cap12 %.2f, rail34 %.2f cap34 %.2f; pre2 %.2f pre3 %.2f pre4 %.2f; scale %.2f L4 %s.'):format(
                 glow_levels(g),g.rail12,g.cap12,g.rail34,g.cap34,
                 g.pre2,g.pre3,g.pre4,g.scale,g.l4))
             message('Use //sc glow levels 34|1234|off; rail12|cap12|rail34|cap34|level1-4|pre12|pre2|pre3|pre4|scale <number>; preset balanced|capforward; l4 gold|whitegold|white; reset.')
@@ -1044,29 +1055,15 @@ windower.register_event('addon command', function(cmd, ...)
         config.save(settings)
         message('Bar width set to '..opts.bar.width..'.')
     elseif cmd=='default' then
-        opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
-        opts.grid=10
-        opts.animation={enabled=true,intensity=2,flare=2,glow=2,fade=false,fade_period=1/2.4}
-        opts.glow={level_mask='L2,L3,L4',rail12=.30,cap12=.35,rail34=.75,cap34=.85,
-                   level1=1,level2=.70,level3=1,level4=1,
-                   pre12=.18,pre2=.85,pre3=.38,pre4=.85,scale=1,l4='gold'}
-        opts.track={alpha=155,color={6,8,17}}
-        opts.transition={duration=.30,style='energized'}
-        opts.tip={enabled=true,length=16,opacity=.85}
-        opts.mb={position='below',gap=3,height=2,text='on',icon='on',
-            scale=1,fontsize=10,iconsize=10,flash='on',flash_duration=.24,
-            x=opts.bar.x,y=opts.bar.y+25,width=opts.bar.width}
-        opts.name_offset.x,opts.name_offset.y=5,-9
-        opts.icon_offset=opts.icon_offset or {x=0,y=0}
-        opts.icon_offset.x,opts.icon_offset.y=0,0
-        opts.bar.x,opts.bar.y,opts.bar.width=466,696,310
-        opts.list.x,opts.list.y=465,300
-        overlay:scale(1)
+        -- Share the actual typed defaults; never let saved edits mutate them.
+        for key,value in pairs(default.Resonance) do
+            opts[key]=copy_default(value)
+        end
+        overlay:scale(opts.scale)
         overlay:edit(false)
-        overlay.handle:pos(opts.bar.x,opts.bar.y-34)
-        overlay.panel:pos(opts.list.x,opts.list.y)
+        overlay:rescue()
         config.save(settings)
-        message('Display, scale, name offset and positions reset to testing defaults.')
+        message('Resonance settings reset to Cioara-based defaults.')
     elseif cmd=='save' then
         config.save(settings,option=='all' and 'all' or nil)
         message('Settings saved.')
