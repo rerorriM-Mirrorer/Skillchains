@@ -67,8 +67,21 @@ jobs:
           git show e095657a2e7ecc5a49d05e96c1b78523a4860af5:Skillchains.lua > /tmp/Skillchains-baseline.lua
           lua5.1 TargetSC/tests/test_skillchains_regression.lua /tmp/Skillchains-baseline.lua
       - name: Package complete installable addons
+        if: github.ref_name != 'development/skillchains-cioara-defaults'
         run: python3 tools/package_targetsc.py
+      - name: Package Skillchains-only Cioara defaults
+        if: github.ref_name == 'development/skillchains-cioara-defaults'
+        run: python3 tools/package_skillchains_defaults.py
+      - name: Publish installable Skillchains Cioara defaults
+        if: github.ref_name == 'development/skillchains-cioara-defaults'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Skillchains-Cioara-Defaults-Animation8.8
+          path: dist/Skillchains-Cioara-Defaults-Animation8.8.zip
+          if-no-files-found: error
+          retention-days: 30
       - name: Publish complete testing package
+        if: github.ref_name != 'development/skillchains-cioara-defaults'
         uses: actions/upload-artifact@v4
         with:
           name: Skillchains-Animation8.8-TargetSC-Test11.1-White-Breath-Paired-test
@@ -76,6 +89,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Publish Skillchains-only testing package
+        if: github.ref_name != 'development/skillchains-cioara-defaults'
         uses: actions/upload-artifact@v4
         with:
           name: Skillchains-Animation8.8-MB-Intro-Solo-test
@@ -83,6 +97,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Publish minimal TargetSC patch
+        if: github.ref_name != 'development/skillchains-cioara-defaults'
         uses: actions/upload-artifact@v4
         with:
           name: TargetSC-Test11.1-White-Breath-Patch

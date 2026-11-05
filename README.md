@@ -14,7 +14,11 @@ This was tuned on a 3840×2160 client. Smaller windows may need
 `//sc edit on`, `//sc center`, and `//sc mb center` for recovery.
 Existing saved per-character/global settings continue to take precedence;
 the addon does not erase `data/settings.xml`. Legacy numeric saved
-glow masks are still respected.
+glow masks are still respected. The testing package is
+`Skillchains-Cioara-Defaults-Animation8.8.zip`, containing a single
+`Skillchains/` folder with all runtime Lua, artwork and guidance; install it
+into Windower's `addons/` while preserving `Skillchains/data/`, then
+`//lua reload Skillchains`. It does not include or replace TargetSC.
 
 
 ## 0.11.1 Test11.1 — white breathing glyph restored
@@ -887,3 +891,7 @@ Bell shape and closing motion, original low glyph anchor, coordinated MB respons
 - Make `//sc default` deep-copy the same configuration and refresh drag-handle positions through viewport recovery rather than reset with duplicated literals.
 - Retain compatibility with legacy `glow.levels` values by using L3/L4 only as the fallback when a saved mask is absent.
 - Extend simulated command tests for initialization and explicit reset; live FFXI checks remain pending.
+
+### 2026-11-05 — Dedicated Skillchains-only test package
+- Added an independent, SHA256/CRC-validated Skillchains-only test package with complete animation/MB art and nested workflow/testing documents.
+- Branch-specific CI runs the full Lua 5.1 and TargetSC regression tests but does not invoke the TargetSC-only packager's intentional Skillchains source guard. No DLL or TargetSC files are shipped.
