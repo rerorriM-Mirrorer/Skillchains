@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.12.0-unified-test1'
+_addon.version='0.12.1-unified-test2'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')

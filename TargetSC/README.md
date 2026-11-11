@@ -1,5 +1,34 @@
 # TargetSC — elemental resonance
 
+## 0.12.1 unified Test2 — target-specific AoE and helper-only HUD
+
+**Test2 is a private regression build, not a public release.** It fixes the
+Skillchains combat handler's first-target/first-action assumption. A successful
+Uriel Blade by Valaineral can now create elemental resonance on *each*
+successfully hit enemy, even after switching targets. Shining Strike performed
+by another player/party member, such as Myrr, remains supported; a missed
+hit must not falsely open a window. Confirmed skillchain effects take
+priority over ordinary hit reports from the same target. Combat timings,
+property data, native renderer and bell visuals have not been altered.
+
+For only the 3D rings and learning helper, use:
+```text
+//tsc sc mode learn
+//tsc sc display off
+```
+Restore both countdown ribbons with `//tsc sc display both`.
+The learning box is displayed during an available continuation window,
+independently of ribbon visibility.
+
+To diagnose a still-missing weapon skill, use `//tsc sc trace on` and observe
+the next Valaineral or Myrr action on Cioara's client. Then use
+`//tsc sc trace off`. Tracing is **off by default** and prints actor, target,
+message, recognized action and reason when no opener was recorded.
+
+Preserve `TargetSC/data/` (including imported Skillchains settings).
+The separate original Skillchains addon should remain unloaded when running
+this unified Test2 build. See TESTING.md for verification and live requests.
+
 ## 0.12.0 unified Test1 — one-folder integration (experimental)
 
 **This is the first merger test, not a validated public release.** The original

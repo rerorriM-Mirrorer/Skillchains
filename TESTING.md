@@ -1,5 +1,41 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC unified Test2 — AoE and learning HUD (2026-11-11)
+
+User observations: on **Cioara's client**, GripRumble's long *SC-window*
+vibration fires for Valaineral's Uriel Blade, but a second successfully hit
+enemy may have no TargetSC rings after target switching. Myrr's Shining Strike
+has also sometimes lacked rings while Cioara is observing. This is stronger
+evidence than a generic damage-vibration cue.
+
+**Source finding:** The embedded Skillchains combat handler used the first
+target *and its first subaction* only. Both Uriel Blade (including monster
+abilities 2273/3202) and Shining Strike (WS 160, Impaction) already exist in
+skills.lua; no new arbitrary skillchain properties were added. Test2 now
+iterates each target and action, accepts only qualifying landed actions,
+prefers confirmed SC additional effects over opener reports, and shares
+consumable action buffs across AoE targets rather than re-consuming per target.
+It still uses the original SC and provisional MB timing rules.
+
+**Display request:** `//tsc sc mode learn` and `//tsc sc display off` hide
+the SC and MB HUD ribbons while retaining the helper/learning box for open
+continuation windows. `display both` restores the ribbons. `//tsc sc trace on|off`
+temporarily records per-target combat classification for investigation.
+No visual presets or character settings are reset.
+
+**Host tests:** New integration simulation covers Valaineral-style multi-target
+Uriel Blade (first target missed, two subsequent valid), Myrr-style external
+actor Shining Strike, Shining Strike misses, SC effect precedence, and
+renderer resubscription. New UI simulation tests helper visibility with both
+ribbons disabled, reenabled, expired, and compact. Automated CI results to be
+recorded after successful build.
+
+**FFXI pending:** Reproduce Uriel on different target IDs, watch Myrr's actual
+Shining Strike packet from Cioara, compare open window haptic vs bell,
+test helper-only during SC and MB periods, and verify no false resonances on
+missed attacks. The exact GripRumble code is not in this repository; its
+independent target tracker cannot prove identical observations by the two addons.
+
 ## TargetSC unified Test1 — green host verification (2026-11-10)
 
 **Verified commit:** [`a941b82`](https://github.com/rerorriM-Mirrorer/Skillchains/commit/a941b82976b214f2466e61398da59c41a4c4346b). **GitHub Actions:** [run 42964264172](https://github.com/rerorriM-Mirrorer/Skillchains/actions/runs/42964264172) completed successfully.
