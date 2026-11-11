@@ -8,6 +8,8 @@ local config=require('config')
 local resonance=require('resonance')
 local previews=require('resonance_preview')
 local controls=require('resonance_controls')
+local local_bus=require('targetsc_local')
+local sc_runtime
 local defaults={enabled=true,debug=false}
 for key,value in pairs(resonance.defaults)do defaults[key]=value end
 local settings=config.load(defaults)
@@ -62,8 +64,8 @@ end
 local function subscribe()
     if not settings.enabled then return end
     requested_at=os.clock() source_wait_notice=false
-    windower.send_command('lua c Skillchains targetsc subscribe')
-    debug('requested Skillchains bridge v1 snapshot')
+    if not local_bus.subscribe() then debug('Embedded Skillchains engine is not ready') end
+    debug('refreshed embedded Skillchains state')
 end
 local function selected_mob()
     local info=windower.ffxi.get_info()
@@ -145,7 +147,8 @@ local function help()
         {'intensity <0-4>','Set vibration and flash strength.'},
         {'height <0.25-3>','Adjust the model-height estimate.'},
         {'debug on|off','Record state events in data/TargetSC-debug.log.'},
-        {'sync','Request an authoritative snapshot after missing events.'},
+        {'sync','Refresh the shared combat state.'},
+        {'sc <command>','Control Skillchains HUD and learning (e.g. //tsc sc help).'},
         {'restart','Unload and reload TargetSC safely.'},
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
@@ -158,7 +161,7 @@ end
 local function status()
     local now=os.clock()
     say(('v%s; enabled=%s preview=%s source=%s synced=%s events=%d gaps=%d rejected=%d debug=%s'):format(
-        _addon.version,tostring(settings.enabled),preview and (preview.kind..'/'..tostring(preview.phase or 'pre')) or 'off',model.connected and 'Skillchains v1' or 'waiting/absent',
+        _addon.version,tostring(settings.enabled),preview and (preview.kind..'/'..tostring(preview.phase or 'pre')) or 'off',model.connected and 'embedded Skillchains' or 'not synchronized',
         tostring(model.synced),model.events,model.gaps,model.rejected,tostring(settings.debug)))
     say(('opacity=%.2f scale=%.2f intensity=%.2f height=%.2f; target=%s; last tracking=%s; clock delta=%.3fs; unknown burst elements=%d'):format(
         settings.opacity,settings.scale,settings.intensity,settings.height,tostring(selected_id or 'none'),tostring(last_tracking_error or 'ok'),model.clock_warning,model.unknown_bursts))
@@ -192,7 +195,7 @@ local function status()
         state.revision,table.concat(state.properties,'/'),state.closed and 0 or math.max(0,state.sc_close-math.max(now,state.sc_open)),math.max(0,state.sc_open-now),
         math.max(0,state.mb_close-now),tostring(state.closed))) end
     say(native and native.status() or 'Native module unavailable: '..tostring(renderer_error))
-    if not model.connected then say('Load the compatible Skillchains folder, then //tsc sync. Preview remains available.') end
+    if not model.connected then say('Embedded Skillchains not synchronized; use //tsc sync. Preview remains available.') end
 end
 local function begin_preview(args)
     local mob=selected_mob()
@@ -217,27 +220,36 @@ local function advance_preview(now)
     end
 end
 local visual_command=controls.new(settings,resonance.defaults,config.save,say)
+local function receive_frame(args)
+    local accepted,why=model:receive(args,os.clock())
+    if accepted then
+        debug(('event %s seq=%s entity=%s clock_delta=%.6f'):format(tostring(why),tostring(args[3]),tostring(args[6]),model.clock_warning))
+        if args[4]=='state' and preview and tonumber(args[6])==preview.id then preview=nil end
+        if args[4]=='offline' or args[4]=='reset' then clear() preview=nil end
+        if math.abs(model.clock_warning)>.20 then debug('TIMING WARNING: source clock delta exceeds 200ms; absolute deadlines retained') end
+    else debug('rejected event: '..tostring(why)) end
+    if model.needs_sync and os.clock()-requested_at>1 then subscribe() end
+end
+local_bus.set_receiver(receive_frame)
 windower.register_event('addon command',function(command,...)
     local args={...} command=(command or 'help'):lower()
     if command=='_event' then
-        local accepted,why=model:receive(args,os.clock())
-        if accepted then
-            debug(('event %s seq=%s entity=%s clock_delta=%.6f'):format(tostring(why),tostring(args[3]),tostring(args[6]),model.clock_warning))
-            if args[4]=='state' and preview and tonumber(args[6])==preview.id then preview=nil end
-            if args[4]=='offline' or args[4]=='reset' then clear() preview=nil end
-            if math.abs(model.clock_warning)>.20 then debug('TIMING WARNING: bridge latency/clock delta exceeds 200ms; absolute deadlines retained') end
-        else debug('rejected event: '..tostring(why)) end
-        if model.needs_sync and os.clock()-requested_at>1 then subscribe() end
+        -- Legacy test/protocol entry point; live traffic uses the direct local bus.
+        receive_frame(args)
+    elseif command=='sc' then
+        if sc_runtime then
+            sc_runtime.command(args[1] or 'help',unpack(args,2))
+        else say('Embedded Skillchains engine is not ready.') end
     elseif command=='_ready' then if settings.enabled then subscribe() end
     elseif command=='help' then help()
     elseif command=='status' then status()
-    elseif command=='sync' then subscribe() say('Requested Skillchains state.')
+    elseif command=='sync' then subscribe() say('Refreshed embedded Skillchains state.')
     elseif command=='on' then
         settings.enabled=true config.save(settings) start_renderer() subscribe() say('Enabled.')
     elseif command=='off' then
         settings.enabled=false config.save(settings) preview=nil clear()
         if native then native.stop() renderer_started=false end
-        windower.send_command('lua c Skillchains targetsc unsubscribe')
+        local_bus.unsubscribe()
         model:clear() model.connected=false say('Disabled.')
     elseif command=='preview' then
         if args[1] and args[1]:lower()=='off' then preview=nil clear() say('Preview stopped.')
@@ -306,6 +318,24 @@ windower.register_event('zone change','logout',function()
     preview=nil selected_id=nil model:clear() clear() debug('world state cleared')
 end)
 windower.register_event('unload',function()
-    windower.send_command('lua c Skillchains targetsc unsubscribe')
+    local_bus.unsubscribe()
     clear() if native then native.stop() end
 end)
+
+-- One-time, non-destructive import of the previous companion's complete XML,
+-- including character-specific sections. Never overwrite integrated data.
+local function import_skillchains_settings()
+    local destination=addon_path..'data/skillchains-settings.xml'
+    local present=io.open(destination,'rb')
+    if present then present:close() return end
+    local original=io.open(addon_path..'../Skillchains/data/settings.xml','rb')
+    if not original then return end
+    local bytes=original:read('*a') original:close()
+    if not bytes or #bytes>2097152 or not bytes:find('<',1,true) then return end
+    local dir=addon_path..'data/'
+    if not windower.dir_exists(dir) then windower.create_dir(dir) end
+    local output=io.open(destination,'wb')
+    if output then output:write(bytes) output:close() debug('imported legacy Skillchains settings') end
+end
+import_skillchains_settings()
+sc_runtime=require('sc_runtime')
