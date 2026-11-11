@@ -974,7 +974,11 @@ function ui.new(settings, sc_info)
             self:hide_caption_icons('mb')
             self.mb_caption:hide()
         end
-        if opt.mode=='learn' and (sc_alive or self.editing) then
+        -- The learning helper describes the *source* continuation window,
+        -- not the optional visibility of either HUD ribbon. Display 'off'
+        -- therefore leaves learning available without drawing a bar.
+        local can_learn=(state.sc_left or 0)>0 and not state.closed
+        if opt.mode=='learn' and (can_learn or self.editing) then
             -- Color represents the predicted RESULT. Icons represent the
             -- action's own skillchain properties (possibly several).
             self.learning:render(state.groups or {},opt.list.x,opt.list.y,opt.scale,

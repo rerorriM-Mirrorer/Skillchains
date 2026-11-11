@@ -443,45 +443,102 @@ function apply_properties(target, resource, action_id, properties, delay, step, 
     end
 end
 
-function action_handler(act)
-    targetsc:bursts(act)
-    local actionpacket = ActionPacket.new(act)
-    local category = actionpacket:get_category_string()
+-- Quiet by default. Trace individual actor/target decisions on demand when
+-- another client or addon observes an opener that TargetSC does not show.
+local trace_actions=false
+local function trace_action(category,actor,target,record,status)
+    if not trace_actions then return end
+    local name=record and record.ability and record.ability.en or
+        (record and tostring(record.resource)..'/'..tostring(record.action_id)) or '-'
+    message(('Trace %s actor=%s target=%s action=%s msg=%s result=%s'):format(
+        tostring(category),tostring(actor),tostring(target),tostring(name),
+        tostring(record and record.message_id or '-'),tostring(status)))
+end
 
-    if not categories:contains(category) or act.param == 0 then
-        return
+function action_handler(act)
+    -- MB events already enumerate every affected target; keep that observer
+    -- independent of the SC/opener state.
+    targetsc:bursts(act)
+    local packet=ActionPacket.new(act)
+    local category=packet:get_category_string()
+    if not categories:contains(category) or act.param == 0 then return end
+
+    local actor=packet:get_id()
+    local buff_evaluated=false
+    local buff_applies=false
+    local function buff_for_this_packet()
+        -- Chain Affinity and similar buffs are consumed once PER ACTION,
+        -- not once per AoE target. All successful targets share the result.
+        if not buff_evaluated then
+            buff_evaluated=true
+            buff_applies=buffs[actor] and chain_buff(buffs[actor]) or false
+        end
+        return buff_applies
     end
 
-    local actor = actionpacket:get_id()
-    local target = actionpacket:get_targets()()
-    local action = target:get_actions()()
-    local message_id = action:get_message_id()
-    local add_effect = action:get_add_effect()
-    --local basic_info = action:get_basic_info()
-    local param, resource, action_id, interruption, conclusion = action:get_spell()
-    local ability = skills[resource] and skills[resource][action_id]
-
-    if add_effect and conclusion and skillchain_ids:contains(add_effect.message_id) then
-        local skillchain = add_effect.animation:ucfirst()
-        local level = sc_info[skillchain].lvl
-        local reson = resonating[target.id]
-        local delay = ability and ability.delay or 3
-        local step = (reson and reson.step or 1) + 1
-
-        if level == 3 and reson and ability then
-            level = check_props(reson.active, aeonic_prop(ability, actor))
+    -- A single action packet can contain many targets and several subactions
+    -- per target. Skillchain additional effects take priority over opener
+    -- reports so an ordinary hit cannot undo a just-formed skillchain.
+    for target in packet:get_targets() do
+        if target and target.id then
+            local chosen
+            local priority=0
+            for action in target:get_actions() do
+                local message_id=action:get_message_id()
+                local effect=action:get_add_effect()
+                local param,resource,action_id,interruption,conclusion=action:get_spell()
+                local ability=skills[resource] and skills[resource][action_id]
+                local candidate
+                local rank=0
+                if effect and conclusion and
+                    skillchain_ids:contains(effect.message_id) then
+                    local name=type(effect.animation)=='string' and effect.animation:ucfirst()
+                    if name and sc_info[name] then
+                        candidate={kind='chain',name=name,resource=resource,
+                            action_id=action_id,ability=ability,message_id=message_id}
+                        rank=3
+                    end
+                end
+                if rank==0 and ability and
+                    (message_ids:contains(message_id) or
+                    message_id==2 and buff_for_this_packet()) then
+                    candidate={kind='opener',resource=resource,action_id=action_id,
+                        ability=ability,message_id=message_id}
+                    rank=2
+                elseif rank==0 and message_id==529 and chainbound[param] then
+                    candidate={kind='chainbound',resource=resource,action_id=action_id,
+                        param=param,message_id=message_id}
+                    rank=2
+                end
+                if message_id==100 and buff_dur[param] then
+                    buffs[actor]=buffs[actor] or {}
+                    buffs[actor][param]=buff_dur[param]+os.time()
+                end
+                if rank>priority then chosen=candidate;priority=rank end
+            end
+            if chosen then
+                if chosen.kind=='chain' then
+                    local previous=resonating[target.id]
+                    local level=sc_info[chosen.name].lvl
+                    local step=(previous and previous.step or 1)+1
+                    if level==3 and previous and chosen.ability then
+                        level=check_props(previous.active,aeonic_prop(chosen.ability,actor)) or level
+                    end
+                    apply_properties(target.id,chosen.resource,chosen.action_id,
+                        {chosen.name},chosen.ability and chosen.ability.delay or 3,
+                        step,step>5 or level==4,nil,level)
+                elseif chosen.kind=='opener' then
+                    apply_properties(target.id,chosen.resource,chosen.action_id,
+                        aeonic_prop(chosen.ability,actor),chosen.ability.delay or 3,1)
+                elseif chosen.kind=='chainbound' then
+                    apply_properties(target.id,chosen.resource,chosen.action_id,
+                        chainbound[chosen.param],2,1,false,chosen.param)
+                end
+                trace_action(category,actor,target.id,chosen,chosen.kind)
+            else
+                trace_action(category,actor,target.id,nil,'no qualifying successful action')
+            end
         end
-
-        local closed = step > 5 or level == 4
-
-        apply_properties(target.id, resource, action_id, {skillchain}, delay, step, closed, nil, level)
-    elseif ability and (message_ids:contains(message_id) or message_id == 2 and buffs[actor] and chain_buff(buffs[actor])) then
-        apply_properties(target.id, resource, action_id, aeonic_prop(ability, actor), ability.delay or 3, 1)
-    elseif message_id == 529 then
-        apply_properties(target.id, resource, action_id, chainbound[param], 2, 1, false, param)
-    elseif message_id == 100 and buff_dur[param] then
-        buffs[actor] = buffs[actor] or {}
-        buffs[actor][param] = buff_dur[param] + os.time()
     end
 end
 
@@ -554,7 +611,8 @@ local function show_help()
     heading('Resonance HUD')
     line('status','Version, display, mode and positions')
     line('demo [start|status|off]','Local five-stage Umbra HUD preview')
-    line('display sc|mb|both','Select independent SC and MB opportunities')
+    line('display sc|mb|both|off','Show ribbons or hide both while retaining learning')
+    line('trace on|off','Diagnose individual combat targets and received WS actions')
     line('mode learn|compact|minimal','Choose learning suggestions or small labels')
     line('names full|short|off','SC result labels')
     line('names offset <x> <y>','Move SC labels and icons together')
@@ -724,13 +782,21 @@ local function handle_sc_command(cmd, ...)
             m.x,m.y,m.width or opts.bar.width,m.scale or 1,
             m.text or 'on',m.icon or 'on',m.flash or 'on'))
     elseif cmd=='display' then
-        if option~='sc' and option~='mb' and option~='both' then
-            message('Display: '..opts.display..'. Use sc, mb, or both.')
+        if option~='sc' and option~='mb' and option~='both' and option~='off' then
+            message('Display: '..opts.display..'. Use sc, mb, both, or off.')
             return
         end
         opts.display=option
         config.save(settings)
         message('Display set to '..option..'.')
+    elseif cmd=='trace' then
+        if option=='on' or option=='off' then
+            trace_actions=(option=='on')
+        elseif option then
+            message('Use //tsc sc trace on|off.')
+            return
+        end
+        message('Skillchain action trace '..(trace_actions and 'ON' or 'OFF')..'.')
     elseif cmd=='mode' then
         if option~='learn' and option~='compact' and option~='minimal' then
             message('Mode: '..opts.mode..'. Use learn, compact, or minimal.')
