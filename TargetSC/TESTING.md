@@ -2,6 +2,8 @@
 
 ## TargetSC unified Test2 — AoE and learning HUD (2026-11-11)
 
+**Automated verification passed:** [GitHub Actions run 43067931891](https://github.com/rerorriM-Mirrorer/Skillchains/actions/runs/43067931891), from commit `9b200fc`. Native x86 DLL build, portable renderer geometry, HUD artwork generation, Lua 5.1 syntax, existing HUD/bell regressions, actual combined-loader simulation, new multi-target Uriel/missed-hit/Myrr/confirmed-SC tests, helper-only presentation tests, one-folder ZIP integrity and publication all **PASS**. All of these are compilation or host simulation, **not live FFXI testing**. The unified Test1 ZIP and branch remain available for rollback. Full live SC/MB timing and GripRumble parity are outstanding.
+
 User observations: on **Cioara's client**, GripRumble's long *SC-window*
 vibration fires for Valaineral's Uriel Blade, but a second successfully hit
 enemy may have no TargetSC rings after target switching. Myrr's Shining Strike

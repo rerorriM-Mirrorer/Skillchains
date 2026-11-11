@@ -1,6 +1,8 @@
-# TargetSC unified Test1 — installation and validation
+# TargetSC unified Test2 — installation and validation
 
-This development build is **not a public release**. It merges the existing
+This development build is **not a public release**. Test2 additionally fixes secondary AoE/Trust weapon-skill target tracking and allows `//tsc sc display off` with `//tsc sc mode learn` to retain only the helper and world rings. Use `//tsc sc trace on|off` for target-specific action diagnostics. The original Test1 package remains the fallback.
+
+ It merges the existing
 Skillchains combat engine, HUD bars and learning display into one Windower 4
 addon. No combat timing or visualization formulas were changed.
 
