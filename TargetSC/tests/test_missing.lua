@@ -12,6 +12,7 @@ windower={addon_path='./TargetSC/',add_to_chat=function(_,s)messages[#messages+1
     end,
     ffxi={get_info=function()return {logged_in=true}end,get_player=function()return {status=0}end,
         get_mob_by_target=function()return nil end}}
+package.preload.sc_runtime=function()return {command=function()end}end
 package.preload.chat=function()string.color=function(s)return s end return {}end
 package.preload.config=function()return {load=function(d)return d end,save=function()end}end
 local mismatch=arg[1]=='mismatch'
