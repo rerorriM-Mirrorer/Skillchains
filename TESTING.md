@@ -1,5 +1,33 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.12.0 unified Test1 — in-process merger (2026-11-10)
+
+- **Branch:** `development/targetsc-unified-test1`, based on the preserved
+  `development/targetsc-white-breath` Test11.1 build (`6bfbc7b`).
+- **Scope:** Embed the exact Skillchains Animation8.8 runtime as
+  `TargetSC/sc_runtime.lua` with only initialization, settings-path,
+  command-routing and in-process transport adaptations. Bundle its HUD,
+  learning modules, and artwork in the single installable TargetSC directory.
+- **Behavior:** TargetSC is the sole Windower addon. Existing `//tsc` bell
+  commands continue; legacy HUD commands use `//tsc sc <command>`. Preserves
+  source deadlines, rendering code, visual defaults, native API 0.5.0 and
+  per-target bridge-v1 frame semantics. No standalone Skillchains is required.
+- **Configuration:** TargetSC `data/settings.xml` is unchanged. The embedded
+  HUD loads `data/skillchains-settings.xml`, importing a previous
+  `../Skillchains/data/settings.xml` only when destination is absent.
+  Source files and personal settings are never overwritten.
+- **Verification:** Require Lua 5.1 parse checks, direct callback+actual
+  bridge state/burst/reset tests, existing native/renderer/HUD suites, source
+  regression, ZIP manifest/assets/licensing checks and x86 compilation.
+  Record CI run outcome separately from live FFXI.
+- **LIVE TEST PENDING:** Install with standalone Skillchains unloaded; confirm
+  real weaponskill opener/extension, burst, SC/MB bar, learning panel,
+  target change, job change, death, zone, logout/login, reload, multibox
+  and settings persistence. Compare with a separate known-good client.
+- **Rollback:** Restore the two original addon folders/data backups and load
+  Skillchains and TargetSC from the known-good paired package. Do not replace
+  the old DLL while clients are running.
+
 ## TargetSC 0.11.1 Test11.1 — white breathing glyph (2026-10-22)
 
 Branch `development/targetsc-white-breath`, based on Test11 `0ba8176`. A reports the large breathing glyph gets lost during demo level-two Gravitation. Diagnosis: Test10 extended the requested MB ring color cycling to the glyph too; its dark-purple/earth palette combined with roughly 7–20% breathing opacity and overlaid property fill makes it hard to see. A asks to revert only the large glyph's ordinary color. Restore white between confirmed bursts at all levels; preserve MB ring palette cycling, elemental MB overlays, bloom/return, rotation, opacity and all Killala defaults. No new setting or user-data change.

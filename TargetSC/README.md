@@ -1,5 +1,33 @@
 # TargetSC — elemental resonance
 
+## 0.12.0 unified Test1 — one-folder integration (experimental)
+
+**This is the first merger test, not a validated public release.** The original
+Skillchains combat engine, SC/MB bars and learning UI now load *inside* TargetSC.
+The bell receives the unchanged Skillchains bridge-v1 events through a local Lua
+callback rather than a second Windower addon. Native DLL 0.5.0 and its visuals
+remain unchanged.
+
+Install the complete integrated `TargetSC/` folder and **unload the old standalone
+Skillchains addon before testing**. Close all FFXI clients when replacing
+`_TargetSC.dll`. Back up both previous `data/` folders; never delete them.
+TargetSC retains its normal `data/settings.xml`. The first load copies a
+previous `Skillchains/data/settings.xml`, if available and the destination
+doesn't exist, to `TargetSC/data/skillchains-settings.xml`. HUD settings use that
+separate file. The original is never altered.
+
+Commands: `//tsc status`, `//tsc preview demo`, `//tsc sc help`,
+`//tsc sc status`, `//tsc sc edit on`, and `//tsc sc demo`.
+For this test `//sc` is **not** registered as a direct alias; existing SC
+commands are nested under `//tsc sc` to avoid collisions. The SC-only HUD
+`//tsc sc demo` and bell `//tsc preview demo` remain independently timed.
+
+If the native renderer fails to initialize, the embedded HUD/combat engine
+still loads. The combat/MB clock model (including the provisional 10-second MB
+deadline) is unchanged. Do not interpret host tests as proof of live behavior.
+
+See [INTEGRATION.md](INTEGRATION.md) and [TESTING.md](TESTING.md).
+
 ## 0.11.1 Test11.1 — white breathing glyph restored
 
 The large glyph's ordinary breathing outline is white again at every level. The level-two MB ring still cycles its property colors; confirmed MBs still tint the glyph in their element and run the existing bloom/return. Killala defaults, breathing opacity, rotation and all other motion controls are preserved.

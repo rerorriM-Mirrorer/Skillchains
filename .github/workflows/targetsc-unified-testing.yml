@@ -1,0 +1,67 @@
+name: TargetSC unified Test1 single-addon integration
+on:
+  push:
+    branches:
+      - development/targetsc-unified-test1
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Lua 5.1 and native build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.1 g++-mingw-w64-i686 python3-pil
+      - name: Build and verify native renderer
+        run: |
+          i686-w64-mingw32-g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror -shared -static -static-libgcc -static-libstdc++ -Wl,--no-insert-timestamp -o /tmp/_TargetSC.dll TargetSC/src/TargetSC.cpp TargetSC/src/exports.def -ld3d8
+          g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-stroke TargetSC/tests/test_stroke.cpp
+          /tmp/tsc-stroke
+          g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o /tmp/tsc-property TargetSC/tests/test_property.cpp
+          /tmp/tsc-property
+      - name: Generate and verify HUD art
+        run: |
+          python3 tools/generate_capsule_halo.py --check
+          python3 tools/test_capsule_halo.py
+          python3 tools/generate_terminal_icons.py
+          python3 tools/generate_terminal_icons.py --check
+          python3 tools/generate_mb_flash_icons.py
+          python3 tools/generate_mb_flash_icons.py --check
+      - name: Validate both embedded and baseline Lua 5.1
+        run: |
+          for f in Skillchains.lua skills.lua resonance_ui.lua resonance_fx.lua learning_ui.lua targetsc_bridge.lua skillchains_demo.lua TargetSC/*.lua TargetSC/tests/*.lua tools/test_learning_ui.lua tools/test_visual_commands.lua tools/test_skillchains_demo.lua; do luac5.1 -p "$f"; done
+      - name: Regression and integration simulations
+        run: |
+          lua5.1 tools/test_learning_ui.lua
+          lua5.1 tools/test_visual_commands.lua
+          lua5.1 tools/test_skillchains_demo.lua
+          lua5.1 TargetSC/tests/test_motion.lua
+          lua5.1 TargetSC/tests/test_mb_glyph.lua
+          lua5.1 TargetSC/tests/test_bell_burst.lua
+          lua5.1 TargetSC/tests/test_display_bell.lua
+          lua5.1 TargetSC/tests/test_mb_finish.lua
+          lua5.1 TargetSC/tests/test_terminal_intro.lua
+          lua5.1 TargetSC/tests/test_clapper.lua
+          lua5.1 TargetSC/tests/test_bloom_descent.lua
+          lua5.1 TargetSC/tests/test_resonance.lua
+          lua5.1 TargetSC/tests/test_transport.lua
+          lua5.1 TargetSC/tests/test_local_bus.lua
+          lua5.1 TargetSC/tests/test_addon.lua
+          lua5.1 TargetSC/tests/test_missing.lua
+          lua5.1 TargetSC/tests/test_missing.lua mismatch
+          git show e095657a2e7ecc5a49d05e96c1b78523a4860af5:Skillchains.lua > /tmp/Skillchains-baseline.lua
+          lua5.1 TargetSC/tests/test_skillchains_regression.lua /tmp/Skillchains-baseline.lua
+      - name: Package single-folder installable Test1 ZIP
+        run: python3 tools/package_targetsc_unified.py
+      - name: Publish complete unified test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: TargetSC-Unified-0.12.0-Test1
+          path: dist/TargetSC-Unified-0.12.0-Test1.zip
+          if-no-files-found: error
+          retention-days: 30

@@ -39,10 +39,12 @@ _addon={}
 package.preload.chat=function()string.color=function(s)return s end return {}end
 package.preload.config=function()return {load=function(d)return d end,save=function(settings)saved=settings end}end
 package.preload._TargetSC=function()return native end
+package.preload.sc_runtime=function()return {command=function(cmd) _G.__test_sc_command=cmd end}end
 assert(loadfile('TargetSC/TargetSC.lua'))()
 events.load()
-assert(native.starts==1 and commands[#commands]=='lua c Skillchains targetsc subscribe')
+assert(native.starts==1 and #commands==0,'standalone package never commands another addon')
 local command=events['addon command']
+command('sc','status') assert(_G.__test_sc_command=='status','internal SC command routing')
 command('preview','demo','Liquefaction')
 for _,t in ipairs({.5,2.5,3.05,9.5,17.5,24.5,30.5,33.9,40.1})do now=t events.prerender() end
 assert(native.draws==9 and #native.rings==0,'preview exits with clean geometry')
