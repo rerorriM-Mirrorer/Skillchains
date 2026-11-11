@@ -2,6 +2,8 @@
 
 **2026-11-10 integration CI correction:** The original `test_transport.lua` deliberately loads two isolated Windower addon environments and is no longer an appropriate Test1 merged-load test. Keep it in history for standalone pair regression; the unified workflow runs the direct event test `test_local_bus.lua` instead. `test_missing.lua` now stubs only the embedded SC engine so it can continue testing the actual TargetSC error path without requiring a real Windower action listener. Native build, asset generation, and Lua parsing already passed before this correction. Live FFXI still untested.
 
+**Unified-loader smoke test:** A new host simulation now loads the real `TargetSC.lua` and embedded `sc_runtime.lua` in a single Windower-like Lua environment, stubbing only native drawing and game/HUD APIs. It verifies one command dispatcher and action listener, direct SC/MB state propagation, unchanged deadlines after resync, independent renderer on/off, zone cleanup and zero inter-addon command dispatch. This remains host simulation, not actual FFXI testing.
+
 ## TargetSC 0.12.0 unified Test1 — in-process merger (2026-11-10)
 
 - **Branch:** `development/targetsc-unified-test1`, based on the preserved

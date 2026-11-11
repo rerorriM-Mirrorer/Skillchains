@@ -52,6 +52,7 @@ jobs:
           # The historical two-addon transport test is retained, but superseded
           # here by the in-process bridge test below.
           lua5.1 TargetSC/tests/test_local_bus.lua
+          lua5.1 TargetSC/tests/test_integrated_loader.lua
           lua5.1 TargetSC/tests/test_addon.lua
           lua5.1 TargetSC/tests/test_missing.lua
           lua5.1 TargetSC/tests/test_missing.lua mismatch
