@@ -48,6 +48,35 @@ e.windower={
     }
 }
 e.ActionPacket={open_listener=function(fn)e.action_handler=fn end}
+-- Windower-style iterators across all targets and subactions.
+e.ActionPacket.new=function(act)
+    local packet={}
+    function packet:get_category_string()return act.category end
+    function packet:get_id()return act.actor_id end
+    function packet:get_targets()
+        local i=0
+        return function()
+            i=i+1
+            local raw=act.targets and act.targets[i]
+            if not raw then return nil end
+            return {id=raw.id,get_actions=function()
+                local j=0
+                return function()
+                    j=j+1
+                    local action=raw.actions and raw.actions[j]
+                    if not action then return nil end
+                    return {
+                        get_message_id=function()return action.message end,
+                        get_spell=function()return action.param or 1,action.resource,
+                            action.id or act.param,false,action.conclusion or false end,
+                        get_add_effect=function()return action.add_effect or false end
+                    }
+                end
+            end}
+        end
+    end
+    return packet
+end
 local module_cache={}
 e.require=function(mod)
     if mod=='config'then return e.config end
@@ -84,7 +113,7 @@ e.require=function(mod)
 end
 
 setfenv(assert(loadfile('TargetSC/TargetSC.lua')),e)()
-assert(e._addon.name=='TargetSC'and e._addon.version=='0.12.0-unified-test1')
+assert(e._addon.name=='TargetSC'and e._addon.version=='0.12.1-unified-test2')
 assert(type(e.action_handler)=='function','real action packet listener installed')
 assert(#(handlers.load or{})==2,'both systems register load inside one addon')
 assert(#(handlers['addon command']or{})==1,'only one command dispatcher')
@@ -103,6 +132,41 @@ now=104
 e.apply_properties(71,'weapon_skills',19,{'Detonation'},3,2,false,nil,1)
 assert(model.states[71].sc_close==113 and model.states[71].mb_close==114)
 local created=model.states[71].created
+-- Uriel Blade (Trust/NPC AoE) must set each successful enemy's
+-- resonance, not only the first entity reported in the action packet.
+now=106
+local function hit(id,message,resource,ability,more)
+    local t={id=id,actions={{message=message,resource=resource,id=ability}}}
+    if more then for _,act in ipairs(more)do t.actions[#t.actions+1]=act end end
+    return t
+end
+e.action_handler({category='mob_tp_finish',actor_id=988,param=2273,
+    targets={hit(81,188,'monster_abilities',2273),
+        hit(82,317,'monster_abilities',2273),
+        hit(83,110,'monster_abilities',2273)}})
+assert(not model.states[81],'miss never starts a window')
+assert(model.states[82] and model.states[83],'AoE must register secondary targets')
+assert(model.states[82].sc_close==116 and model.states[83].sc_close==116)
+-- Myrr's WS should register in Cioara's client from an external actor.
+now=107
+e.action_handler({category='weaponskill_finish',actor_id=721,param=160,
+    targets={hit(84,185,'weapon_skills',160)}})
+assert(model.states[84]and model.states[84].sc_close==117,
+    'external actor Shining Strike must open Impaction window')
+now=108
+e.action_handler({category='weaponskill_finish',actor_id=721,param=160,
+    targets={hit(85,188,'weapon_skills',160)}})
+assert(not model.states[85],'missed Shining Strike cannot open a window')
+-- If multiple subactions exist, confirmed SC outranks ordinary opener.
+now=109
+e.action_handler({category='mob_tp_finish',actor_id=988,param=2273,
+    targets={hit(82,317,'monster_abilities',2273,{
+       {message=317,resource='monster_abilities',id=2273,
+        conclusion=true,add_effect={message_id=291,animation='fusion'}}
+    })}})
+assert(model.states[82].step==2 and model.states[82].level==2,
+    'confirmed skillchain overrides opener in same packet')
+assert(model.states[82].mb_close==119,'MB window based on chain time')
 event('addon command','sync')
 assert(model.synced and model.states[71].created==created,'snapshot keeps timestamps')
 event('addon command','sc','status')
@@ -113,6 +177,7 @@ e.apply_properties(72,'weapon_skills',32,{'Scission'},3,1)
 assert(not model.states[72],'off unsubscribes world, not combat listener')
 event('addon command','on')
 assert(model.synced and model.states[72],'on restores source snapshot')
+assert(model.states[82] and model.states[83] and model.states[84],'AoE and party states survive resubscription')
 event('zone change')
 assert(not next(model.states),'zone clears both consumer and source')
 event('unload')
