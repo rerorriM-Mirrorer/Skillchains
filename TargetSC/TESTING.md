@@ -1,5 +1,20 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC unified Test1 — green host verification (2026-11-10)
+
+**Verified commit:** [`a941b82`](https://github.com/rerorriM-Mirrorer/Skillchains/commit/a941b82976b214f2466e61398da59c41a4c4346b). **GitHub Actions:** [run 42964264172](https://github.com/rerorriM-Mirrorer/Skillchains/actions/runs/42964264172) completed successfully.
+
+- Lua 5.1 syntax validation of embedded and baseline files: **PASS**.
+- x86 native renderer rebuild and portable geometry tests: **PASS**.
+- HUD art generation and validation: **PASS**.
+- Existing Skillchains HUD/demo and TargetSC animation regression simulations: **PASS**.
+- New local publisher/receiver bridge test with states, burst, resync, zone and unload: **PASS**.
+- New single-process, actual-entry/runtime loader simulation: **PASS**.
+- Missing or incompatible native module with independent HUD stub: **PASS**.
+- One-folder TargetSC ZIP creation, artifact publication, manifest, required modules, no shipped personal settings and PNG integrity: **PASS**.
+- **Unverified:** Actual FFXI/Windower rendering, real combat timestamps, imported character settings on disk, graphics compatibility, multibox performance, install-and-restart behavior. The standalone two-addon transport regression remains historical; it is not a valid loader test for this merged build.
+- **Delivery:** GitHub Actions artifact `TargetSC-Unified-0.12.0-Test1` at run 42964264172. Requires unloading standalone Skillchains and preserving both prior data folders. Native DLL replacement requires clients closed.
+
 **2026-11-10 integration CI correction:** The original `test_transport.lua` deliberately loads two isolated Windower addon environments and is no longer an appropriate Test1 merged-load test. Keep it in history for standalone pair regression; the unified workflow runs the direct event test `test_local_bus.lua` instead. `test_missing.lua` now stubs only the embedded SC engine so it can continue testing the actual TargetSC error path without requiring a real Windower action listener. Native build, asset generation, and Lua parsing already passed before this correction. Live FFXI still untested.
 
 **Unified-loader smoke test:** A new host simulation now loads the real `TargetSC.lua` and embedded `sc_runtime.lua` in a single Windower-like Lua environment, stubbing only native drawing and game/HUD APIs. It verifies one command dispatcher and action listener, direct SC/MB state propagation, unchanged deadlines after resync, independent renderer on/off, zone cleanup and zero inter-addon command dispatch. This remains host simulation, not actual FFXI testing.
