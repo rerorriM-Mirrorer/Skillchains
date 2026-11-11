@@ -1,8 +1,8 @@
-name: TargetSC unified Test1 single-addon integration
+name: TargetSC unified Test2 AoE and helper-only HUD
 on:
   push:
     branches:
-      - development/targetsc-unified-test1
+      - development/targetsc-unified-aoe-helper-test2
   workflow_dispatch:
 permissions:
   contents: read
@@ -53,6 +53,7 @@ jobs:
           # here by the in-process bridge test below.
           lua5.1 TargetSC/tests/test_local_bus.lua
           lua5.1 TargetSC/tests/test_integrated_loader.lua
+          lua5.1 TargetSC/tests/test_helper_only.lua
           lua5.1 TargetSC/tests/test_addon.lua
           lua5.1 TargetSC/tests/test_missing.lua
           lua5.1 TargetSC/tests/test_missing.lua mismatch
@@ -63,7 +64,7 @@ jobs:
       - name: Publish complete unified test package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Unified-0.12.0-Test1
-          path: dist/TargetSC-Unified-0.12.0-Test1.zip
+          name: TargetSC-Unified-0.12.1-Test2
+          path: dist/TargetSC-Unified-0.12.1-Test2.zip
           if-no-files-found: error
           retention-days: 30
