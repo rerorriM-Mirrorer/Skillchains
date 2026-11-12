@@ -65,6 +65,21 @@ Stop drawing without leaving:
 scenehook_set_enabled(g_bus, g_slot, false);
 ```
 
+Leave, from your own shutdown (the function your Lua calls on `unload`), with
+the wait:
+
+```cpp
+if (g_bus && g_slot >= 0) {
+    scenehook_unregister(g_bus, g_slot, true);
+    g_slot = -1;
+}
+```
+
+`true` waits, up to a second, for a frame that is still inside the stub before
+your module can unmap (v2.1). Register again on your next start. Keep the
+`DllMain` call below as well: it is the backstop that runs however the addon
+goes away, and it cannot wait.
+
 Leave, from `DllMain`, unconditionally:
 
 ```cpp
@@ -80,7 +95,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID) {
 **This call is the one that must not be skipped.** `DLL_PROCESS_DETACH` is the
 only teardown point guaranteed to run however your addon goes away — a normal
 unload, a force-unload, or a Lua error during unload — and it runs before your
-image is unmapped. Do not move it into an unload event handler. The `false`
+image is unmapped. Do not replace it with an unload event handler. The `false`
 argument means "do not wait": the loader lock is held there, so only lock-free
 stores are performed.
 
@@ -141,3 +156,25 @@ different version refuses to join rather than guess at the layout. `ready`,
 only be appended to.
 
 32-bit only, which a `static_assert` enforces.
+
+## v2.1 (2026-10-30)
+
+**Compatible with v2.0 copies.** The bus layout, the client table and
+`SCENEHOOK_ABI_VERSION` (2) are unchanged, so a module built with v2.1 and one
+built with v2.0 attach to the same bus, draw in the same frame and hand the
+frame to each other exactly as before, in any load or unload order. Nothing
+needs updating at the same time; each module gets the v2.1 protection for
+itself when it is rebuilt with these two files.
+
+What changed:
+
+- `in_flight` now covers the owner stub's call into the game's own `draw_scene`
+  as well as the clients' callbacks, and `scenehook_unregister(..., true)` waits
+  up to a second for it. Before, a module unloaded while the render thread was
+  inside `draw_scene` could return into that module's stub after it had
+  unmapped. A v2.0 stub alongside simply counts a shorter span.
+- `find_draw_scene` refuses a build where the prologue matches more than once.
+- Call `scenehook_unregister(bus, slot, true)` from your module's own shutdown
+  (the function your Lua calls on `unload`), not only from `DllMain`: the wait
+  can only happen there. Keep the `DllMain` call with `may_wait = false` as the
+  backstop.
