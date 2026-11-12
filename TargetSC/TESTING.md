@@ -1,5 +1,38 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC unified Test2 — native renderer safety candidate (2026-11-12)
+
+- **Repository / branch:** `rerorriM-Mirrorer/Skillchains`,
+  `development/targetsc-native-safety-304`; based on the complete unified
+  Test2 AoE/helper branch, with the known-good source untouched.
+- **Upstream provenance:** TargetRing 3.0.4 commit
+  `982980f5009c06fdba070d0114a1869688e4764c` adds executable-memory
+  validation for COM device-discovery calls. SceneHook v2.1 from TargetRing
+  3.0.3 commit `d45806bf1edb270db86cd1343e87cafa2a064c9d` covers
+  the complete in-flight scene frame on unload/reload. Their ABI stays 2.
+- **Changes:** Native DLL version 0.5.1; defensive COM checks;
+  matching upstream SceneHook header/docs; fresh 32-bit DLL must replace the
+  checked-in older binary during CI packaging. No SC/MB action processing,
+  target tracking, 3D artwork, animation or settings modified.
+- **Build / checks:** CI cross-compile with MinGW `-Werror`, static safety
+  assertions, portable geometry and Lua 5.1/host simulations; package
+  integrity and compiled DLL identification. Record results after CI.
+  These are static/host checks, **not FFXI execution**.
+- **Live tests outstanding:** Backup `TargetSC/data`; **close all FFXI
+  clients before replacing native DLL**. Load the complete new TargetSC
+  folder; standalone Skillchains remains unloaded. Check device detection,
+  ground/sky bell + MB rings, targets and subtargets, zone changes,
+  switching targets after landed Uriel Blade, Myrr's Shining Strike,
+  `//tsc preview demo`, and unload/reload/start/stop (alone and with
+  TargetRing, either load order). Test standard D3D8 and dgVoodoo only
+  if present, note any crashes or render regression, and rollback to
+  prior unified Test2 if needed.
+- **Delivery:** GitHub Actions is expected to publish
+  `TargetSC-Unified-0.12.1-Test2-NativeSafety.zip`. Do not substitute
+  the older `TargetSC/libs/_TargetSC.dll` from the repository.
+- **Status:** Changes under development; record final commit and CI run
+  once confirmed. No live game testing has occurred for this candidate.
+
 ## TargetSC unified Test2 — AoE and learning HUD (2026-11-11)
 
 **Automated verification passed:** [GitHub Actions run 43067931891](https://github.com/rerorriM-Mirrorer/Skillchains/actions/runs/43067931891), from commit `9b200fc`. Native x86 DLL build, portable renderer geometry, HUD artwork generation, Lua 5.1 syntax, existing HUD/bell regressions, actual combined-loader simulation, new multi-target Uriel/missed-hit/Myrr/confirmed-SC tests, helper-only presentation tests, one-folder ZIP integrity and publication all **PASS**. All of these are compilation or host simulation, **not live FFXI testing**. The unified Test1 ZIP and branch remain available for rollback. Full live SC/MB timing and GripRumble parity are outstanding.
