@@ -1,5 +1,25 @@
 # TargetSC — elemental resonance
 
+## 0.12.1 unified Test2 — native safety candidate (2026-11-12)
+
+**Private safety build on `development/targetsc-native-safety-304`, not a public
+release or an in-game validated version.** This keeps every SC/MB and bell
+behavior from unified Test2, while updating the native DLL to 0.5.1:
+
+- TargetRing 3.0.4: validate candidate COM function pointers before invoking
+  them during Direct3D device discovery, including release and query methods
+  and potential resource GetDevice calls.
+- SceneHook v2.1: drain an entire in-flight scene frame during unload/reload,
+  including the trampoline call. ABI remains 2.
+- CI rebuilds the 32-bit native DLL and packages that compiled DLL, **not** the
+  older checked-in binary. Archive name ends in `NativeSafety.zip`.
+
+For in-game testing, **close every FFXI client before replacing the DLL**,
+back up `TargetSC/data/`, and keep the standalone Skillchains addon unloaded.
+Verify ring render, zoning, target switching, graphic-wrapper compatibility
+where applicable, plus `//lua unload TargetSC` / reload with and without
+TargetRing running. Live stability remains to be verified. See TESTING.md.
+
 ## 0.12.1 unified Test2 — target-specific AoE and helper-only HUD
 
 **Test2 is a private regression build, not a public release.** It fixes the
@@ -871,3 +891,7 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 
 
 2026-10-21 Test9: lifted black/white-gold terminal stars, larger terminal discs, synchronized source-driven MB white introductions; preserved Animation8.7 and native 0.5.0. Author: A.
+
+### 2026-11-12 — Unified Test2 native safety candidate (A)
+
+Ported TargetRing 3.0.4 COM candidate executable-memory validation and SceneHook v2.1 full-frame unload safety into native 0.5.1. No combat or visual behavior changes. New test ZIP deliberately contains CI-rebuilt native DLL; live FFXI verification pending.
