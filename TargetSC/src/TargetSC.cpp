@@ -1,4 +1,4 @@
-// TargetSC 0.5.0 — Author: A.
+// TargetSC 0.5.1 — Author: A.
 // Device discovery, projection and model following adapted from Broguypal's
 // TargetRing (BSD-3-Clause); see licenses/ and THIRD_PARTY_NOTICES.md.
 // SceneHook.h is deliberately byte-identical to both reference addons.
@@ -249,6 +249,29 @@ void* vtable_slot(std::uintptr_t object, int index) {
     return reinterpret_cast<void*>(address);
 }
 
+// TargetRing 3.0.4: only call candidate COM functions in committed,
+// executable memory. An arbitrary readable vtable can otherwise point at
+// garbage code and crash the game during renderer discovery.
+bool code_at(void const* address) {
+    if (!address) {
+        return false;
+    }
+
+    MEMORY_BASIC_INFORMATION region {};
+    return VirtualQuery(address, &region, sizeof(region))
+        && region.State == MEM_COMMIT
+        && page_executable(region.Protect);
+}
+
+void* com_slot(std::uintptr_t object, int index) {
+    void* const fn = vtable_slot(object, index);
+    return code_at(fn) ? fn : nullptr;
+}
+
+bool com_shaped(std::uintptr_t object) {
+    return com_slot(object, 0) && com_slot(object, 1) && com_slot(object, 2);
+}
+
 using fn_release = unsigned long(__stdcall*)(void*);
 void* d3d_device_=nullptr;
 std::uintptr_t g_entity_array = 0;
@@ -458,7 +481,7 @@ void release_com(void* object) {
         return;
     }
     auto release = reinterpret_cast<fn_release>(
-        vtable_slot(reinterpret_cast<std::uintptr_t>(object), 2));
+        com_slot(reinterpret_cast<std::uintptr_t>(object), 2));
     if (release) {
         release(object);
     }
@@ -467,7 +490,7 @@ void release_com(void* object) {
 bool query_interface(std::uintptr_t object, GUID const& iid, void*& out) {
     out = nullptr;
 
-    void* fn = vtable_slot(object, 0);
+    void* fn = com_slot(object, 0);
     if (!fn) {
         return false;
     }
@@ -567,7 +590,7 @@ bool candidate_at(
 
     std::uintptr_t vtable = 0;
     std::memcpy(&vtable, reinterpret_cast<void const*>(object), sizeof(vtable));
-    return vtable_in_d3d8_module(vtable, modules, count);
+    return vtable_in_d3d8_module(vtable, modules, count) && com_shaped(object);
 }
 
 bool adopt_device(
@@ -664,7 +687,7 @@ void acquire_device(std::uintptr_t renderer) {
             continue;
         }
 
-        void* get_device = vtable_slot(object, 3);
+        void* get_device = com_slot(object, 3);
         if (!get_device) {
             continue;
         }
@@ -933,11 +956,11 @@ int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.5.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.5.1");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.5.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.5.1 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;
