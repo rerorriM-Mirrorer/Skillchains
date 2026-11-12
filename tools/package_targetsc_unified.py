@@ -9,7 +9,7 @@ import subprocess
 ROOT=Path(__file__).resolve().parent.parent
 SRC=ROOT/'TargetSC'
 DIST=ROOT/'dist'
-NAME='TargetSC-Unified-0.12.1-Test2.zip'
+NAME='TargetSC-Unified-0.12.1-Test2-NativeSafety.zip'
 MODULES={'TargetSC.lua','sc_runtime.lua','targetsc_local.lua','targetsc_bridge.lua',
          'skills.lua','resonance_ui.lua','resonance_fx.lua','learning_ui.lua',
          'skillchains_demo.lua','resonance.lua','resonance_motion.lua',
@@ -44,7 +44,7 @@ assert not any(n.startswith('Skillchains/') or '/data/' in n or n.endswith('sett
 assert all(n.startswith('TargetSC/') for n in names)
 assert len([n for n in names if n.endswith('.png')])>=35, 'missing HUD artwork'
 
-manifest={'version':'0.12.1-unified-test2','kind':'single-addon-private-test',
+manifest={'version':'0.12.1-unified-test2-native-safety','kind':'single-addon-private-test',
           'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
           'files':{n:hashlib.sha256(p.read_bytes()).hexdigest() for n,p in files}}
 DIST.mkdir(exist_ok=True)
