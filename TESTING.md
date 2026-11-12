@@ -14,10 +14,13 @@
   matching upstream SceneHook header/docs; fresh 32-bit DLL must replace the
   checked-in older binary during CI packaging. No SC/MB action processing,
   target tracking, 3D artwork, animation or settings modified.
-- **Build / checks:** CI cross-compile with MinGW `-Werror`, static safety
-  assertions, portable geometry and Lua 5.1/host simulations; package
-  integrity and compiled DLL identification. Record results after CI.
-  These are static/host checks, **not FFXI execution**.
+- **Build / checks: PASS** in [GitHub Actions run 43276240083](https://github.com/rerorriM-Mirrorer/Skillchains/actions/runs/43276240083),
+  code commit `c3fca25cfcd5a9b116b8638b1b553d79d96ed5bc`:
+  static native safety assertions, MinGW x86 `-Werror` DLL cross-compile,
+  actual compiled-DLL version confirmation, C++ geometry regression executables,
+  Lua 5.1 syntax, HUD art generation, complete embedded Skillchains and
+  TargetSC host/integration simulations, final ZIP package integrity, and
+  artifact publication. These are **static/host checks, not FFXI execution**.
 - **Live tests outstanding:** Backup `TargetSC/data`; **close all FFXI
   clients before replacing native DLL**. Load the complete new TargetSC
   folder; standalone Skillchains remains unloaded. Check device detection,
@@ -27,11 +30,17 @@
   TargetRing, either load order). Test standard D3D8 and dgVoodoo only
   if present, note any crashes or render regression, and rollback to
   prior unified Test2 if needed.
-- **Delivery:** GitHub Actions is expected to publish
-  `TargetSC-Unified-0.12.1-Test2-NativeSafety.zip`. Do not substitute
-  the older `TargetSC/libs/_TargetSC.dll` from the repository.
-- **Status:** Changes under development; record final commit and CI run
-  once confirmed. No live game testing has occurred for this candidate.
+- **Delivery: PASS.** GitHub Actions published artifact
+  `TargetSC-Unified-0.12.1-Test2-NativeSafety` (ID `13970711952`)
+  containing `TargetSC-Unified-0.12.1-Test2-NativeSafety.zip`;
+  reproducible package source commit `c3fca25`. Inspected actual ZIP:
+  all 73 files remain under `TargetSC/`, native `libs/_TargetSC.dll`
+  is a Windows PE containing `TargetSC 0.5.1`, DLL hash matches manifest,
+  test ZIP integrity passed, settings/data not included.
+  Do not substitute the older checked-in DLL.
+- **Status:** All automated CI checks green; **live FFXI pending**. The
+  documentation recording this result may be committed after the tested
+  source commit; package manifest identifies the actual tested source.
 
 ## TargetSC unified Test2 — AoE and learning HUD (2026-11-11)
 
