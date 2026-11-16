@@ -1,5 +1,36 @@
 # TargetSC — elemental resonance
 
+## 0.13.0 unified Test3 — MB glyph rise, gradient discs, smooth SC opening
+
+**Private test build.** Install over Test2 (keep `TargetSC/data/`). This batch
+includes a **new native DLL (0.6.0)**: close every FFXI client before
+replacing `TargetSC/libs/_TargetSC.dll`. If you only reload Lua with the old
+DLL still loaded, everything works except that gradients fall back to a
+four-step approximation.
+
+What changed, and the commands to tune or undo each:
+
+- **Large glyph on a confirmed MB** now rises to just above the MB ring,
+  stays **white**, and falls back at the same time as the lifted property
+  trace. Another MB while it is up keeps it up (no dip) and restarts the hold.
+  - `//tsc mb glyph height <0-2>` — 1 = MB ring height, default 1.1; 0 = old rise.
+  - `//tsc mb glyph tint <0-1>` — 0 white (default), 1 old elemental tint.
+  - `//tsc mb glyph rise <0-1>` — seconds to rise (default .15); 0 = instant.
+- **Quieter new-window flash** on the large glyph:
+  `//tsc mb intro glyph <0-1>` (default .5) and `//tsc mb intro disc <0-1>`
+  for the small property disc (default 1, unchanged).
+- **Two-element discs** (e.g. Fusion, Distortion) are now a smooth gradient:
+  `//tsc discs blend gradient|split`.
+- **Presets:** `//tsc preset default|killala|discson|discsoff|vivid|gentle|legacy`.
+  `default` is the Test3 look; `killala` is the exact pre-Test3 look (your
+  Killala profile, which is also identical to Cioara's saved settings).
+  `//tsc opener preset original|gap|black|muted|combined|quiet` and
+  `//tsc sc glow preset balanced|capforward` are unchanged.
+- **SC HUD opening sweep** now draws every game frame while it animates
+  (30 Hz otherwise, on an even cadence): `//tsc sc smooth on|off`.
+- **SC HUD position preset:** `//tsc sc positions default|cioara` moves the SC
+  bar, MB ribbon and learning panel (positions and widths only).
+
 ## 0.12.1 unified Test2 — target-specific AoE and helper-only HUD
 
 **Test2 is a private regression build, not a public release.** It fixes the
@@ -871,3 +902,6 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 
 
 2026-10-21 Test9: lifted black/white-gold terminal stars, larger terminal discs, synchronized source-driven MB white introductions; preserved Animation8.7 and native 0.5.0. Author: A.
+
+
+2026-11-16 unified Test3 (0.13.0): large MB glyph rises white to the MB ring and lands with the trace; dimmer intro glyph; native 0.6.0 gradient two-element discs; killala preset; every-frame SC opening sweep; SC positions presets. Test2 promoted to master as known-good. Author: A.
