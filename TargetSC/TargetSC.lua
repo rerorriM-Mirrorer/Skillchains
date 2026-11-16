@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.12.1-unified-test2'
+_addon.version='0.13.0-unified-test3'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -142,7 +142,7 @@ local function help()
         {'mb period <0.2-6>','Large glyph full breathing cycle in seconds (default 2).'},
         {'mb rise|expand <0-2>','Burst glyph rise as model-height fraction / extra radial growth.'},
         {'awakening on|off|opacity <0-1>','Filled white opening glyph; MB breathing/burst controls are independent.'},
-        {'preset default|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test12 look; killala = exact pre-Test12 (Killala/Cioara) look.'},
+        {'preset default|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; killala = exact pre-Test3 (Killala/Cioara) look.'},
         {'mb glyph height <0-2>','Burst rise of the large glyph as a fraction of the MB ring height; 1 = ring, 0 = old mb rise (default 1.1).'},
         {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},
         {'mb glyph rise <0-1>','Seconds the large glyph takes to rise; 0 = instant like the trace (default .15).'},
@@ -160,7 +160,7 @@ local function help()
         {'unload','Release the renderer and unload TargetSC.'},
         {'help','Show this command list.'},
     }
-    windower.add_to_chat(0,('TargetSC 0.11.1 — elemental resonance'):color(167))
+    windower.add_to_chat(0,('TargetSC '.._addon.version..' — elemental resonance'):color(167))
     for _,line in ipairs(lines) do
         windower.add_to_chat(0,('//tsc '):color(200)..line[1]:color(207)..(' -> '):color(200)..line[2]:color(0))
     end

@@ -1,4 +1,4 @@
--- Test12 (2026-11-16): large glyph rises to just above the MB ring, stays
+-- Test3 (2026-11-16): large glyph rises to just above the MB ring, stays
 -- white, lands with the property trace, never dips on a re-strike; quieter
 -- intro flash on the large glyph; gradient two-element discs; killala preset.
 package.path='./TargetSC/?.lua;'..package.path
@@ -91,4 +91,4 @@ for k,v in pairs(R.defaults)do
 end
 assert(settings.mb_glyph_height==0 and settings.disc_blend=='split')
 assert(cmd('preset',{'default'})and settings.mb_glyph_height==1.1 and settings.disc_blend=='gradient')
-print('PASS Test12 glyph rise to MB ring, white glyph, synced landing, re-strike continuity, intro glyph, gradient discs, killala preset')
+print('PASS Test3 glyph rise to MB ring, white glyph, synced landing, re-strike continuity, intro glyph, gradient discs, killala preset')

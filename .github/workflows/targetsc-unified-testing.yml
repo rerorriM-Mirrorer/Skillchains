@@ -1,8 +1,10 @@
-name: TargetSC unified Test2 AoE and helper-only HUD
+name: TargetSC unified Test3 glyph rise, gradient discs, smooth HUD
 on:
   push:
     branches:
       - development/targetsc-unified-aoe-helper-test2
+      - development/targetsc-mb-rise-gradient
+      - master
   workflow_dispatch:
 permissions:
   contents: read
@@ -54,6 +56,8 @@ jobs:
           lua5.1 TargetSC/tests/test_local_bus.lua
           lua5.1 TargetSC/tests/test_integrated_loader.lua
           lua5.1 TargetSC/tests/test_helper_only.lua
+          lua5.1 TargetSC/tests/test_glyph_rise.lua
+          lua5.1 TargetSC/tests/test_hud_cadence.lua
           lua5.1 TargetSC/tests/test_addon.lua
           lua5.1 TargetSC/tests/test_missing.lua
           lua5.1 TargetSC/tests/test_missing.lua mismatch
@@ -64,7 +68,7 @@ jobs:
       - name: Publish complete unified test package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Unified-0.12.1-Test2
-          path: dist/TargetSC-Unified-0.12.1-Test2.zip
+          name: TargetSC-Unified-0.13.0-Test3
+          path: dist/TargetSC-Unified-0.13.0-Test3.zip
           if-no-files-found: error
           retention-days: 30

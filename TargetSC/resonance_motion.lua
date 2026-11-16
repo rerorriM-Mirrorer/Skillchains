@@ -20,14 +20,14 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     mb_intro=.6,mb_intro_flashes=1,ground_lift=.04,
     mb_style='clapper',mb_size=.5,mb_position=.5,mb_spin=.025,
     mb_breath_min=.35,mb_breath_gain=3,mb_hold=.6,mb_return=2,mb_lift=.3,mb_shimmer=1,
-    -- Test12 (2026-11-16): the large lower glyph rises to just above the MB
+    -- Test3 (2026-11-16): the large lower glyph rises to just above the MB
     -- ring on a confirmed burst, stays white, and lands with the property
     -- trace. glyph_height 0 / glyph_tint 1 / intro_glyph 1 restore Killala.
     mb_glyph_height=1.1,mb_glyph_tint=0,mb_glyph_rise=.15,mb_intro_glyph=.5,mb_intro_disc=1,
     -- Two-element property discs blend smoothly instead of splitting in half.
     disc_blend='gradient'}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
--- TargetSC settings): `//tsc preset killala` restores the pre-Test12 look.
+-- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while

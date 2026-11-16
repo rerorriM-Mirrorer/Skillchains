@@ -29,7 +29,7 @@ function M.new(settings,defaults,save,say,killala)
     local function preset(value)
         if not presets[value]then say('Use //tsc preset '..preset_names..'.');return end
         for key,v in pairs(defaults)do settings[key]=v end
-        -- killala: the exact pre-Test12 2026-10-22 profile (also Cioara's).
+        -- killala: the exact pre-Test3 2026-10-22 profile (also Cioara's).
         if value=='killala'then for key,v in pairs(killala or {})do settings[key]=v end end
         if value=='discsoff'then settings.discs=false
         elseif value=='vivid'then
@@ -101,7 +101,7 @@ function M.new(settings,defaults,save,say,killala)
             if not range then say('Use //tsc mb breath min <0-1> or gain <0-8>.');return true end
             numeric('mb_breath_'..name,args[3],range,'mb breath '..name)
         elseif command=='mb'and value=='glyph'then
-            -- Large lower glyph's confirmed-burst response (Test12).
+            -- Large lower glyph's confirmed-burst response (Test3).
             local name=(args[2]or ''):lower()
             local ranges={height={0,2},tint={0,1},rise={0,1}}
             if not ranges[name]then

@@ -18,7 +18,7 @@ for k,v in pairs(expected)do assert(R.defaults[k]==v,'snapshot default '..k)end
 local s={id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,
  step=2,level=2,properties={'Fusion'},elements=R.elements('Fusion')}
 local function model()local m=R.new();m.states[71]=copy(s);return m end
--- Test12: pin the exact Test11 Killala look (killala preset overrides).
+-- Test3: pin the exact Test11 Killala look (killala preset overrides).
 local o=copy(R.defaults);for k,v in pairs(R.killala)do o[k]=v end;o.mb_expand=.4;o.mb_rise=.2;o.mb_intro=0;o.mb_ending_style='off'
 local hit=model();hit.bursts[71]={{at=104,color=R.element_color('Fire')}}
 local plain=model()

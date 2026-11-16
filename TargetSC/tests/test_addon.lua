@@ -17,7 +17,7 @@ function native.ring(r,h,w,c,px,sectors,c2,c3,c4,rotation,gap)
 end
 function native.disc(r,h,a,c,g,outline,sectors,c2,c3,c4,blend)
     assert(sectors>=1 and sectors<=4 and outline>=0 and outline<=4294967295)
-    -- Test12: this mock reports DLL 0.5.0, so Lua must send its four-step
+    -- Test3: this mock reports DLL 0.5.0, so Lua must send its four-step
     -- gradient fallback (blend 0) rather than the 0.6.0 gradient flag.
     assert(blend==0,'0.5.0 native receives no gradient flag')
     if sectors==4 then native.fallbacks=(native.fallbacks or 0)+1 end
