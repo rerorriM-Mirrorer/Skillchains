@@ -34,10 +34,30 @@ end
 for _,r in ipairs(f)do if #r.colors==1 then assert(r.blend==0)end end
 local split=copy(o);split.ring_blend='split'
 for _,r in ipairs(frame(l2,104,split))do assert(r.blend==0,'split restores sectors')end
+-- Firm: four stops A,A,B,B (colors hold, fade concentrated where they meet).
+local firm=copy(o);firm.ring_blend='firm';firm.disc_blend='firm'
+local ff=frame(l2,104,firm)
+for _,part in ipairs({'ground','sky'})do
+ local core=rings(ff,part,'core')
+ for j,r in ipairs(core)do
+  assert(#r.colors==4 and r.blend==1,part..' firm four stops')
+  assert(r.colors[1]%16777216==r.colors[2]%16777216 and r.colors[3]%16777216==r.colors[4]%16777216,'A,A,B,B')
+ end
+ assert(core[1].colors[1]%16777216==core[2].colors[3]%16777216,part..' firm strands still opposite')
+end
+local fdisc;for _,d in ipairs(ff.discs)do if d.role=='property'then fdisc=d end end
+assert(#fdisc.colors==4 and fdisc.blend==1 and fdisc.colors[1]==fdisc.colors[2]and fdisc.colors[3]==fdisc.colors[4],'firm disc A,A,B,B')
+local shaded=copy(firm);shaded.ring_shade=.25
+local sr=rings(frame(l2,104,shaded),'ground','core')[1]
+assert(math.floor(sr.colors[1]/16777216)>math.floor(sr.colors[3]/16777216),'firm keeps the lit side')
+for _,r in ipairs(frame(opener,104,firm))do if r.part=='ground'or r.part=='sky'then assert(r.blend==0)end end
 -- Commands and presets.
 local settings=copy(R.defaults)
 local cmd=C.new(settings,R.defaults,function()end,function()end,R.killala)
 assert(cmd('rings',{'blend','split'})and settings.ring_blend=='split')
+assert(cmd('rings',{'blend','firm'})and settings.ring_blend=='firm')
+assert(cmd('rings',{'blend','split'})and settings.ring_blend=='split')
+assert(cmd('discs',{'blend','firm'})and settings.disc_blend=='firm')
 assert(cmd('rings',{'blend','swirl'})and settings.ring_blend=='split')
 assert(cmd('rings',{})and settings.ring_blend=='split')
 assert(cmd('preset',{'default'})and settings.ring_blend=='gradient')

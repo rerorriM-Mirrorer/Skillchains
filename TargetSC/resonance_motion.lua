@@ -246,24 +246,32 @@ function M.frame(model,s,now,radius,height,opts,context)
         if a<=.002 or r<.01 then return end
         r=min(r,100)
         local p=packed(colors,a)
+        local mode=option(opts,'ring_blend')
+        local smooth_mode=mode=='gradient'or mode=='firm'
         local shade=option(opts,'ring_shade')
-        if shade>0 and not opener and (part=='ground'or part=='sky')and
-            option(opts,'ring_blend')=='gradient'and #colors<=2 then
-            -- One side slightly brighter, the opposite slightly dimmer; the
-            -- native gradient blends alpha too, so this soft "lit side" turns
-            -- with the ring. Two-color rings keep A->B order: A+ | mid | B- | mid.
-            if #colors==1 then
-                p={context.argb(colors[1],a*(1+shade)),context.argb(colors[1],a*(1-shade))}
+        local eligible=not opener and (part=='ground'or part=='sky')and #colors<=2
+        if eligible and smooth_mode and (shade>0 or (mode=='firm'and #colors==2))then
+            -- Lit side: one side slightly brighter, the opposite slightly
+            -- dimmer; the native gradient blends alpha too, so it turns with
+            -- the ring. gradient: A+ | mid | B- | mid (even fade).
+            -- firm: A+ | A | B- | B — each color holds through its half and
+            -- the fade concentrates where they meet (four-stop "harder" blend).
+            local c1,c2=colors[1],colors[#colors]
+            if mode=='firm'then
+                p={context.argb(c1,a*(1+shade)),context.argb(c1,a*(1+shade*.35)),
+                    context.argb(c2,a*(1-shade)),context.argb(c2,a*(1-shade*.35))}
+            elseif #colors==1 then
+                p={context.argb(c1,a*(1+shade)),context.argb(c1,a*(1-shade))}
             else
-                local middle=mix(colors[1],colors[2],.5)
-                p={context.argb(colors[1],a*(1+shade)),context.argb(middle,a),
-                    context.argb(colors[2],a*(1-shade)),context.argb(middle,a)}
+                local middle=mix(c1,c2,.5)
+                p={context.argb(c1,a*(1+shade)),context.argb(middle,a),
+                    context.argb(c2,a*(1-shade)),context.argb(middle,a)}
             end
         end
         out[#out+1]={radius=r,offset=h,width=0,pixels=pixels,color=p[1],colors=p,
             rotation=rotation or 0,role=role,part=part,strand=strand,
             gap=opener and (part=='ground'or part=='sky')and option(opts,'opener_gap')or 0,
-            blend=not opener and #p>1 and option(opts,'ring_blend')=='gradient'and 1 or 0}
+            blend=not opener and #p>1 and smooth_mode and 1 or 0}
     end
     local function ring(r,h,colors,a,part,strand,rotation,light)
         local opening=opener and (part=='ground'or part=='sky')
@@ -279,9 +287,11 @@ function M.frame(model,s,now,radius,height,opts,context)
         if (a<=.002 and outline<=.002)or r<.01 or #out.discs>=8 then return end
         r=min(r,100)
         local p=packed(colors,a)
+        local mode=option(opts,'disc_blend')
+        if mode=='firm'and #p==2 then p={p[1],p[1],p[2],p[2]}end -- hold, then meet
         out.discs[#out.discs+1]={radius=r,offset=h,rotation=angle,color=p[1],colors=p,
             glyph=glyph,outline=context.argb(stroke_color or white,outline),role=role,
-            blend=#p>1 and option(opts,'disc_blend')=='gradient'and 1 or 0}
+            blend=#p>1 and (mode=='gradient'or mode=='firm')and 1 or 0}
     end
     local electric=1
     if not opener and s.level==3 then electric=.68+.32*sin(age*11)^2

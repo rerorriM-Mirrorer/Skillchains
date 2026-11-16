@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.13.3 unified Test3.3 — firm blend option (2026-11-16)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.6.0 unchanged). Author: A.
+
+**User question/request:** current stage speeds were listed (global .1 × opener 4 / L1 2 / L2 3 / L3 4 / L4 0 turns/sec; minimum .5 → .05; per-stage max 4, raise `discs speed` to go further). User asked whether gradients could hold each side's own color longer with the fade concentrated where the colors meet ("harder"/"sharper" transition, narrower falloff); chose to feel out the Lua-only four-stop approach first.
+
+**Change:** `rings blend firm` and `discs blend firm` send A,A,B,B four stops with the native gradient, so each color holds pure for about a quarter turn and the fade occupies the two quarters where they meet. With shading, firm rings carry a lit half: A+ | A | B- | B (single-color rings: bright half/dim half). Strand order and openers unchanged. On a 0.5.0 DLL firm falls back to plain halves. A continuous native hardness slider remains a possible later DLL batch.
+
+**Host verification (not FFXI):** full suite + `test_ring_blend` firm checks (four stops, A,A,B,B, opposite strands preserved, firm disc, lit side, openers split, commands) PASS. **Live pending:** compare `rings blend gradient` vs `firm` and `discs blend gradient` vs `firm`.
+
 ## TargetSC 0.13.2 unified Test3.2 — rings turn with the disc, lit side, MB ring settles (2026-11-16)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.6.0 DLL unchanged from Test3.1). Author: A.

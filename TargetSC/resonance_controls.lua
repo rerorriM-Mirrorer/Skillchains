@@ -50,7 +50,7 @@ function M.new(settings,defaults,save,say,killala)
         elseif disc_limits[value]then numeric('disc_'..value,args[2],disc_limits[value],'discs '..value)
         elseif value=='blend'then
             local blend=(args[2]or ''):lower()
-            if blend~='gradient'and blend~='split'then say('Use //tsc discs blend gradient|split.');return end
+            if blend~='gradient'and blend~='firm'and blend~='split'then say('Use //tsc discs blend gradient|firm|split.');return end
             settings.disc_blend=blend;save(settings);say('Disc blend '..blend..'.')
         elseif value=='style'then
             local style=(args[2]or ''):lower()
@@ -129,14 +129,14 @@ function M.new(settings,defaults,save,say,killala)
             else say('See //tsc help for '..command..' controls.')end
         elseif command=='rings'then
             local choice=(args[2]or ''):lower()
-            if value=='blend'and (choice=='gradient'or choice=='split')then
+            if value=='blend'and (choice=='gradient'or choice=='firm'or choice=='split')then
                 settings.ring_blend=choice;save(settings);say('Ring blend '..choice..' (openers stay split).')
             elseif value=='spin'and (choice=='disc'or choice=='classic')then
                 settings.ring_spin=choice;save(settings);say('Ring spin '..choice..'.')
             elseif value=='shade'then numeric('ring_shade',args[2],{0,1},'rings shade')
             elseif value=='glow'and choice=='spin'then numeric('ring_glow_spin',args[3],{0,4},'rings glow spin')
             else
-                say('Use //tsc rings blend gradient|split | spin disc|classic | shade <0-1> | glow spin <0-4>.')
+                say('Use //tsc rings blend gradient|firm|split | spin disc|classic | shade <0-1> | glow spin <0-4>.')
             end
         elseif command=='opener'then opener(args,value)
         elseif command=='discs'then discs(args,value)

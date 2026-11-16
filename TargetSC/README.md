@@ -1,5 +1,11 @@
 # TargetSC — elemental resonance
 
+## 0.13.3 unified Test3.3 — firm blend option
+
+Lua-only. `//tsc rings blend firm` and `//tsc discs blend firm`: each color
+holds through its own side and the fade is concentrated where they meet.
+`gradient` is the even fade; `split` the old halves.
+
 ## 0.13.2 unified Test3.2 — rings turn with the disc, lit side, MB ring settles
 
 Lua-only over Test3.1 (no DLL change; `//lua reload TargetSC` is enough if
@@ -927,3 +933,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-16 unified Test3.1 (0.13.1): HUD countdown no longer freezes after smooth animation periods; gradient SC rings (openers split). Author: A.
 
 2026-11-16 unified Test3.2 (0.13.2): rings turn in step with the property disc easing to its minimum, lit-side shading, glow spin multiplier, MB ring settles onto the large glyph during endings. Author: A.
+
+2026-11-16 unified Test3.3 (0.13.3): firm blend option for rings and discs. Author: A.
