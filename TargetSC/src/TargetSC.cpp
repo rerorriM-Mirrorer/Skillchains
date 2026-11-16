@@ -72,7 +72,7 @@ constexpr std::uintptr_t kEntityTargetType=0x0EE;
 constexpr unsigned char kTargetTypeObject=3;
 int g_object_mode=0;
 struct Ring {float radius=0, offset=0, width=0; DWORD color=0; float pixels=0;
-    int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0,gap=0;};
+    int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0,gap=0;int blend=0;};
 struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     DWORD outline=0;int sectors=1;DWORD color2=0,color3=0,color4=0;int blend=0;};
 struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0;
@@ -755,6 +755,14 @@ void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewpor
         // the color at a sector boundary, avoiding interpolation or any gap.
         auto a=inside[start],b=outside[start],c=inside[n],d=outside[n];
         a.color=b.color=c.color=d.color=color;
+        if(ring.blend && ring.sectors>1 && !open) {
+            // 0.6.0 gradient: each vertex takes the blended color at its own
+            // angle, so the closed ring shades smoothly through its colors in
+            // the SAME order (and direction) as the split sectors it replaces.
+            const std::uint32_t packed[]={palette[0],palette[1],palette[2],palette[3]};
+            a.color=b.color=targetsc::gradient_at(packed,ring.sectors,static_cast<float>(i),ring_slices_);
+            c.color=d.color=targetsc::gradient_at(packed,ring.sectors,static_cast<float>(i+1),ring_slices_);
+        }
         triangle(a,b,c);triangle(c,b,d);
     }
 }
@@ -777,7 +785,7 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
         // interpolates smoothly across every fan triangle (no texture).
         const std::uint32_t packed[]={palette[0],palette[1],palette[2],palette[3]};
         DWORD rim[ring_slices_]{};
-        for(int i=0;i<ring_slices_;++i)rim[i]=targetsc::gradient_color(packed,disc.sectors,i,ring_slices_);
+        for(int i=0;i<ring_slices_;++i)rim[i]=targetsc::gradient_at(packed,disc.sectors,static_cast<float>(i),ring_slices_);
         const DWORD center=targetsc::average_color(packed,disc.sectors);
         for(int i=0;i<ring_slices_;++i) {
             const int n=(i+1)%ring_slices_;
@@ -921,11 +929,13 @@ int __cdecl lua_ring(lua_State* L) {
     const double c2=argc>=7?g_lua.tonumber(L,7):c,c3=argc>=8?g_lua.tonumber(L,8):c,c4=argc>=9?g_lua.tonumber(L,9):c;
     const double angle=argc>=10?g_lua.tonumber(L,10):0;
     const double gap=argc>=11?g_lua.tonumber(L,11):0;
+    const double blend=argc>=12?g_lua.tonumber(L,12):0;
     if(!std::isfinite(gap)||gap<0||gap>60)return 0;
+    if(!std::isfinite(blend)||(blend!=0&&blend!=1))return 0;
     if(!std::isfinite(sectors)||sectors<1||sectors>4||sectors!=std::floor(sectors)||!std::isfinite(angle)||std::fabs(angle)>1000000)return 0;
     for(double color:{c2,c3,c4})if(!std::isfinite(color)||color<0||color>4294967295.0)return 0;
     g_pending.rings[g_pending.count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(w),static_cast<DWORD>(c),static_cast<float>(pixels),
-        static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<float>(angle),static_cast<float>(gap)};
+        static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<float>(angle),static_cast<float>(gap),static_cast<int>(blend)};
     return 0;
 }
 int __cdecl lua_disc(lua_State* L) {

@@ -55,7 +55,7 @@ int main() {
         assert(targetsc::lerp_argb(pal[0],pal[1],0.f)==pal[0]);
         assert(targetsc::lerp_argb(pal[0],pal[1],1.f)==pal[1]);
         // Two sectors: centres are slices 16 and 48 of 64 (± half a slice).
-        const auto a=targetsc::gradient_color(pal,2,15,64),b=targetsc::gradient_color(pal,2,47,64);
+        const auto a=targetsc::gradient_at(pal,2,16.f,64),b=targetsc::gradient_at(pal,2,48.f,64);
         auto channel=[](std::uint32_t c,int s){return static_cast<int>((c>>s)&0xFFu);};
         assert(channel(a,0)>=250 && channel(a,16)<=5);  // near pure blue
         assert(channel(b,16)>=250 && channel(b,0)<=5);  // near pure red

@@ -125,6 +125,12 @@ function M.new(settings,defaults,save,say,killala)
         elseif group then
             if group.values[value]then numeric(group.prefix..value,args[2],group.values[value],command..' '..value)
             else say('See //tsc help for '..command..' controls.')end
+        elseif command=='rings'then
+            local blend=(args[2]or ''):lower()
+            if value~='blend'or (blend~='gradient'and blend~='split')then
+                say('Use //tsc rings blend gradient|split.');return true
+            end
+            settings.ring_blend=blend;save(settings);say('Ring blend '..blend..' (openers stay split).')
         elseif command=='opener'then opener(args,value)
         elseif command=='discs'then discs(args,value)
         elseif command=='awakening'then

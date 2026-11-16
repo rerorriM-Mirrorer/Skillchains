@@ -13,4 +13,4 @@ return {opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded'
     mb_style='clapper',mb_size=.5,mb_position=.5,mb_spin=.025,
     mb_breath_min=.35,mb_breath_gain=5,mb_hold=.12,mb_return=.85,mb_lift=.12,mb_shimmer=1,
     -- Test3 keys at their pre-Test3-equivalent values (behavior unchanged).
-    mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split'}
+    mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split'}

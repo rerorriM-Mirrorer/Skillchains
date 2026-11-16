@@ -148,6 +148,7 @@ local function help()
         {'mb glyph rise <0-1>','Seconds the large glyph takes to rise; 0 = instant like the trace (default .15).'},
         {'mb intro glyph|disc <0-1>','New-MB-window white flash strength on the large glyph / property disc (default .5 / 1).'},
         {'discs blend gradient|split','Two-element discs: smooth gradient or two half-discs (default gradient).'},
+        {'rings blend gradient|split','Multi-color SC rings: smooth gradient or sectors; openers always split (default gradient).'},
         {'preview off','End preview and return to live state.'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
         {'scale <0.25-3>','Scale the model-relative rings.'},
@@ -323,8 +324,17 @@ windower.register_event('prerender',function()
     end
     for _,ring in ipairs(frame) do
         local colors=ring.colors or {ring.color}
-        native.ring(ring.radius,ring.offset,ring.width,ring.color,ring.pixels or settings.width,
-            #colors,colors[2]or ring.color,colors[3]or ring.color,colors[4]or ring.color,ring.rotation or 0,ring.gap or 0)
+        local blend=ring.blend or 0
+        if native_version=='0.5.0'then
+            -- Same four-step fallback as discs on the older DLL.
+            if blend==1 and #colors==2 then
+                local middle=resonance.mix_argb(colors[1],colors[2])
+                colors={colors[1],middle,colors[2],middle}
+            end
+            blend=0
+        end
+        native.ring(ring.radius,ring.offset,ring.width,colors[1]or ring.color,ring.pixels or settings.width,
+            #colors,colors[2]or ring.color,colors[3]or ring.color,colors[4]or ring.color,ring.rotation or 0,ring.gap or 0,blend)
     end
     native.commit()
 end)

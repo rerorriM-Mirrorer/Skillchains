@@ -24,15 +24,19 @@ inline std::uint32_t lerp_argb(std::uint32_t a,std::uint32_t b,float t) {
     }
     return out;
 }
-inline std::uint32_t gradient_color(std::uint32_t const* palette,int sectors,int slice,int slices) {
+// position is measured in slices around the circle (vertex i sits at i).
+inline std::uint32_t gradient_at(std::uint32_t const* palette,int sectors,float position,int slices) {
     sectors=std::max(1,std::min(4,sectors));
     if(sectors==1)return palette[0];
-    const float p=(static_cast<float>(slice)+.5f)*sectors/std::max(1,slices)-.5f;
+    const float p=position*sectors/std::max(1,slices)-.5f;
     const float wrapped=p<0.f?p+sectors:p;
     const int k=static_cast<int>(wrapped)%sectors;
     float t=wrapped-static_cast<float>(static_cast<int>(wrapped));
     t=t*t*(3.f-2.f*t);
     return lerp_argb(palette[k],palette[(k+1)%sectors],t);
+}
+inline std::uint32_t gradient_color(std::uint32_t const* palette,int sectors,int slice,int slices) {
+    return gradient_at(palette,sectors,static_cast<float>(slice)+.5f,slices);
 }
 inline std::uint32_t average_color(std::uint32_t const* palette,int sectors) {
     sectors=std::max(1,std::min(4,sectors));

@@ -11,8 +11,9 @@ function native.start()native.starts=native.starts+1 return 'running'end
 function native.stop()native.stops=native.stops+1 end
 function native.clear()native.clears=native.clears+1 native.rings={} native.discs={}end
 function native.begin(index,id)native.index=index native.id=id native.rings={} native.discs={}end
-function native.ring(r,h,w,c,px,sectors,c2,c3,c4,rotation,gap)
+function native.ring(r,h,w,c,px,sectors,c2,c3,c4,rotation,gap,blend)
     assert(sectors>=1 and sectors<=4 and rotation==rotation and gap>=0 and gap<=60)
+    assert(blend==0,'0.5.0 native receives no ring gradient flag')
     native.rings[#native.rings+1]={r,h,w,c,px,sectors,c2,c3,c4,rotation,gap}
 end
 function native.disc(r,h,a,c,g,outline,sectors,c2,c3,c4,blend)
