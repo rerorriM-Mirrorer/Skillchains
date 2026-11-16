@@ -347,8 +347,14 @@ windower.register_event('prerender', function()
     -- it glides during the same window, yet resets immediately on a new WS.
     -- Advance on a fixed 1/30 grid (not now+1/30) so a 60 fps client gets
     -- an even every-other-frame cadence instead of alternating 2 and 3.
-    next_frame=next_frame+(1/30)
-    if next_frame<=now then next_frame=now+(1/30) end
+    -- Only a DUE tick advances the grid: extra every-frame renders during an
+    -- animation must not push it ahead of real time (Test3 froze the HUD
+    -- for seconds after each smooth period). Never schedule > 1/30 ahead.
+    if now>=next_frame then
+        next_frame=next_frame+(1/30)
+        if next_frame<=now then next_frame=now+(1/30) end
+    end
+    if next_frame>now+(1/30) then next_frame=now+(1/30) end
     for id,state in pairs(resonating) do
         -- Do not remove a completed chain while its MB window is active.
         if math.max(state.times,state.mb_window or 0) + 1 < now then

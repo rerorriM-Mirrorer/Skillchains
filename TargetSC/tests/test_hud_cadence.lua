@@ -154,12 +154,26 @@ now=208
 e.apply_properties(71,'weapon_skills',19,{'Detonation'},3,2,false,nil,1)
 local link=frames(208,211.5,60)
 assert(#link>=209,'refill and window transition render every frame: '..#link)
+-- Regression (Test3 live report): after a smooth period the HUD froze for
+-- seconds because every-frame renders advanced the 30 Hz grid. Other
+-- targets' new skillchains keep re-arming smoothing; never a gap > 1/30.
+local continuous=frames(211.5,214,60)
+for i=2,#continuous do
+    assert(continuous[i]-continuous[i-1]<1/30+1e-6,'HUD paused at '..continuous[i-1])
+end
+assert(continuous[1]-211.5<1/30+1e-6,'HUD resumes immediately after smoothing ends')
+assert(#continuous>=74 and 214-continuous[#continuous]<1/30+1e-6,'HUD keeps drawing: '..#continuous)
+now=214
+e.apply_properties(90,'weapon_skills',32,{'Scission'},3,1) -- another target
+local mixed=frames(214,221,60)
+for i=2,#mixed do assert(mixed[i]-mixed[i-1]<1/30+1e-6,'pause after foreign SC at '..mixed[i-1])end
+assert(#mixed>=210 and 221-mixed[#mixed]<1/30+1e-6,'HUD keeps drawing after foreign SC: '..#mixed)
 -- smooth off: back to 30 Hz even during the sweep.
 event('addon command','sc','smooth','off')
-now=220
+now=221
 target={id=72,index=13,hpp=100}
 e.apply_properties(72,'weapon_skills',32,{'Scission'},3,1)
-local throttled=frames(220,222,60)
+local throttled=frames(221,223,60)
 assert(#throttled<=62 and #throttled>=58,'smooth off keeps 30 Hz: '..#throttled)
 event('addon command','sc','smooth','on')
 -- Position presets for SC bar, MB ribbon and learning panel.
