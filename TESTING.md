@@ -1,5 +1,17 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.13.1 unified Test3.1 — HUD freeze fix and gradient SC rings (2026-11-16)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. **Commits:** `ccf7b49` HUD freeze fix, `4b64ea0` gradient rings, plus this record. Author: A.
+
+**User feedback on Test3 (live):** likes the changes; the opening HUD animation is much smoother, but the countdown pauses as it begins counting down, apparently in response to a new skillchain or MB, when it should keep counting and animating. Likes the blended discs; requests blended SC rings (ground and sky), noting level-2 strands are oriented in opposite color directions; openers keep two-part rings because of their gaps.
+
+**Cause of pause (Test3 regression):** each every-frame render during the smooth period advanced the 30 Hz grid by 1/30 s, so after ~2 s at 60 fps the next scheduled frame was seconds in the future and the HUD stopped drawing until real time caught up. Every new opener/link on any target re-armed smoothing. **Fix:** the grid advances only on due ticks and is never scheduled more than 1/30 s ahead. The strengthened `test_hud_cadence.lua` reproduces the freeze on the Test3 code (6 frames in 2.5 s) and passes after the fix, including after another target's skillchain.
+
+**Gradient rings:** native ring call takes an optional 12th `blend` argument; each closed-ring vertex takes the blended color at its own angle, in the same order and direction as the split sectors it replaces, so the two level-2 strands keep their opposite orientation and ground/sky strands match. Glow bands follow. Opener ground/sky rings are always split (even with `opener gap 0`). Level 3/4 rings are single-color strands and look unchanged. `//tsc rings blend gradient|split` (default gradient); `preset killala` restores split. The 0.5.0 DLL receives the same four-step fallback as discs. Disc rims now sample the gradient at exact vertex angles (half-slice correction).
+
+**Host verification (not FFXI):** DLL `-Werror` build, property/stroke tests, Lua 5.1 parse, all prior simulations, `test_glyph_rise`, `test_hud_cadence`, new `test_ring_blend` PASS; the addon mock asserts a 0.5.0 DLL never receives either gradient flag. **Live pending:** HUD never pauses through openers, links and MBs (including other characters' SCs); L2 ring gradients from ground and sky views; opener rings unchanged; DLL replacement needs all clients closed.
+
 ## TargetSC 0.13.0 unified Test3 — MB glyph rise, gradient discs, smooth SC opening (2026-11-16)
 
 **Branch:** `development/targetsc-mb-rise-gradient`, based on the newly promoted `master` (`9476226` = known-good Test2 `9c9106f`). **Commits:** `3394f9d` native 0.6.0 gradient, `232366f` MB glyph/intro/blend/killala, `9a5f32b` HUD cadence + positions, `76c0309` version/CI, plus this record. Author: A.

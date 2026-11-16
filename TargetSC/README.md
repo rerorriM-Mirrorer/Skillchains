@@ -1,5 +1,12 @@
 # TargetSC — elemental resonance
 
+## 0.13.1 unified Test3.1 — HUD freeze fix and gradient SC rings
+
+Fixes the Test3 HUD countdown pausing after a new skillchain or MB. Multi-color
+SC rings (ground, sky and their glow) now blend smoothly like the discs;
+opener rings stay two-part around their gaps. `//tsc rings blend gradient|split`.
+Replace the DLL with all clients closed (as in Test3).
+
 ## 0.13.0 unified Test3 — MB glyph rise, gradient discs, smooth SC opening
 
 **Private test build.** Install over Test2 (keep `TargetSC/data/`). This batch
@@ -905,3 +912,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 
 
 2026-11-16 unified Test3 (0.13.0): large MB glyph rises white to the MB ring and lands with the trace; dimmer intro glyph; native 0.6.0 gradient two-element discs; killala preset; every-frame SC opening sweep; SC positions presets. Test2 promoted to master as known-good. Author: A.
+
+2026-11-16 unified Test3.1 (0.13.1): HUD countdown no longer freezes after smooth animation periods; gradient SC rings (openers split). Author: A.
