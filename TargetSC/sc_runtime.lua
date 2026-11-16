@@ -62,6 +62,9 @@ default.Resonance = {
     -- RGB controls the hue; alpha sets how much game scenery shows through.
     track={alpha=155,color={6,8,17}},
     transition={duration=.30,style='energized'},
+    -- Test3: draw every game frame while an opening sweep / window
+    -- transition animates; otherwise keep the steady ~30 Hz countdown.
+    smooth='on',
     tip={enabled=true,length=16,opacity=.85},
     mb={position='below',gap=3,height=2,text='on',icon='on',
         scale=1,fontsize=10,iconsize=10,flash='on',flash_duration=.24},
@@ -310,6 +313,9 @@ function colorize(t)
 end
 
 local next_frame = os.clock()
+-- Until this clock, skip the 30 Hz throttle so the opener's white sweep and
+-- window transitions advance every rendered frame (no 2/3-frame judder).
+local smooth_until = 0
 -- Visual preview never publishes any TargetSC events or acts on FFXI.
 local animation_preview=nil
 local hud_demo=nil
@@ -333,11 +339,16 @@ end
 
 windower.register_event('prerender', function()
     local now=os.clock()
-    if now < next_frame then return end
+    local animating=settings.Resonance.smooth~='off' and
+        (now<smooth_until or hud_demo~=nil or animation_preview~=nil)
+    if now < next_frame and not animating then return end
     -- Previous 0.1s updates made the countdown visibly step between pixels.
     -- The remaining width comes from absolute expiry timestamps; at ~30Hz
     -- it glides during the same window, yet resets immediately on a new WS.
-    next_frame=now+(1/30)
+    -- Advance on a fixed 1/30 grid (not now+1/30) so a 60 fps client gets
+    -- an even every-other-frame cadence instead of alternating 2 and 3.
+    next_frame=next_frame+(1/30)
+    if next_frame<=now then next_frame=now+(1/30) end
     for id,state in pairs(resonating) do
         -- Do not remove a completed chain while its MB window is active.
         if math.max(state.times,state.mb_window or 0) + 1 < now then
@@ -441,6 +452,9 @@ function apply_properties(target, resource, action_id, properties, delay, step, 
     if target == targ_id then
         next_frame = clock
     end
+    -- Opener sweep lasts 2s; successful links refill for 1s and transition
+    -- around the real window start (clock+delay). Cover both, plus margin.
+    smooth_until = math.max(smooth_until, clock + math.max(2.2, delay + .6))
 end
 
 -- Quiet by default. Trace individual actor/target decisions on demand when
@@ -645,11 +659,13 @@ local function show_help()
     line('glow rail34|cap34 <number>','Bright-tier halo rail / cap power')
     line('glow l4 gold|whitegold|white','Terminal border palette')
     line('transition <seconds>','Window-opening color transition')
+    line('smooth on|off','Every-frame opening sweep/transitions (default on)')
     heading('Layout and lifecycle')
     line('edit on|off','Drag SC, MB and Learning handles; Ctrl snaps')
     line('scale <0.5-2.5>|edit','Scale HUD or edit scaling interactively')
     line('grid <pixels>','Ctrl-drag grid spacing')
     line('pos <x> <y>','Position SC bar only')
+    line('positions default|cioara','Position preset for SC bar, MB ribbon and learning panel')
     line('width <pixels>','Width of SC bar only')
     line('center','Recover HUD on screen')
     line('save [all]','Save settings')
@@ -850,6 +866,36 @@ local function handle_sc_command(cmd, ...)
         overlay:center()
         config.save(settings)
         message('Resonance bar and learning panel moved into the screen center.')
+    elseif cmd=='positions' then
+        -- Test3 position presets for the SC bar, MB ribbon and learning
+        -- panel only (colors, text, icons and display mode are untouched).
+        -- cioara = her saved 2026-11-16 layout; default = addon defaults
+        -- with the MB ribbon re-attached below the bar.
+        local layouts={
+            default={bar={x=466,y=696,width=310},list={x=465,y=300}},
+            cioara={bar={x=1490,y=60,width=310},list={x=1050,y=2100},
+                mb={position='custom',x=1489,y=54,width=445}},
+        }
+        local layout=layouts[option or '']
+        if not layout then
+            message(('Bar %d,%d w%d; MB %s %d,%d w%d; learning %d,%d. Use //tsc sc positions default|cioara.'):format(
+                opts.bar.x,opts.bar.y,opts.bar.width,tostring(opts.mb.position),opts.mb.x or 0,opts.mb.y or 0,
+                opts.mb.width or opts.bar.width,opts.list.x,opts.list.y))
+            return
+        end
+        opts.bar.x,opts.bar.y,opts.bar.width=layout.bar.x,layout.bar.y,layout.bar.width
+        opts.list.x,opts.list.y=layout.list.x,layout.list.y
+        if layout.mb then
+            opts.mb.position,opts.mb.width=layout.mb.position,layout.mb.width
+            overlay:set_mb_position(layout.mb.x,layout.mb.y)
+        else
+            opts.mb.width=layout.bar.width
+            overlay:mb_align('below')
+        end
+        overlay:rescue() -- clamps onto smaller screens without editing the preset
+        config.save(settings)
+        message(('Positions %s: bar %d,%d; MB %d,%d; learning %d,%d (clamped to this screen).'):format(
+            option,opts.bar.x,opts.bar.y,opts.mb.x,opts.mb.y,opts.list.x,opts.list.y))
     elseif cmd=='pos' then
         local x,y=tonumber(args[1]),tonumber(args[2])
         if not x or not y then
@@ -987,6 +1033,17 @@ local function handle_sc_command(cmd, ...)
                 t.alpha,t.color[1],t.color[2],t.color[3]))
             message('Use //tsc sc track alpha <0-255> | rgb <r> <g> <b> | reset.')
         end
+    elseif cmd=='smooth' then
+        local value=(option or ''):lower()
+        if value=='' then value=opts.smooth=='off' and 'on' or 'off' end
+        if value~='on' and value~='off' then
+            message('Use //tsc sc smooth on|off (default on).')
+            return
+        end
+        opts.smooth=value
+        config.save(settings)
+        message('Smooth opening animation '..value..(value=='on' and
+            ': every frame during sweeps/transitions, 30 Hz otherwise.' or ': steady 30 Hz.'))
     elseif cmd=='transition' then
         opts.transition=opts.transition or {}
         local t=opts.transition
@@ -1116,6 +1173,7 @@ local function handle_sc_command(cmd, ...)
                    pre12=.18,pre2=.85,pre3=.38,pre4=.85,scale=1,l4='gold'}
         opts.track={alpha=155,color={6,8,17}}
         opts.transition={duration=.30,style='energized'}
+        opts.smooth='on'
         opts.tip={enabled=true,length=16,opacity=.85}
         opts.mb={position='below',gap=3,height=2,text='on',icon='on',
             scale=1,fontsize=10,iconsize=10,flash='on',flash_duration=.24,
