@@ -1,6 +1,7 @@
 // Normalized property glyph and sector selection shared with CPU tests.
 // Circle rim is emitted separately by the projection-aware ring path. Author: A.
 #pragma once
+#include <cstdint>
 #include <array>
 #include <algorithm>
 #include <cmath>
@@ -10,6 +11,37 @@ struct GlyphLine {GlyphPoint a,b;};
 constexpr int kGlyphLines=24;
 inline int sector_index(int slice,int slices,int sectors) {
     return std::min(sectors-1,std::max(0,slice)*sectors/std::max(1,slices));
+}
+// Native 0.6.0 gradient discs. Sector k's pure color sits at the centre of
+// the arc sector_index() would give it; between centres the rim blends with
+// a smoothstep, wrapping cyclically. Works on packed ARGB channel by channel.
+inline std::uint32_t lerp_argb(std::uint32_t a,std::uint32_t b,float t) {
+    std::uint32_t out=0;
+    for(int shift=0;shift<32;shift+=8) {
+        const float ca=static_cast<float>((a>>shift)&0xFFu),cb=static_cast<float>((b>>shift)&0xFFu);
+        const float v=ca+(cb-ca)*t+.5f;
+        out|=(static_cast<std::uint32_t>(v<0.f?0.f:(v>255.f?255.f:v))&0xFFu)<<shift;
+    }
+    return out;
+}
+inline std::uint32_t gradient_color(std::uint32_t const* palette,int sectors,int slice,int slices) {
+    sectors=std::max(1,std::min(4,sectors));
+    if(sectors==1)return palette[0];
+    const float p=(static_cast<float>(slice)+.5f)*sectors/std::max(1,slices)-.5f;
+    const float wrapped=p<0.f?p+sectors:p;
+    const int k=static_cast<int>(wrapped)%sectors;
+    float t=wrapped-static_cast<float>(static_cast<int>(wrapped));
+    t=t*t*(3.f-2.f*t);
+    return lerp_argb(palette[k],palette[(k+1)%sectors],t);
+}
+inline std::uint32_t average_color(std::uint32_t const* palette,int sectors) {
+    sectors=std::max(1,std::min(4,sectors));
+    std::uint32_t out=0;
+    for(int shift=0;shift<32;shift+=8) {
+        unsigned sum=0;for(int k=0;k<sectors;++k)sum+=(palette[k]>>shift)&0xFFu;
+        out|=((sum+sectors/2)/sectors&0xFFu)<<shift;
+    }
+    return out;
 }
 // Two opposite gaps split the ring into equal 32-segment open arcs.
 // Points 0..32 describe the first arc; 33..65 describe the opposite arc.
