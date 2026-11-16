@@ -1,5 +1,13 @@
 # TargetSC — elemental resonance
 
+## 0.13.4 unified Test3.4 — smoother MB burst glows
+
+Lua-only. The elemental glows on the two glyphs during a confirmed MB now
+have a lit side (following `rings blend`) and turn a little faster than their
+glyphs. `//tsc mb glow shade <0-1>` (default .5), `//tsc mb glow spin <-2-2>`
+turns/sec added (default .5), `//tsc mb glow flicker <0-1>` (1 original,
+0 steady), `//tsc mb glow width <0.2-2>` (default 1).
+
 ## 0.13.3 unified Test3.3 — firm blend option
 
 Lua-only. `//tsc rings blend firm` and `//tsc discs blend firm`: each color
@@ -935,3 +943,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-16 unified Test3.2 (0.13.2): rings turn in step with the property disc easing to its minimum, lit-side shading, glow spin multiplier, MB ring settles onto the large glyph during endings. Author: A.
 
 2026-11-16 unified Test3.3 (0.13.3): firm blend option for rings and discs. Author: A.
+
+2026-11-16 unified Test3.4 (0.13.4): MB burst glows get lit side, added spin, flicker and width controls. Author: A.

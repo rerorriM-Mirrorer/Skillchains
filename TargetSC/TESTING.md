@@ -1,5 +1,17 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.13.4 unified Test3.4 — smoother MB burst glows (2026-11-16)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.6.0 unchanged). Author: A.
+
+**User feedback:** loves Test3.3; firm feels better for both rings and discs. Supplied current `settings.xml`: Cioara overrides `disc_blend`/`ring_blend` firm, `disc_speed` .12, `disc_speed_level4` 1, `mb_glyph_rise` .3, `mb_glyph_tint` .6, `opener_gap` 60, `ring_shade` .6. Reports that the elemental glows on the two glyphs during a confirmed MB look chunky; asks for the ring lit-side treatment and a spin faster/slower than their glyphs; approved all three proposed parts.
+
+**Cause:** each burst glow was one even-brightness band 10–12 px wide with a 9 Hz decaying flicker, with no visible rotation.
+
+**Changes:** `mb glow shade` (.5) gives both burst glows a lit side using the current `rings blend` mode (gradient or firm; split keeps them even). `mb glow spin` (turns/sec, −2..2, default .5) is added on top of each glyph's own angle (large glyph's slow reverse spin; trace's disc rotation), using a continuous clock so re-strikes do not jump. `mb glow flicker` (1 original, 0 steady) scales the 9 Hz ripple; `mb glow width` (.2–2, default 1) multiplies thickness. Flicker/width defaults keep the previous look. `preset killala` → shade 0, spin 0.
+
+**Host verification (not FFXI):** full suite plus new `test_mb_glow.lua` (lit side in gradient/firm, split/shade 0 even, exact added spin for ±/0 on both glyphs, flicker 0 monotone vs ripple at 1, width multipliers, commands, killala/default) PASS. **Live pending:** compare glow smoothness with shade/spin, try flicker 0–.5 and width .6–.8.
+
 ## TargetSC 0.13.3 unified Test3.3 — firm blend option (2026-11-16)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.6.0 unchanged). Author: A.

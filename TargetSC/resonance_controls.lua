@@ -100,6 +100,14 @@ function M.new(settings,defaults,save,say,killala)
             local range=groups.breath.values[name]
             if not range then say('Use //tsc mb breath min <0-1> or gain <0-8>.');return true end
             numeric('mb_breath_'..name,args[3],range,'mb breath '..name)
+        elseif command=='mb'and value=='glow'then
+            -- Confirmed-MB glows on the large glyph and the lifted trace.
+            local name=(args[2]or ''):lower()
+            local ranges={shade={0,1},spin={-2,2},flicker={0,1},width={.2,2}}
+            if not ranges[name]then
+                say('Use //tsc mb glow shade <0-1> | spin <-2-2> | flicker <0-1> | width <0.2-2>.');return true
+            end
+            numeric('mb_glow_'..name,args[3],ranges[name],'mb glow '..name)
         elseif command=='mb'and value=='glyph'then
             -- Large lower glyph's confirmed-burst response (Test3).
             local name=(args[2]or ''):lower()

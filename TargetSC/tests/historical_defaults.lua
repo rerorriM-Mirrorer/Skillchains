@@ -14,4 +14,5 @@ return {opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded'
     mb_breath_min=.35,mb_breath_gain=5,mb_hold=.12,mb_return=.85,mb_lift=.12,mb_shimmer=1,
     -- Test3 keys at their pre-Test3-equivalent values (behavior unchanged).
     mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
-    ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0}
+    ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0,
+    mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1}

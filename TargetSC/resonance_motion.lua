@@ -33,11 +33,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- the disc minimum), carry a soft brighter/dimmer side so the spin reads,
     -- glows may turn faster, and the MB ring settles onto the large glyph
     -- during the closing pulses.
-    ring_spin='disc',ring_shade=.25,ring_glow_spin=1,mb_ending_drop=1}
+    ring_spin='disc',ring_shade=.25,ring_glow_spin=1,mb_ending_drop=1,
+    -- Test3.4: confirmed-MB glows on the two glyphs get a turning lit side,
+    -- an added spin (turns/sec) over their glyph, and optional softening.
+    mb_glow_shade=.5,mb_glow_spin=.5,mb_glow_flicker=1,mb_glow_width=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
-    ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0}
+    ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0,
+    mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -212,6 +216,9 @@ function M.frame(model,s,now,radius,height,opts,context)
     local mb_overall=option(opts,'mb_overall')
     local intro=not response.ending and mb_overall>0 and (response.intro or 0)or 0
     out.mb_strength=mb_strength
+    -- Added glow spin (turns/sec, negative reverses) on top of each glyph's
+    -- own angle; continuous clock so a re-strike never jumps the lit side.
+    local glow_turn=2*pi*option(opts,'mb_glow_spin')*max(0,now-s.created)
     local bottom,top,remaining,details=M.positions(s,now,height,opts)
     local clapper=option(opts,'mb_style')=='clapper'
     local terminal=s.step>1 and s.level>=4
@@ -248,8 +255,9 @@ function M.frame(model,s,now,radius,height,opts,context)
         local p=packed(colors,a)
         local mode=option(opts,'ring_blend')
         local smooth_mode=mode=='gradient'or mode=='firm'
-        local shade=option(opts,'ring_shade')
-        local eligible=not opener and (part=='ground'or part=='sky')and #colors<=2
+        local burst_glow=role=='burst-glow'
+        local shade=burst_glow and option(opts,'mb_glow_shade')or option(opts,'ring_shade')
+        local eligible=#colors<=2 and (burst_glow or (not opener and (part=='ground'or part=='sky')))
         if eligible and smooth_mode and (shade>0 or (mode=='firm'and #colors==2))then
             -- Lit side: one side slightly brighter, the opposite slightly
             -- dimmer; the native gradient blends alpha too, so it turns with
@@ -271,7 +279,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         out[#out+1]={radius=r,offset=h,width=0,pixels=pixels,color=p[1],colors=p,
             rotation=rotation or 0,role=role,part=part,strand=strand,
             gap=opener and (part=='ground'or part=='sky')and option(opts,'opener_gap')or 0,
-            blend=not opener and #p>1 and smooth_mode and 1 or 0}
+            blend=(burst_glow or not opener)and #p>1 and smooth_mode and 1 or 0}
     end
     local function ring(r,h,colors,a,part,strand,rotation,light)
         local opening=opener and (part=='ground'or part=='sky')
@@ -399,7 +407,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- The shimmer follows the glyph: white unless mb glyph tint > 0.
             local shimmer_color=mix(white,response.element,option(opts,'mb_glyph_tint'))
             band(opening.radius,opening.offset,{shimmer_color},mb_overall*min(1,response.shimmer)*.65,
-                px+10,'burst-glow','mb-glyph',0,opening.rotation)
+                px+10*option(opts,'mb_glow_width'),'burst-glow','mb-glyph',0,opening.rotation+glow_turn)
         end
     end
     if option(opts,'discs')then
@@ -462,7 +470,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     (glyph==0 and not respond)and 0 or disc_outline,'property-trace',stroke)
                 if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
                     band(r,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
-                        px+12,'burst-glow','property-trace',0,angle)
+                        px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn)
                 end
             else
                 disc(radius*(.78-(j-1)*.11),h,angle,colors,disc_fill,

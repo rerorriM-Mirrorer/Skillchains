@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.13.3-unified-test3.3'
+_addon.version='0.13.4-unified-test3.4'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -152,6 +152,10 @@ local function help()
         {'rings spin disc|classic','disc: every link turns with the property disc, easing to its minimum; classic: only L2, slowing to a stop.'},
         {'rings shade <0-1>','Brighter/dimmer side that shows the ring turning; 0 = even (default .25).'},
         {'rings glow spin <0-4>','Glow rotation multiplier relative to its ring (default 1; try 2).'},
+        {'mb glow shade <0-1>','Lit side on the two MB burst glows (uses rings blend gradient|firm; default .5).'},
+        {'mb glow spin <-2-2>','Turns/sec added to each MB glow over its glyph; negative reverses (default .5).'},
+        {'mb glow flicker <0-1>','9 Hz ripple on the MB glows; 1 original, 0 steady (default 1).'},
+        {'mb glow width <0.2-2>','MB glow thickness multiplier (default 1).'},
         {'mb ending drop <0-1>','How far the MB ring settles onto the large glyph during the closing pulses (default 1).'},
         {'preview off','End preview and return to live state.'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},

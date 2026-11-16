@@ -99,8 +99,10 @@ function M.sample(model,state,now,option)
                 out.glyph_rise=ramp>0 and carry+(1-carry)*smooth(age/ramp)or 1
                 out.property=M.return_energy(age,return_at,option('mb_return'))*effects
                 out.lift=option('mb_lift')*out.property
+                -- mb glow flicker scales the 9 Hz ripple (1 = original, 0 = steady).
+                local ripple=.45*option('mb_glow_flicker')
                 out.shimmer=option('mb_shimmer')*math.exp(-age*3)*
-                    (.55+.45*math.cos(age*2*math.pi*9))*out.property
+                    ((1-ripple)+ripple*math.cos(age*2*math.pi*9))*out.property
                 out.white=0 -- the new strike is immediately its burst element
                 local t=smooth((age-option('mb_hold'))/math.max(.001,duration-option('mb_hold')))
                 out.release=option('mb_burst')>0 and (1-t)*(1+(option('mb_burst')-1)*t)*effects or 0
