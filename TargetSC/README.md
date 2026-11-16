@@ -1,5 +1,16 @@
 # TargetSC — elemental resonance
 
+## 0.13.2 unified Test3.2 — rings turn with the disc, lit side, MB ring settles
+
+Lua-only over Test3.1 (no DLL change; `//lua reload TargetSC` is enough if
+Test3.1's DLL is installed). SC rings at every level now turn with the
+property disc at each stage's speed, easing to `discs minimum`, with a soft
+brighter side so the turning shows. During the closing pulses the MB ring
+settles onto the large glyph.
+- `//tsc rings spin disc|classic`, `//tsc rings shade <0-1>` (default .25),
+  `//tsc rings glow spin <0-4>` (try 2), `//tsc mb ending drop <0-1>` (default 1).
+- Level 4 rings follow `discs speed level4` (default 0, so they stay still).
+
 ## 0.13.1 unified Test3.1 — HUD freeze fix and gradient SC rings
 
 Fixes the Test3 HUD countdown pausing after a new skillchain or MB. Multi-color
@@ -914,3 +925,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-16 unified Test3 (0.13.0): large MB glyph rises white to the MB ring and lands with the trace; dimmer intro glyph; native 0.6.0 gradient two-element discs; killala preset; every-frame SC opening sweep; SC positions presets. Test2 promoted to master as known-good. Author: A.
 
 2026-11-16 unified Test3.1 (0.13.1): HUD countdown no longer freezes after smooth animation periods; gradient SC rings (openers split). Author: A.
+
+2026-11-16 unified Test3.2 (0.13.2): rings turn in step with the property disc easing to its minimum, lit-side shading, glow spin multiplier, MB ring settles onto the large glyph during endings. Author: A.

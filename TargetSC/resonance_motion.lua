@@ -28,10 +28,16 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     disc_blend='gradient',
     -- Multi-color SC rings (ground, sky and their glows) blend smoothly too.
     -- Opener rings always stay split around their two gaps.
-    ring_blend='gradient'}
+    ring_blend='gradient',
+    -- Test3.2: SC rings turn with the property disc (stage speed easing to
+    -- the disc minimum), carry a soft brighter/dimmer side so the spin reads,
+    -- glows may turn faster, and the MB ring settles onto the large glyph
+    -- during the closing pulses.
+    ring_spin='disc',ring_shade=.25,ring_glow_spin=1,mb_ending_drop=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
-M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split'}
+M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
+    ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -240,6 +246,20 @@ function M.frame(model,s,now,radius,height,opts,context)
         if a<=.002 or r<.01 then return end
         r=min(r,100)
         local p=packed(colors,a)
+        local shade=option(opts,'ring_shade')
+        if shade>0 and not opener and (part=='ground'or part=='sky')and
+            option(opts,'ring_blend')=='gradient'and #colors<=2 then
+            -- One side slightly brighter, the opposite slightly dimmer; the
+            -- native gradient blends alpha too, so this soft "lit side" turns
+            -- with the ring. Two-color rings keep A->B order: A+ | mid | B- | mid.
+            if #colors==1 then
+                p={context.argb(colors[1],a*(1+shade)),context.argb(colors[1],a*(1-shade))}
+            else
+                local middle=mix(colors[1],colors[2],.5)
+                p={context.argb(colors[1],a*(1+shade)),context.argb(middle,a),
+                    context.argb(colors[2],a*(1-shade)),context.argb(middle,a)}
+            end
+        end
         out[#out+1]={radius=r,offset=h,width=0,pixels=pixels,color=p[1],colors=p,
             rotation=rotation or 0,role=role,part=part,strand=strand,
             gap=opener and (part=='ground'or part=='sky')and option(opts,'opener_gap')or 0,
@@ -250,7 +270,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         local mode=opening and option(opts,'opener_glow')or 'color'
         if glow>0 and light~=false and mode~='off'then
             local surround=mode=='black'and {{0,0,0}}or colors
-            band(r,h,surround,a*.24*glow,px+4*min(glow,3),'glow',part,strand,rotation)
+            band(r,h,surround,a*.24*glow,px+4*min(glow,3),'glow',part,strand,
+                opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin'))
         end
         band(r,h,colors,a,px,'core',part,strand,rotation)
     end
@@ -278,7 +299,11 @@ function M.frame(model,s,now,radius,height,opts,context)
                 colors[#colors+1]=mix(mix(white,target,color_t),white,flash)
             end
             local r=radius*spec.radial
+            -- classic: only openers and L2 turn, slowing to a stop. disc
+            -- (default): every link turns with the property disc, at its stage
+            -- speed easing to the disc minimum, so rings and glyph stay in step.
             local rotation=(opener or s.level==2)and M.rotation(s,now,opts)or 0
+            if not opener and option(opts,'ring_spin')=='disc'then rotation=M.disc_rotation(s,now,opts)end
             for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
                 if place[1]then
                     local h=place[1]+spec.stack
@@ -288,7 +313,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                     end
                     if glow>0 and not opener and s.level>=3 then
                         local tint=(s.properties[1]=='Darkness'or s.properties[1]=='Umbra')and {132,74,224}or gold
-                        band(draw_radius,h,{tint},opacity*.32*glow*electric*fade,px+6*min(glow,3),'glow',place[2],j,rotation)
+                        band(draw_radius,h,{tint},opacity*.32*glow*electric*fade,px+6*min(glow,3),'glow',place[2],j,
+                            rotation*option(opts,'ring_glow_spin'))
                     end
                     ring(draw_radius,h,colors,alpha,place[2],j,rotation)
                 end
@@ -453,7 +479,16 @@ function M.frame(model,s,now,radius,height,opts,context)
             color=mix(color,white,option(opts,'mb_effects'))
             alpha=alpha*(1-option(opts,'mb_effects'))+response.end_flash*option(opts,'mb_effects')
         end
-        ring(mb_radius,mb_height,{color},alpha*mb_overall,'mb',0,0)
+        local ring_height=mb_height
+        if response.ending and clapper then
+            -- Through the closing pulses the MB ring settles down onto the
+            -- large glyph's resting plane (same radius), reaching it at the
+            -- real MB deadline when everything goes dark.
+            local progress=clamp(1-(s.mb_close-now)/option(opts,'mb_ending'),0,1)
+            ring_height=mb_height+(option(opts,'disc_height')-mb_height)*
+                option(opts,'mb_ending_drop')*smooth(progress)
+        end
+        ring(mb_radius,ring_height,{color},alpha*mb_overall,'mb',0,0)
     end
     while #out>32 do table.remove(out,1)end
     return out

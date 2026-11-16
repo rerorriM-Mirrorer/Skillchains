@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.13.2 unified Test3.2 — rings turn with the disc, lit side, MB ring settles (2026-11-16)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.6.0 DLL unchanged from Test3.1). Author: A.
+
+**User feedback/requests:** opener gap 60 is enough (no change). L2 gradient rings no longer seemed to spin with the upper glyph. Explanation given: the rotation itself was unchanged, but the smooth gradient removed the hard color edges that made the spin visible, and since Test8 the disc eased to its minimum speed while rings slowed to zero, so they drifted apart. Requests: rings rotate at each stage's set speed, easing toward the minimum so they match the disc/glyph; give levels 1, 3 and 4 rings rotation plus a slightly brighter/dimmer side; same visible link for L2 gradient rings; an option for the glow to spin twice as fast; the closing three pulses are the MB ring and large breathing glyph (confirmed) — lower the MB ring toward the large glyph during the end of the MB window.
+
+**Changes:** `ring_spin='disc'` — all non-opener SC rings use the property disc's rotation (`discs speed levelN`, easing to `discs minimum` through MB; with display `sc` both fall back to the original slow-to-stop). Level 4 default speed is 0, so its rings stay still unless `discs speed level4` is raised. `ring_shade=.25` — ground/sky rings and glows get a brighter side and an opposite dimmer side via the native alpha gradient (single color: bright/dim; two colors: A+ | mid | B- | mid, preserving each strand's order). `ring_glow_spin` multiplies glow rotation (default 1). `mb_ending_drop=1` — during the ending interval the MB ring smoothly settles from its height to the large glyph's resting plane (same radius), reaching it at the real deadline. Openers are untouched. `preset killala` restores `classic`/0/1/0. New commands: `rings spin disc|classic`, `rings shade <0-1>`, `rings glow spin <0-4>`, `mb ending drop <0-1>`.
+
+**Host verification (not FFXI):** all prior simulations and C++ tests PASS; `test_ring_blend` pinned to shade 0 for its structural checks; new `test_ring_spin.lua` (L1/L2/L3 rings share the disc angle through the window and keep turning near the deadline, classic restore, lit side for 1- and 2-color rings, shade 0, openers unchanged, glow ×2, MB ring lowering and drop 0, commands, killala/default) PASS. **Live pending:** spin visibility and step with the glyph at each level; lit-side strength; glow ×2 comparison; MB ring settling during soft/hard endings.
+
 ## TargetSC 0.13.1 unified Test3.1 — HUD freeze fix and gradient SC rings (2026-11-16)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. **Commits:** `ccf7b49` HUD freeze fix, `4b64ea0` gradient rings, plus this record. Author: A.

@@ -115,6 +115,8 @@ function M.new(settings,defaults,save,say,killala)
             local flashes=tonumber(args[3])
             if flashes~=1 and flashes~=2 then say('Use //tsc mb intro flashes 1|2.');return true end
             settings.mb_intro_flashes=flashes;save(settings);say('MB intro flashes '..flashes..'.')
+        elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='drop'then
+            numeric('mb_ending_drop',args[3],{0,1},'mb ending drop')
         elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='style'then
             local style=(args[3]or ''):lower()
             if not ({soft=true,hard=true,both=true,off=true})[style]then
@@ -126,11 +128,16 @@ function M.new(settings,defaults,save,say,killala)
             if group.values[value]then numeric(group.prefix..value,args[2],group.values[value],command..' '..value)
             else say('See //tsc help for '..command..' controls.')end
         elseif command=='rings'then
-            local blend=(args[2]or ''):lower()
-            if value~='blend'or (blend~='gradient'and blend~='split')then
-                say('Use //tsc rings blend gradient|split.');return true
+            local choice=(args[2]or ''):lower()
+            if value=='blend'and (choice=='gradient'or choice=='split')then
+                settings.ring_blend=choice;save(settings);say('Ring blend '..choice..' (openers stay split).')
+            elseif value=='spin'and (choice=='disc'or choice=='classic')then
+                settings.ring_spin=choice;save(settings);say('Ring spin '..choice..'.')
+            elseif value=='shade'then numeric('ring_shade',args[2],{0,1},'rings shade')
+            elseif value=='glow'and choice=='spin'then numeric('ring_glow_spin',args[3],{0,4},'rings glow spin')
+            else
+                say('Use //tsc rings blend gradient|split | spin disc|classic | shade <0-1> | glow spin <0-4>.')
             end
-            settings.ring_blend=blend;save(settings);say('Ring blend '..blend..' (openers stay split).')
         elseif command=='opener'then opener(args,value)
         elseif command=='discs'then discs(args,value)
         elseif command=='awakening'then

@@ -5,7 +5,7 @@ local R=require('resonance')
 local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end
 local function rings(f,part,role)local r={}for _,v in ipairs(f)do if v.part==part and v.role==role then r[#r+1]=v end end return r end
-local o=copy(R.defaults);o.mb_intro=0
+local o=copy(R.defaults);o.mb_intro=0;o.ring_shade=0 -- structure only; shading has its own test
 local function frame(state,t,opts)local m=R.new();m.states[71]=state;return m:frame(71,t,2,4,opts or o)end
 local l2={id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,
  step=2,level=2,properties={'Fusion'},elements=R.elements('Fusion')}
