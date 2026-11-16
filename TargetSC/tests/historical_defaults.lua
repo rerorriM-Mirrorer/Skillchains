@@ -11,4 +11,6 @@ return {opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded'
     mb_duration=1.2,mb_effects=1,mb_ending=.6,mb_ending_style='soft',mb_overall=1,
     mb_intro=.24,mb_intro_flashes=2,ground_lift=.04,
     mb_style='clapper',mb_size=.5,mb_position=.5,mb_spin=.025,
-    mb_breath_min=.35,mb_breath_gain=5,mb_hold=.12,mb_return=.85,mb_lift=.12,mb_shimmer=1}
+    mb_breath_min=.35,mb_breath_gain=5,mb_hold=.12,mb_return=.85,mb_lift=.12,mb_shimmer=1,
+    -- Test12 keys at their pre-Test12-equivalent values (behavior unchanged).
+    mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split'}

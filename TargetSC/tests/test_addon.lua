@@ -15,8 +15,12 @@ function native.ring(r,h,w,c,px,sectors,c2,c3,c4,rotation,gap)
     assert(sectors>=1 and sectors<=4 and rotation==rotation and gap>=0 and gap<=60)
     native.rings[#native.rings+1]={r,h,w,c,px,sectors,c2,c3,c4,rotation,gap}
 end
-function native.disc(r,h,a,c,g,outline,sectors,c2,c3,c4)
+function native.disc(r,h,a,c,g,outline,sectors,c2,c3,c4,blend)
     assert(sectors>=1 and sectors<=4 and outline>=0 and outline<=4294967295)
+    -- Test12: this mock reports DLL 0.5.0, so Lua must send its four-step
+    -- gradient fallback (blend 0) rather than the 0.6.0 gradient flag.
+    assert(blend==0,'0.5.0 native receives no gradient flag')
+    if sectors==4 then native.fallbacks=(native.fallbacks or 0)+1 end
     native.discs=native.discs or {};native.discs[#native.discs+1]={r,h,a,c,g,outline,sectors,c2,c3,c4}
 end
 function native.commit()native.draws=native.draws+1 end

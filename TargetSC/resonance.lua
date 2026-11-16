@@ -3,6 +3,7 @@ local M={}
 local motion=require('resonance_motion')
 local burst_effect=require('resonance_burst')
 M.defaults=motion.defaults
+M.killala=motion.killala
 M.phase=motion.phase
 local min,max,exp,sin,pi=math.min,math.max,math.exp,math.sin,math.pi
 local function clamp(x,a,b) return max(a,min(b,x)) end
@@ -48,6 +49,15 @@ end
 function M.argb(c,alpha)
     return math.floor(clamp(alpha,0,1)*255+.5)*16777216+math.floor(c[1]+.5)*65536+
         math.floor(c[2]+.5)*256+math.floor(c[3]+.5)
+end
+-- Average two packed ARGB colors channel by channel (gradient fallback).
+function M.mix_argb(a,b)
+    local out,scale=0,1
+    for _=1,4 do
+        out=out+math.floor(((a%256)+(b%256))/2+.5)*scale
+        a,b,scale=math.floor(a/256),math.floor(b/256),scale*256
+    end
+    return out
 end
 function M.dimensions(mob,opts)
     local size=tonumber(mob.model_size) or 0

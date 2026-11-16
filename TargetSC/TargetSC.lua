@@ -14,7 +14,7 @@ local defaults={enabled=true,debug=false}
 for key,value in pairs(resonance.defaults)do defaults[key]=value end
 local settings=config.load(defaults)
 local model=resonance.new()
-local native,renderer_error,renderer_started
+local native,renderer_error,renderer_started,native_version
 local preview,selected_id,next_frame,last_tracking_error=nil,nil,0,nil
 local requested_at,source_wait_notice=0,false
 local log_size=0
@@ -27,8 +27,10 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     for _,name in ipairs({'start','stop','clear','begin','ring','disc','commit','status'}) do
         if type(result[name])~='function' then api_ok=false end
     end
-    if version_ok and version=='0.5.0' and api_ok then native=result
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.5.0, received '..tostring(version) end
+    -- 0.6.0 adds optional smooth gradient discs (11th disc argument). 0.5.0
+    -- remains accepted: gradients then use a four-step Lua approximation.
+    if version_ok and (version=='0.6.0' or version=='0.5.0') and api_ok then native=result;native_version=version
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.6.0 (or 0.5.0), received '..tostring(version) end
 else renderer_error=tostring(result) end
 
 local function say(text) windower.add_to_chat(207,'TargetSC: '..text) end
@@ -140,7 +142,12 @@ local function help()
         {'mb period <0.2-6>','Large glyph full breathing cycle in seconds (default 2).'},
         {'mb rise|expand <0-2>','Burst glyph rise as model-height fraction / extra radial growth.'},
         {'awakening on|off|opacity <0-1>','Filled white opening glyph; MB breathing/burst controls are independent.'},
-        {'preset default|discson|discsoff|vivid|gentle|legacy','Reset visual settings; default is your latest snapshot.'},
+        {'preset default|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test12 look; killala = exact pre-Test12 (Killala/Cioara) look.'},
+        {'mb glyph height <0-2>','Burst rise of the large glyph as a fraction of the MB ring height; 1 = ring, 0 = old mb rise (default 1.1).'},
+        {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},
+        {'mb glyph rise <0-1>','Seconds the large glyph takes to rise; 0 = instant like the trace (default .15).'},
+        {'mb intro glyph|disc <0-1>','New-MB-window white flash strength on the large glyph / property disc (default .5 / 1).'},
+        {'discs blend gradient|split','Two-element discs: smooth gradient or two half-discs (default gradient).'},
         {'preview off','End preview and return to live state.'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
         {'scale <0.25-3>','Scale the model-relative rings.'},
@@ -219,7 +226,7 @@ local function advance_preview(now)
         if prior~=preview.phase then debug('preview phase '..tostring(preview.phase))end
     end
 end
-local visual_command=controls.new(settings,resonance.defaults,config.save,say)
+local visual_command=controls.new(settings,resonance.defaults,config.save,say,resonance.killala)
 local function receive_frame(args)
     local accepted,why=model:receive(args,os.clock())
     if accepted then
@@ -301,8 +308,18 @@ windower.register_event('prerender',function()
     native.begin(mob.index,mob.id)
     for _,disc in ipairs(frame.discs or {})do
         local colors=disc.colors or {disc.color}
-        native.disc(disc.radius,disc.offset,disc.rotation,disc.color,disc.glyph,disc.outline or 0,
-            #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color)
+        local blend=disc.blend or 0
+        if native_version=='0.5.0'then
+            -- Older DLL has no gradient: approximate two colors with
+            -- A | A+B | B | A+B; three or four colors stay as sectors.
+            if blend==1 and #colors==2 then
+                local middle=resonance.mix_argb(colors[1],colors[2])
+                colors={colors[1],middle,colors[2],middle}
+            end
+            blend=0
+        end
+        native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
+            #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend)
     end
     for _,ring in ipairs(frame) do
         local colors=ring.colors or {ring.color}

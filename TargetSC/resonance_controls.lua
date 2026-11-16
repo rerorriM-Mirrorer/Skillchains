@@ -11,8 +11,9 @@ local groups={flutter=strike,strike=strike,
     sky={prefix='sky_',values={expand={0,2},cutoff={.05,1},curve={1,8},hold={0,2},descent={-4,4}}},
     ground={prefix='ground_',values={height={0,1},lift={0,.3}}},fade={prefix='fade_',values={duration={.1,1}}}}
 local disc_limits={opacity={0,1},outline={0,1},height={0,.5},speed={0,4},minimum={0,4},slowdown={.1,4}}
-local presets={default=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}
-function M.new(settings,defaults,save,say)
+local presets={default=true,killala=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}
+local preset_names='default|killala|discson|discsoff|vivid|gentle|legacy'
+function M.new(settings,defaults,save,say,killala)
     local function numeric(key,value,range,syntax)
         local n=tonumber(value)
         if not n or n~=n or n<range[1]or n>range[2]then
@@ -26,8 +27,10 @@ function M.new(settings,defaults,save,say)
         settings[key]=value=='on';save(settings);say(label..' '..value..'.');return true
     end
     local function preset(value)
-        if not presets[value]then say('Use //tsc preset default|discson|discsoff|vivid|gentle|legacy.');return end
+        if not presets[value]then say('Use //tsc preset '..preset_names..'.');return end
         for key,v in pairs(defaults)do settings[key]=v end
+        -- killala: the exact pre-Test12 2026-10-22 profile (also Cioara's).
+        if value=='killala'then for key,v in pairs(killala or {})do settings[key]=v end end
         if value=='discsoff'then settings.discs=false
         elseif value=='vivid'then
             settings.opacity=1;settings.brightness=1;settings.intensity=2;settings.motion='flutter'
@@ -45,6 +48,10 @@ function M.new(settings,defaults,save,say)
         if value=='speed'and (stage=='opener'or stage:match('^level[1-4]$'))then
             numeric('disc_speed_'..stage,args[3],{0,4},'discs speed '..stage)
         elseif disc_limits[value]then numeric('disc_'..value,args[2],disc_limits[value],'discs '..value)
+        elseif value=='blend'then
+            local blend=(args[2]or ''):lower()
+            if blend~='gradient'and blend~='split'then say('Use //tsc discs blend gradient|split.');return end
+            settings.disc_blend=blend;save(settings);say('Disc blend '..blend..'.')
         elseif value=='style'then
             local style=(args[2]or ''):lower()
             if style~='glyph'and style~='outline'and style~='fill'then say('Use //tsc discs style glyph|outline|fill.');return end
@@ -93,6 +100,17 @@ function M.new(settings,defaults,save,say)
             local range=groups.breath.values[name]
             if not range then say('Use //tsc mb breath min <0-1> or gain <0-8>.');return true end
             numeric('mb_breath_'..name,args[3],range,'mb breath '..name)
+        elseif command=='mb'and value=='glyph'then
+            -- Large lower glyph's confirmed-burst response (Test12).
+            local name=(args[2]or ''):lower()
+            local ranges={height={0,2},tint={0,1},rise={0,1}}
+            if not ranges[name]then
+                say('Use //tsc mb glyph height <0-2> | tint <0-1> | rise <0-1>.');return true
+            end
+            numeric('mb_glyph_'..name,args[3],ranges[name],'mb glyph '..name)
+        elseif command=='mb'and value=='intro'and ((args[2]or ''):lower()=='glyph'or (args[2]or ''):lower()=='disc')then
+            local name=(args[2]or ''):lower()
+            numeric('mb_intro_'..name,args[3],{0,1},'mb intro '..name)
         elseif command=='mb'and value=='intro'and (args[2]or ''):lower()=='flashes'then
             local flashes=tonumber(args[3])
             if flashes~=1 and flashes~=2 then say('Use //tsc mb intro flashes 1|2.');return true end

@@ -19,7 +19,16 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     mb_duration=0.9,mb_effects=1,mb_ending=2,mb_ending_style='soft',mb_overall=0.66,
     mb_intro=.6,mb_intro_flashes=1,ground_lift=.04,
     mb_style='clapper',mb_size=.5,mb_position=.5,mb_spin=.025,
-    mb_breath_min=.35,mb_breath_gain=3,mb_hold=.6,mb_return=2,mb_lift=.3,mb_shimmer=1}
+    mb_breath_min=.35,mb_breath_gain=3,mb_hold=.6,mb_return=2,mb_lift=.3,mb_shimmer=1,
+    -- Test12 (2026-11-16): the large lower glyph rises to just above the MB
+    -- ring on a confirmed burst, stays white, and lands with the property
+    -- trace. glyph_height 0 / glyph_tint 1 / intro_glyph 1 restore Killala.
+    mb_glyph_height=1.1,mb_glyph_tint=0,mb_glyph_rise=.15,mb_intro_glyph=.5,mb_intro_disc=1,
+    -- Two-element property discs blend smoothly instead of splitting in half.
+    disc_blend='gradient'}
+-- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
+-- TargetSC settings): `//tsc preset killala` restores the pre-Test12 look.
+M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -246,7 +255,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         r=min(r,100)
         local p=packed(colors,a)
         out.discs[#out.discs+1]={radius=r,offset=h,rotation=angle,color=p[1],colors=p,
-            glyph=glyph,outline=context.argb(stroke_color or white,outline),role=role}
+            glyph=glyph,outline=context.argb(stroke_color or white,outline),role=role,
+            blend=#p>1 and option(opts,'disc_blend')=='gradient'and 1 or 0}
     end
     local electric=1
     if not opener and s.level==3 then electric=.68+.32*sin(age*11)^2
@@ -306,8 +316,19 @@ function M.frame(model,s,now,radius,height,opts,context)
                 local energy=option(opts,'mb_burst')>0 and (response.property or 0)or 0
                 local strike=energy*(1+(option(opts,'mb_burst')-1)*(1-energy))
                 opening.radius=resting_radius*(1+option(opts,'mb_expand')*energy)
-                opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*energy
-                color=mix(color,response.element,strike)
+                local rest=option(opts,'disc_height')
+                local ring_fraction=option(opts,'mb_glyph_height')
+                if ring_fraction>0 then
+                    -- Rise toward (or just past) the steady MB ring, using the
+                    -- SAME return energy as the lifted property trace so both
+                    -- land together. A re-strike continues from the current
+                    -- height (response.glyph_rise) instead of dropping first.
+                    local rise=(response.glyph_rise or 1)*energy
+                    opening.offset=rest+(mb_height-rest)*ring_fraction*rise
+                else
+                    opening.offset=rest+height*option(opts,'mb_rise')*energy
+                end
+                color=mix(color,response.element,strike*option(opts,'mb_glyph_tint'))
                 opening.opacity=opening.opacity+(1-opening.opacity)*strike
             else
                 color=mix(response.element,white,response.white)
@@ -316,10 +337,13 @@ function M.frame(model,s,now,radius,height,opts,context)
                 opening.opacity=response.release
             end
         end
-        if intro>0 then
+        local glyph_intro=intro*option(opts,'mb_intro_glyph')
+        if glyph_intro>0 then
+            -- A new MB window may announce itself more quietly on the large
+            -- glyph than on the property disc and ring (mb intro glyph).
             role='mb-glyph';fill=0
-            color=mix(color,white,intro)
-            opening.opacity=opening.opacity+(1-opening.opacity)*intro
+            color=mix(color,white,glyph_intro)
+            opening.opacity=opening.opacity+(1-opening.opacity)*glyph_intro
         end
         if response.ending then
             -- A closing signal wins over a simultaneous hit's color/alpha,
@@ -332,7 +356,9 @@ function M.frame(model,s,now,radius,height,opts,context)
         disc(opening.radius,opening.offset,fill>0 and 0 or opening.rotation,{white},fill,fill>0 and 0 or 2,
             fill>0 and 0 or opening.opacity,role,color)
         if clapper and response.element and (response.shimmer or 0)>0 then
-            band(opening.radius,opening.offset,{response.element},mb_overall*min(1,response.shimmer)*.65,
+            -- The shimmer follows the glyph: white unless mb glyph tint > 0.
+            local shimmer_color=mix(white,response.element,option(opts,'mb_glyph_tint'))
+            band(opening.radius,opening.offset,{shimmer_color},mb_overall*min(1,response.shimmer)*.65,
                 px+10,'burst-glow','mb-glyph',0,opening.rotation)
         end
     end
@@ -372,11 +398,12 @@ function M.frame(model,s,now,radius,height,opts,context)
             if flash>0 then
                 for i,c in ipairs(colors)do colors[i]=mix(c,clapper and response.element or white,flash)end
             end
-            if intro>0 then
-                disc_fill=disc_fill+(mb_overall-disc_fill)*intro
-                disc_outline=disc_outline+(mb_overall-disc_outline)*intro
-                stroke=mix(stroke,white,intro)
-                for i,c in ipairs(colors)do colors[i]=mix(c,white,intro)end
+            local disc_intro=intro*option(opts,'mb_intro_disc')
+            if disc_intro>0 then
+                disc_fill=disc_fill+(mb_overall-disc_fill)*disc_intro
+                disc_outline=disc_outline+(mb_overall-disc_outline)*disc_intro
+                stroke=mix(stroke,white,disc_intro)
+                for i,c in ipairs(colors)do colors[i]=mix(c,white,disc_intro)end
             end
             local angle=M.disc_rotation(s,now,opts)
             local h=base+.006+(j-1)*.008
@@ -384,7 +411,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                 -- Separate planes let a struck trace lift while its fill
                 -- remains anchored. Terminal traces keep their .006 clearance.
                 local r=terminal and radius*.92 or radius*(.78-(j-1)*.11)
-                local respond=flash>0 or intro>0
+                local respond=flash>0 or disc_intro>0
                 disc(r,h,angle,colors,(glyph==2 and not respond)and 0 or disc_fill,
                     0,0,'property')
                 local trace_height=h+(terminal and .006 or 0)
@@ -399,7 +426,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                 end
             else
                 disc(radius*(.78-(j-1)*.11),h,angle,colors,disc_fill,
-                    (flash>0 or intro>0)and 1 or glyph,disc_outline,'property',stroke)
+                    (flash>0 or disc_intro>0)and 1 or glyph,disc_outline,'property',stroke)
             end
         end
     end

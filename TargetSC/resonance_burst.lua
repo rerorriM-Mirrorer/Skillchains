@@ -88,6 +88,15 @@ function M.sample(model,state,now,option)
             out.release=option('mb_burst')*(1-smooth((age-duration*.1)/(duration*.9)))*effects
             if clapper then
                 local return_at=math.max(option('mb_hold'),duration*.375)
+                -- Large-glyph rise ramp. If an earlier burst still holds the
+                -- glyph aloft, carry its height so a re-strike never dips.
+                local carry=0
+                local previous=bursts[i-1]
+                if previous and previous.at<=burst.at then
+                    carry=M.return_energy(burst.at-previous.at,return_at,option('mb_return'))
+                end
+                local ramp=option('mb_glyph_rise')
+                out.glyph_rise=ramp>0 and carry+(1-carry)*smooth(age/ramp)or 1
                 out.property=M.return_energy(age,return_at,option('mb_return'))*effects
                 out.lift=option('mb_lift')*out.property
                 out.shimmer=option('mb_shimmer')*math.exp(-age*3)*
