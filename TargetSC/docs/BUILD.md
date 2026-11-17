@@ -1,3 +1,13 @@
+# Building and verifying TargetSC 0.10.0 / unified Test4.9
+
+Native API 0.10.0: `native.disc` takes optional args 15 (middle radial stop:
+alpha multiplier 0–1, or −1 for none) and 16 (its position, .05–.95 of the
+radius). Its RGB is the straight blend of the unscaled center (hub or average)
+and rim colors there; with it the fill is a center fan plus a middle→rim
+annulus. Disc limit 16 (was 8); bounded storage 42,240 vertices, one draw
+call; SceneHook ABI unchanged. Omitted args draw exactly as 0.9.0. Build
+command unchanged (below).
+
 # Building and verifying TargetSC 0.5.0 / Test5
 
 Native API 0.5.0 interprets the optional eleventh `ring` argument as the size of

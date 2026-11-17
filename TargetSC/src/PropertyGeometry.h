@@ -55,6 +55,15 @@ template<class C> inline C scale_alpha(C color,float k) {
     const std::uint32_t alpha=static_cast<std::uint32_t>(a>255.f?255.f:a);
     return static_cast<C>((static_cast<std::uint32_t>(color)&0x00FFFFFFu)|(alpha<<24));
 }
+// Native 0.10.0 three-stop radial fill: the optional middle ring sits at
+// `position` (0..1 of the radius). Its RGBA is the straight blend of the
+// unscaled center and rim colors there, with alpha then multiplied by `mid`
+// (center/rim keep their own inner/outer multipliers).
+template<class C> inline C radial_mid(C center,C rim,float position,float mid) {
+    position=position<0.f?0.f:(position>1.f?1.f:position);
+    return scale_alpha(static_cast<C>(lerp_argb(static_cast<std::uint32_t>(center),
+        static_cast<std::uint32_t>(rim),position)),mid);
+}
 // Native 0.8.0 opener arc fade. at = point index within one open arc
 // (0..points-1, angle increasing). direction +1 keeps the high-angle end
 // (the end facing a positive rotation) bright; -1 the other end. The fade

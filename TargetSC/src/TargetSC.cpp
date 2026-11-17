@@ -60,7 +60,7 @@ struct DrawVertex {
 };
 
 constexpr int kMaxRings=64; // 0.9.0: stacked opener section arcs
-constexpr int kMaxDiscs=8;
+constexpr int kMaxDiscs=16; // 0.10.0: MB burst blooms and their glyph copies
 constexpr int ring_slices_=64;
 constexpr DWORD kMaxIndex=0x900;
 constexpr std::uintptr_t kDisplayHeading=0x048;
@@ -77,7 +77,9 @@ struct Ring {float radius=0, offset=0, width=0; DWORD color=0; float pixels=0;
     int arc=0;float arc_start=0,arc_span=0;DWORD tail=0;};
 struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     DWORD outline=0;int sectors=1;DWORD color2=0,color3=0,color4=0;int blend=0;float inner=1.f,outer=1.f;
-    int has_hub=0;DWORD hub=0;};
+    int has_hub=0;DWORD hub=0;
+    // 0.10.0: optional middle radial stop (alpha multiplier, radius fraction).
+    int has_mid=0;float mid=1.f,mid_pos=.5f;};
 struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0;
     Ring rings[kMaxRings]{};Disc discs[kMaxDiscs]{};};
 SRWLOCK g_frame_lock=SRWLOCK_INIT;
@@ -704,9 +706,11 @@ bool project(Position const& p,D3DVIEWPORT8 const& v, DrawVertex& out,DWORD colo
     return true;
 }
 // Bounded storage reused by the render thread: no per-frame allocations.
+// 0.10.0: a disc fill may be a center fan plus a middle-to-rim annulus
+// (3+6 vertices per slice) when it carries a middle radial stop.
 constexpr int kMaxVertices=(kMaxRings+kMaxDiscs)*ring_slices_*6+
-    kMaxDiscs*(ring_slices_*3+targetsc::kGlyphLines*6);
-static_assert(kMaxVertices==30336,"Review bounded storage when glyph complexity changes");
+    kMaxDiscs*(ring_slices_*9+targetsc::kGlyphLines*6);
+static_assert(kMaxVertices==42240,"Review bounded storage when glyph complexity changes");
 DrawVertex g_vertices[kMaxVertices]{};
 unsigned g_vertex_count=0;
 void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
@@ -827,6 +831,25 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
         valid[i]=project(p,viewport,edge[i],disc.color);
     }
     const DWORD palette[]={disc.color,disc.color2,disc.color3,disc.color4};
+    // 0.10.0 middle stop: a second ring of projected points at mid_pos.
+    DrawVertex middle[ring_slices_]{};bool middle_ok[ring_slices_]{};
+    const bool staged=disc.has_mid && disc.glyph!=2 && (disc.color>>24);
+    if(staged)for(int i=0;i<ring_slices_;++i) {
+        const float r=disc.radius*disc.mid_pos;
+        Position p{center.east+r*(ring_cos_[i]*cr-ring_sin_[i]*sr),
+            center.north+r*(ring_sin_[i]*cr+ring_cos_[i]*sr),center.height};
+        middle_ok[i]=project(p,viewport,middle[i],disc.color);
+    }
+    // One fill slice: hub->rim triangle, or hub->middle plus middle->rim
+    // quad when staged. Colors here are already alpha-scaled.
+    auto slice=[&](int i,int n,DWORD hub_color,DWORD rim_i,DWORD rim_n,DWORD mid_i,DWORD mid_n) {
+        if(!valid[i]||!valid[n])return;
+        if(!staged){auto a=hub,b=edge[i],c=edge[n];a.color=hub_color;b.color=rim_i;c.color=rim_n;triangle(a,b,c);return;}
+        if(!middle_ok[i]||!middle_ok[n])return;
+        auto a=hub,b=middle[i],c=middle[n];a.color=hub_color;b.color=mid_i;c.color=mid_n;triangle(a,b,c);
+        auto d=middle[i],e=edge[i],f=middle[n],g=edge[n];
+        d.color=mid_i;e.color=rim_i;f.color=mid_n;g.color=rim_n;triangle(d,e,f);triangle(f,e,g);
+    };
     if(disc.glyph!=2 && (disc.color>>24) && disc.blend && disc.sectors>1) {
         // 0.6.0 gradient: each rim vertex blends the neighbouring sector
         // colors; the hub carries their average. D3D's Gouraud shading then
@@ -835,22 +858,25 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
         DWORD rim[ring_slices_]{};
         for(int i=0;i<ring_slices_;++i)rim[i]=targetsc::gradient_at(packed,disc.sectors,static_cast<float>(i),ring_slices_);
         // 0.7.0 radial: inner/outer scale hub and rim alpha independently.
-        const DWORD center=targetsc::scale_alpha(disc.has_hub?static_cast<std::uint32_t>(disc.hub)
-            :targetsc::average_color(packed,disc.sectors),disc.inner);
+        const DWORD raw_center=disc.has_hub?static_cast<std::uint32_t>(disc.hub)
+            :targetsc::average_color(packed,disc.sectors);
+        const DWORD center=targetsc::scale_alpha(raw_center,disc.inner);
+        DWORD mid[ring_slices_]{};
+        for(int i=0;i<ring_slices_;++i)mid[i]=targetsc::radial_mid(raw_center,rim[i],disc.mid_pos,disc.mid);
         for(int i=0;i<ring_slices_;++i)rim[i]=targetsc::scale_alpha(rim[i],disc.outer);
         for(int i=0;i<ring_slices_;++i) {
             const int n=(i+1)%ring_slices_;
-            if(!valid[i]||!valid[n])continue;
-            auto a=hub,b=edge[i],c=edge[n];a.color=center;b.color=rim[i];c.color=rim[n];triangle(a,b,c);
+            slice(i,n,center,rim[i],rim[n],mid[i],mid[n]);
         }
     } else if(disc.glyph!=2 && (disc.color>>24))for(int i=0;i<ring_slices_;++i) {
         const int n=(i+1)%ring_slices_;
         if(!valid[i]||!valid[n])continue;
         const DWORD color=palette[targetsc::sector_index(i,ring_slices_,disc.sectors)];
         // 0.7.0 radial: Gouraud shading fades hub alpha (inner) to rim (outer).
-        auto a=hub,b=edge[i],c=edge[n];
-        a.color=targetsc::scale_alpha(disc.has_hub?disc.hub:color,disc.inner);b.color=c.color=targetsc::scale_alpha(color,disc.outer);
-        triangle(a,b,c);
+        const DWORD raw_center=disc.has_hub?disc.hub:color;
+        const DWORD rim_color=targetsc::scale_alpha(color,disc.outer);
+        const DWORD mid_color=targetsc::radial_mid(raw_center,color,disc.mid_pos,disc.mid);
+        slice(i,n,targetsc::scale_alpha(raw_center,disc.inner),rim_color,rim_color,mid_color,mid_color);
     }
     if(!disc.glyph || !(disc.outline>>24))return;
     Ring rim{disc.radius,disc.offset,0,disc.outline,1.f};emit_ring(base,rim,viewport);
@@ -1031,24 +1057,29 @@ int __cdecl lua_disc(lua_State* L) {
     // 0.9.0: optional hub (center) color, replacing the averaged center.
     const double hub=argc>=14?g_lua.tonumber(L,14):-1;
     if(!std::isfinite(hub)||hub>4294967295.0||(hub<0&&hub!=-1))return 0;
+    // 0.10.0: optional middle radial stop: alpha multiplier (0..1, -1 = none)
+    // at a fraction of the radius (.05..95).
+    const double mid=argc>=15?g_lua.tonumber(L,15):-1,mid_pos=argc>=16?g_lua.tonumber(L,16):.5;
+    if(!std::isfinite(mid)||(mid!=-1&&(mid<0||mid>1))||!std::isfinite(mid_pos)||mid_pos<.05||mid_pos>.95)return 0;
     if(g<0||g>2||g!=std::floor(g)||!std::isfinite(sectors)||sectors<1||sectors>4||sectors!=std::floor(sectors))return 0;
     if(!std::isfinite(blend)||(blend!=0&&blend!=1))return 0;
     if(!std::isfinite(inner)||!std::isfinite(outer)||inner<0||inner>1||outer<0||outer>1)return 0;
     for(double color:{outline,c2,c3,c4})if(!std::isfinite(color)||color<0||color>4294967295.0)return 0;
     g_pending.discs[g_pending.disc_count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(a),static_cast<DWORD>(c),static_cast<int>(g),
         static_cast<DWORD>(outline),static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<int>(blend),
-        static_cast<float>(inner),static_cast<float>(outer),hub>=0?1:0,static_cast<DWORD>(hub>=0?hub:0)};
+        static_cast<float>(inner),static_cast<float>(outer),hub>=0?1:0,static_cast<DWORD>(hub>=0?hub:0),
+        mid>=0?1:0,static_cast<float>(mid>=0?mid:1),static_cast<float>(mid_pos)};
     return 0;
 }
 int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.9.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.10.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.9.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.10.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;

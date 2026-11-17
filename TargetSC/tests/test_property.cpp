@@ -92,6 +92,14 @@ int main() {
         assert(targetsc::scale_alpha(0xFF123456u,.5f)==0x80123456u);
         assert(targetsc::scale_alpha(0xFF123456u,2.f)==0xFF123456u);
         assert(targetsc::scale_alpha(0xFF123456u,-1.f)==0x00123456u);
+        // 0.10.0 middle radial stop: straight blend of unscaled center/rim
+        // at the stop position, then its own alpha multiplier.
+        assert(targetsc::radial_mid(0xFFFFFFFFu,0x00FF0000u,0.f,1.f)==0xFFFFFFFFu);
+        assert(targetsc::radial_mid(0xFFFFFFFFu,0x00FF0000u,1.f,1.f)==0x00FF0000u);
+        assert(targetsc::radial_mid(0xFF00FF00u,0xFF0000FFu,.5f,1.f)==0xFF008080u);
+        assert(targetsc::radial_mid(0xFF00FF00u,0xFF0000FFu,.5f,.5f)==0x80008080u);
+        assert(targetsc::radial_mid(0xFF00FF00u,0xFF0000FFu,.5f,0.f)==0x00008080u);
+        assert(targetsc::radial_mid(0xFF00FF00u,0xFF0000FFu,2.f,1.f)==0xFF0000FFu);
     }
     // 0.6.0 gradient discs: pure color at each sector centre, smooth and
     // continuous around the rim, hub = average, alpha preserved.
