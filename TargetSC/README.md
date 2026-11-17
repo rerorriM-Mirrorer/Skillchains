@@ -1,5 +1,12 @@
 # TargetSC — elemental resonance
 
+## 0.14.1 unified Test4.1 — opener spin slowdown and minimum
+
+Lua-only over Test4.0 (keep its 0.9.0 DLL). Openers now keep turning through
+their window instead of slowing to a stop.
+- `//tsc opener spin slowdown <0-4>` — 0 never slows; 1 even (default); 3 was the old curve.
+- `//tsc opener spin minimum <0-4>` — speed it eases toward (default .5).
+
 ## 0.14.0 unified Test4.0 — opener sections
 
 **New DLL (0.9.0): close all clients before installing.** Opener properties
@@ -1012,3 +1019,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test3.9 (0.13.9): previews may draw on yourself. Author: A.
 
 2026-11-17 unified Test4.0 (0.14.0): native 0.9.0; opener sections with stacked two-color arcs. Author: A.
+
+2026-11-17 unified Test4.1 (0.14.1): opener spin slowdown and minimum. Author: A.

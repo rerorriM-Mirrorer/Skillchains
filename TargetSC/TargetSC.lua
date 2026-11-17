@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.0-unified-test4.0'
+_addon.version='0.14.1-unified-test4.1'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -157,6 +157,8 @@ local function help()
         {'opener glow color|black|off','Opener surround color; uses the global glow strength.'},
         {'opener muted [on|off]','Quieter elemental hues on opener rings.'},
         {'opener layout sections|rings','sections: properties share the circle (gaps 90/60/30), one stacked arc per element; rings: previous nested rings.'},
+        {'opener spin slowdown <0-4>','How sharply the opener slows across its window; 0 = never (default 1, was 3).'},
+        {'opener spin minimum <0-4>','Speed the opener eases toward instead of stopping, in discs speed units (default .5).'},
         {'opener spacing <0-0.2>','Height between stacked section arcs (default .035, like level 2 strands).'},
         {'opener fade <0-1>','Opener arcs fade from their bright end toward the tip; 0 = even (default .6).'},
         {'opener fade length <0.1-1>','Fraction of each arc the fade covers, from the tip (default 1).'},

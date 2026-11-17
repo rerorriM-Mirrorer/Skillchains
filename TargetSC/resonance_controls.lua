@@ -79,6 +79,12 @@ function M.new(settings,defaults,save,say,killala)
             if layout~='sections'and layout~='rings'then say('Use //tsc opener layout sections|rings.');return end
             settings.opener_layout=layout;save(settings);say('Opener layout '..layout..'.')
         elseif value=='spacing'then numeric('opener_spacing',args[2],{0,.2},'opener spacing')
+        elseif value=='spin'then
+            local name=(args[2]or ''):lower()
+            if name~='slowdown'and name~='minimum'then
+                say('Use //tsc opener spin slowdown <0-4> | minimum <0-4>.');return
+            end
+            numeric('opener_spin_'..name,args[3],{0,4},'opener spin '..name)
         elseif value=='fade'then
             -- Opener arc fade along each arc (native 0.8.0).
             local name=(args[2]or ''):lower()

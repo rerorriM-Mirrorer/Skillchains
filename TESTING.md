@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.14.1 unified Test4.1 — opener spin slowdown and minimum (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test4.0 (native 0.9.0 unchanged). Author: A.
+
+**User feedback:** Test4.0 sections look good. Asked how the opener spin is animated and wanted it not to slow so much. Explained: constant `discs speed opener × discs speed` through the wait, then `(1−t)^discs slowdown` across the window to a full stop (cube: 42% a quarter in, 12.5% halfway, <2% at three-quarters). Also asked about glyph-line alpha on opener discs: `discs outline` (all stages; no opener-only control yet). User may keep the glyph lines on opener discs, so stage 3 (moving the glyph to the awakening disc) is on hold pending their decision.
+
+**Change:** opener-only `opener spin slowdown <0-4>` (default 1; 0 = never slows) and `opener spin minimum <0-4>` (default .5, in `discs speed` units, capped at the opener's own speed): after the window opens the speed eases from full to the minimum along (1−t)^slowdown, integrated analytically. Applies to everything using the opener rotation (section arcs, rings, opener property discs). Links unchanged. `preset killala` → 3 / 0 (identical to before).
+
+**Host verification (not FFXI):** full suite + new `test_opener_spin.lua` (legacy 3/0 matches an independent copy of the old formula at eight times; full speed in the wait, halfway = minimum + half, reaches minimum at close; far faster than before late in the window; slowdown 0 constant; minimum capped; continuous at open/close; links identical; commands; presets) PASS. **Live pending:** feel of slowdown 1 / minimum .5; try slowdown 0.5 or 0.
+
 ## TargetSC 0.14.0 unified Test4.0 — opener sections (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.9.0).** Author: A.

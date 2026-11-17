@@ -52,7 +52,9 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     opener_fade=.6,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
     -- Test4.0: opener properties share the circle as sections (gaps 90/60/30
     -- for 1/2/3 properties); each element is one arc, stacked by height.
-    opener_layout='sections',opener_spacing=.035}
+    opener_layout='sections',opener_spacing=.035,
+    -- Test4.1: openers keep turning: gentler slowdown toward a minimum speed.
+    opener_spin_slowdown=1,opener_spin_minimum=.5}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -61,7 +63,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     awakening_inner=1,awakening_outer=1,awakening_size=1,
     opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default',
     opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
-    opener_layout='rings',opener_spacing=.035}
+    opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -97,6 +99,18 @@ end
 function M.rotation(s,now,opts)
     local stage=s.step==1 and 'opener'or 'level'..s.level
     local turns=option(opts,'disc_speed_'..stage)
+    if s.step==1 then
+        -- Test4.1 opener spin: full speed through the wait, then ease toward
+        -- a minimum (never above full) along (1-t)^slowdown; 0 = no slowing.
+        -- Integrated analytically so the angle never jumps.
+        local power=option(opts,'opener_spin_slowdown')
+        local minimum=min(turns,option(opts,'opener_spin_minimum'))
+        local charge=max(0,min(now,s.sc_open)-s.created)
+        local elapsed=max(0,now-s.sc_open)
+        local duration=s.closed and option(opts,'fade_duration')or max(.1,s.sc_close-s.sc_open)
+        return 2*pi*option(opts,'disc_speed')*(turns*charge+minimum*elapsed+
+            (turns-minimum)*M.slow_integral(elapsed,duration,power))
+    end
     return 2*pi*turns*option(opts,'disc_speed')*energy_time(s,now,opts,option(opts,'disc_slowdown'))
 end
 -- Only the property disc carries on through an enabled MB window. Integrate

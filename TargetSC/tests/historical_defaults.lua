@@ -19,4 +19,4 @@ return {opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded'
     awakening_inner=1,awakening_outer=1,awakening_size=1,
     opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default',
     opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
-    opener_layout='rings',opener_spacing=.035}
+    opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0}
