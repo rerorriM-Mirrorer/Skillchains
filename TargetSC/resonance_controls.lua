@@ -195,6 +195,14 @@ function M.new(settings,defaults,save,say,killala)
                 settings.ring_blend=choice;save(settings);say('Ring blend '..choice..' (openers stay split).')
             elseif value=='spin'and (choice=='disc'or choice=='classic')then
                 settings.ring_spin=choice;save(settings);say('Ring spin '..choice..'.')
+            elseif value=='light'then
+                -- Level-3 Light only (Test4.6); Darkness uses rings lightdark.
+                local name=(args[2]or ''):lower()
+                if name=='white'or name=='elements'or name=='classic'then
+                    settings.ring_light=name;save(settings);say('Light rings '..name..'.')
+                elseif name=='cycle'then numeric('ring_light_cycle',args[3],{.5,30},'rings light cycle')
+                elseif name=='glow'then numeric('ring_light_glow',args[3],{0,3},'rings light glow')
+                else say('Use //tsc rings light white|elements|classic | cycle <0.5-30 s> | glow <0-3>.')end
             elseif value=='lightdark'then
                 -- Level-3 Light/Darkness rings (Test4.5).
                 local name=(args[2]or ''):lower()

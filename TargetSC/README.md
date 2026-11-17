@@ -1,5 +1,14 @@
 # TargetSC — elemental resonance
 
+## 0.14.6 unified Test4.6 — level 3 Light: white strands, colored inner glows
+
+Lua-only. Light's level 3 rings are all white; the four inner rings' glows
+carry Fire, Wind, Lightning and Light, slowly moving down; its MB ring is
+white. Darkness keeps the four-color look.
+- `//tsc rings light white|elements|classic` (default white).
+- `//tsc rings light cycle <0.5-30>` — seconds per step (default 4).
+- `//tsc rings light glow <0-3>` — colored glow strength (default 1).
+
 ## 0.14.5 unified Test4.5 — level 3 Light/Darkness rings
 
 Lua-only. Level 3 Light/Darkness links now show white (or black) top and
@@ -1059,3 +1068,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.4 (0.14.4): link disc fade/size/lines; Light/Darkness elements disc look. Author: A.
 
 2026-11-17 unified Test4.5 (0.14.5): level 3 Light/Darkness rings and four-color MB ring cycle. Author: A.
+
+2026-11-17 unified Test4.6 (0.14.6): level 3 Light white strands with element-colored inner glows; white MB ring. Author: A.

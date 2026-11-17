@@ -62,7 +62,11 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     -- Test4.5: level-3 Light/Darkness links: white/black outer strands, the
     -- four element colors around the middle strand, MB ring cycling them.
-    ring_lightdark='elements',ring_lightdark_spin=1,ring_lightdark_tint='white',mb_lightdark_cycle=2}
+    ring_lightdark='elements',ring_lightdark_spin=1,ring_lightdark_tint='white',mb_lightdark_cycle=2,
+    -- Test4.6: level-3 LIGHT only (Darkness keeps the elements look): all
+    -- strands white; the four inner rings' glows carry the four element
+    -- colors (top to bottom), slowly rotating; MB ring white breathing.
+    ring_light='white',ring_light_cycle=4,ring_light_glow=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -74,7 +78,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0,
     opener_disc_outline=-1,
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
-    ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2}
+    ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
+    ring_light='classic',ring_light_cycle=4,ring_light_glow=1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -242,8 +247,14 @@ local function opener_arcs(p,context)
 end
 -- Test4.5: is this a level-3 Light/Darkness link drawn in the elements look?
 local function lightdark(s,opts)
-    return s.step>1 and s.level==3 and (s.properties[1]=='Light'or s.properties[1]=='Darkness')
-        and option(opts,'ring_lightdark')=='elements'
+    if s.step<=1 or s.level~=3 then return false end
+    if s.properties[1]=='Darkness'then return option(opts,'ring_lightdark')=='elements'end
+    -- Light has its own mode since Test4.6 (white|elements|classic).
+    return s.properties[1]=='Light'and option(opts,'ring_light')=='elements'
+end
+-- Test4.6 Light 'white' look: all strands white, element-colored inner glows.
+local function light_white(s,opts)
+    return s.step>1 and s.level==3 and s.properties[1]=='Light'and option(opts,'ring_light')=='white'
 end
 local function element_colors(p,context)
     local r={}
@@ -252,6 +263,10 @@ local function element_colors(p,context)
 end
 local function specifications(s,context,opts)
     local result={}
+    if light_white(s,opts)then
+        return {{colors={white},radial=1,stack=0},{colors={white},radial=1,stack=.035},
+            {colors={white},radial=1,stack=.07}}
+    end
     if lightdark(s,opts)then
         -- Bottom and top strands white (Light) or black (Darkness); the middle
         -- strand blends around the circle through the four element colors.
@@ -317,6 +332,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         local cycle=.5-.5*math.cos(age*pi/option(opts,'mb_period'))
         mb_color=mix(mb_colors[1],mb_colors[2],smooth(cycle))
     end
+    if light_white(s,opts)then mb_color=white end -- white breathing for Light
     if lightdark(s,opts)then
         -- Cycle through the four element colors; at multiplier 2 each color
         -- hands to the next twice as fast as level 2's two-color cycle.
@@ -393,12 +409,12 @@ function M.frame(model,s,now,radius,height,opts,context)
             fade_curve=option(opts,'opener_fade_curve'),
             fade_direction=option(opts,'opener_fade_end')=='trail'and -1 or 1}
     end
-    local function ring(r,h,colors,a,part,strand,rotation,light)
+    local function ring(r,h,colors,a,part,strand,rotation,light,glow_colors,glow_gain)
         local opening=opener and (part=='ground'or part=='sky')
         local mode=opening and option(opts,'opener_glow')or 'color'
         if glow>0 and light~=false and mode~='off'then
-            local surround=mode=='black'and {{0,0,0}}or colors
-            band(r,h,surround,a*.24*glow,px+4*min(glow,3),'glow',part,strand,
+            local surround=mode=='black'and {{0,0,0}}or glow_colors or colors
+            band(r,h,surround,a*.24*glow*(glow_gain or 1),px+4*min(glow,3),'glow',part,strand,
                 opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin'))
         end
         band(r,h,colors,a,px,'core',part,strand,rotation)
@@ -480,15 +496,32 @@ function M.frame(model,s,now,radius,height,opts,context)
                     if place[2]=='sky'then
                         draw_radius=r*M.bell_factor(top-bottom,height,opts)
                     end
+                    -- Test4.6: Light white look: the four inner rings (top to
+                    -- bottom: sky middle, sky lower, ground upper, ground
+                    -- middle) glow in the element colors, rotating slowly.
+                    local inner_glow
+                    if light_white(s,opts)then
+                        local index=place[2]=='sky'and (j<=2 and 3-j)or (place[2]=='ground'and j>=2 and 6-j)or nil
+                        if index then
+                            local four=element_colors('Light',context)
+                            local step=age/max(.1,option(opts,'ring_light_cycle'))
+                            local k=math.floor(step)
+                            local a1=four[(index-1+k)%4+1]
+                            local a2=four[(index+k)%4+1]
+                            inner_glow=mix(a1,a2,smooth(step-k))
+                        end
+                    end
                     if glow>0 and not opener and s.level>=3 then
                         local tint=(s.properties[1]=='Darkness'or s.properties[1]=='Umbra')and {132,74,224}or gold
                         -- Light's gold glow reads close to Earth; the elements
                         -- look may use a white glow instead (rings lightdark tint).
                         if lightdark(s,opts)and s.properties[1]=='Light'and option(opts,'ring_lightdark_tint')=='white'then tint=white end
-                        band(draw_radius,h,{tint},opacity*.32*glow*electric*fade,px+6*min(glow,3),'glow',place[2],j,
+                        if light_white(s,opts)then tint=inner_glow or white end
+                        band(draw_radius,h,{tint},opacity*.32*glow*electric*fade*(inner_glow and option(opts,'ring_light_glow')or 1),px+6*min(glow,3),'glow',place[2],j,
                             rotation*option(opts,'ring_glow_spin'))
                     end
-                    ring(draw_radius,h,colors,alpha,place[2],j,rotation)
+                    ring(draw_radius,h,colors,alpha,place[2],j,rotation,nil,
+                        inner_glow and {inner_glow}or nil,inner_glow and option(opts,'ring_light_glow')or nil)
                 end
             end
         end

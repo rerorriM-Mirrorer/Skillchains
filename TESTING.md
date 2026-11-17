@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.14.6 unified Test4.6 — level 3 Light: white strands, element-colored inner glows (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.
+
+**User feedback on Test4.5:** too colorful for Light. Chose: rings white with the colors living on the property disc (Cioara uses `discs lightdark elements`); the four inner rings' **glows** carry the element colors in game order top to bottom (one of them the Light element, white), slowly changing over time; the Light MB window keeps a white breathing ring. **Darkness keeps the Test4.5 elements look** (user likes it). Supplied Cioara's current settings (incl. `frames full`, `disc_inner 0`, `disc_size 1.03`, `mb_breath_gain 1`, `mb_breath_min 0.7`, `mb_glyph_rise 0`, `mb_lightdark_cycle 3`, `ring_lightdark_spin -2`, `intensity 0.1`).
+
+**Changes:** `rings light white|elements|classic` (Light only; default white). White: all six strands white; the four inner rings (top to bottom: sky middle, sky lower, ground upper, ground middle) get glow bands in Fire/Wind/Lightning/Light that shift down one ring every `rings light cycle` seconds (default 4) with smooth hand-offs; the outer two keep white glows; `rings light glow <0-3>` scales both glow layers on the inner rings; MB ring white with its normal breathing. `rings lightdark` now governs Darkness (and Light only when `rings light elements`). Test4.5's test pinned to `rings light elements`. `preset killala` → classic.
+
+**Host verification (not FFXI):** full suite PASS; new `test_light_white.lua` (six white strands; inner glow colors at four step boundaries in order, outer glows white; exactly one inner glow is the Light element; glow strength; white MB ring; Darkness frames identical whatever the Light mode, still four-color middle; commands; killala) PASS. **Live pending:** `preview level3` look, cycle speed, glow strength.
+
 ## TargetSC 0.14.5 unified Test4.5 — level 3 Light/Darkness rings (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.

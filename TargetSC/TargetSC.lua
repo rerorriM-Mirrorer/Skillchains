@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.5-unified-test4.5'
+_addon.version='0.14.6-unified-test4.6'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -196,7 +196,10 @@ local function help()
         {'discs lightdark classic|elements','Light/Darkness discs: classic tones, or white/black center to four element colors (default classic).'},
         {'discs blend gradient|firm|split','Two-element discs: even fade, firm (each color holds, fade where they meet), or halves (default gradient).'},
         {'rings blend gradient|firm|split','SC rings: even fade, firm (colors hold, fade where they meet), or sectors; openers always split (default gradient).'},
-        {'rings lightdark classic|elements','Level 3 Light/Darkness: white/black outer strands, four element colors around the middle (default elements).'},
+        {'rings light white|elements|classic','Level 3 Light: white strands, inner glows in the four element colors; white MB ring (default white).'},
+        {'rings light cycle <0.5-30>','Seconds for the inner glow colors to move down one ring (default 4).'},
+        {'rings light glow <0-3>','Strength of the colored inner glows (default 1).'},
+        {'rings lightdark classic|elements','Level 3 Darkness (and Light in its elements mode): outer strands, four element colors around the middle (default elements).'},
         {'rings lightdark spin <-2-2>','Middle (element) strand turn rate relative to the others; negative counter-turns (default 1).'},
         {'rings lightdark tint gold|white','Light level 3 glow color in the elements look (default white).'},
         {'rings lightdark cycle <0.25-6>','MB ring cycle speed through the four colors, x level 2 speed (default 2).'},

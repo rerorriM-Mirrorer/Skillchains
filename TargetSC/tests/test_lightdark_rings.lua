@@ -12,7 +12,7 @@ local function link(prop,level)return {id=71,revision=2,created=100,sc_open=103,
  properties={prop},elements=R.elements(prop)}end
 local function frame(s,t,o)local m=R.new();m.states[71]=copy(s);return m:frame(71,t,2,4,o)end
 local function cores(f,part)local r={}for _,x in ipairs(f)do if x.part==part and x.role=='core'then r[x.strand]=x end end return r end
-local o=copy(R.defaults);o.ring_shade=0;o.mb_intro=0
+local o=copy(R.defaults);o.ring_shade=0;o.mb_intro=0;o.ring_light='elements' -- Test4.5 look; Light's white look has its own test
 for prop,head in pairs({Light=0xFFFFFF,Darkness=0})do
  local f=frame(link(prop,3),104,o)
  for _,part in ipairs({'ground','sky'})do
@@ -43,7 +43,7 @@ local seen={}
 for i=0,3 do local x=mb(100+i*per,o);if x then seen[rgb(x.colors[1])]=true end end
 for _,e in ipairs(R.elements('Light'))do assert(seen[argb(R.element_color(e))],'MB ring shows '..e)end
 -- Classic restores the previous three-tone strands and MB color.
-local cl=copy(o);cl.ring_lightdark='classic'
+local cl=copy(o);cl.ring_lightdark='classic';cl.ring_light='classic'
 local cc=cores(frame(link('Light',3),104,cl),'ground')
 for j=1,3 do assert(#cc[j].colors==1)end
 assert(rgb(cc[2].colors[1])~=0xFFFFFF or rgb(cc[3].colors[1])~=0xFFFFFF,'classic tones')
@@ -63,5 +63,5 @@ assert(cmd('rings',{'lightdark','tint','blue'})and settings.ring_lightdark_tint=
 assert(cmd('rings',{'lightdark','cycle','3'})and settings.mb_lightdark_cycle==3)
 assert(cmd('rings',{'shade','0.5'})and settings.ring_shade==.5,'rings shade still works')
 assert(cmd('preset',{'killala'})and settings.ring_lightdark=='classic'and settings.ring_lightdark_tint=='gold')
-assert(cmd('preset',{'default'})and settings.ring_lightdark=='elements'and settings.mb_lightdark_cycle==2)
+assert(cmd('preset',{'default'})and settings.ring_lightdark=='elements'and settings.mb_lightdark_cycle==2 and settings.ring_light=='white')
 print('PASS Test4.5 Light/Darkness level 3: white/black outer strands, four-color middle, spin, tint, MB four-color cycle, classic, others untouched')
