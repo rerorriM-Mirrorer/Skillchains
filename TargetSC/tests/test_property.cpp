@@ -1,5 +1,6 @@
 #include "../src/PropertyGeometry.h"
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <cstdint>
 #include <cstdio>
@@ -48,6 +49,27 @@ int main() {
         for(int i=0;i<sectors;++i)assert(counts[i]>=64/sectors && counts[i]<=64/sectors+1);
     }
     assert(targetsc::sector_index(31,64,2)==0 && targetsc::sector_index(32,64,2)==1);
+    // 0.8.0 opener arc fade along each open arc.
+    {
+        const int P=33;
+        assert(targetsc::arc_fade(0,P,0.f,1.f,1.f,1)==1.f);              // off
+        assert(std::fabs(targetsc::arc_fade(P-1,P,.6f,1.f,1.f,1)-1.f)<1e-6f); // bright lead end
+        assert(std::fabs(targetsc::arc_fade(0,P,.6f,1.f,1.f,1)-.4f)<1e-6f);  // tip = 1-fade
+        assert(std::fabs(targetsc::arc_fade(0,P,.6f,1.f,1.f,-1)-1.f)<1e-6f); // trail mode flips
+        assert(std::fabs(targetsc::arc_fade(P-1,P,.6f,1.f,1.f,-1)-.4f)<1e-6f);
+        // length .4: the bright 60% stays full.
+        for(int at=P-1;at>=0;--at) {
+            const float d=1.f-static_cast<float>(at)/(P-1);
+            const float k=targetsc::arc_fade(at,P,1.f,.4f,1.f,1);
+            if(d<=.6f)assert(k==1.f);
+            assert(k>=0.f&&k<=1.f);
+        }
+        // monotone from bright end to tip; curve >1 stays brighter midway.
+        float prev=2.f;
+        for(int at=P-1;at>=0;--at){const float k=targetsc::arc_fade(at,P,.8f,1.f,1.f,1);assert(k<=prev+1e-6f);prev=k;}
+        assert(targetsc::arc_fade(16,P,.8f,1.f,2.f,1)>targetsc::arc_fade(16,P,.8f,1.f,1.f,1));
+        assert(targetsc::arc_fade(16,P,.8f,1.f,.5f,1)<targetsc::arc_fade(16,P,.8f,1.f,1.f,1));
+    }
     // 0.7.0 radial fills scale only alpha, clamped to 0..1.
     {
         assert(targetsc::scale_alpha(0x80FF00FFu,1.f)==0x80FF00FFu);

@@ -72,7 +72,8 @@ constexpr std::uintptr_t kEntityTargetType=0x0EE;
 constexpr unsigned char kTargetTypeObject=3;
 int g_object_mode=0;
 struct Ring {float radius=0, offset=0, width=0; DWORD color=0; float pixels=0;
-    int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0,gap=0;int blend=0;};
+    int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0,gap=0;int blend=0;
+    float fade=0,fade_length=1,fade_curve=1;int fade_direction=1;};
 struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     DWORD outline=0;int sectors=1;DWORD color2=0,color3=0,color4=0;int blend=0;float inner=1.f,outer=1.f;};
 struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0;
@@ -755,6 +756,14 @@ void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewpor
         // the color at a sector boundary, avoiding interpolation or any gap.
         auto a=inside[start],b=outside[start],c=inside[n],d=outside[n];
         a.color=b.color=c.color=d.color=color;
+        if(open && ring.fade>0.f) {
+            // 0.8.0: alpha fades along each open arc from its bright end.
+            const int per_arc=ring_slices_/2+1;
+            const float ka=targetsc::arc_fade(start%per_arc,per_arc,ring.fade,ring.fade_length,ring.fade_curve,ring.fade_direction);
+            const float kn=targetsc::arc_fade(n%per_arc,per_arc,ring.fade,ring.fade_length,ring.fade_curve,ring.fade_direction);
+            a.color=b.color=targetsc::scale_alpha(color,ka);
+            c.color=d.color=targetsc::scale_alpha(color,kn);
+        }
         if(ring.blend && ring.sectors>1 && !open) {
             // 0.6.0 gradient: each vertex takes the blended color at its own
             // angle, so the closed ring shades smoothly through its colors in
@@ -935,12 +944,18 @@ int __cdecl lua_ring(lua_State* L) {
     const double angle=argc>=10?g_lua.tonumber(L,10):0;
     const double gap=argc>=11?g_lua.tonumber(L,11):0;
     const double blend=argc>=12?g_lua.tonumber(L,12):0;
+    // 0.8.0: optional open-arc fade, length, curve and bright-end direction.
+    const double fade=argc>=13?g_lua.tonumber(L,13):0,length=argc>=14?g_lua.tonumber(L,14):1;
+    const double curve=argc>=15?g_lua.tonumber(L,15):1,direction=argc>=16?g_lua.tonumber(L,16):1;
+    if(!std::isfinite(fade)||fade<0||fade>1||!std::isfinite(length)||length<.1||length>1
+        ||!std::isfinite(curve)||curve<.5||curve>3||(direction!=1&&direction!=-1))return 0;
     if(!std::isfinite(gap)||gap<0||gap>60)return 0;
     if(!std::isfinite(blend)||(blend!=0&&blend!=1))return 0;
     if(!std::isfinite(sectors)||sectors<1||sectors>4||sectors!=std::floor(sectors)||!std::isfinite(angle)||std::fabs(angle)>1000000)return 0;
     for(double color:{c2,c3,c4})if(!std::isfinite(color)||color<0||color>4294967295.0)return 0;
     g_pending.rings[g_pending.count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(w),static_cast<DWORD>(c),static_cast<float>(pixels),
-        static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<float>(angle),static_cast<float>(gap),static_cast<int>(blend)};
+        static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<float>(angle),static_cast<float>(gap),static_cast<int>(blend),
+        static_cast<float>(fade),static_cast<float>(length),static_cast<float>(curve),static_cast<int>(direction)};
     return 0;
 }
 int __cdecl lua_disc(lua_State* L) {
@@ -967,11 +982,11 @@ int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.7.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.8.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.7.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.8.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;

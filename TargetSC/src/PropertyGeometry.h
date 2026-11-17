@@ -55,6 +55,22 @@ template<class C> inline C scale_alpha(C color,float k) {
     const std::uint32_t alpha=static_cast<std::uint32_t>(a>255.f?255.f:a);
     return static_cast<C>((static_cast<std::uint32_t>(color)&0x00FFFFFFu)|(alpha<<24));
 }
+// Native 0.8.0 opener arc fade. at = point index within one open arc
+// (0..points-1, angle increasing). direction +1 keeps the high-angle end
+// (the end facing a positive rotation) bright; -1 the other end. The fade
+// covers the far `length` fraction of the arc, shaped by `curve` (1 even,
+// >1 holds brightness longer, <1 drops early), reaching 1-fade at the tip.
+inline float arc_fade(int at,int points,float fade,float length,float curve,int direction) {
+    if(fade<=0.f||points<2)return 1.f;
+    const float u=static_cast<float>(at)/static_cast<float>(points-1);
+    const float d=direction<0?u:1.f-u; // distance from the bright end, 0..1
+    length=length<.01f?.01f:(length>1.f?1.f:length);
+    const float t=(d-(1.f-length))/length;
+    if(t<=0.f)return 1.f;
+    const float shaped=std::pow(t>1.f?1.f:t,curve);
+    const float k=1.f-(fade>1.f?1.f:fade)*shaped;
+    return k<0.f?0.f:k;
+}
 // Two opposite gaps split the ring into equal 32-segment open arcs.
 // Points 0..32 describe the first arc; 33..65 describe the opposite arc.
 inline float ring_angle(int point,int slices,float gap_degrees) {
