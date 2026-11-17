@@ -22,6 +22,9 @@ function M.parse(args,resonance)
         if not element then return nil,'Use an element such as Wind, Fire, Ice, Water, Earth, Lightning, Light or Dark.'end
         return {kind='burst',properties={'Fragmentation'},level=2,element=element}
     end
+    local second=(args[2]or ''):lower()
+    if first=='mb'and second=='light'then return {kind='mblight',properties={'Fusion'},level=2}end
+    if first=='mb'and (second=='dark'or second=='darkness')then return {kind='mbdark',properties={'Darkness'},level=3}end
     if first=='mb'or first=='mbdemo'or (first=='demo'and (args[2]or ''):lower()=='mb')then
         return {kind='mbdemo',properties={'Scission'},level=1}
     end
@@ -60,11 +63,50 @@ function M.new(spec,id,now,resonance,opts)
     local s
     if kind=='opener' or kind=='pre' or kind=='umbra' or kind=='mbdemo' then s=state(now,1,spec.properties,spec.level,false)
     else s=state(now,2,spec.properties,spec.level,kind=='closed' or spec.level==4) end
+    -- Test4.9 overlap previews (user-specified). Times are relative to the
+    -- preview start; `ending` = the last mb ending seconds of a window.
+    local ending=(self.opts.mb_ending or resonance.defaults.mb_ending or 2)
+    local function burst_at(at,element)
+        self.events[#self.events+1]={at=at,kind='burst',element=element,color=resonance.element_color(element)}
+    end
+    local function chain_at(at,step,property,level,closed,label)
+        local next_state=state(at,step,{property},level,closed)
+        self.events[#self.events+1]={at=at,kind='chain',state=next_state,label=label}
+        return next_state
+    end
+    if kind=='mblight'then
+        -- A Fusion link already open and nearly closed (SC ends at 3 s); a
+        -- Fire MB at 1.2 s; Light (level 3) opens just after, at 1.8 s; a
+        -- Light MB once its window is open; a Wind MB just after the
+        -- ending begins.
+        s=state(now-5,3,{'Fusion'},2,false)
+        self.stage='Fusion window open, nearly closed (local visual preview)'
+        burst_at(now+1.2,'Fire')
+        local light=chain_at(now+1.8,4,'Light',3,false,'Light (Level 3) opens from Fusion')
+        burst_at(light.sc_open+.5,'Light')
+        burst_at(light.mb_close-ending+.15,'Wind')
+        self.final=light
+    elseif kind=='mbdark'then
+        -- Darkness (level 3) opens; Ice MB, then Darkness as that response
+        -- ends; Umbra (level 4) near the window end; Ice, Earth, then
+        -- Darkness exactly as the ending begins.
+        s=state(now,4,{'Darkness'},3,false)
+        self.stage='Darkness (Level 3) opens (local visual preview)'
+        burst_at(now+1,'Ice')
+        burst_at(now+1+((self.opts.mb_hold or .6)+(self.opts.mb_return or 2))*.9,'Dark')
+        local umbra=chain_at(s.sc_close-.7,5,'Umbra',4,true,'Umbra (Level 4) closes the chain')
+        burst_at(umbra.sc_open+1.3,'Ice')
+        burst_at(umbra.sc_open+3,'Earth')
+        burst_at(umbra.mb_close-ending,'Dark')
+        self.final=umbra
+    end
+    if self.final then table.sort(self.events,function(a,b)return a.at<b.at end)end
     if kind=='window'or kind=='burst' then
         s=state(now-3,2,spec.properties,spec.level,false)
     elseif kind=='expire' then s=state(now-8,2,spec.properties,spec.level,false) end
     self.model.states[id]=s
     self.ends=kind=='pre' and now+3 or math.max(s.sc_close+1.05,s.mb_close)
+    if self.final then self.ends=self.final.mb_close+.05 end
     if kind=='burst'then
         self.events[1]={at=now+.6,kind='burst',color=resonance.element_color(spec.element)}
     end
@@ -114,7 +156,17 @@ function M.new(spec,id,now,resonance,opts)
         return clock>=self.ends
     end
     local relative_open=s.sc_open-now
-    self.description=kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or
+    local function at(t)return ('%.1fs'):format(t-now)end
+    local function list()
+        local parts={}
+        for _,e in ipairs(self.events)do
+            parts[#parts+1]=(e.kind=='burst'and (e.element..' MB ')or (e.state.properties[1]..' link '))..at(e.at)
+        end
+        return table.concat(parts,', ')
+    end
+    self.description=kind=='mblight'and ('MB Light overlap: Fusion window open (closes 3.0s); '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
+        kind=='mbdark'and ('MB Dark overlap: Darkness link 0s; '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
+        kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or
         kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or
         kind=='pre' and 'pre only: ground charge 0–3s; stops before countdown' or
         kind=='opener' and 'opener: ground charge 0–3s; sky enters/countdown 3–10s; no MB' or

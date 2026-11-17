@@ -73,7 +73,18 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test4.8: large breathing glyph: after a burst it stays risen and fades
     -- (instead of falling); at the floor it shows only the window-opening
     -- flash (no breathing).
-    mb_glyph_after='fade',mb_glyph_rest='hidden'}
+    mb_glyph_after='fade',mb_glyph_rest='hidden',
+    -- Test4.9: burst bloom. Each confirmed burst releases an element-colored
+    -- disc (white-hot center, transparent edge) that grows and fades, from the
+    -- MB ring (or property disc / risen glyph), optionally with copies of the
+    -- glyph lines growing outward. Sizes are multiples of the MB ring radius.
+    -- Three opacity stops (center, middle, edge) need native 0.10.0; older
+    -- DLLs draw center and edge only.
+    mb_bloom=true,mb_bloom_from='ring',mb_bloom_to='same',mb_bloom_start=.3,mb_bloom_end=1.5,
+    mb_bloom_time=1,mb_bloom_ease=2.5,mb_bloom_fade=1.5,
+    mb_bloom_center=.7,mb_bloom_middle=.35,mb_bloom_edge=0,mb_bloom_position=.5,
+    mb_bloom_flash=.6,mb_bloom_core=.5,
+    mb_bloom_lines=0,mb_bloom_lines_opacity=.6,mb_bloom_lines_delay=.12,mb_bloom_lines_size=1.8}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -87,7 +98,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
-    mb_glyph_after='fall',mb_glyph_rest='breath'}
+    mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -437,8 +448,11 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         band(r,h,colors,a,px,'core',part,strand,rotation)
     end
+    local disc_cap=(context.native_level or 9)>=10 and 16 or 8
     local function disc(r,h,angle,colors,a,glyph,outline,role,stroke_color)
-        if (a<=.002 and outline<=.002)or r<.01 or #out.discs>=8 then return end
+        -- Native 0.10.0 holds 16 discs (blooms and their glyph copies);
+        -- earlier DLLs 8. Blooms are drawn last, so they drop first.
+        if (a<=.002 and outline<=.002)or r<.01 or #out.discs>=disc_cap then return end
         r=min(r,100)
         local p=packed(colors,a)
         local mode=option(opts,'disc_blend')
@@ -793,6 +807,66 @@ function M.frame(model,s,now,radius,height,opts,context)
             mb_rotation=option(opts,'ring_spin')=='disc'and M.disc_rotation(s,now,opts)or 0
         end
         ring(mb_radius,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
+    end
+    -- Test4.9 burst bloom: one per confirmed burst still in its life, oldest
+    -- first so the newest draws on top. Lives on its own clock (burst time),
+    -- so overlapping bursts each finish their own bloom.
+    if show_mb and option(opts,'mb_bloom')and model.bursts and model.bursts[s.id]then
+        local life=max(.05,option(opts,'mb_bloom_time'))
+        local ease,curve=option(opts,'mb_bloom_ease'),option(opts,'mb_bloom_fade')
+        local effects=option(opts,'mb_effects')
+        -- With a closing signal, blooms go out with the real MB deadline.
+        local closing=1
+        if option(opts,'mb_ending_style')~='off'then closing=smooth((s.mb_close-now)/.25)end
+        local function plane(where)
+            if where=='disc'then return option(opts,'disc_height')+.01 end -- just above the property fill
+            if where=='glyph'then return opening and opening.offset or mb_height end
+            return mb_height
+        end
+        local from=option(opts,'mb_bloom_from')
+        local to=option(opts,'mb_bloom_to')
+        if to=='same'then to=from end
+        local function growth(age)
+            local t=clamp(age/life,0,1)
+            -- Fast-then-slow expansion; fade along (1-t)^curve after a .05 s attack.
+            return 1-(1-t)^ease,smooth(age/.05)*(1-t)^curve
+        end
+        local start,finish=option(opts,'mb_bloom_start'),option(opts,'mb_bloom_end')
+        local copies=math.floor(option(opts,'mb_bloom_lines'))
+        local delay=option(opts,'mb_bloom_lines_delay')
+        for _,burst in ipairs(model.bursts[s.id])do
+            local age=now-burst.at
+            if age>=0 and age<life+max(0,copies-1)*delay and burst.color then
+                local function tint(at)
+                    -- White-hot at the strike, settling into the element color.
+                    return mix(burst.color,white,option(opts,'mb_bloom_flash')*(1-smooth(at/(life*.3))))
+                end
+                if age<life then
+                    local g,env=growth(age)
+                    local a=mb_overall*effects*env*closing
+                    local color=tint(age)
+                    local before=#out.discs
+                    disc(mb_radius*(start+(finish-start)*g),plane(from)+(plane(to)-plane(from))*g,0,{color},a,0,0,'bloom')
+                    if #out.discs>before then
+                        local d=out.discs[#out.discs]
+                        d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
+                        d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
+                        d.hub=context.argb(mix(color,white,option(opts,'mb_bloom_core')),a)
+                    end
+                end
+                -- Optional copies of the glyph lines grow out from the large
+                -- glyph's size, one after another, turning with the glyph.
+                for k=1,copies do
+                    local at=age-(k-1)*delay
+                    if at>=0 and at<life then
+                        local g,env=growth(at)
+                        local r=mb_radius*(1+(option(opts,'mb_bloom_lines_size')-1)*g)
+                        disc(r,plane(from)+(plane(to)-plane(from))*g,opening and opening.rotation or 0,{white},0,2,
+                            option(opts,'mb_bloom_lines_opacity')*mb_overall*effects*env*closing,'bloom-lines',tint(at))
+                    end
+                end
+            end
+        end
     end
     while #out>32 do table.remove(out,1)end
     return out

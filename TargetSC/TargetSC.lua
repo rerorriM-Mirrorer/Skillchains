@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.8-unified-test4.8'
+_addon.version='0.14.9-unified-test4.9'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -35,9 +35,10 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     -- remains accepted: gradients then use a four-step Lua approximation.
     -- 0.8.0 adds opener arc fades (ring arguments 13-16).
     -- 0.9.0 adds native.arc (opener sections) and a disc hub color (arg 14).
-    local levels={['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
+    -- 0.10.0 adds a middle radial stop on discs (args 15-16) and 16 discs.
+    local levels={['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
     if version_ok and levels[version] and api_ok then native=result;native_version=version;native_level=levels[version]
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.9.0 (or 0.8.0-0.5.0), received '..tostring(version) end
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.10.0 (or 0.9.0-0.5.0), received '..tostring(version) end
     -- Older DLLs cannot draw section arcs; the layout falls back to rings.
     resonance.native_level=native_level
 else renderer_error=tostring(result) end
@@ -131,6 +132,8 @@ local function help()
         {'preview burst [element]','Local MB response preview; no game actions or bridge events.'},
         {'preview demo','Five weaponskills: opener then L1/L2/L3/Umbra, no bursts.'},
         {'preview mb','Same four links with Wind/Earth/Water/Dark bursts; includes late-link overlaps.'},
+        {'preview mb light','Fusion nearly closed takes a Fire MB, Light opens; Light MB, then Wind as the ending begins.'},
+        {'preview mb dark','Darkness: Ice then Dark MBs; Umbra late in the window; Ice, Earth, then Dark as the ending begins.'},
         {'mb style clapper|classic','Low breathing clapper / Test9 presentation comparison.'},
         {'ground lift <0-0.3>','Extra floor-ring clearance added to saved ground height (default .04).'},
         {'mb position|size <0-1>','Position between property and floor rings / size between their radii (default .5).'},
@@ -191,6 +194,18 @@ local function help()
         {'mb glyph after fade|fall','After a burst the large glyph stays risen and fades, or falls back as before (default fade).'},
         {'mb glyph rest hidden|breath','Large glyph at the floor: only the window-opening flash, or breathing as before (default hidden).'},
         {'mb glyph rise <0-1>','Seconds the large glyph takes to rise; 0 = instant like the trace (default .15).'},
+        {'mb bloom [on|off]','Burst bloom: an element disc grows and fades from each confirmed MB (default on).'},
+        {'mb bloom from ring|disc|glyph [to ring|disc|glyph|same]','Where the bloom starts, and optionally where it rises/sinks to (default ring).'},
+        {'mb bloom size <start> [end]','Bloom growth in MB ring radii (default .3 to 1.5).'},
+        {'mb bloom time <0.2-4>','Bloom lifetime in seconds (default 1).'},
+        {'mb bloom ease <0.5-6>','Growth shape: higher = faster burst then slower spread (default 2.5).'},
+        {'mb bloom fade <0.3-6>','Fade shape over its life: higher = fades sooner (default 1.5).'},
+        {'mb bloom opacity <center> [middle] [edge]','Bloom opacity at three points, 0-1 each (default .7 .35 0; middle needs DLL 0.10.0).'},
+        {'mb bloom middle <0.1-0.9>','Where the middle opacity point sits, as a fraction of the radius (default .5).'},
+        {'mb bloom flash <0-1>','How white-hot it starts before settling into the element color (default .6).'},
+        {'mb bloom core <0-1>','How white the center stays (default .5).'},
+        {'mb bloom lines <0-4>','Copies of the glyph lines growing outward with it (default 0 = off).'},
+        {'mb bloom lines opacity|delay|size <number>','Copy opacity 0-1 (.6), seconds between copies 0-0.5 (.12), final size 0.2-4 ring radii (1.8).'},
         {'mb intro glyph|disc <0-1>','New-MB-window white flash strength on the large glyph / property disc (default .5 / 1).'},
         {'discs fade <inner 0-1> <outer 0-1>','Link property-disc fill opacity at center/edge, all levels (default 1 1).'},
         {'discs size <0.2-2>','Link property-disc fill size; sigil lines keep theirs (default 1).'},
@@ -413,7 +428,12 @@ windower.register_event('prerender',function()
             local k=(inner+outer)/2
             for i,c in ipairs(colors)do colors[i]=resonance.scale_alpha(c,k)end
         end
-        if native_level>=9 and disc.hub then
+        if native_level>=10 and disc.mid then
+            -- 0.10.0 middle radial stop (burst bloom): hub -1 = averaged center.
+            native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
+                #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer,
+                disc.hub or -1,math.max(0,math.min(1,disc.mid)),math.max(.05,math.min(.95,disc.mid_pos or .5)))
+        elseif native_level>=9 and disc.hub then
             -- 0.9.0 hub (center) color, e.g. Light/Darkness 'elements' discs.
             native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
                 #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer,disc.hub)

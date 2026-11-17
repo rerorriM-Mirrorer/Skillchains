@@ -1,10 +1,19 @@
 -- Analytic MB presentation only: no event publication or deadline changes.
 -- One retained glyph responds to the latest confirmed burst. Author: A.
-local M={max_duration=4}
+-- max_duration bounds an expired target's retained visual tail (bloom time 4 +
+-- three copy delays of .5 fits).
+local M={max_duration=6}
+-- Test4.9: a burst also lives as long as its bloom (and glyph copies).
+local function bloom_life(opts,option)
+    option=option or function(k)return opts[k]end
+    if not option('mb_bloom')then return 0 end
+    return (option('mb_bloom_time')or 1)+math.max(0,math.floor(option('mb_bloom_lines')or 0)-1)*(option('mb_bloom_lines_delay')or 0)
+end
+M.bloom_life=bloom_life
 function M.duration(opts)
     local duration=opts.mb_duration or 1.2
-    if (opts.mb_style or 'clapper')=='classic'then return duration end
-    return math.max(duration,math.max(opts.mb_hold or .12,duration*.375)+(opts.mb_return or .85))
+    if (opts.mb_style or 'clapper')=='classic'then return math.max(duration,bloom_life(opts))end
+    return math.max(duration,math.max(opts.mb_hold or .12,duration*.375)+(opts.mb_return or .85),bloom_life(opts))
 end
 local function clamp(x)return math.max(0,math.min(1,x))end
 local function smooth(x)x=clamp(x)return x*x*(3-2*x)end
@@ -68,7 +77,10 @@ function M.sample(model,state,now,option)
         local burst=bursts[i]
         local age=now-burst.at
         local lifetime=clapper and math.max(duration,math.max(option('mb_hold'),duration*.375)+option('mb_return'))or duration
-        if age>lifetime then table.remove(bursts,i)
+        -- Keep the entry while its bloom is still drawing (Test4.9); the
+        -- glyph/ring response below still ends on its own timing.
+        if age>math.max(lifetime,bloom_life(nil,option)) then table.remove(bursts,i)
+        elseif age>lifetime then -- bloom only: no glyph/ring response
         elseif age>=0 then
             local glyph=model.awakening_glyphs and model.awakening_glyphs[state.id]
             if glyph and glyph.release_last~=burst.at then

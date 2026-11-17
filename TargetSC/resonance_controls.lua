@@ -43,6 +43,54 @@ function M.new(settings,defaults,save,say,killala)
         end
         save(settings);say('Visual preset '..value..'. Enabled/debug preserved; all visual values reset.')
     end
+    -- Test4.9 burst bloom: //tsc mb bloom ... (args[1] is 'bloom').
+    local bloom_usage='Use //tsc mb bloom on|off | from ring|disc|glyph [to ring|disc|glyph|same] | size <start> [end] | '..
+        'time <0.2-4> | ease <0.5-6> | fade <0.3-6> | opacity <center> [middle] [edge] | middle <0.1-0.9> | '..
+        'flash <0-1> | core <0-1> | lines <0-4> | lines opacity|delay|size <number>.'
+    local bloom_places={ring=true,disc=true,glyph=true}
+    local function bloom(args)
+        local name=(args[2]or ''):lower()
+        local valid=function(n,a,b)return n and n==n and n>=a and n<=b end
+        if name==''or name=='on'or name=='off'then
+            if name==''then name=settings.mb_bloom and 'off'or 'on'end
+            settings.mb_bloom=name=='on';save(settings);say('MB bloom '..name..'.')
+        elseif name=='from'then
+            local from,to=(args[3]or ''):lower(),(args[5]or ''):lower()
+            if not bloom_places[from]or (args[4]and ((args[4]):lower()~='to'or not (bloom_places[to]or to=='same')))then
+                say('Use //tsc mb bloom from ring|disc|glyph [to ring|disc|glyph|same].');return
+            end
+            settings.mb_bloom_from=from;settings.mb_bloom_to=args[4]and to or 'same';save(settings)
+            say('MB bloom from '..from..(settings.mb_bloom_to=='same'and ''or (' rising to '..to))..'.')
+        elseif name=='size'then
+            local a=tonumber(args[3])
+            local b=args[4]==nil and settings.mb_bloom_end or tonumber(args[4])
+            if not valid(a,.05,4)or not valid(b,.05,4)then say('Use //tsc mb bloom size <start 0.05-4> [end 0.05-4] (MB ring radii).');return end
+            settings.mb_bloom_start,settings.mb_bloom_end=a,b;save(settings)
+            say(('MB bloom grows from %.2f to %.2f MB ring radii.'):format(a,b))
+        elseif name=='opacity'then
+            local c=tonumber(args[3])
+            local m=args[4]==nil and settings.mb_bloom_middle or tonumber(args[4])
+            local e=args[5]==nil and settings.mb_bloom_edge or tonumber(args[5])
+            if not valid(c,0,1)or not valid(m,0,1)or not valid(e,0,1)then
+                say('Use //tsc mb bloom opacity <center 0-1> [middle 0-1] [edge 0-1].');return
+            end
+            settings.mb_bloom_center,settings.mb_bloom_middle,settings.mb_bloom_edge=c,m,e;save(settings)
+            say(('MB bloom opacity: center %.2f, middle %.2f, edge %.2f.'):format(c,m,e))
+        elseif name=='lines'then
+            local option=(args[3]or ''):lower()
+            local ranges={opacity={0,1},delay={0,.5},size={.2,4}}
+            if ranges[option]then numeric('mb_bloom_lines_'..option,args[4],ranges[option],'mb bloom lines '..option)
+            else
+                local n=tonumber(args[3])
+                if not n or n~=math.floor(n)or n<0 or n>4 then say('Use //tsc mb bloom lines <0-4> | lines opacity <0-1> | delay <0-0.5> | size <0.2-4>.');return end
+                settings.mb_bloom_lines=n;save(settings);say('MB bloom glyph-line copies: '..n..'.')
+            end
+        else
+            local ranges={time={.2,4},ease={.5,6},fade={.3,6},middle={.1,.9},flash={0,1},core={0,1}}
+            if not ranges[name]then say(bloom_usage);return end
+            numeric(name=='middle'and 'mb_bloom_position'or 'mb_bloom_'..name,args[3],ranges[name],'mb bloom '..name)
+        end
+    end
     local function discs(args,value)
         local stage=(args[2]or ''):lower()
         if value=='speed'and (stage=='opener'or stage:match('^level[1-4]$'))then
@@ -162,6 +210,7 @@ function M.new(settings,defaults,save,say,killala)
                 say('Use //tsc mb glow shade <0-1> | spin <-2-2> | flicker <0-1> | width <0.2-2>.');return true
             end
             numeric('mb_glow_'..name,args[3],ranges[name],'mb glow '..name)
+        elseif command=='mb'and value=='bloom'then bloom(args)
         elseif command=='mb'and value=='glyph'then
             -- Large lower glyph's confirmed-burst response (Test3).
             local name=(args[2]or ''):lower()

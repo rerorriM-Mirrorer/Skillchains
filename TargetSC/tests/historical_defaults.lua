@@ -22,4 +22,5 @@ return {opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded'
     opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0,opener_disc_outline=-1,
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
-    ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',mb_glyph_after='fall',mb_glyph_rest='breath'}
+    ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',mb_glyph_after='fall',mb_glyph_rest='breath',
+    mb_bloom=false}
