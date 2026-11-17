@@ -1,5 +1,13 @@
 # TargetSC TESTING.md — start here
 
+## Design principle stated by the user (2026-11-17)
+
+**Live feedback on Test4.1/4.2:** "the opener now animates so beautifully … the timing for those comet trails just right"; no settings changed. Settled on `opener discs outline 0`.
+
+**Principle (user's words, summarized):** each layer means one thing. The **glyphs and MB ring** represent only an MB opportunity. The **skillchain rings** represent the resonance of skillchain properties, and those properties are represented by the **property disc colors**. So the opener (no MB possible) shows an incomplete skillchain with an open window resonating its properties' colors, with no glyphs. Future changes should keep each layer to its meaning; e.g. putting a glyph on the white awakening disc (stage 3, on hold) would conflict with it.
+
+**Performance note given:** a layer at 0 opacity is skipped in Lua before reaching the native renderer (and native also skips zero-alpha lines), so `outline 0` costs the same as removal. Rough budget: disc fill 64 triangles, glyph lines ~175, full ring 128, opener arc 64; a busy three-property opener is ~2–3k triangles. Per-client cost is mainly Lua frame building at 30 Hz. **Possible later smoothing:** the world renderer's 30 Hz animation update uses `now+1/30` (the same drift pattern fixed in the HUD in Test3.1), which can alternate 2- and 3-frame steps at 60 fps.
+
 ## TargetSC 0.14.2 unified Test4.2 — opener discs outline (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test4.0/4.1 (native 0.9.0 unchanged). Author: A.
