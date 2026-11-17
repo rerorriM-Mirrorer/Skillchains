@@ -195,6 +195,16 @@ function M.new(settings,defaults,save,say,killala)
                 settings.ring_blend=choice;save(settings);say('Ring blend '..choice..' (openers stay split).')
             elseif value=='spin'and (choice=='disc'or choice=='classic')then
                 settings.ring_spin=choice;save(settings);say('Ring spin '..choice..'.')
+            elseif value=='lightdark'then
+                -- Level-3 Light/Darkness rings (Test4.5).
+                local name=(args[2]or ''):lower()
+                if name=='classic'or name=='elements'then
+                    settings.ring_lightdark=name;save(settings);say('Light/Darkness rings '..name..'.')
+                elseif name=='spin'then numeric('ring_lightdark_spin',args[3],{-2,2},'rings lightdark spin')
+                elseif name=='tint'and ((args[3]or ''):lower()=='gold'or (args[3]or ''):lower()=='white')then
+                    settings.ring_lightdark_tint=args[3]:lower();save(settings);say('Light glow tint '..settings.ring_lightdark_tint..'.')
+                elseif name=='cycle'then numeric('mb_lightdark_cycle',args[3],{.25,6},'rings lightdark cycle')
+                else say('Use //tsc rings lightdark classic|elements | spin <-2-2> | tint gold|white | cycle <0.25-6>.')end
             elseif value=='shade'then numeric('ring_shade',args[2],{0,1},'rings shade')
             elseif value=='glow'and choice=='spin'then numeric('ring_glow_spin',args[3],{0,4},'rings glow spin')
             else

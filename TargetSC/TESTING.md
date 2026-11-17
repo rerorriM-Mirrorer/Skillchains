@@ -1,5 +1,17 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.14.5 unified Test4.5 — level 3 Light/Darkness rings (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.
+
+**Brainstorm recorded (2026-11-17), not yet built:** (1) the whole MB apparatus fades over the window after its introduction except when lit by a burst or the ending ("energy passing from anchor to resonance" liked; open question whether the MB ring keeps strengthening while the glyph fades); (2) the breathing glyph stops spinning while risen at MB ring height during a burst and resumes without a jump (alternative: fades out and grows back in like the MB ring); (3) special animations when an MB or skillchain kills the target, instead of cutting out (needs research on death/event timing; dead mobs persist a few seconds); (4) a quick fade on target switch (sequential fade without native change; true crossfade needs a DLL); (5) a burst "bloom" disc in the element color expanding from MB-ring or property-disc height, center-opaque/edge-transparent. Ease ranking given: fade < L3 rings < glyph hold < target switch < kill animations. User chose the level 3 rings first.
+
+**Request implemented:** level 3 Light and Darkness links: top and bottom strands white (Light) or black (Darkness); the middle strand blends around the circle through the four element colors; the MB ring cycles through those four colors, twice as fast as level 2's two-color cycle.
+
+**Changes:** `rings lightdark classic|elements` (default elements); options `rings lightdark spin <-2-2>` (middle strand turn rate relative to the others; negative counter-turns), `rings lightdark tint gold|white` (Light's level 3 glow band; default white since gold read close to Earth), `rings lightdark cycle <0.25-6>` (MB ring four-color cycle speed as a multiple of level 2's; default 2). Uses the existing native ring gradient; the middle strand follows `rings blend`. Strand heights unchanged (0/.035/.07). Openers, level 2 and level 4 unchanged. `preset killala` → classic/1/gold/2.
+
+**Host verification (not FFXI):** full suite PASS; new `test_lightdark_rings.lua` (Light and Darkness on ground and sky: outer strands white/black, middle four element colors blended in game order and turning with the rest; spin −1 counter-turns; white tint with gold option; MB ring shows all four Light elements over four hand-offs; classic restores three single-tone strands; Fusion L2 and Radiance/Umbra L4 identical either way; commands; presets) PASS. **Live pending:** `preview level3`, `preview Darkness 3`, middle strand spin values, tint, MB cycle speed.
+
 ## TargetSC 0.14.4 unified Test4.4 — link disc controls and Light/Darkness elements look (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test4.0+ (native 0.9.0 unchanged). Author: A.

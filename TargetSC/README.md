@@ -1,5 +1,15 @@
 # TargetSC — elemental resonance
 
+## 0.14.5 unified Test4.5 — level 3 Light/Darkness rings
+
+Lua-only. Level 3 Light/Darkness links now show white (or black) top and
+bottom strands with the four element colors around the middle strand, and
+the MB ring cycles through those four colors.
+- `//tsc rings lightdark classic|elements` (default elements).
+- `//tsc rings lightdark spin <-2-2>` — middle strand turn rate (default 1).
+- `//tsc rings lightdark tint gold|white` — Light's glow color (default white).
+- `//tsc rings lightdark cycle <0.25-6>` — MB ring color cycle speed (default 2).
+
 ## 0.14.4 unified Test4.4 — link disc controls and Light/Darkness look
 
 Lua-only. For skillchain links (all levels):
@@ -1047,3 +1057,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.3 (0.14.3): optional frames classic|even|full. Author: A.
 
 2026-11-17 unified Test4.4 (0.14.4): link disc fade/size/lines; Light/Darkness elements disc look. Author: A.
+
+2026-11-17 unified Test4.5 (0.14.5): level 3 Light/Darkness rings and four-color MB ring cycle. Author: A.

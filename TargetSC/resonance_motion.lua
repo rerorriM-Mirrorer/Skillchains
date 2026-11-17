@@ -59,7 +59,10 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     opener_disc_outline=-1,
     -- Test4.4: link property discs (all levels): fill center/edge fade, fill
     -- size, glyph-line (sigil) size; Light/Darkness disc look.
-    disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic'}
+    disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
+    -- Test4.5: level-3 Light/Darkness links: white/black outer strands, the
+    -- four element colors around the middle strand, MB ring cycling them.
+    ring_lightdark='elements',ring_lightdark_spin=1,ring_lightdark_tint='white',mb_lightdark_cycle=2}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -70,7 +73,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
     opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0,
     opener_disc_outline=-1,
-    disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic'}
+    disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
+    ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -236,8 +240,26 @@ local function opener_arcs(p,context)
     local c=color(elements[1]or 'Light')
     return {{c,c}}
 end
-local function specifications(s,context)
+-- Test4.5: is this a level-3 Light/Darkness link drawn in the elements look?
+local function lightdark(s,opts)
+    return s.step>1 and s.level==3 and (s.properties[1]=='Light'or s.properties[1]=='Darkness')
+        and option(opts,'ring_lightdark')=='elements'
+end
+local function element_colors(p,context)
+    local r={}
+    for _,e in ipairs(context.elements(p))do r[#r+1]=context.element_color(e)or white end
+    return r
+end
+local function specifications(s,context,opts)
     local result={}
+    if lightdark(s,opts)then
+        -- Bottom and top strands white (Light) or black (Darkness); the middle
+        -- strand blends around the circle through the four element colors.
+        local head=s.properties[1]=='Darkness'and {0,0,0}or white
+        return {{colors={head},radial=1,stack=0},
+            {colors=element_colors(s.properties[1],context),radial=1,stack=.035,spin=option(opts,'ring_lightdark_spin')},
+            {colors={head},radial=1,stack=.07}}
+    end
     if s.step==1 then
         for j,p in ipairs(s.properties)do
             result[#result+1]={colors=property_palette(p,context),radial=1-(j-1)*.13,stack=0}
@@ -294,6 +316,15 @@ function M.frame(model,s,now,radius,height,opts,context)
     if clapper and s.level==2 and #mb_colors==2 then
         local cycle=.5-.5*math.cos(age*pi/option(opts,'mb_period'))
         mb_color=mix(mb_colors[1],mb_colors[2],smooth(cycle))
+    end
+    if lightdark(s,opts)then
+        -- Cycle through the four element colors; at multiplier 2 each color
+        -- hands to the next twice as fast as level 2's two-color cycle.
+        local four=element_colors(s.properties[1],context)
+        local per=option(opts,'mb_period')/max(.05,option(opts,'mb_lightdark_cycle'))
+        local position=(age/per)%#four
+        local k=math.floor(position)
+        mb_color=mix(four[k+1],four[(k+1)%#four+1],smooth(position-k))
     end
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
     local intensity,opacity=option(opts,'intensity'),option(opts,'opacity')
@@ -424,7 +455,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             end
         end
     elseif show_sc and phase~='mb-only'and phase~='expired'then
-        local specs=specifications(s,context)
+        local specs=specifications(s,context,opts)
         if not opener and s.level~=2 and age<.16 then specs={{colors={white},radial=1,stack=0}}end
         out.strands=#specs
         local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*fade
@@ -441,6 +472,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- speed easing to the disc minimum, so rings and glyph stay in step.
             local rotation=(opener or s.level==2)and M.rotation(s,now,opts)or 0
             if not opener and option(opts,'ring_spin')=='disc'then rotation=M.disc_rotation(s,now,opts)end
+            rotation=rotation*(spec.spin or 1) -- Light/Darkness middle strand may turn at its own rate
             for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
                 if place[1]then
                     local h=place[1]+spec.stack
@@ -450,6 +482,9 @@ function M.frame(model,s,now,radius,height,opts,context)
                     end
                     if glow>0 and not opener and s.level>=3 then
                         local tint=(s.properties[1]=='Darkness'or s.properties[1]=='Umbra')and {132,74,224}or gold
+                        -- Light's gold glow reads close to Earth; the elements
+                        -- look may use a white glow instead (rings lightdark tint).
+                        if lightdark(s,opts)and s.properties[1]=='Light'and option(opts,'ring_lightdark_tint')=='white'then tint=white end
                         band(draw_radius,h,{tint},opacity*.32*glow*electric*fade,px+6*min(glow,3),'glow',place[2],j,
                             rotation*option(opts,'ring_glow_spin'))
                     end
