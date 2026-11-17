@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.13.8 unified Test3.8 — opener arc fade (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.8.0).** Author: A.
+
+**User feedback:** Test3.7 looking good; has settings that may become new defaults (to be supplied). Approved the proposed opener arc gradient design and commands.
+
+**Changes:** native `lua_ring` takes optional fade (0–1), length (.1–1), curve (.5–3) and bright-end direction (±1), args 13–16; on gapped (open) arcs each of the 33 points per arc scales its alpha from 1 at the bright end to 1−fade at the tip over the far `length` fraction, shaped by `curve`. Lua sends them only for gapped opener ground/sky rings with fade > 0; "lead" = +1 because openers rotate toward increasing angle, so the end facing the spin stays bright. The opener glow band uses fade × `opener_fade_glow`. Commands: `opener fade <0-1>` (default .6), `opener fade length <0.1-1>` (1), `opener fade curve <0.5-3>` (1), `opener fade lead|trail` (lead), `opener fade glow <0-1>` (1). Lua accepts DLL 0.8.0/0.7.0/0.6.0/0.5.0 by level; older DLLs never receive fade args and draw even arcs. `preset killala` → fade 0. Also tidied a stray comment that an earlier edit had copied into the killala table (no value change).
+
+**Host verification (not FFXI):** 0.8.0 `-Werror` DLL build; property tests incl. arc_fade (off, lead/trail ends, tip = 1−fade, length holds the bright 60%, monotone, curve ordering) PASS; full suite PASS; `test_addon` asserts a 0.5.0 DLL never receives fade args; new `test_opener_fade.lua` (cores and glows faded, all options flow, glow 0 leaves glow even, fade 0 / no gap / killala / links send nothing new, command parsing and ranges, presets) PASS. **Live pending:** default .6 lead look while spinning; length .4–.6 and curve 2; trail for comparison; glow follow. Close all clients before replacing the DLL.
+
 ## TargetSC 0.13.7 unified Test3.7 — awakening fade until (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test3.5/3.6 (native 0.7.0 unchanged). Author: A.

@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.13.7-unified-test3.7'
+_addon.version='0.13.8-unified-test3.8'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -15,6 +15,7 @@ for key,value in pairs(resonance.defaults)do defaults[key]=value end
 local settings=config.load(defaults)
 local model=resonance.new()
 local native,renderer_error,renderer_started,native_version
+local native_level=0
 local preview,selected_id,next_frame,last_tracking_error=nil,nil,0,nil
 local requested_at,source_wait_notice=0,false
 local log_size=0
@@ -30,8 +31,10 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     -- 0.7.0 adds radial disc fills (inner/outer alpha, 12th/13th arguments).
     -- 0.6.0 adds optional smooth gradient discs (11th disc argument). 0.5.0
     -- remains accepted: gradients then use a four-step Lua approximation.
-    if version_ok and (version=='0.7.0' or version=='0.6.0' or version=='0.5.0') and api_ok then native=result;native_version=version
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.7.0 (or 0.6.0/0.5.0), received '..tostring(version) end
+    -- 0.8.0 adds opener arc fades (ring arguments 13-16).
+    local levels={['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
+    if version_ok and levels[version] and api_ok then native=result;native_version=version;native_level=levels[version]
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.8.0 (or 0.7.0/0.6.0/0.5.0), received '..tostring(version) end
 else renderer_error=tostring(result) end
 
 local function say(text) windower.add_to_chat(207,'TargetSC: '..text) end
@@ -131,6 +134,11 @@ local function help()
         {'opener gap <0-60>|on|off','Two opposite opener gaps, each this many degrees; on=12.'},
         {'opener glow color|black|off','Opener surround color; uses the global glow strength.'},
         {'opener muted [on|off]','Quieter elemental hues on opener rings.'},
+        {'opener fade <0-1>','Opener arcs fade from their bright end toward the tip; 0 = even (default .6).'},
+        {'opener fade length <0.1-1>','Fraction of each arc the fade covers, from the tip (default 1).'},
+        {'opener fade curve <0.5-3>','Fade shape: 1 even, >1 holds brightness longer, <1 drops early (default 1).'},
+        {'opener fade lead|trail','Which end of each arc stays bright (default lead, facing the spin).'},
+        {'opener fade glow <0-1>','How closely the opener glow band follows the arc fade (default 1).'},
         {'opener discs fade <inner 0-1> <outer 0-1>','Opener property-disc fill opacity at center/edge, as multipliers (default 1 1).'},
         {'opener discs size <0.2-2>','Opener property-disc fill size; glyph lines keep their size (default 1).'},
         {'discs on|off|opacity <0-1>','Control procedural ground property glyphs.'},
@@ -334,12 +342,12 @@ windower.register_event('prerender',function()
             blend=0
         end
         local inner,outer=disc.inner or 1,disc.outer or 1
-        if native_version~='0.7.0'and (inner~=1 or outer~=1)then
+        if native_level<7 and (inner~=1 or outer~=1)then
             -- Pre-0.7.0 DLL has no radial fill: use the average, evenly.
             local k=(inner+outer)/2
             for i,c in ipairs(colors)do colors[i]=resonance.scale_alpha(c,k)end
         end
-        if native_version=='0.7.0'then
+        if native_level>=7 then
             native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
                 #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer)
         else
@@ -358,8 +366,15 @@ windower.register_event('prerender',function()
             end
             blend=0
         end
-        native.ring(ring.radius,ring.offset,ring.width,colors[1]or ring.color,ring.pixels or settings.width,
-            #colors,colors[2]or ring.color,colors[3]or ring.color,colors[4]or ring.color,ring.rotation or 0,ring.gap or 0,blend)
+        if native_level>=8 and (ring.fade or 0)>0 then
+            native.ring(ring.radius,ring.offset,ring.width,colors[1]or ring.color,ring.pixels or settings.width,
+                #colors,colors[2]or ring.color,colors[3]or ring.color,colors[4]or ring.color,ring.rotation or 0,ring.gap or 0,blend,
+                ring.fade,ring.fade_length or 1,ring.fade_curve or 1,ring.fade_direction or 1)
+        else
+            -- No arc fade (or a pre-0.8.0 DLL): today's even arcs, exactly.
+            native.ring(ring.radius,ring.offset,ring.width,colors[1]or ring.color,ring.pixels or settings.width,
+                #colors,colors[2]or ring.color,colors[3]or ring.color,colors[4]or ring.color,ring.rotation or 0,ring.gap or 0,blend)
+        end
     end
     native.commit()
 end)

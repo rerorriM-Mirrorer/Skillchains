@@ -46,18 +46,18 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- When the awakening disc's fade ends: 'default' (two-thirds of the wait,
     -- as before), 'open' (window opens), 'close' (window ends) or '1'..'9'
     -- seconds after the window opens. A link fades it out over .3 s.
-    awakening_until='default'}
+    awakening_until='default',
+    -- Test3.8: opener arcs fade along their length from the bright end
+    -- (lead = facing the spin); the glow band follows by opener_fade_glow.
+    opener_fade=.6,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
     ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0,
     mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1,
     awakening_inner=1,awakening_outer=1,awakening_size=1,
-    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,
-    -- When the awakening disc's fade ends: 'default' (two-thirds of the wait,
-    -- as before), 'open' (window opens), 'close' (window ends) or '1'..'9'
-    -- seconds after the window opens. A link fades it out over .3 s.
-    awakening_until='default'}
+    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default',
+    opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -296,6 +296,18 @@ function M.frame(model,s,now,radius,height,opts,context)
             rotation=rotation or 0,role=role,part=part,strand=strand,
             gap=opener and (part=='ground'or part=='sky')and option(opts,'opener_gap')or 0,
             blend=(burst_glow or not opener)and #p>1 and smooth_mode and 1 or 0}
+        local entry=out[#out]
+        if opener and (part=='ground'or part=='sky')and entry.gap>0 then
+            -- Opener arc fade (native 0.8.0). Openers spin toward increasing
+            -- angle, so +1 keeps the end facing the spin bright ("lead").
+            local fade=option(opts,'opener_fade')*(role=='glow'and option(opts,'opener_fade_glow')or 1)
+            if fade>0 then
+                entry.fade=min(1,fade)
+                entry.fade_length=option(opts,'opener_fade_length')
+                entry.fade_curve=option(opts,'opener_fade_curve')
+                entry.fade_direction=option(opts,'opener_fade_end')=='trail'and -1 or 1
+            end
+        end
     end
     local function ring(r,h,colors,a,part,strand,rotation,light)
         local opening=opener and (part=='ground'or part=='sky')

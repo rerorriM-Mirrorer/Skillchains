@@ -74,6 +74,16 @@ function M.new(settings,defaults,save,say,killala)
             if not toggle('opener_muted',(args[2]or ''):lower(),'Opener muted colors')then
                 say('Use //tsc opener muted [on|off].')
             end
+        elseif value=='fade'then
+            -- Opener arc fade along each arc (native 0.8.0).
+            local name=(args[2]or ''):lower()
+            if name=='lead'or name=='trail'then
+                settings.opener_fade_end=name;save(settings);say('Opener fade bright end: '..name..'.')
+            elseif name=='length'then numeric('opener_fade_length',args[3],{.1,1},'opener fade length')
+            elseif name=='curve'then numeric('opener_fade_curve',args[3],{.5,3},'opener fade curve')
+            elseif name=='glow'then numeric('opener_fade_glow',args[3],{0,1},'opener fade glow')
+            elseif tonumber(args[2])then numeric('opener_fade',args[2],{0,1},'opener fade')
+            else say('Use //tsc opener fade <0-1> | length <0.1-1> | curve <0.5-3> | lead|trail | glow <0-1>.')end
         elseif value=='discs'then
             -- Opener-only property-disc FILL; glyph lines are unchanged.
             local name=(args[2]or ''):lower()

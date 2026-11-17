@@ -1,5 +1,16 @@
 # TargetSC — elemental resonance
 
+## 0.13.8 unified Test3.8 — opener arc fade
+
+**New DLL (0.8.0): close all clients before installing.** Each opener arc now
+stays bright at the end facing its spin and fades toward its tip, with the
+dark glow band following.
+- `//tsc opener fade <0-1>` — how far the tip fades (0 even; default .6).
+- `//tsc opener fade length <0.1-1>` — how much of the arc fades (default 1).
+- `//tsc opener fade curve <0.5-3>` — 1 even; above 1 holds brightness longer.
+- `//tsc opener fade lead|trail` — which end stays bright (default lead).
+- `//tsc opener fade glow <0-1>` — how closely the glow band follows (default 1).
+
 ## 0.13.7 unified Test3.7 — awakening fade until
 
 Lua-only over Test3.5/3.6 (keep the 0.7.0 DLL). Choose when the white opening
@@ -978,3 +989,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test3.6 (0.13.6): opener-only property-disc fill fade and size. Author: A.
 
 2026-11-17 unified Test3.7 (0.13.7): awakening fade until default|open|close|1-9. Author: A.
+
+2026-11-17 unified Test3.8 (0.13.8): native 0.8.0 opener arc fade with length, curve, lead/trail and glow follow. Author: A.
