@@ -36,12 +36,16 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     ring_spin='disc',ring_shade=.25,ring_glow_spin=1,mb_ending_drop=1,
     -- Test3.4: confirmed-MB glows on the two glyphs get a turning lit side,
     -- an added spin (turns/sec) over their glyph, and optional softening.
-    mb_glow_shade=.5,mb_glow_spin=.5,mb_glow_flicker=1,mb_glow_width=1}
+    mb_glow_shade=.5,mb_glow_spin=.5,mb_glow_flicker=1,mb_glow_width=1,
+    -- Test3.5: the white awakening disc keeps its opacity at the center and
+    -- fades toward the edge (inner/outer multiply its opacity); size scales it.
+    awakening_inner=1,awakening_outer=0,awakening_size=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
     ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0,
-    mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1}
+    mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1,
+    awakening_inner=1,awakening_outer=1,awakening_size=1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -356,7 +360,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         opening.opacity=response.idle
         if initial>0 then
             role='awakening';fill=initial
-            opening.radius=opening.radius*grow;opening.opacity=0
+            opening.radius=opening.radius*grow*option(opts,'awakening_size');opening.opacity=0
         end
         if response.responding then
             fill=0;role='mb-glyph'
@@ -401,8 +405,14 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         if role=='mb-glyph'then opening.opacity=opening.opacity*mb_overall end
         out.awakening_glyph=opening
+        local before=#out.discs
         disc(opening.radius,opening.offset,fill>0 and 0 or opening.rotation,{white},fill,fill>0 and 0 or 2,
             fill>0 and 0 or opening.opacity,role,color)
+        if role=='awakening'and #out.discs>before then
+            -- Radial fill: center and rim opacity multipliers (native 0.7.0).
+            local d=out.discs[#out.discs]
+            d.inner,d.outer=option(opts,'awakening_inner'),option(opts,'awakening_outer')
+        end
         if clapper and response.element and (response.shimmer or 0)>0 then
             -- The shimmer follows the glyph: white unless mb glyph tint > 0.
             local shimmer_color=mix(white,response.element,option(opts,'mb_glyph_tint'))

@@ -50,6 +50,11 @@ function M.argb(c,alpha)
     return math.floor(clamp(alpha,0,1)*255+.5)*16777216+math.floor(c[1]+.5)*65536+
         math.floor(c[2]+.5)*256+math.floor(c[3]+.5)
 end
+-- Multiply only the alpha byte of a packed ARGB color (radial fallback).
+function M.scale_alpha(c,k)
+    local alpha=math.floor(c/16777216)
+    return math.floor(alpha*clamp(k,0,1)+.5)*16777216+c%16777216
+end
 -- Average two packed ARGB colors channel by channel (gradient fallback).
 function M.mix_argb(a,b)
     local out,scale=0,1

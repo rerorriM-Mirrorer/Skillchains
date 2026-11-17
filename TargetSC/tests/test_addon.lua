@@ -16,8 +16,10 @@ function native.ring(r,h,w,c,px,sectors,c2,c3,c4,rotation,gap,blend)
     assert(blend==0,'0.5.0 native receives no ring gradient flag')
     native.rings[#native.rings+1]={r,h,w,c,px,sectors,c2,c3,c4,rotation,gap}
 end
-function native.disc(r,h,a,c,g,outline,sectors,c2,c3,c4,blend)
+function native.disc(r,h,a,c,g,outline,sectors,c2,c3,c4,blend,inner,outer)
     assert(sectors>=1 and sectors<=4 and outline>=0 and outline<=4294967295)
+    -- Test3.5: a 0.5.0 DLL never receives the 0.7.0 radial arguments.
+    assert(inner==nil and outer==nil,'0.5.0 native receives no radial fill arguments')
     -- Test3: this mock reports DLL 0.5.0, so Lua must send its four-step
     -- gradient fallback (blend 0) rather than the 0.6.0 gradient flag.
     assert(blend==0,'0.5.0 native receives no gradient flag')

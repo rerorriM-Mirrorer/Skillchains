@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.13.4-unified-test3.4'
+_addon.version='0.13.5-unified-test3.5'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -27,10 +27,11 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     for _,name in ipairs({'start','stop','clear','begin','ring','disc','commit','status'}) do
         if type(result[name])~='function' then api_ok=false end
     end
+    -- 0.7.0 adds radial disc fills (inner/outer alpha, 12th/13th arguments).
     -- 0.6.0 adds optional smooth gradient discs (11th disc argument). 0.5.0
     -- remains accepted: gradients then use a four-step Lua approximation.
-    if version_ok and (version=='0.6.0' or version=='0.5.0') and api_ok then native=result;native_version=version
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.6.0 (or 0.5.0), received '..tostring(version) end
+    if version_ok and (version=='0.7.0' or version=='0.6.0' or version=='0.5.0') and api_ok then native=result;native_version=version
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.7.0 (or 0.6.0/0.5.0), received '..tostring(version) end
 else renderer_error=tostring(result) end
 
 local function say(text) windower.add_to_chat(207,'TargetSC: '..text) end
@@ -142,6 +143,8 @@ local function help()
         {'mb period <0.2-6>','Large glyph full breathing cycle in seconds (default 2).'},
         {'mb rise|expand <0-2>','Burst glyph rise as model-height fraction / extra radial growth.'},
         {'awakening on|off|opacity <0-1>','Filled white opening glyph; MB breathing/burst controls are independent.'},
+        {'awakening fade <inner 0-1> [outer 0-1]','Center/edge opacity of the white opening disc, as multipliers; outer defaults to 0 (default 1 0).'},
+        {'awakening size <0.1-3>','White opening disc size; 1 = previous size (default 1).'},
         {'preset default|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; killala = exact pre-Test3 (Killala/Cioara) look.'},
         {'mb glyph height <0-2>','Burst rise of the large glyph as a fraction of the MB ring height; 1 = ring, 0 = old mb rise (default 1.1).'},
         {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},
@@ -327,8 +330,19 @@ windower.register_event('prerender',function()
             end
             blend=0
         end
-        native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
-            #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend)
+        local inner,outer=disc.inner or 1,disc.outer or 1
+        if native_version~='0.7.0'and (inner~=1 or outer~=1)then
+            -- Pre-0.7.0 DLL has no radial fill: use the average, evenly.
+            local k=(inner+outer)/2
+            for i,c in ipairs(colors)do colors[i]=resonance.scale_alpha(c,k)end
+        end
+        if native_version=='0.7.0'then
+            native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
+                #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer)
+        else
+            native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
+                #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend)
+        end
     end
     for _,ring in ipairs(frame) do
         local colors=ring.colors or {ring.color}

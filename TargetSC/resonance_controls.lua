@@ -150,7 +150,20 @@ function M.new(settings,defaults,save,say,killala)
         elseif command=='discs'then discs(args,value)
         elseif command=='awakening'then
             if value=='opacity'then numeric('awakening_opacity',args[2],{0,1},'awakening opacity')
-            elseif not toggle('awakening',value,'Awakening')then say('Use //tsc awakening on|off|opacity <0-1>.')end
+            elseif value=='fade'then
+                -- Center-to-edge fill opacity, each a multiplier of the
+                -- current awakening opacity. Outer is optional (default 0).
+                local inner,outer=tonumber(args[2]),args[3]==nil and 0 or tonumber(args[3])
+                local valid=function(n)return n and n==n and n>=0 and n<=1 end
+                if not valid(inner)or not valid(outer)then
+                    say('Use //tsc awakening fade <inner 0-1> [outer 0-1] (outer defaults to 0).');return true
+                end
+                settings.awakening_inner,settings.awakening_outer=inner,outer;save(settings)
+                say(('Awakening fade: center %.2f, edge %.2f.'):format(inner,outer))
+            elseif value=='size'then numeric('awakening_size',args[2],{.1,3},'awakening size')
+            elseif not toggle('awakening',value,'Awakening')then
+                say('Use //tsc awakening on|off | opacity <0-1> | fade <inner> [outer] | size <0.1-3>.')
+            end
         elseif command=='preset'then preset(value)
         elseif command=='display'then
             if not ({sc=true,mb=true,both=true,off=true})[value]then say('Use //tsc display sc|mb|both|off.');return true end
