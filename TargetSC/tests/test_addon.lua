@@ -180,6 +180,32 @@ do
  assert(#native.rings==0 and #native.discs==0,'no live resonance on yourself')
  windower.ffxi.get_mob_by_target,windower.ffxi.get_mob_by_index=get_target,get_index
 end
+-- Test4.3: frames classic|even|full world update cadence at 60 fps.
+do
+ local commit=native.commit
+ local stamps
+ native.commit=function()commit();if stamps then stamps[#stamps+1]=now end end
+ local function run(mode,start)
+  command('frames',mode)
+  now=start;command('preview','Fusion','2')
+  stamps={}
+  for i=0,119 do now=start+.01+i/60;events.prerender()end
+  local got=stamps;stamps=nil;command('preview','off')
+  local gaps={}
+  for i=2,#got do gaps[math.floor((got[i]-got[i-1])*600+.5)]=true end
+  return #got,gaps
+ end
+ local n_full=run('full',300)
+ assert(n_full>=119,'full renders every frame: '..n_full)
+ local n_even,even=run('even',310)
+ local list={}for k in pairs(even)do list[#list+1]=k end
+ table.sort(list)
+ assert(#list==1 and list[1]==20 and n_even>=59 and n_even<=61,'even: every other frame, '..n_even..' gaps '..table.concat(list,','))
+ local n_classic=run('classic',320)
+ assert(n_classic>=39 and n_classic<=61,'classic unchanged ~30 Hz: '..n_classic)
+ command('frames','sideways')
+ native.commit=commit
+end
 command('restart') assert(commands[#commands]=='lua reload TargetSC')
 local reload_count=0 for _,c in ipairs(commands)do if c=='lua reload TargetSC'then reload_count=reload_count+1 end end
 assert(reload_count==1)

@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.14.3 unified Test4.3 — optional world frame cadence (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.
+
+**User decisions:** the animated white→color shift (stage 2's second half) and the cycling opener disc (stage 4) are no longer needed: the stacked opener discs already appear to shift colors as they rotate under each other. Stage 3 stays on hold (and conflicts with the recorded design principle). Asked whether the world-animation smoothing affects performance and wanted it optional so nothing working changes.
+
+**Change:** `//tsc frames classic|even|full` (stored outside the visual presets; default classic = previous `now+1/30`). `even` advances a fixed 1/30 s grid with a 2 ms jitter tolerance so a 60 fps client updates exactly every other frame; same CPU as classic. `full` rebuilds every game frame (roughly double the Lua work at 60 fps).
+
+**Host verification (not FFXI):** full suite PASS; `test_addon.lua` measures commits over 2 s at 60 fps: full ≥119, even exactly every other frame (one 1/30 s gap value), classic ~30 Hz; unknown mode rejected. **Live pending:** compare classic vs even (and full) on Cioara and while multiboxing.
+
 ## Design principle stated by the user (2026-11-17)
 
 **Live feedback on Test4.1/4.2:** "the opener now animates so beautifully … the timing for those comet trails just right"; no settings changed. Settled on `opener discs outline 0`.

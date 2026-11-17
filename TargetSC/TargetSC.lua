@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.2-unified-test4.2'
+_addon.version='0.14.3-unified-test4.3'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -10,7 +10,9 @@ local previews=require('resonance_preview')
 local controls=require('resonance_controls')
 local local_bus=require('targetsc_local')
 local sc_runtime
-local defaults={enabled=true,debug=false}
+-- frames: world animation update cadence (not a visual preset value).
+-- classic = previous now+1/30; even = fixed 30 Hz grid; full = every frame.
+local defaults={enabled=true,debug=false,frames='classic'}
 for key,value in pairs(resonance.defaults)do defaults[key]=value end
 local settings=config.load(defaults)
 local model=resonance.new()
@@ -200,6 +202,7 @@ local function help()
         {'mb ending drop <0-1>','How far the MB ring settles onto the large glyph during the closing pulses (default 1).'},
         {'preview self [scenario]','Preview on your own character (also automatic when targeting yourself or nothing).'},
         {'preview off','End preview and return to live state.'},
+        {'frames classic|even|full','World animation updates: previous 30 Hz, even 30 Hz steps, or every frame (default classic).'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
         {'scale <0.25-3>','Scale the model-relative rings.'},
         {'intensity <0-4>','Set vibration and flash strength.'},
@@ -316,6 +319,13 @@ windower.register_event('addon command',function(command,...)
     elseif command=='preview' then
         if args[1] and args[1]:lower()=='off' then preview=nil clear() say('Preview stopped.')
         else begin_preview(args) end
+    elseif command=='frames' then
+        local mode=(args[1]or ''):lower()
+        if mode~='classic'and mode~='even'and mode~='full'then
+            say('Frames '..tostring(settings.frames)..'. Use //tsc frames classic|even|full.') return
+        end
+        settings.frames=mode config.save(settings)
+        say('Frames '..mode..({classic=' (previous 30 Hz).',even=': even 30 Hz steps.',full=': every game frame (more CPU).'})[mode])
     elseif command=='debug' then
         local option=(args[1] or ''):lower()
         if option~='on' and option~='off' then say('Use //tsc debug on|off.') return end
@@ -337,8 +347,16 @@ end)
 windower.register_event('prerender',function()
     if not settings.enabled or not native or not renderer_started then return end
     local now=os.clock()
-    if now<next_frame then return end
-    next_frame=now+1/30
+    -- even: 2 ms tolerance so frame-time jitter landing a hair early does
+    -- not skip a beat (which would make a 3-frame step).
+    if now<next_frame-(settings.frames=='even'and .002 or 0)then return end
+    if settings.frames=='full'then next_frame=0
+    elseif settings.frames=='even'then
+        -- Fixed 1/30 s grid: a 60 fps client updates every other frame
+        -- evenly instead of alternating 2- and 3-frame steps.
+        next_frame=next_frame+1/30
+        if next_frame<=now then next_frame=now+1/30 end
+    else next_frame=now+1/30 end
     -- Retry once the subscription throttle permits if the last event was the
     -- only one that revealed a gap. No request is sent during healthy frames.
     if model.needs_sync and now-requested_at>1 then subscribe() end

@@ -1,5 +1,11 @@
 # TargetSC — elemental resonance
 
+## 0.14.3 unified Test4.3 — optional world frame cadence
+
+Lua-only. `//tsc frames classic|even|full` (default classic, unchanged):
+`even` keeps 30 updates a second but evenly spaced (same cost); `full`
+updates every game frame (more CPU). Not reset by visual presets.
+
 ## 0.14.2 unified Test4.2 — opener discs outline
 
 Lua-only. `//tsc opener discs outline <0-1>|same` sets the glyph line opacity
@@ -1028,3 +1034,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.1 (0.14.1): opener spin slowdown and minimum. Author: A.
 
 2026-11-17 unified Test4.2 (0.14.2): opener discs outline. Author: A.
+
+2026-11-17 unified Test4.3 (0.14.3): optional frames classic|even|full. Author: A.
