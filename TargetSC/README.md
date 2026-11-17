@@ -1,5 +1,15 @@
 # TargetSC — elemental resonance
 
+## 0.13.7 unified Test3.7 — awakening fade until
+
+Lua-only over Test3.5/3.6 (keep the 0.7.0 DLL). Choose when the white opening
+disc finishes fading: `//tsc awakening fade until default|open|close|<1-9>`.
+- `default` — as before (two-thirds of the wait).
+- `open` (or `window`) — exactly as the window opens.
+- `close` — at the end of the opener's window.
+- `1`–`9` — that many seconds after the window opens (never past its end).
+A link landing while it is still visible fades it out over 0.3 s.
+
 ## 0.13.6 unified Test3.6 — opener property-disc fade and size
 
 Lua-only over Test3.5 (keep its 0.7.0 DLL). During the opener only, the
@@ -966,3 +976,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test3.5 (0.13.5): native 0.7.0 radial disc fill; awakening fade and size. Author: A.
 
 2026-11-17 unified Test3.6 (0.13.6): opener-only property-disc fill fade and size. Author: A.
+
+2026-11-17 unified Test3.7 (0.13.7): awakening fade until default|open|close|1-9. Author: A.

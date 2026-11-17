@@ -134,10 +134,12 @@ function M.new()
     function self:opening_glyph(state)
         local glyph=self.awakening_glyphs[state.id]
         if not glyph or (state.step==1 and glyph.created~=state.created)then
-            glyph={created=state.created,open=state.sc_open,rotation=0,glyph=2,opacity=0,
+            glyph={created=state.created,open=state.sc_open,close=state.sc_close,rotation=0,glyph=2,opacity=0,
                 shape='property-glyph',radius=0,offset=0,opener_seen=state.step==1}
             self.awakening_glyphs[state.id]=glyph
         end
+        -- The opener's own window end, refreshed while it is still the opener.
+        if state.step==1 and glyph.created==state.created then glyph.close=state.sc_close end
         return glyph
     end
     function self:receive(args,now)

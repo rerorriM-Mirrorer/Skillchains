@@ -17,4 +17,4 @@ return {opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded'
     ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0,
     mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1,
     awakening_inner=1,awakening_outer=1,awakening_size=1,
-    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1}
+    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default'}

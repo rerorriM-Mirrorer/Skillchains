@@ -42,14 +42,22 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     awakening_inner=1,awakening_outer=0,awakening_size=1,
     -- Test3.6: opener-only property disc FILL (glyph lines unchanged):
     -- center/edge opacity multipliers and size. Defaults change nothing.
-    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1}
+    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,
+    -- When the awakening disc's fade ends: 'default' (two-thirds of the wait,
+    -- as before), 'open' (window opens), 'close' (window ends) or '1'..'9'
+    -- seconds after the window opens. A link fades it out over .3 s.
+    awakening_until='default'}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
     ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0,
     mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1,
     awakening_inner=1,awakening_outer=1,awakening_size=1,
-    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1}
+    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,
+    -- When the awakening disc's fade ends: 'default' (two-thirds of the wait,
+    -- as before), 'open' (window opens), 'close' (window ends) or '1'..'9'
+    -- seconds after the window opens. A link fades it out over .3 s.
+    awakening_until='default'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -357,8 +365,35 @@ function M.frame(model,s,now,radius,height,opts,context)
     if opening then
         local progress=clamp((now-opening.created)/max(.1,opening.open-opening.created),0,1)
         local grow=1-(1-clamp(progress*3,0,1))^3
-        local initial=show_sc and opening.opener_seen and option(opts,'awakening')and
-            option(opts,'awakening_opacity')*opacity*(1-smooth((progress-1/3)*3))or 0
+        local initial=0
+        if show_sc and opening.opener_seen and option(opts,'awakening')then
+            local span=max(.1,opening.open-opening.created)
+            local start=opening.created+span/3 -- the grow ends here, as before
+            local mode=tostring(option(opts,'awakening_until'))
+            local finish=opening.created+span*2/3
+            if mode=='open'then finish=opening.open
+            elseif mode=='close'then finish=max(opening.open,opening.close or opening.open)
+            elseif tonumber(mode)then
+                -- Never outlast the opener's own window: past its end the whole
+                -- display clears, so cap the timed fade to finish cleanly.
+                finish=min(opening.open+tonumber(mode),max(opening.open,opening.close or opening.open))
+            end
+            local level=1-smooth((now-start)/max(.05,finish-start))
+            -- A link takes over: finish quickly and continuously, no pop.
+            if s.step>1 then level=level*(1-smooth((now-s.created)/.3))end
+            initial=option(opts,'awakening_opacity')*opacity*level
+        end
+        if initial>0 and s.step>1 then
+            -- The link's large MB glyph now owns the pooled shape, so the
+            -- lingering awakening disc finishes as its own fill disc.
+            local before=#out.discs
+            disc(radius*.96*option(opts,'awakening_size'),option(opts,'disc_height'),0,{white},initial,0,0,'awakening')
+            if #out.discs>before then
+                local d=out.discs[#out.discs]
+                d.inner,d.outer=option(opts,'awakening_inner'),option(opts,'awakening_outer')
+            end
+            initial=0
+        end
         local role='mb-glyph'
         local fill=0
         local color=white -- steady neutral breath; only confirmed MBs tint it

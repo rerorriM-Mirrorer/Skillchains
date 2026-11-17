@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.13.7 unified Test3.7 — awakening fade until (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test3.5/3.6 (native 0.7.0 unchanged). Author: A.
+
+**Request:** `//tsc awakening fade until default|window|…|1-9`: default = current; window = as the window opens; (fading until the end of the skillchain window); 1–9 = that many seconds after the window opens. The request named "until window" twice with two meanings; implemented as `open` (alias `window`) for the opening and `close` for the end of the window.
+
+**Changes:** the grow stays over the first third of the wait; the fade now runs from there to the chosen end: `default` (two-thirds of the wait, bit-identical to before), `open` (exactly at the real window opening), `close` (the opener's own window end, stored on the opening glyph and refreshed while the opener is current), or `N` seconds after opening, **capped at the window end** because the whole opener display clears after it. If a link lands while the disc is still showing, it fades out continuously over 0.3 s; because the link's large MB glyph takes over the pooled shape, the lingering disc is drawn as its own fill disc (same radius/size, center/edge fade). The default can never overlap a link, so it is unchanged. `preset killala` → default.
+
+**Host verification (not FFXI):** full suite + new `test_awakening_until.lua` (default matches the previous formula at seven times and is gone at two-thirds; open/close/1/5/9 end exactly on time, 9 capped at window end; grow identical in every mode; no jump when a link lands, fading through .3 s and gone at .3 s; command parsing incl. `window` alias and rejects 0/10/2.5/text; fade numbers unaffected; killala) PASS. **Live pending:** compare `open` vs `close` vs a few seconds; check the hand-off when a link lands during a lingering fade.
+
 ## TargetSC 0.13.6 unified Test3.6 — opener property-disc fade and size (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test3.5 (native 0.7.0 unchanged). Author: A.

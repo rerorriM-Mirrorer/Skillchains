@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.13.6-unified-test3.6'
+_addon.version='0.13.7-unified-test3.7'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -147,6 +147,7 @@ local function help()
         {'awakening on|off|opacity <0-1>','Filled white opening glyph; MB breathing/burst controls are independent.'},
         {'awakening fade <inner 0-1> [outer 0-1]','Center/edge opacity of the white opening disc, as multipliers; outer defaults to 0 (default 1 0).'},
         {'awakening size <0.1-3>','White opening disc size; 1 = previous size (default 1).'},
+        {'awakening fade until default|open|close|<1-9>','When the white disc finishes fading: as before, as the window opens, at window end, or N s after it opens.'},
         {'preset default|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; killala = exact pre-Test3 (Killala/Cioara) look.'},
         {'mb glyph height <0-2>','Burst rise of the large glyph as a fraction of the MB ring height; 1 = ring, 0 = old mb rise (default 1.1).'},
         {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},

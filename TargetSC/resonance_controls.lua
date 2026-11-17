@@ -163,6 +163,17 @@ function M.new(settings,defaults,save,say,killala)
         elseif command=='discs'then discs(args,value)
         elseif command=='awakening'then
             if value=='opacity'then numeric('awakening_opacity',args[2],{0,1},'awakening opacity')
+            elseif value=='fade'and (args[2]or ''):lower()=='until'then
+                local mode=(args[3]or ''):lower()
+                if mode=='window'then mode='open'end
+                local n=tonumber(mode)
+                if not (mode=='default'or mode=='open'or mode=='close'or
+                    (n and n==math.floor(n)and n>=1 and n<=9))then
+                    say('Use //tsc awakening fade until default|open|close|<1-9 seconds after the window opens>.');return true
+                end
+                settings.awakening_until=n and tostring(n)or mode;save(settings)
+                local meaning={default='two-thirds of the wait (previous)',open='the window opens',close='the window ends'}
+                say('Awakening fades until '..(meaning[mode]or (mode..' s after the window opens'))..'.')
             elseif value=='fade'then
                 -- Center-to-edge fill opacity, each a multiplier of the
                 -- current awakening opacity. Outer is optional (default 0).
