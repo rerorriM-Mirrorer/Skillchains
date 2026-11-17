@@ -1,5 +1,13 @@
 # TargetSC — elemental resonance
 
+## 0.14.8 unified Test4.8 — large glyph fades at its risen height
+
+Lua-only. After a burst the large breathing glyph now stays at its risen
+height and fades away (instead of falling back); at the floor it shows only
+the flash when an MB window opens.
+- `//tsc mb glyph after fade|fall` (default fade).
+- `//tsc mb glyph rest hidden|breath` (default hidden).
+
 ## 0.14.7 unified Test4.7 — Light glows wait for the window; matching MB ring
 
 Lua-only. Level 3 Light's colored inner glows stay off until the window
@@ -1080,3 +1088,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.6 (0.14.6): level 3 Light white strands with element-colored inner glows; white MB ring. Author: A.
 
 2026-11-17 unified Test4.7 (0.14.7): Light glows wait for the window; Light MB ring matches the lowest ring. Author: A.
+
+2026-11-17 unified Test4.8 (0.14.8): large glyph fades at its risen height; hidden at rest. Author: A.

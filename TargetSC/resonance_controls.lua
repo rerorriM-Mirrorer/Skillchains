@@ -166,8 +166,14 @@ function M.new(settings,defaults,save,say,killala)
             -- Large lower glyph's confirmed-burst response (Test3).
             local name=(args[2]or ''):lower()
             local ranges={height={0,2},tint={0,1},rise={0,1}}
+            local choice=(args[3]or ''):lower()
+            if name=='after'and (choice=='fade'or choice=='fall')then
+                settings.mb_glyph_after=choice;save(settings);say('MB glyph after a burst: '..choice..'.');return true
+            elseif name=='rest'and (choice=='hidden'or choice=='breath')then
+                settings.mb_glyph_rest=choice;save(settings);say('MB glyph at rest: '..choice..'.');return true
+            end
             if not ranges[name]then
-                say('Use //tsc mb glyph height <0-2> | tint <0-1> | rise <0-1>.');return true
+                say('Use //tsc mb glyph height <0-2> | tint <0-1> | rise <0-1> | after fade|fall | rest hidden|breath.');return true
             end
             numeric('mb_glyph_'..name,args[3],ranges[name],'mb glyph '..name)
         elseif command=='mb'and value=='intro'and ((args[2]or ''):lower()=='glyph'or (args[2]or ''):lower()=='disc')then

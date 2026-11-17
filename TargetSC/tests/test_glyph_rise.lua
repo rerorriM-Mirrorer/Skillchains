@@ -15,6 +15,7 @@ local s={id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,
  step=2,level=2,properties={'Fusion'},elements=R.elements('Fusion')}
 local function model()local m=R.new();m.states[71]=copy(s);return m end
 local o=copy(R.defaults);o.mb_intro=0;o.mb_ending_style='off'
+o.mb_glyph_after='fall';o.mb_glyph_rest='breath' -- Test3 behavior; Test4.8 has its own test
 local hit=model();hit.bursts[71]={{at=104,color=R.element_color('Fire')}}
 local plain=model()
 local rest=o.disc_height
@@ -55,7 +56,7 @@ assert(rgb(layer(hit:frame(71,105.3,2,4,tinted),'mb-glyph').outline)~=0xFFFFFF,'
 local old=copy(o);old.mb_glyph_height=0
 near(layer(hit:frame(71,105.3,2,4,old),'mb-glyph').offset,rest+4*o.mb_rise,1e-9,'height 0 = legacy mb rise')
 -- Intro: the large glyph flashes at mb_intro_glyph of the disc strength.
-local intro=copy(R.defaults);intro.mb_ending_style='off';intro.mb_idle=0
+local intro=copy(R.defaults);intro.mb_ending_style='off';intro.mb_idle=0;intro.mb_glyph_after='fall';intro.mb_glyph_rest='breath'
 local fresh=model()
 local f=fresh:frame(71,100.05,2,4,intro)
 local glyph=layer(f,'mb-glyph');local full=copy(intro);full.mb_intro_glyph=1

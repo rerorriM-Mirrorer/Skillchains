@@ -69,7 +69,11 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     ring_light='white',ring_light_cycle=4,ring_light_glow=1,
     -- Test4.7: Light's colored inner glows stay off until its window opens,
     -- then rise to `rings light glow`; its MB ring matches the lowest SC ring.
-    ring_light_opening='off',ring_light_mb='match'}
+    ring_light_opening='off',ring_light_mb='match',
+    -- Test4.8: large breathing glyph: after a burst it stays risen and fades
+    -- (instead of falling); at the floor it shows only the window-opening
+    -- flash (no breathing).
+    mb_glyph_after='fade',mb_glyph_rest='hidden'}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -82,7 +86,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     opener_disc_outline=-1,
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
-    ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white'}
+    ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
+    mb_glyph_after='fall',mb_glyph_rest='breath'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -581,6 +586,10 @@ function M.frame(model,s,now,radius,height,opts,context)
         opening.offset=option(opts,'disc_height')
         opening.rotation=clapper and -2*pi*option(opts,'mb_spin')*max(0,now-opening.created)or 0
         opening.opacity=response.idle
+        -- Test4.8 rest hidden: no floor breathing; the window-opening flash,
+        -- bursts and the ending still light it.
+        if clapper and option(opts,'mb_glyph_rest')=='hidden'and not response.ending then opening.opacity=0 end
+        local fades=clapper and option(opts,'mb_glyph_after')=='fade'
         if initial>0 then
             role='awakening';fill=initial
             opening.radius=opening.radius*grow*option(opts,'awakening_size');opening.opacity=0
@@ -598,10 +607,12 @@ function M.frame(model,s,now,radius,height,opts,context)
                     -- SAME return energy as the lifted property trace so both
                     -- land together. A re-strike continues from the current
                     -- height (response.glyph_rise) instead of dropping first.
-                    local rise=(response.glyph_rise or 1)*energy
+                    -- Test4.8 fade: stay at the risen height (no fall); the
+                    -- opacity below fades along the same return energy.
+                    local rise=(response.glyph_rise or 1)*(fades and 1 or energy)
                     opening.offset=rest+(mb_height-rest)*ring_fraction*rise
                 else
-                    opening.offset=rest+height*option(opts,'mb_rise')*energy
+                    opening.offset=rest+height*option(opts,'mb_rise')*(fades and 1 or energy)
                 end
                 color=mix(color,response.element,strike*option(opts,'mb_glyph_tint'))
                 opening.opacity=opening.opacity+(1-opening.opacity)*strike

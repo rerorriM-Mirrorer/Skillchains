@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.7-unified-test4.7'
+_addon.version='0.14.8-unified-test4.8'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -188,6 +188,8 @@ local function help()
         {'preset default|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; killala = exact pre-Test3 (Killala/Cioara) look.'},
         {'mb glyph height <0-2>','Burst rise of the large glyph as a fraction of the MB ring height; 1 = ring, 0 = old mb rise (default 1.1).'},
         {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},
+        {'mb glyph after fade|fall','After a burst the large glyph stays risen and fades, or falls back as before (default fade).'},
+        {'mb glyph rest hidden|breath','Large glyph at the floor: only the window-opening flash, or breathing as before (default hidden).'},
         {'mb glyph rise <0-1>','Seconds the large glyph takes to rise; 0 = instant like the trace (default .15).'},
         {'mb intro glyph|disc <0-1>','New-MB-window white flash strength on the large glyph / property disc (default .5 / 1).'},
         {'discs fade <inner 0-1> <outer 0-1>','Link property-disc fill opacity at center/edge, all levels (default 1 1).'},

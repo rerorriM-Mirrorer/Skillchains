@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.14.8 unified Test4.8 — large glyph fades at its risen height; hidden at rest (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.
+
+**User request:** instead of the large breathing glyph falling back after a burst (`mb hold` .6 s / `mb return` 2 s only time the fall), it should stay at its risen height and fade away over that same period. At the floor it should show only the brief flash when a new MB window opens and otherwise be fully faded, so there are no conflicts; a burst during that time takes over. The ending interaction is still to be decided.
+
+**Changes:** `mb glyph after fade|fall` (default fade): the clapper glyph's height stays at the peak (rise ramp still applies) while its opacity follows the same return energy as before, fading out instead of landing; a re-strike returns it to full at that height. `mb glyph rest hidden|breath` (default hidden): no floor breathing; the window-opening flash, bursts and (interim) the ending pulses still light it. Classic MB style unaffected. Test3's glyph test pinned to fall/breath. `preset killala` → fall/breath.
+
+**Host verification (not FFXI):** full suite PASS; new `test_glyph_fade.lua` (opening flash visible then hidden at four later times; breath option still breathes; after a burst the height is constant at the risen peak while visible and well above the floor, opacity falls (168→84 alpha over 1.5 s in a host probe), gone after the return with no fall; fall option still falls; re-strike brightens at the same height; ending pulses still show; commands; presets) PASS. **Open:** ending interaction for the glyph (currently pulses at the floor while the MB ring sinks onto it). **Live pending:** feel of fade vs fall; empty floor during the window.
+
 ## TargetSC 0.14.7 unified Test4.7 — Light glows wait for the window; Light MB ring matches the lowest ring (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.
