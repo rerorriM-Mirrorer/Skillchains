@@ -74,6 +74,11 @@ function M.new(settings,defaults,save,say,killala)
             if not toggle('opener_muted',(args[2]or ''):lower(),'Opener muted colors')then
                 say('Use //tsc opener muted [on|off].')
             end
+        elseif value=='layout'then
+            local layout=(args[2]or ''):lower()
+            if layout~='sections'and layout~='rings'then say('Use //tsc opener layout sections|rings.');return end
+            settings.opener_layout=layout;save(settings);say('Opener layout '..layout..'.')
+        elseif value=='spacing'then numeric('opener_spacing',args[2],{0,.2},'opener spacing')
         elseif value=='fade'then
             -- Opener arc fade along each arc (native 0.8.0).
             local name=(args[2]or ''):lower()

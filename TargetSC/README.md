@@ -1,5 +1,15 @@
 # TargetSC — elemental resonance
 
+## 0.14.0 unified Test4.0 — opener sections
+
+**New DLL (0.9.0): close all clients before installing.** Opener properties
+now share the circle: one property leaves a 90° gap, two leave 60° gaps,
+three leave 30° gaps. Each element is its own arc, stacked in height.
+Two-element arcs trail into each other's color; Light and Darkness show four
+arcs with white or black heads trailing into their four elements.
+- `//tsc opener spacing <0-0.2>` — height between stacked arcs (default .035).
+- `//tsc opener layout sections|rings` — `rings` is the previous look.
+
 ## 0.13.9 unified Test3.9 — previews on yourself
 
 Lua-only over Test3.8 (keep its 0.8.0 DLL). Previews now draw on your own
@@ -1000,3 +1010,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test3.8 (0.13.8): native 0.8.0 opener arc fade with length, curve, lead/trail and glow follow. Author: A.
 
 2026-11-17 unified Test3.9 (0.13.9): previews may draw on yourself. Author: A.
+
+2026-11-17 unified Test4.0 (0.14.0): native 0.9.0; opener sections with stacked two-color arcs. Author: A.

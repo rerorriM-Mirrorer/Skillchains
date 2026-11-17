@@ -49,7 +49,10 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     awakening_until='default',
     -- Test3.8: opener arcs fade along their length from the bright end
     -- (lead = facing the spin); the glow band follows by opener_fade_glow.
-    opener_fade=.6,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1}
+    opener_fade=.6,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
+    -- Test4.0: opener properties share the circle as sections (gaps 90/60/30
+    -- for 1/2/3 properties); each element is one arc, stacked by height.
+    opener_layout='sections',opener_spacing=.035}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -57,7 +60,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1,
     awakening_inner=1,awakening_outer=1,awakening_size=1,
     opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default',
-    opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1}
+    opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
+    opener_layout='rings',opener_spacing=.035}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -193,6 +197,24 @@ end
 local function property_palette(name,context)
     return context.palette({properties={name},elements={},level=context.level(name)})
 end
+-- Test4.0 opener section arcs, top of the stack first: {lead,tail} pairs.
+-- One element: one arc. Two: each color leads and trails into the other
+-- (game order, first on top). Light/Darkness (and level 4): one arc per
+-- element, white/black heads trailing into each element color.
+local function opener_arcs(p,context)
+    local elements=context.elements(p)
+    local color=function(e)return context.element_color(e)or white end
+    if context.level(p)>=3 then
+        local head=(p=='Darkness'or p=='Umbra')and {0,0,0}or white
+        local arcs={}
+        for _,e in ipairs(elements)do arcs[#arcs+1]={head,color(e),head=true}end
+        return arcs
+    elseif #elements>=2 then
+        return {{color(elements[1]),color(elements[2])},{color(elements[2]),color(elements[1])}}
+    end
+    local c=color(elements[1]or 'Light')
+    return {{c,c}}
+end
 local function specifications(s,context)
     local result={}
     if s.step==1 then
@@ -309,6 +331,16 @@ function M.frame(model,s,now,radius,height,opts,context)
             end
         end
     end
+    local function arc(r,h,lead,tail,a,pixels,role,part,strand,rotation,start,span)
+        if a<=.002 or r<.01 then return end
+        local fade=option(opts,'opener_fade')*(role=='glow'and option(opts,'opener_fade_glow')or 1)
+        out[#out+1]={kind='arc',radius=min(r,100),offset=h,width=0,pixels=pixels,
+            color=context.argb(lead,a),tail=context.argb(tail,a),colors={context.argb(lead,a)},
+            rotation=rotation or 0,arc_start=start,arc_span=span,role=role,part=part,strand=strand,gap=0,blend=0,
+            fade=min(1,max(0,fade)),fade_length=option(opts,'opener_fade_length'),
+            fade_curve=option(opts,'opener_fade_curve'),
+            fade_direction=option(opts,'opener_fade_end')=='trail'and -1 or 1}
+    end
     local function ring(r,h,colors,a,part,strand,rotation,light)
         local opening=opener and (part=='ground'or part=='sky')
         local mode=opening and option(opts,'opener_glow')or 'color'
@@ -337,7 +369,45 @@ function M.frame(model,s,now,radius,height,opts,context)
     local electric=1
     if not opener and s.level==3 then electric=.68+.32*sin(age*11)^2
     elseif not opener and s.level>=4 then electric=(.37+.63*sin(age*23)^2)*(.72+.28*sin(age*28)^2)end
-    if show_sc and phase~='mb-only'and phase~='expired'then
+    local sections=opener and option(opts,'opener_layout')=='sections'and (context.native_level or 9)>=9
+    if show_sc and phase~='mb-only'and phase~='expired'and sections then
+        -- Test4.0: each property owns an equal section of the circle; its
+        -- elements are stacked arcs at the same radius, lifted by spacing.
+        local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*fade
+        local n=#s.properties
+        local gap=({90,60,30})[n]or 30
+        local section=(360-n*gap)/n
+        local rotation=M.rotation(s,now,opts)
+        local function shade(c,head)
+            local target=(not head)and option(opts,'opener_muted')and muted(c)or c
+            return mix(mix(white,target,color_t),white,flash)
+        end
+        local mode=option(opts,'opener_glow')
+        out.strands=0
+        for k,p in ipairs(s.properties)do
+            local start=(k-1)*(section+gap)+gap/2
+            local arcs=opener_arcs(p,context)
+            for idx,pair in ipairs(arcs)do
+                out.strands=out.strands+1
+                local lead,tail=shade(pair[1],pair.head),shade(pair[2],false)
+                local lift=(#arcs-idx)*option(opts,'opener_spacing')
+                local strand=(k-1)*4+idx
+                for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
+                    if place[1]then
+                        local h=place[1]+lift
+                        local draw_radius=radius
+                        if place[2]=='sky'then draw_radius=radius*M.bell_factor(top-bottom,height,opts)end
+                        if glow>0 and mode~='off'then
+                            local gl,gt=lead,tail
+                            if mode=='black'then gl,gt={0,0,0},{0,0,0}end
+                            arc(draw_radius,h,gl,gt,alpha*.24*glow,px+4*min(glow,3),'glow',place[2],strand,rotation,start,section)
+                        end
+                        arc(draw_radius,h,lead,tail,alpha,px,'core',place[2],strand,rotation,start,section)
+                    end
+                end
+            end
+        end
+    elseif show_sc and phase~='mb-only'and phase~='expired'then
         local specs=specifications(s,context)
         if not opener and s.level~=2 and age<.16 then specs={{colors={white},radial=1,stack=0}}end
         out.strands=#specs

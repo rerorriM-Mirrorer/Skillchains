@@ -10,7 +10,7 @@ local opener={id=71,revision=1,created=100,sc_open=103,sc_close=110,mb_close=0,s
 local link={id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,step=2,level=2,
  properties={'Fusion'},elements=R.elements('Fusion')}
 local function frame(s,t,o)local m=R.new();m.states[71]=copy(s);return m:frame(71,t,2,4,o)end
-local o=copy(R.defaults)
+local o=copy(R.defaults);o.opener_layout='rings' -- Test3.8 checks the gapped-ring path; sections have their own test
 local f=frame(opener,104,o)
 local cores,glows=0,0
 for _,r in ipairs(f)do

@@ -1,5 +1,17 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.14.0 unified Test4.0 — opener sections (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.9.0).** Author: A.
+
+**Design agreed with the user (2026-11-17):** the opener's properties share the circle as equal sections with gaps of 90° (one property), 60° (two) or 30° (three). Inside a section there is one arc per element, at the same radius and stacked by height like level-2 strands (`opener spacing`). Single element: one arc. Two elements: two arcs, each leading in its own color and trailing into the other; game order with the first-listed element on top (Fusion: Light above Fire). Light/Darkness: four arcs (one per element) with white or black heads trailing into Fire/Wind/Lightning/Light or Earth/Ice/Water/Dark; the dark glow stays. Arcs keep the bright-leading-end fade. Staggering nested groups was discussed and superseded by sections. Arc shortening near the window end was **not** wanted; the user clarified they meant the existing white-to-color shift (rings start white with a .3 s pulse and turn to color over two-thirds of the wait), which stage 2 will tie to the awakening disc.
+
+**Remaining stages (agreed, not yet built):** (2) arc fade grows as the white disc fades, and the white→color shift follows the white disc; (3) property discs lose glyph lines during the opener and the awakening disc shows the glyph, spinning with the rings; (4) one opener disc cross-fading between each property's look (single: solid; two-element: its blend; Light/Darkness: white/black center to a rim of four element colors via the new hub color).
+
+**Changes (stage 1):** native `native.arc` (start/span, lead→tail color and alpha along the shaped fade), optional disc hub color (stage 4 groundwork), ring limit 32→64 with storage check updated. Lua `opener layout sections|rings` (default sections), `opener spacing <0-0.2>` (default .035); context now carries element lookups and the DLL level; DLLs older than 0.9.0 fall back to the previous gapped rings. `preset killala` → rings.
+
+**Host verification (not FFXI):** 0.9.0 `-Werror` build; property tests incl. arc_color/arc_shape (lead end, tail rgb at tip, fade alpha, trail flip, length holds lead) PASS; full suite PASS (Test3.8's fade test pinned to the rings layout); new `test_opener_sections.lua` (gaps 90/60/30 and equal sections for 1–3 properties, 1/2/4 arcs, two-element lead/tail swap with Light-led arc on top, stack spacing, Light white heads with all four element tails, Darkness black heads, fade/glow follow and black glow, sky arcs, rings/killala/0.8.0 fallbacks, links unaffected, worst case Light+Darkness+Fusion = 32 strokes ≤ 64, commands) PASS. **Live pending:** whole look on 1/2/3-property openers (`preview opener Liquefaction,Fusion,Light`), stacking height, colors after the white shift. Close all clients before replacing the DLL.
+
 ## TargetSC 0.13.9 unified Test3.9 — previews on yourself (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test3.8 (native 0.8.0 unchanged). Author: A.

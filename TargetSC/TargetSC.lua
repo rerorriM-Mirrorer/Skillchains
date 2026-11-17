@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.13.9-unified-test3.9'
+_addon.version='0.14.0-unified-test4.0'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -32,9 +32,12 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     -- 0.6.0 adds optional smooth gradient discs (11th disc argument). 0.5.0
     -- remains accepted: gradients then use a four-step Lua approximation.
     -- 0.8.0 adds opener arc fades (ring arguments 13-16).
-    local levels={['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
+    -- 0.9.0 adds native.arc (opener sections) and a disc hub color (arg 14).
+    local levels={['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
     if version_ok and levels[version] and api_ok then native=result;native_version=version;native_level=levels[version]
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.8.0 (or 0.7.0/0.6.0/0.5.0), received '..tostring(version) end
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.9.0 (or 0.8.0-0.5.0), received '..tostring(version) end
+    -- Older DLLs cannot draw section arcs; the layout falls back to rings.
+    resonance.native_level=native_level
 else renderer_error=tostring(result) end
 
 local function say(text) windower.add_to_chat(207,'TargetSC: '..text) end
@@ -153,6 +156,8 @@ local function help()
         {'opener gap <0-60>|on|off','Two opposite opener gaps, each this many degrees; on=12.'},
         {'opener glow color|black|off','Opener surround color; uses the global glow strength.'},
         {'opener muted [on|off]','Quieter elemental hues on opener rings.'},
+        {'opener layout sections|rings','sections: properties share the circle (gaps 90/60/30), one stacked arc per element; rings: previous nested rings.'},
+        {'opener spacing <0-0.2>','Height between stacked section arcs (default .035, like level 2 strands).'},
         {'opener fade <0-1>','Opener arcs fade from their bright end toward the tip; 0 = even (default .6).'},
         {'opener fade length <0.1-1>','Fraction of each arc the fade covers, from the tip (default 1).'},
         {'opener fade curve <0.5-3>','Fade shape: 1 even, >1 holds brightness longer, <1 drops early (default 1).'},
@@ -381,6 +386,13 @@ windower.register_event('prerender',function()
         end
     end
     for _,ring in ipairs(frame) do
+      if ring.kind=='arc'then
+        if native_level>=9 then
+            native.arc(ring.radius,ring.offset,ring.width,ring.color,ring.tail,ring.pixels or settings.width,
+                ring.rotation or 0,ring.arc_start,ring.arc_span,ring.fade or 0,ring.fade_length or 1,
+                ring.fade_curve or 1,ring.fade_direction or 1)
+        end
+      else
         local colors=ring.colors or {ring.color}
         local blend=ring.blend or 0
         if native_version=='0.5.0'then
@@ -400,6 +412,7 @@ windower.register_event('prerender',function()
             native.ring(ring.radius,ring.offset,ring.width,colors[1]or ring.color,ring.pixels or settings.width,
                 #colors,colors[2]or ring.color,colors[3]or ring.color,colors[4]or ring.color,ring.rotation or 0,ring.gap or 0,blend)
         end
+      end
     end
     native.commit()
 end)
