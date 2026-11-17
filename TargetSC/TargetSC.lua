@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.13.5-unified-test3.5'
+_addon.version='0.13.6-unified-test3.6'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -131,6 +131,8 @@ local function help()
         {'opener gap <0-60>|on|off','Two opposite opener gaps, each this many degrees; on=12.'},
         {'opener glow color|black|off','Opener surround color; uses the global glow strength.'},
         {'opener muted [on|off]','Quieter elemental hues on opener rings.'},
+        {'opener discs fade <inner 0-1> <outer 0-1>','Opener property-disc fill opacity at center/edge, as multipliers (default 1 1).'},
+        {'opener discs size <0.2-2>','Opener property-disc fill size; glyph lines keep their size (default 1).'},
         {'discs on|off|opacity <0-1>','Control procedural ground property glyphs.'},
         {'discs outline <0-1>','Glyph line opacity independent of elemental fill.'},
         {'discs style glyph|outline|fill','Select filled glyph, outline only, or fill only.'},

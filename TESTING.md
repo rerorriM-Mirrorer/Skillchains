@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.13.6 unified Test3.6 — opener property-disc fade and size (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test3.5 (native 0.7.0 unchanged). Author: A.
+
+**Questions answered:** `awakening opacity` (0.3) is multiplied by global `opacity` (0.27), so ≈8% at the disc center; 1 caps at ≈27% unless global opacity rises. Awakening timing: the pre-window is each ability's delay (3 s for most weapon skills); the disc grows over the first third, fades over the middle third and is gone at two-thirds (≈1 s before the window on a 3 s opener). Proposed (not built, awaiting choice): `awakening fade until window` (default; fade ends exactly at the real window opening whatever the delay) plus `awakening fade until <seconds>` for a fixed time.
+
+**Request implemented:** opener-only controls for the property-disc **fill**, glyph lines unchanged: `//tsc opener discs fade <inner 0-1> <outer 0-1>` (both required; multipliers of current fill opacity; 1 1 = unchanged) and `//tsc opener discs size <0.2-2>` (1 = current). Clapper path resizes the separate fill disc only; the classic path splits fill and glyph lines only when a custom value is set. Defaults send exactly the previous discs (no radial fields). Links and later stages untouched. `preset killala` → 1/1/1.
+
+**Host verification (not FFXI):** full suite + new `test_opener_discs.lua` (both MB styles: defaults untouched, fill fade/size per opener property, glyph line discs keep size and carry no radial, link discs unchanged, command parsing/range, killala) PASS. **Live pending:** try `opener discs fade 0.2 1` (edge-bright), `fade 1 0` (center-bright), `size 1.2–1.5`.
+
 ## TargetSC 0.13.5 unified Test3.5 — awakening disc fade and size (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.7.0).** Author: A.

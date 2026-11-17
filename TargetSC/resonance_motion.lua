@@ -39,13 +39,17 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     mb_glow_shade=.5,mb_glow_spin=.5,mb_glow_flicker=1,mb_glow_width=1,
     -- Test3.5: the white awakening disc keeps its opacity at the center and
     -- fades toward the edge (inner/outer multiply its opacity); size scales it.
-    awakening_inner=1,awakening_outer=0,awakening_size=1}
+    awakening_inner=1,awakening_outer=0,awakening_size=1,
+    -- Test3.6: opener-only property disc FILL (glyph lines unchanged):
+    -- center/edge opacity multipliers and size. Defaults change nothing.
+    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
     ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0,
     mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1,
-    awakening_inner=1,awakening_outer=1,awakening_size=1}
+    awakening_inner=1,awakening_outer=1,awakening_size=1,
+    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -305,6 +309,11 @@ function M.frame(model,s,now,radius,height,opts,context)
             glyph=glyph,outline=context.argb(stroke_color or white,outline),role=role,
             blend=#p>1 and (mode=='gradient'or mode=='firm')and 1 or 0}
     end
+    -- Opener property-disc fill: radial center/edge multipliers (native 0.7.0).
+    local function opener_fill(d)
+        local inner,outer=option(opts,'opener_disc_inner'),option(opts,'opener_disc_outer')
+        if inner~=1 or outer~=1 then d.inner,d.outer=inner,outer end -- 1 1 = untouched
+    end
     local electric=1
     if not opener and s.level==3 then electric=.68+.32*sin(age*11)^2
     elseif not opener and s.level>=4 then electric=(.37+.63*sin(age*23)^2)*(.72+.28*sin(age*28)^2)end
@@ -470,8 +479,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                 -- remains anchored. Terminal traces keep their .006 clearance.
                 local r=terminal and radius*.92 or radius*(.78-(j-1)*.11)
                 local respond=flash>0 or disc_intro>0
-                disc(r,h,angle,colors,(glyph==2 and not respond)and 0 or disc_fill,
-                    0,0,'property')
+                local before=#out.discs
+                disc(opener and r*option(opts,'opener_disc_size')or r,h,angle,colors,
+                    (glyph==2 and not respond)and 0 or disc_fill,0,0,'property')
+                if opener and #out.discs>before then opener_fill(out.discs[#out.discs])end
                 local trace_height=h+(terminal and .006 or 0)
                 if clapper and mb_overall>0 then
                     trace_height=trace_height+(response.lift or 0)*option(opts,'mb_floor')
@@ -483,8 +494,20 @@ function M.frame(model,s,now,radius,height,opts,context)
                         px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn)
                 end
             else
-                disc(radius*(.78-(j-1)*.11),h,angle,colors,disc_fill,
-                    (flash>0 or disc_intro>0)and 1 or glyph,disc_outline,'property',stroke)
+                local r=radius*(.78-(j-1)*.11)
+                local line_style=(flash>0 or disc_intro>0)and 1 or glyph
+                local custom=opener and (option(opts,'opener_disc_size')~=1 or
+                    option(opts,'opener_disc_inner')~=1 or option(opts,'opener_disc_outer')~=1)
+                if custom and line_style~=2 then
+                    -- Classic path: draw the opener fill on its own (resized,
+                    -- radial) and keep the glyph lines at their usual size.
+                    local before=#out.discs
+                    disc(r*option(opts,'opener_disc_size'),h,angle,colors,disc_fill,0,0,'property')
+                    if #out.discs>before then opener_fill(out.discs[#out.discs])end
+                    if line_style~=0 then disc(r,h,angle,{white},0,2,disc_outline,'property',stroke)end
+                else
+                    disc(r,h,angle,colors,disc_fill,line_style,disc_outline,'property',stroke)
+                end
             end
         end
     end

@@ -1,5 +1,13 @@
 # TargetSC — elemental resonance
 
+## 0.13.6 unified Test3.6 — opener property-disc fade and size
+
+Lua-only over Test3.5 (keep its 0.7.0 DLL). During the opener only, the
+property discs' colored fill can fade from center to edge and be resized;
+their glyph lines stay as they are.
+- `//tsc opener discs fade <inner 0-1> <outer 0-1>` — 1 1 = unchanged.
+- `//tsc opener discs size <0.2-2>` — 1 = current size.
+
 ## 0.13.5 unified Test3.5 — awakening disc fade and size
 
 **New DLL (0.7.0): close all clients before installing.** The white disc at
@@ -956,3 +964,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-16 unified Test3.4 (0.13.4): MB burst glows get lit side, added spin, flicker and width controls. Author: A.
 
 2026-11-17 unified Test3.5 (0.13.5): native 0.7.0 radial disc fill; awakening fade and size. Author: A.
+
+2026-11-17 unified Test3.6 (0.13.6): opener-only property-disc fill fade and size. Author: A.

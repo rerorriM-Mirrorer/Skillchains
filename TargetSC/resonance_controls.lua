@@ -74,6 +74,19 @@ function M.new(settings,defaults,save,say,killala)
             if not toggle('opener_muted',(args[2]or ''):lower(),'Opener muted colors')then
                 say('Use //tsc opener muted [on|off].')
             end
+        elseif value=='discs'then
+            -- Opener-only property-disc FILL; glyph lines are unchanged.
+            local name=(args[2]or ''):lower()
+            if name=='fade'then
+                local inner,outer=tonumber(args[3]),tonumber(args[4])
+                local valid=function(n)return n and n==n and n>=0 and n<=1 end
+                if not valid(inner)or not valid(outer)then
+                    say('Use //tsc opener discs fade <inner 0-1> <outer 0-1> (1 1 = unchanged).');return
+                end
+                settings.opener_disc_inner,settings.opener_disc_outer=inner,outer;save(settings)
+                say(('Opener discs fade: center %.2f, edge %.2f.'):format(inner,outer))
+            elseif name=='size'then numeric('opener_disc_size',args[3],{.2,2},'opener discs size')
+            else say('Use //tsc opener discs fade <inner> <outer> | size <0.2-2>.')end
         elseif value=='preset'then
             local name=(args[2]or ''):lower()
             local choices={original={0,'color',false},gap={12,'color',false},

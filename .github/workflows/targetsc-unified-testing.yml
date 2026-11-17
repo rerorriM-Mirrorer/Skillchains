@@ -62,6 +62,7 @@ jobs:
           lua5.1 TargetSC/tests/test_ring_spin.lua
           lua5.1 TargetSC/tests/test_mb_glow.lua
           lua5.1 TargetSC/tests/test_awakening_fade.lua
+          lua5.1 TargetSC/tests/test_opener_discs.lua
           lua5.1 TargetSC/tests/test_addon.lua
           lua5.1 TargetSC/tests/test_missing.lua
           lua5.1 TargetSC/tests/test_missing.lua mismatch
@@ -72,7 +73,7 @@ jobs:
       - name: Publish complete unified test package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Unified-0.13.5-Test3.5
-          path: dist/TargetSC-Unified-0.13.5-Test3.5.zip
+          name: TargetSC-Unified-0.13.6-Test3.6
+          path: dist/TargetSC-Unified-0.13.6-Test3.6.zip
           if-no-files-found: error
           retention-days: 30
