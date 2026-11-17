@@ -1,5 +1,14 @@
 # TargetSC — elemental resonance
 
+## 0.13.5 unified Test3.5 — awakening disc fade and size
+
+**New DLL (0.7.0): close all clients before installing.** The white disc at
+the start of a skillchain now keeps its opacity in the center and fades to
+transparent at the edge.
+- `//tsc awakening fade <inner 0-1> [outer 0-1]` — center and edge opacity as
+  multipliers of the current one; outer defaults to 0 (default `1 0`).
+- `//tsc awakening size <0.1-3>` — 1 is the previous size.
+
 ## 0.13.4 unified Test3.4 — smoother MB burst glows
 
 Lua-only. The elemental glows on the two glyphs during a confirmed MB now
@@ -945,3 +954,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-16 unified Test3.3 (0.13.3): firm blend option for rings and discs. Author: A.
 
 2026-11-16 unified Test3.4 (0.13.4): MB burst glows get lit side, added spin, flicker and width controls. Author: A.
+
+2026-11-17 unified Test3.5 (0.13.5): native 0.7.0 radial disc fill; awakening fade and size. Author: A.

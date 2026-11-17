@@ -1,5 +1,17 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.13.5 unified Test3.5 — awakening disc fade and size (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.7.0).** Author: A.
+
+**Discussion (2026-11-17, questions before changes):** user asked about radial opacity on single-element discs, center/edge opacity on glyph outlines, and a fading end on opener arcs; all three need native support. Then described the opener as it stands (awakening white disc grows over the first third of the pre-window and fades over the middle third at awakening_opacity × opacity ≈ 8%, unchanged by Test3; property discs fade in over the first fifth at opener speed; opener rings muted, two gapped arcs, black glow, drawn at 78% before the window and 95% after — an instant step). Answered: breath opacity = `mb idle` .1 × `mb breath gain` 3 × breath (.35–1) × `mb overall` .66 ≈ 7–20%; a confirmed MB holds .6 s and lands over 2 s (~2.6 s); pausing the upper sigil during MB would desync the rings since Test3.2 (choose: rings pause too, or sigil pauses then eases back into step); radial/arc fades can be animated per frame from Lua at no native cost. Proposed series (later): large glyph grows with the awakening disc and spins with the arcs; plain opener discs (fill-only, edge-bright, separate inner/outer controls); opener arc fade with bright leading end and matching glow band; darker opener glow before the window opens; sigil pause during MB. Smoothing suggestions: ease the 78%→95% opener-ring step, crossfade the 0.16 s white link strike, fade out extra opener property discs at the first link.
+
+**Request implemented now (only):** `//tsc awakening fade <inner 0-1> [outer 0-1]` — center and edge multipliers of the current awakening opacity, outer defaulting to 0; `//tsc awakening size <scale>` with 1 = current size.
+
+**Changes:** native `lua_disc` takes optional inner/outer fill-alpha multipliers (args 12/13; default 1 keeps 0.6.0 output), applied to hub and rim vertices on both fill paths. Awakening disc carries `inner`/`outer` (defaults 1/0 = center at current opacity, transparent edge); `awakening_size` scales its radius throughout the grow/fade. Lua accepts DLL 0.7.0, 0.6.0 or 0.5.0; older DLLs never receive the radial args and draw an even fill at the average opacity. `preset killala` restores 1/1/1. No other visuals changed.
+
+**Host verification (not FFXI):** mingw `-Werror` 0.7.0 DLL build; property test (scale_alpha) PASS; all prior simulations PASS; `test_addon` asserts a 0.5.0 DLL never receives radial args; new `test_awakening_fade.lua` (defaults 1/0, killala 1/1 with identical base opacity, size at four moments, radial only on the awakening disc, fallback alpha, command parsing incl. optional outer and range errors, opacity/toggle unaffected, presets) PASS. **Live pending:** default fade look; try `awakening fade 1 0.3`, `awakening size 0.8/1.3`. Close all clients before replacing the DLL.
+
 ## TargetSC 0.13.4 unified Test3.4 — smoother MB burst glows (2026-11-16)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.6.0 unchanged). Author: A.
