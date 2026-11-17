@@ -1,5 +1,30 @@
 # TargetSC — elemental resonance
 
+## 0.14.9 unified Test4.9 — MB burst bloom
+
+**New native DLL 0.10.0** (close every FFXI client before replacing
+`libs/_TargetSC.dll`). Each confirmed magic burst now releases a bloom: an
+element-colored disc, white-hot at the strike and whiter at its center, that
+grows outward from the MB ring and fades. Sizes are in MB ring radii.
+- `//tsc mb bloom [on|off]` (default on; `preset killala` turns it off).
+- `//tsc mb bloom from ring|disc|glyph [to ring|disc|glyph|same]` — start at
+  the MB ring (default), the property disc or the risen glyph; optionally
+  rise or sink to another height while it grows.
+- `//tsc mb bloom size <start> [end]` (default .3 → 1.5), `time <0.2-4>` (1 s),
+  `ease <0.5-6>` (2.5: fast burst, slow spread), `fade <0.3-6>` (1.5).
+- `//tsc mb bloom opacity <center> [middle] [edge]` (default .7 .35 0) and
+  `middle <0.1-0.9>` (where the middle point sits, default .5). The middle
+  point needs DLL 0.10.0; with 0.9.0 the bloom uses center and edge only.
+- `//tsc mb bloom flash <0-1>` (white-hot start, .6), `core <0-1>` (center
+  whiteness, .5).
+- `//tsc mb bloom lines <0-4>` (copies of the glyph lines growing outward,
+  default 0 = off), `lines opacity|delay|size` (.6 / .12 s / 1.8).
+- Previews: `//tsc preview mb light` (Fusion nearly closed takes a Fire MB,
+  Light opens, Light MB, Wind MB as the ending begins) and
+  `//tsc preview mb dark` (Darkness: Ice then Dark MBs; Umbra late in the
+  window; Ice, Earth, then Dark exactly as the ending begins).
+- DLL 0.10.0 also allows 16 discs per frame (was 8) so overlapping blooms fit.
+
 ## 0.14.8 unified Test4.8 — large glyph fades at its risen height
 
 Lua-only. After a burst the large breathing glyph now stays at its risen
@@ -1090,3 +1115,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.7 (0.14.7): Light glows wait for the window; Light MB ring matches the lowest ring. Author: A.
 
 2026-11-17 unified Test4.8 (0.14.8): large glyph fades at its risen height; hidden at rest. Author: A.
+
+2026-11-17 unified Test4.9 (0.14.9): MB burst bloom with three opacity points and glyph-line copies; preview mb light/dark; native 0.10.0. Author: A.
