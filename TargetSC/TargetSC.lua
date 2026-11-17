@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.6-unified-test4.6'
+_addon.version='0.14.7-unified-test4.7'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -199,6 +199,8 @@ local function help()
         {'rings light white|elements|classic','Level 3 Light: white strands, inner glows in the four element colors; white MB ring (default white).'},
         {'rings light cycle <0.5-30>','Seconds for the inner glow colors to move down one ring (default 4).'},
         {'rings light glow <0-3>','Strength of the colored inner glows (default 1).'},
+        {'rings light opening off|on','Light colored inner glows before its window opens: off rises to rings light glow as it opens (default off).'},
+        {'rings light mb match|white','Light level 3 MB ring: match the lowest SC ring (white, lit side, rotation) or plain white (default match).'},
         {'rings lightdark classic|elements','Level 3 Darkness (and Light in its elements mode): outer strands, four element colors around the middle (default elements).'},
         {'rings lightdark spin <-2-2>','Middle (element) strand turn rate relative to the others; negative counter-turns (default 1).'},
         {'rings lightdark tint gold|white','Light level 3 glow color in the elements look (default white).'},

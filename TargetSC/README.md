@@ -1,5 +1,13 @@
 # TargetSC — elemental resonance
 
+## 0.14.7 unified Test4.7 — Light glows wait for the window; matching MB ring
+
+Lua-only. Level 3 Light's colored inner glows stay off until the window
+opens, then rise to `rings light glow`; its MB ring now looks like the lowest
+skillchain ring (white, lit side, turning with it).
+- `//tsc rings light opening off|on` (default off).
+- `//tsc rings light mb match|white` (default match).
+
 ## 0.14.6 unified Test4.6 — level 3 Light: white strands, colored inner glows
 
 Lua-only. Light's level 3 rings are all white; the four inner rings' glows
@@ -1070,3 +1078,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.5 (0.14.5): level 3 Light/Darkness rings and four-color MB ring cycle. Author: A.
 
 2026-11-17 unified Test4.6 (0.14.6): level 3 Light white strands with element-colored inner glows; white MB ring. Author: A.
+
+2026-11-17 unified Test4.7 (0.14.7): Light glows wait for the window; Light MB ring matches the lowest ring. Author: A.

@@ -202,7 +202,13 @@ function M.new(settings,defaults,save,say,killala)
                     settings.ring_light=name;save(settings);say('Light rings '..name..'.')
                 elseif name=='cycle'then numeric('ring_light_cycle',args[3],{.5,30},'rings light cycle')
                 elseif name=='glow'then numeric('ring_light_glow',args[3],{0,3},'rings light glow')
-                else say('Use //tsc rings light white|elements|classic | cycle <0.5-30 s> | glow <0-3>.')end
+                elseif name=='opening'and ((args[3]or ''):lower()=='off'or (args[3]or ''):lower()=='on')then
+                    settings.ring_light_opening=args[3]:lower();save(settings)
+                    say('Light colored glows before the window opens: '..settings.ring_light_opening..'.')
+                elseif name=='mb'and ((args[3]or ''):lower()=='match'or (args[3]or ''):lower()=='white')then
+                    settings.ring_light_mb=args[3]:lower();save(settings)
+                    say('Light MB ring: '..settings.ring_light_mb..'.')
+                else say('Use //tsc rings light white|elements|classic | cycle <0.5-30 s> | glow <0-3> | opening off|on | mb match|white.')end
             elseif value=='lightdark'then
                 -- Level-3 Light/Darkness rings (Test4.5).
                 local name=(args[2]or ''):lower()

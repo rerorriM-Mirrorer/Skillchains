@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.14.7 unified Test4.7 — Light glows wait for the window; Light MB ring matches the lowest ring (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.
+
+**User request:** first asked for Light's pre-window rings to look like `rings light classic`; after learning that every link's rings are white before the window in both modes (the classic difference being the gold glow and no lit side), revised before delivery: stay in the white look, with the colored inner glows at strength 0 until the window opens, then at the `rings light glow` setting. Also, for level-3 Light only, the MB ring should basically match the lowermost skillchain ring's appearance, including rotation. A classic-crossfade version was built and tested first, then replaced in the same batch (not shipped).
+
+**Changes:** `rings light opening off|on` (default off): the inner glows' strength follows `rings light glow` × the opening transition (0 before the window, full .15 s after it opens, the same .3 s ring opening transition). `rings light mb match|white` (default match): the level-3 Light MB ring is white with the same lit side (`rings shade`) and the same rotation as the lowest ground ring (disc spin under `rings spin disc`; still under classic), keeping its MB breathing, burst flash, intro and ending. Darkness, level 2 and other levels unchanged. Test4.6's test pinned to `opening on`. `preset killala` → on/white.
+
+**Host verification (not FFXI):** full suite PASS; new `test_light_opening.lua` (no colored glows before the window, present after; `on` shows them from the start; identical to `on` after the transition; strength rises through the opening; MB ring rotation equals the lowest ring's, white with a bright/dim lit side like it, `white` option plain and still; MB ring still breathes; Darkness and Fusion MB rings unchanged; commands; presets) PASS. **Live pending:** the wait→open moment on a Light link; MB ring look against the lowest ring.
+
 ## TargetSC 0.14.6 unified Test4.6 — level 3 Light: white strands, element-colored inner glows (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.

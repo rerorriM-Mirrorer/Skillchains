@@ -66,7 +66,10 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test4.6: level-3 LIGHT only (Darkness keeps the elements look): all
     -- strands white; the four inner rings' glows carry the four element
     -- colors (top to bottom), slowly rotating; MB ring white breathing.
-    ring_light='white',ring_light_cycle=4,ring_light_glow=1}
+    ring_light='white',ring_light_cycle=4,ring_light_glow=1,
+    -- Test4.7: Light's colored inner glows stay off until its window opens,
+    -- then rise to `rings light glow`; its MB ring matches the lowest SC ring.
+    ring_light_opening='off',ring_light_mb='match'}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -79,7 +82,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     opener_disc_outline=-1,
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
-    ring_light='classic',ring_light_cycle=4,ring_light_glow=1}
+    ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -332,6 +335,15 @@ function M.frame(model,s,now,radius,height,opts,context)
         local cycle=.5-.5*math.cos(age*pi/option(opts,'mb_period'))
         mb_color=mix(mb_colors[1],mb_colors[2],smooth(cycle))
     end
+    -- Test4.7: Light's colored inner glows: 0 before the window, rising to
+    -- `rings light glow` over the same .3 s opening transition.
+    local light_open=1
+    if light_white(s,opts)and option(opts,'ring_light_opening')=='off'then
+        light_open=smooth((now-(s.sc_open-.15))/.30)
+    end
+    -- Test4.7: level-3 Light MB ring matches the lowest SC ring's look:
+    -- white, the same lit side and the same rotation (MB timing kept).
+    local mb_like_ring=light_white(s,opts)and option(opts,'ring_light_mb')=='match'
     if light_white(s,opts)then mb_color=white end -- white breathing for Light
     if lightdark(s,opts)then
         -- Cycle through the four element colors; at multiplier 2 each color
@@ -363,7 +375,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         local smooth_mode=mode=='gradient'or mode=='firm'
         local burst_glow=role=='burst-glow'
         local shade=burst_glow and option(opts,'mb_glow_shade')or option(opts,'ring_shade')
-        local eligible=#colors<=2 and (burst_glow or (not opener and (part=='ground'or part=='sky')))
+        local eligible=#colors<=2 and (burst_glow or (not opener and (part=='ground'or part=='sky'))
+            or (part=='mb'and mb_like_ring))
         if eligible and smooth_mode and (shade>0 or (mode=='firm'and #colors==2))then
             -- Lit side: one side slightly brighter, the opposite slightly
             -- dimmer; the native gradient blends alpha too, so it turns with
@@ -517,11 +530,11 @@ function M.frame(model,s,now,radius,height,opts,context)
                         -- look may use a white glow instead (rings lightdark tint).
                         if lightdark(s,opts)and s.properties[1]=='Light'and option(opts,'ring_lightdark_tint')=='white'then tint=white end
                         if light_white(s,opts)then tint=inner_glow or white end
-                        band(draw_radius,h,{tint},opacity*.32*glow*electric*fade*(inner_glow and option(opts,'ring_light_glow')or 1),px+6*min(glow,3),'glow',place[2],j,
+                        band(draw_radius,h,{tint},opacity*.32*glow*electric*fade*(inner_glow and option(opts,'ring_light_glow')*light_open or 1),px+6*min(glow,3),'glow',place[2],j,
                             rotation*option(opts,'ring_glow_spin'))
                     end
                     ring(draw_radius,h,colors,alpha,place[2],j,rotation,nil,
-                        inner_glow and {inner_glow}or nil,inner_glow and option(opts,'ring_light_glow')or nil)
+                        inner_glow and {inner_glow}or nil,inner_glow and option(opts,'ring_light_glow')*light_open or nil)
                 end
             end
         end
@@ -762,7 +775,13 @@ function M.frame(model,s,now,radius,height,opts,context)
             ring_height=mb_height+(option(opts,'disc_height')-mb_height)*
                 option(opts,'mb_ending_drop')*smooth(progress)
         end
-        ring(mb_radius,ring_height,{color},alpha*mb_overall,'mb',0,0)
+        local mb_rotation=0
+        if mb_like_ring then
+            -- Same turn as the lowest SC ring (level 3 uses the disc spin
+            -- unless rings spin classic, where level 3 does not turn).
+            mb_rotation=option(opts,'ring_spin')=='disc'and M.disc_rotation(s,now,opts)or 0
+        end
+        ring(mb_radius,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
     end
     while #out>32 do table.remove(out,1)end
     return out

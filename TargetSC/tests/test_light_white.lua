@@ -10,7 +10,7 @@ local function argb(c)return rgb(R.argb(c,1))end
 local function link(prop)return {id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,step=2,level=3,
  properties={prop},elements=R.elements(prop)}end
 local function frame(s,t,o)local m=R.new();m.states[71]=copy(s);return m:frame(71,t,2,4,o)end
-local o=copy(R.defaults);o.ring_shade=0;o.mb_intro=0
+local o=copy(R.defaults);o.ring_shade=0;o.mb_intro=0;o.ring_light_opening='on' -- Test4.6 glows from the start; Test4.7 has its own test
 local four={};for i,e in ipairs(R.elements('Light'))do four[i]=argb(R.element_color(e))end
 local function sample(t,opts)
  local f=frame(link('Light'),t,opts or o)
