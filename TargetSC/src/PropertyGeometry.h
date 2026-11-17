@@ -60,16 +60,28 @@ template<class C> inline C scale_alpha(C color,float k) {
 // (the end facing a positive rotation) bright; -1 the other end. The fade
 // covers the far `length` fraction of the arc, shaped by `curve` (1 even,
 // >1 holds brightness longer, <1 drops early), reaching 1-fade at the tip.
-inline float arc_fade(int at,int points,float fade,float length,float curve,int direction) {
-    if(fade<=0.f||points<2)return 1.f;
+// 0 at the bright end .. 1 at the tip, over the far `length`, shaped by curve.
+inline float arc_shape(int at,int points,float length,float curve,int direction) {
+    if(points<2)return 0.f;
     const float u=static_cast<float>(at)/static_cast<float>(points-1);
     const float d=direction<0?u:1.f-u; // distance from the bright end, 0..1
     length=length<.01f?.01f:(length>1.f?1.f:length);
     const float t=(d-(1.f-length))/length;
-    if(t<=0.f)return 1.f;
-    const float shaped=std::pow(t>1.f?1.f:t,curve);
-    const float k=1.f-(fade>1.f?1.f:fade)*shaped;
+    if(t<=0.f)return 0.f;
+    return std::pow(t>1.f?1.f:t,curve);
+}
+inline float arc_fade(int at,int points,float fade,float length,float curve,int direction) {
+    if(fade<=0.f||points<2)return 1.f;
+    const float k=1.f-(fade>1.f?1.f:fade)*arc_shape(at,points,length,curve,direction);
     return k<0.f?0.f:k;
+}
+// 0.9.0 section arcs: lead color at the bright end blending to the tail
+// color along the same shaped path; alpha fades by `fade` along it too.
+inline std::uint32_t arc_color(std::uint32_t lead,std::uint32_t tail,int at,int points,
+    float fade,float length,float curve,int direction) {
+    const float shaped=arc_shape(at,points,length,curve,direction);
+    const std::uint32_t mixed=lerp_argb(lead,tail,shaped);
+    return scale_alpha(mixed,1.f-(fade<0.f?0.f:(fade>1.f?1.f:fade))*shaped);
 }
 // Two opposite gaps split the ring into equal 32-segment open arcs.
 // Points 0..32 describe the first arc; 33..65 describe the opposite arc.

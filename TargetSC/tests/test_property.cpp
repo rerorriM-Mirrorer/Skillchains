@@ -49,6 +49,21 @@ int main() {
         for(int i=0;i<sectors;++i)assert(counts[i]>=64/sectors && counts[i]<=64/sectors+1);
     }
     assert(targetsc::sector_index(31,64,2)==0 && targetsc::sector_index(32,64,2)==1);
+    // 0.9.0 section arcs: lead color at the bright end, tail color at the tip.
+    {
+        const int P=33;
+        const std::uint32_t lead=0xFFFFFFFFu,tail=0xFFFF0000u;
+        assert(targetsc::arc_color(lead,tail,P-1,P,0.f,1.f,1.f,1)==lead);           // bright lead end
+        assert((targetsc::arc_color(lead,tail,0,P,0.f,1.f,1.f,1)&0x00FFFFFFu)==0x00FF0000u); // tip = tail rgb
+        assert((targetsc::arc_color(lead,tail,0,P,1.f,1.f,1.f,1)>>24)==0u);         // fade 1: tip transparent
+        assert((targetsc::arc_color(lead,tail,0,P,.5f,1.f,1.f,1)>>24)==0x80u);      // fade .5: half alpha
+        assert(targetsc::arc_color(lead,tail,0,P,0.f,1.f,1.f,-1)==lead);            // trail mode flips ends
+        assert(targetsc::arc_shape(P-1,P,1.f,1.f,1)==0.f && targetsc::arc_shape(0,P,1.f,1.f,1)==1.f);
+        // length .4: the bright 60% keeps the pure lead color at full alpha.
+        for(int at=0;at<P;++at){const float d=1.f-static_cast<float>(at)/(P-1);
+            if(d<=.6f)assert(targetsc::arc_color(lead,tail,at,P,1.f,.4f,1.f,1)==lead);}
+        assert(targetsc::arc_fade(5,P,.7f,.8f,1.5f,1)==1.f-.7f*targetsc::arc_shape(5,P,.8f,1.5f,1));
+    }
     // 0.8.0 opener arc fade along each open arc.
     {
         const int P=33;

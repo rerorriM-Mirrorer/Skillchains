@@ -59,7 +59,7 @@ struct DrawVertex {
     DWORD color;
 };
 
-constexpr int kMaxRings=32;
+constexpr int kMaxRings=64; // 0.9.0: stacked opener section arcs
 constexpr int kMaxDiscs=8;
 constexpr int ring_slices_=64;
 constexpr DWORD kMaxIndex=0x900;
@@ -73,9 +73,11 @@ constexpr unsigned char kTargetTypeObject=3;
 int g_object_mode=0;
 struct Ring {float radius=0, offset=0, width=0; DWORD color=0; float pixels=0;
     int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0,gap=0;int blend=0;
-    float fade=0,fade_length=1,fade_curve=1;int fade_direction=1;};
+    float fade=0,fade_length=1,fade_curve=1;int fade_direction=1;
+    int arc=0;float arc_start=0,arc_span=0;DWORD tail=0;};
 struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
-    DWORD outline=0;int sectors=1;DWORD color2=0,color3=0,color4=0;int blend=0;float inner=1.f,outer=1.f;};
+    DWORD outline=0;int sectors=1;DWORD color2=0,color3=0,color4=0;int blend=0;float inner=1.f,outer=1.f;
+    int has_hub=0;DWORD hub=0;};
 struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0;
     Ring rings[kMaxRings]{};Disc discs[kMaxDiscs]{};};
 SRWLOCK g_frame_lock=SRWLOCK_INIT;
@@ -704,14 +706,51 @@ bool project(Position const& p,D3DVIEWPORT8 const& v, DrawVertex& out,DWORD colo
 // Bounded storage reused by the render thread: no per-frame allocations.
 constexpr int kMaxVertices=(kMaxRings+kMaxDiscs)*ring_slices_*6+
     kMaxDiscs*(ring_slices_*3+targetsc::kGlyphLines*6);
-static_assert(kMaxVertices==18048,"Review bounded storage when glyph complexity changes");
+static_assert(kMaxVertices==30336,"Review bounded storage when glyph complexity changes");
 DrawVertex g_vertices[kMaxVertices]{};
 unsigned g_vertex_count=0;
 void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
     if(g_vertex_count+3>kMaxVertices)return;
     g_vertices[g_vertex_count++]=a;g_vertices[g_vertex_count++]=b;g_vertices[g_vertex_count++]=c;
 }
+// 0.9.0 section arc: one open arc from arc_start over arc_span (radians),
+// lead->tail color and alpha along it, same projection/width as rings.
+void emit_arc(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewport) {
+    constexpr int P=ring_slices_/2+1;
+    DrawVertex points[P]{};bool valid[P]{};float widths[P]{};
+    for(int i=0;i<P;++i) {
+        const float angle=ring.arc_start+ring.arc_span*static_cast<float>(i)/(P-1)+ring.rotation;
+        const float x=std::cos(angle),y=std::sin(angle);
+        Position p{base.east+ring.radius*x,base.north+ring.radius*y,base.height-ring.offset};
+        valid[i]=project(p,viewport,points[i],ring.color);
+        DrawVertex inner{},outer{};
+        Position a{base.east+(ring.radius-ring.width*.5f)*x,base.north+(ring.radius-ring.width*.5f)*y,p.height};
+        Position b{base.east+(ring.radius+ring.width*.5f)*x,base.north+(ring.radius+ring.width*.5f)*y,p.height};
+        const float natural=(project(a,viewport,inner,ring.color)&&project(b,viewport,outer,ring.color))
+            ? std::hypot(outer.x-inner.x,outer.y-inner.y):0.f;
+        widths[i]=targetsc::visible_width(natural,ring.pixels);
+    }
+    DrawVertex inside[P]{},outside[P]{};
+    for(int i=0;i<P;++i) {
+        if(!valid[i])continue;
+        const int prev=i==0?i:i-1,next=i==P-1?i:i+1;
+        auto const& p=points[i];
+        auto const& a=valid[prev]?points[prev]:p;
+        auto const& b=valid[next]?points[next]:p;
+        const auto d=targetsc::stroke_offset({a.x,a.y},{p.x,p.y},{b.x,b.y},widths[i]*.5f);
+        inside[i]=p;outside[i]=p;inside[i].x-=d.x;inside[i].y-=d.y;
+        outside[i].x+=d.x;outside[i].y+=d.y;
+    }
+    for(int i=0;i<P-1;++i) {
+        if(!valid[i]||!valid[i+1])continue;
+        auto a=inside[i],b=outside[i],c=inside[i+1],d=outside[i+1];
+        a.color=b.color=targetsc::arc_color(ring.color,ring.tail,i,P,ring.fade,ring.fade_length,ring.fade_curve,ring.fade_direction);
+        c.color=d.color=targetsc::arc_color(ring.color,ring.tail,i+1,P,ring.fade,ring.fade_length,ring.fade_curve,ring.fade_direction);
+        triangle(a,b,c);triangle(c,b,d);
+    }
+}
 void emit_ring(Position const& base,Ring const& ring,D3DVIEWPORT8 const& viewport) {
+    if(ring.arc){emit_arc(base,ring,viewport);return;}
     const bool open=ring.gap>0;
     const int point_count=ring_slices_+(open?2:0);
     DrawVertex points[ring_slices_+2]{};bool valid[ring_slices_+2]{};
@@ -796,7 +835,8 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
         DWORD rim[ring_slices_]{};
         for(int i=0;i<ring_slices_;++i)rim[i]=targetsc::gradient_at(packed,disc.sectors,static_cast<float>(i),ring_slices_);
         // 0.7.0 radial: inner/outer scale hub and rim alpha independently.
-        const DWORD center=targetsc::scale_alpha(targetsc::average_color(packed,disc.sectors),disc.inner);
+        const DWORD center=targetsc::scale_alpha(disc.has_hub?static_cast<std::uint32_t>(disc.hub)
+            :targetsc::average_color(packed,disc.sectors),disc.inner);
         for(int i=0;i<ring_slices_;++i)rim[i]=targetsc::scale_alpha(rim[i],disc.outer);
         for(int i=0;i<ring_slices_;++i) {
             const int n=(i+1)%ring_slices_;
@@ -809,7 +849,7 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
         const DWORD color=palette[targetsc::sector_index(i,ring_slices_,disc.sectors)];
         // 0.7.0 radial: Gouraud shading fades hub alpha (inner) to rim (outer).
         auto a=hub,b=edge[i],c=edge[n];
-        a.color=targetsc::scale_alpha(color,disc.inner);b.color=c.color=targetsc::scale_alpha(color,disc.outer);
+        a.color=targetsc::scale_alpha(disc.has_hub?disc.hub:color,disc.inner);b.color=c.color=targetsc::scale_alpha(color,disc.outer);
         triangle(a,b,c);
     }
     if(!disc.glyph || !(disc.outline>>24))return;
@@ -958,6 +998,25 @@ int __cdecl lua_ring(lua_State* L) {
         static_cast<float>(fade),static_cast<float>(length),static_cast<float>(curve),static_cast<int>(direction)};
     return 0;
 }
+// 0.9.0: native.arc(radius,offset,width,lead,tail,pixels,rotation,start_deg,span_deg,
+//                   fade,length,curve,direction)
+int __cdecl lua_arc(lua_State* L) {
+    if(g_pending.count>=kMaxRings || !g_pending.index || g_lua.gettop(L)<13)return 0;
+    double v[13];for(int i=0;i<13;++i){v[i]=g_lua.tonumber(L,i+1);if(!std::isfinite(v[i]))return 0;}
+    const double r=v[0],h=v[1],w=v[2],lead=v[3],tail=v[4],px=v[5],rot=v[6],start=v[7],span=v[8];
+    const double fade=v[9],length=v[10],curve=v[11],direction=v[12];
+    if(r<.01||r>100||std::fabs(h)>1000||w<0||w>5||lead<0||lead>4294967295.0||tail<0||tail>4294967295.0
+        ||px<0||px>64||std::fabs(rot)>1000000||std::fabs(start)>3600||span<=0||span>360
+        ||fade<0||fade>1||length<.1||length>1||curve<.5||curve>3||(direction!=1&&direction!=-1))return 0;
+    constexpr double rad=3.14159265358979/180.0;
+    Ring ring{};ring.radius=static_cast<float>(r);ring.offset=static_cast<float>(h);ring.width=static_cast<float>(w);
+    ring.color=static_cast<DWORD>(lead);ring.pixels=static_cast<float>(px);ring.rotation=static_cast<float>(rot);
+    ring.fade=static_cast<float>(fade);ring.fade_length=static_cast<float>(length);ring.fade_curve=static_cast<float>(curve);
+    ring.fade_direction=static_cast<int>(direction);ring.arc=1;ring.arc_start=static_cast<float>(start*rad);
+    ring.arc_span=static_cast<float>(span*rad);ring.tail=static_cast<DWORD>(tail);
+    g_pending.rings[g_pending.count++]=ring;
+    return 0;
+}
 int __cdecl lua_disc(lua_State* L) {
     if(!g_pending.index||g_pending.disc_count>=kMaxDiscs||g_lua.gettop(L)<5)return 0;
     const double r=g_lua.tonumber(L,1),h=g_lua.tonumber(L,2),a=g_lua.tonumber(L,3),c=g_lua.tonumber(L,4),g=g_lua.tonumber(L,5);
@@ -969,24 +1028,27 @@ int __cdecl lua_disc(lua_State* L) {
     const double blend=argc>=11?g_lua.tonumber(L,11):0;
     // 0.7.0: optional center (inner) and rim (outer) fill-alpha multipliers.
     const double inner=argc>=12?g_lua.tonumber(L,12):1,outer=argc>=13?g_lua.tonumber(L,13):1;
+    // 0.9.0: optional hub (center) color, replacing the averaged center.
+    const double hub=argc>=14?g_lua.tonumber(L,14):-1;
+    if(!std::isfinite(hub)||hub>4294967295.0||(hub<0&&hub!=-1))return 0;
     if(g<0||g>2||g!=std::floor(g)||!std::isfinite(sectors)||sectors<1||sectors>4||sectors!=std::floor(sectors))return 0;
     if(!std::isfinite(blend)||(blend!=0&&blend!=1))return 0;
     if(!std::isfinite(inner)||!std::isfinite(outer)||inner<0||inner>1||outer<0||outer>1)return 0;
     for(double color:{outline,c2,c3,c4})if(!std::isfinite(color)||color<0||color>4294967295.0)return 0;
     g_pending.discs[g_pending.disc_count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(a),static_cast<DWORD>(c),static_cast<int>(g),
         static_cast<DWORD>(outline),static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<int>(blend),
-        static_cast<float>(inner),static_cast<float>(outer)};
+        static_cast<float>(inner),static_cast<float>(outer),hub>=0?1:0,static_cast<DWORD>(hub>=0?hub:0)};
     return 0;
 }
 int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.8.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.9.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.8.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.9.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;
@@ -1029,10 +1091,10 @@ bool bind_lua() {
 } // namespace
 extern "C" __declspec(dllexport) int __cdecl luaopen__TargetSC(lua_State* L) {
     if(!bind_lua())return 0;
-    build_tables();clear_frame();g_lua.createtable(L,0,9);
+    build_tables();clear_frame();g_lua.createtable(L,0,10);
     struct Entry {char const* name;lua_CFunction fn;};
     const Entry entries[]={{"start",lua_start},{"stop",lua_stop},{"clear",lua_clear},{"begin",lua_begin},
-        {"ring",lua_ring},{"disc",lua_disc},{"commit",lua_commit},{"status",lua_status},{"version",lua_version}};
+        {"ring",lua_ring},{"arc",lua_arc},{"disc",lua_disc},{"commit",lua_commit},{"status",lua_status},{"version",lua_version}};
     for(auto const& e:entries){g_lua.pushcclosure(L,e.fn,0);g_lua.setfield(L,-2,e.name);}
     return 1;
 }
