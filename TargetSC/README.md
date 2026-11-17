@@ -1,5 +1,12 @@
 # TargetSC — elemental resonance
 
+## 0.13.9 unified Test3.9 — previews on yourself
+
+Lua-only over Test3.8 (keep its 0.8.0 DLL). Previews now draw on your own
+character when you target yourself or have nothing targeted, or with
+`//tsc preview self [scenario]` (e.g. `//tsc preview self mb`). Live
+skillchains still only draw on enemies.
+
 ## 0.13.8 unified Test3.8 — opener arc fade
 
 **New DLL (0.8.0): close all clients before installing.** Each opener arc now
@@ -991,3 +998,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test3.7 (0.13.7): awakening fade until default|open|close|1-9. Author: A.
 
 2026-11-17 unified Test3.8 (0.13.8): native 0.8.0 opener arc fade with length, curve, lead/trail and glow follow. Author: A.
+
+2026-11-17 unified Test3.9 (0.13.9): previews may draw on yourself. Author: A.

@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.13.9 unified Test3.9 — previews on yourself (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test3.8 (native 0.8.0 unchanged). Author: A.
+
+**Notes:** Test3.8's zip was built but not sent in the first reply; delivered on request. User asked to allow previews to draw on self as target.
+
+**Change:** previews draw on your own character when you target yourself or have nothing targeted, or with `//tsc preview self [scenario]` (`me` also accepted). A self preview keeps drawing on you if you target something else meanwhile; it ends with `preview off` or when it completes. The native renderer already resolves any entity by index; only the Lua enemy-only gate applied to previews. Live resonance still only ever selects living enemies (unchanged `selected_mob`).
+
+**Host verification (not FFXI):** full suite PASS; `test_addon.lua` adds self-preview checks (no target → self; persists while targeting an enemy; enemy target → enemy; `preview self` forces self; self-targeted → self; nothing drawn on yourself after preview off). **Live pending:** placement/scale on your own model (player model size), self preview while moving.
+
 ## TargetSC 0.13.8 unified Test3.8 — opener arc fade (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.8.0).** Author: A.

@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.13.8-unified-test3.8'
+_addon.version='0.13.9-unified-test3.9'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -88,6 +88,25 @@ local function selected_mob()
     if tonumber(mob.spawn_type)~=16 and (tonumber(mob.claim_id) or 0)==0 then return nil end
     return mob
 end
+-- Previews only: your own character, when you target yourself, have nothing
+-- targeted, or ask for `preview self`. Live resonance never draws on you.
+local function self_mob()
+    local info=windower.ffxi.get_info()
+    if not info or not info.logged_in then return nil end
+    local player=windower.ffxi.get_player()
+    if not player or player.status==4 then return nil end
+    local me=windower.ffxi.get_mob_by_target('me')
+    if not me or not me.id or me.id==0 or not me.index or me.index==0 then return nil end
+    local live=windower.ffxi.get_mob_by_index(me.index)
+    if not live or live.id~=me.id then return nil end
+    return me
+end
+local function targeting_self_or_nothing()
+    local t=windower.ffxi.get_mob_by_target('t')
+    if not t then return true end
+    local me=windower.ffxi.get_mob_by_target('me')
+    return me~=nil and t.id==me.id
+end
 local function help()
     local lines={
         {'on|off','Enable or disable resonance drawing.'},
@@ -171,6 +190,7 @@ local function help()
         {'mb glow flicker <0-1>','9 Hz ripple on the MB glows; 1 original, 0 steady (default 1).'},
         {'mb glow width <0.2-2>','MB glow thickness multiplier (default 1).'},
         {'mb ending drop <0-1>','How far the MB ring settles onto the large glyph during the closing pulses (default 1).'},
+        {'preview self [scenario]','Preview on your own character (also automatic when targeting yourself or nothing).'},
         {'preview off','End preview and return to live state.'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
         {'scale <0.25-3>','Scale the model-relative rings.'},
@@ -228,16 +248,20 @@ local function status()
     if not model.connected then say('Embedded Skillchains not synchronized; use //tsc sync. Preview remains available.') end
 end
 local function begin_preview(args)
-    local mob=selected_mob()
-    if not mob then say('Select a living enemy for preview.') return end
+    local on_self=args[1]and (args[1]:lower()=='self'or args[1]:lower()=='me')
+    if on_self then table.remove(args,1)end
+    local mob=not on_self and selected_mob()
+    if not mob and (on_self or targeting_self_or_nothing())then mob=self_mob();on_self=mob~=nil end
+    if not mob then say('Select a living enemy, target yourself, or use //tsc preview self.') return end
     if not settings.enabled then say('Use //tsc on first.') return end
     if not start_renderer() then return end
     local spec,err=previews.parse(args,resonance)
     if not spec then say(err..' See //tsc help.') return end
     local now=os.clock()
     preview=previews.new(spec,mob.id,now,resonance,settings)
+    preview.on_self=on_self
     selected_id=mob.id
-    say('Preview '..table.concat(spec.properties,'/')..' level '..spec.level..'; '..preview.description)
+    say('Preview '..table.concat(spec.properties,'/')..' level '..spec.level..(on_self and ' on yourself' or '')..'; '..preview.description)
     debug('preview begin target='..mob.id..' '..preview.description)
 end
 local function advance_preview(now)
@@ -313,7 +337,8 @@ windower.register_event('prerender',function()
     if not model.connected and not source_wait_notice and now-requested_at>2 then
         source_wait_notice=true say('Waiting for compatible Skillchains. Load it, then //tsc sync; preview is available.')
     end
-    local mob=selected_mob()
+    -- A self preview keeps drawing on you whatever you target meanwhile.
+    local mob=(preview and preview.on_self)and self_mob()or selected_mob()
     local id=mob and mob.id
     if id~=selected_id then
         debug('target changed '..tostring(selected_id)..' -> '..tostring(id))

@@ -151,6 +151,35 @@ for _,t in ipairs({0,9,12.6,17,23.8,24,29.8,30,38.8,40.1})do
 end
 assert(#native.rings==0 and #native.discs==0)
 command('preview','off')
+-- Test3.9: previews may draw on yourself (target self, nothing, or `self`);
+-- live resonance still never selects your own character.
+do
+ local me={id=500,index=300,hpp=100,is_npc=false,in_party=true,model_size=1,model_scale=1,valid_target=true}
+ local target=nil
+ local get_target,get_index=windower.ffxi.get_mob_by_target,windower.ffxi.get_mob_by_index
+ windower.ffxi.get_mob_by_target=function(which)if which=='me'then return me end return target end
+ windower.ffxi.get_mob_by_index=function(index)if index==me.index then return {id=me.id,valid_target=true}end return get_index(index)end
+ -- Nothing targeted: preview draws on you.
+ now=200;command('preview','Fusion','2');now=200.5;events.prerender()
+ assert(native.id==500 and native.index==300 and #native.rings>0,'no target: preview on self')
+ -- Retargeting an enemy mid-preview does not cancel a self preview.
+ target=mob;now=200.6;events.prerender()
+ assert(native.id==500 and #native.rings>0,'self preview persists while targeting an enemy')
+ command('preview','off')
+ -- With an enemy targeted, plain preview uses the enemy; `self` forces you.
+ now=201;command('preview','Fusion','2');now=201.3;events.prerender()
+ assert(native.id==71,'enemy target: preview on enemy')
+ command('preview','off')
+ now=202;command('preview','self','Fusion','2');now=202.3;events.prerender()
+ assert(native.id==500 and #native.rings>0,'preview self forces you')
+ command('preview','off')
+ -- Targeting yourself: preview on you; live state never draws on you.
+ target=me;now=203;command('preview','Distortion','2');now=203.3;events.prerender()
+ assert(native.id==500,'self targeted: preview on self')
+ command('preview','off');now=203.5;events.prerender()
+ assert(#native.rings==0 and #native.discs==0,'no live resonance on yourself')
+ windower.ffxi.get_mob_by_target,windower.ffxi.get_mob_by_index=get_target,get_index
+end
 command('restart') assert(commands[#commands]=='lua reload TargetSC')
 local reload_count=0 for _,c in ipairs(commands)do if c=='lua reload TargetSC'then reload_count=reload_count+1 end end
 assert(reload_count==1)
