@@ -56,7 +56,10 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test4.1: openers keep turning: gentler slowdown toward a minimum speed.
     opener_spin_slowdown=1,opener_spin_minimum=.5,
     -- Test4.2: opener property-disc glyph line opacity; -1 = follow discs outline.
-    opener_disc_outline=-1}
+    opener_disc_outline=-1,
+    -- Test4.4: link property discs (all levels): fill center/edge fade, fill
+    -- size, glyph-line (sigil) size; Light/Darkness disc look.
+    disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic'}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -66,7 +69,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default',
     opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
     opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0,
-    opener_disc_outline=-1}
+    opener_disc_outline=-1,
+    disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -378,11 +382,6 @@ function M.frame(model,s,now,radius,height,opts,context)
             glyph=glyph,outline=context.argb(stroke_color or white,outline),role=role,
             blend=#p>1 and (mode=='gradient'or mode=='firm')and 1 or 0}
     end
-    -- Opener property-disc fill: radial center/edge multipliers (native 0.7.0).
-    local function opener_fill(d)
-        local inner,outer=option(opts,'opener_disc_inner'),option(opts,'opener_disc_outer')
-        if inner~=1 or outer~=1 then d.inner,d.outer=inner,outer end -- 1 1 = untouched
-    end
     local electric=1
     if not opener and s.level==3 then electric=.68+.32*sin(age*11)^2
     elseif not opener and s.level>=4 then electric=(.37+.63*sin(age*23)^2)*(.72+.28*sin(age*28)^2)end
@@ -584,6 +583,14 @@ function M.frame(model,s,now,radius,height,opts,context)
         for j,p in ipairs(properties)do
             local colors=property_palette(p,context)
             local terminal=not opener and s.level>=4
+            -- Test4.4 Light/Darkness 'elements' look: white/black center (hub)
+            -- blending out to a rim of the four element colors.
+            local hub
+            if not terminal and (p=='Light'or p=='Darkness')and option(opts,'disc_lightdark')=='elements'then
+                colors={}
+                for _,e in ipairs(context.elements(p))do colors[#colors+1]=context.element_color(e)or white end
+                hub=p=='Darkness'and {0,0,0}or white
+            end
             local terminal_stroke=white
             if terminal then
                 local dark=p=='Umbra'or p=='Darkness'
@@ -602,6 +609,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             local stroke=response.element and mix(terminal_stroke,response.element,flash)or terminal_stroke
             if flash>0 then
                 for i,c in ipairs(colors)do colors[i]=mix(c,clapper and response.element or white,flash)end
+                if hub then hub=mix(hub,clapper and response.element or white,flash)end
             end
             local disc_intro=intro*option(opts,'mb_intro_disc')
             if disc_intro>0 then
@@ -609,8 +617,18 @@ function M.frame(model,s,now,radius,height,opts,context)
                 disc_outline=disc_outline+(mb_overall-disc_outline)*disc_intro
                 stroke=mix(stroke,white,disc_intro)
                 for i,c in ipairs(colors)do colors[i]=mix(c,white,disc_intro)end
+                if hub then hub=mix(hub,white,disc_intro)end
             end
             local angle=M.disc_rotation(s,now,opts)
+            -- Stage-specific fill/line sizing and radial fade (opener or links).
+            local fill_size=opener and option(opts,'opener_disc_size')or option(opts,'disc_size')
+            local line_size=opener and 1 or option(opts,'disc_size_lines')
+            local inner=opener and option(opts,'opener_disc_inner')or option(opts,'disc_inner')
+            local outer=opener and option(opts,'opener_disc_outer')or option(opts,'disc_outer')
+            local function finish_fill(d,a)
+                if inner~=1 or outer~=1 then d.inner,d.outer=inner,outer end -- 1 1 = untouched
+                if hub then d.hub=context.argb(hub,a)end
+            end
             local h=base+.006+(j-1)*.008
             if terminal or clapper then
                 -- Separate planes let a struck trace lift while its fill
@@ -618,31 +636,30 @@ function M.frame(model,s,now,radius,height,opts,context)
                 local r=terminal and radius*.92 or radius*(.78-(j-1)*.11)
                 local respond=flash>0 or disc_intro>0
                 local before=#out.discs
-                disc(opener and r*option(opts,'opener_disc_size')or r,h,angle,colors,
-                    (glyph==2 and not respond)and 0 or disc_fill,0,0,'property')
-                if opener and #out.discs>before then opener_fill(out.discs[#out.discs])end
+                local fill_alpha=(glyph==2 and not respond)and 0 or disc_fill
+                disc(r*fill_size,h,angle,colors,fill_alpha,0,0,'property')
+                if #out.discs>before then finish_fill(out.discs[#out.discs],fill_alpha)end
                 local trace_height=h+(terminal and .006 or 0)
                 if clapper and mb_overall>0 then
                     trace_height=trace_height+(response.lift or 0)*option(opts,'mb_floor')
                 end
-                disc(r,trace_height,angle,{white},0,2,
+                disc(r*line_size,trace_height,angle,{white},0,2,
                     (glyph==0 and not respond)and 0 or disc_outline,'property-trace',stroke)
                 if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
-                    band(r,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
+                    band(r*line_size,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
                         px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn)
                 end
             else
                 local r=radius*(.78-(j-1)*.11)
                 local line_style=(flash>0 or disc_intro>0)and 1 or glyph
-                local custom=opener and (option(opts,'opener_disc_size')~=1 or
-                    option(opts,'opener_disc_inner')~=1 or option(opts,'opener_disc_outer')~=1)
+                local custom=fill_size~=1 or line_size~=1 or inner~=1 or outer~=1 or hub~=nil
                 if custom and line_style~=2 then
-                    -- Classic path: draw the opener fill on its own (resized,
-                    -- radial) and keep the glyph lines at their usual size.
+                    -- Classic path: draw the fill on its own (resized, radial,
+                    -- hub) and the glyph lines separately at their own size.
                     local before=#out.discs
-                    disc(r*option(opts,'opener_disc_size'),h,angle,colors,disc_fill,0,0,'property')
-                    if #out.discs>before then opener_fill(out.discs[#out.discs])end
-                    if line_style~=0 then disc(r,h,angle,{white},0,2,disc_outline,'property',stroke)end
+                    disc(r*fill_size,h,angle,colors,disc_fill,0,0,'property')
+                    if #out.discs>before then finish_fill(out.discs[#out.discs],disc_fill)end
+                    if line_style~=0 then disc(r*line_size,h,angle,{white},0,2,disc_outline,'property',stroke)end
                 else
                     disc(r,h,angle,colors,disc_fill,line_style,disc_outline,'property',stroke)
                 end

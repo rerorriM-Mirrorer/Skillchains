@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.14.4 unified Test4.4 — link disc controls and Light/Darkness elements look (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test4.0+ (native 0.9.0 unchanged). Author: A.
+
+**User feedback/requests:** `frames full` "looks so good". Asked about the breathing glyph height (`mb glyph height`, default 1.1 = just above the MB ring), instant rise (`mb glyph rise 0`) and matching the sigil lift (`mb lift` ≈ .15 level / .17 just above with current heights; a ring-relative sigil lift was offered). Described the bell: sky ring = mouth, ground ring = closed end, MB ring = resonance within, floor glyph = anchor holding it to the ground, property disc = elemental resonance tied to both SC and MB. MB overhaul ideas for later: glyph invisible at rest except glow while settling; on a burst the glyph gets its own disc fill that subtly expands and fades (and possibly line copies growing out of it like emanating power). Requested now: link disc fade/size, `discs size lines`, one setting for all links, and the Light/Darkness four-element disc look as an option.
+
+**Changes:** `discs fade <inner> <outer>` (link fill center/edge multipliers), `discs size <0.2-2>` (link fill only), `discs size lines <0.2-2>` (link glyph lines = upper sigil and its burst glow), all levels including level 4 terminal discs; opener keeps its own `opener discs` controls (shared code path now picks opener vs link values). MB ring/large glyph sizing unchanged. `discs lightdark classic|elements` (default classic): Light/Darkness discs (links and openers; level 4 terminal unchanged) show a white/black hub (native 0.9.0 hub color) blending out to Fire/Wind/Lightning/Light or Earth/Ice/Water/Dark at the rim; hub follows burst/intro tinting. Classic MB style splits fill and lines only when a custom value is set. `preset killala` → 1/1/1/1/classic.
+
+**Host verification (not FFXI):** full suite PASS (opener disc tests unchanged after the shared refactor); new `test_link_discs.lua` (both MB styles: defaults byte-identical, fill size/fade with lines unchanged, lines size, terminal fill size, opener and link settings fully independent, Light/Darkness hub and four rim colors with blending, no hub elsewhere or in classic, opener Light gets it; commands; killala) PASS. **Live pending:** `preview level3` (Light), `preview Darkness`, `preview opener Light` with `discs lightdark elements`; link fade/size feel.
+
 ## TargetSC 0.14.3 unified Test4.3 — optional world frame cadence (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.9.0 unchanged). Author: A.

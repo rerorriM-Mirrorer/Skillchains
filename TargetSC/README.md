@@ -1,5 +1,14 @@
 # TargetSC — elemental resonance
 
+## 0.14.4 unified Test4.4 — link disc controls and Light/Darkness look
+
+Lua-only. For skillchain links (all levels):
+- `//tsc discs fade <inner 0-1> <outer 0-1>` — fill opacity at center/edge (default 1 1).
+- `//tsc discs size <0.2-2>` — fill size (default 1).
+- `//tsc discs size lines <0.2-2>` — glyph lines / upper sigil size (default 1).
+- `//tsc discs lightdark classic|elements` — Light/Darkness discs with a white
+  or black center blending out to their four element colors (default classic).
+
 ## 0.14.3 unified Test4.3 — optional world frame cadence
 
 Lua-only. `//tsc frames classic|even|full` (default classic, unchanged):
@@ -1036,3 +1045,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.2 (0.14.2): opener discs outline. Author: A.
 
 2026-11-17 unified Test4.3 (0.14.3): optional frames classic|even|full. Author: A.
+
+2026-11-17 unified Test4.4 (0.14.4): link disc fade/size/lines; Light/Darkness elements disc look. Author: A.

@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.3-unified-test4.3'
+_addon.version='0.14.4-unified-test4.4'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -190,6 +190,10 @@ local function help()
         {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},
         {'mb glyph rise <0-1>','Seconds the large glyph takes to rise; 0 = instant like the trace (default .15).'},
         {'mb intro glyph|disc <0-1>','New-MB-window white flash strength on the large glyph / property disc (default .5 / 1).'},
+        {'discs fade <inner 0-1> <outer 0-1>','Link property-disc fill opacity at center/edge, all levels (default 1 1).'},
+        {'discs size <0.2-2>','Link property-disc fill size; sigil lines keep theirs (default 1).'},
+        {'discs size lines <0.2-2>','Link property-disc glyph lines (upper sigil) size (default 1).'},
+        {'discs lightdark classic|elements','Light/Darkness discs: classic tones, or white/black center to four element colors (default classic).'},
         {'discs blend gradient|firm|split','Two-element discs: even fade, firm (each color holds, fade where they meet), or halves (default gradient).'},
         {'rings blend gradient|firm|split','SC rings: even fade, firm (colors hold, fade where they meet), or sectors; openers always split (default gradient).'},
         {'rings spin disc|classic','disc: every link turns with the property disc, easing to its minimum; classic: only L2, slowing to a stop.'},
@@ -398,7 +402,11 @@ windower.register_event('prerender',function()
             local k=(inner+outer)/2
             for i,c in ipairs(colors)do colors[i]=resonance.scale_alpha(c,k)end
         end
-        if native_level>=7 then
+        if native_level>=9 and disc.hub then
+            -- 0.9.0 hub (center) color, e.g. Light/Darkness 'elements' discs.
+            native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
+                #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer,disc.hub)
+        elseif native_level>=7 then
             native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
                 #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer)
         else

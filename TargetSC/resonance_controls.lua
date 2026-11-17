@@ -48,6 +48,22 @@ function M.new(settings,defaults,save,say,killala)
         if value=='speed'and (stage=='opener'or stage:match('^level[1-4]$'))then
             numeric('disc_speed_'..stage,args[3],{0,4},'discs speed '..stage)
         elseif disc_limits[value]then numeric('disc_'..value,args[2],disc_limits[value],'discs '..value)
+        elseif value=='fade'then
+            -- Link property-disc fill (all levels): center/edge multipliers.
+            local inner,outer=tonumber(args[2]),tonumber(args[3])
+            local valid=function(n)return n and n==n and n>=0 and n<=1 end
+            if not valid(inner)or not valid(outer)then
+                say('Use //tsc discs fade <inner 0-1> <outer 0-1> (1 1 = unchanged).');return
+            end
+            settings.disc_inner,settings.disc_outer=inner,outer;save(settings)
+            say(('Discs fade: center %.2f, edge %.2f.'):format(inner,outer))
+        elseif value=='size'then
+            if (args[2]or ''):lower()=='lines'then numeric('disc_size_lines',args[3],{.2,2},'discs size lines')
+            else numeric('disc_size',args[2],{.2,2},'discs size')end
+        elseif value=='lightdark'then
+            local look=(args[2]or ''):lower()
+            if look~='classic'and look~='elements'then say('Use //tsc discs lightdark classic|elements.');return end
+            settings.disc_lightdark=look;save(settings);say('Light/Darkness discs '..look..'.')
         elseif value=='blend'then
             local blend=(args[2]or ''):lower()
             if blend~='gradient'and blend~='firm'and blend~='split'then say('Use //tsc discs blend gradient|firm|split.');return end
