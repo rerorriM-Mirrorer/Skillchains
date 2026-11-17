@@ -107,7 +107,11 @@ function M.new(settings,defaults,save,say,killala)
                 settings.opener_disc_inner,settings.opener_disc_outer=inner,outer;save(settings)
                 say(('Opener discs fade: center %.2f, edge %.2f.'):format(inner,outer))
             elseif name=='size'then numeric('opener_disc_size',args[3],{.2,2},'opener discs size')
-            else say('Use //tsc opener discs fade <inner> <outer> | size <0.2-2>.')end
+            elseif name=='outline'then
+                if (args[3]or ''):lower()=='same'then
+                    settings.opener_disc_outline=-1;save(settings);say('Opener discs outline follows discs outline.')
+                else numeric('opener_disc_outline',args[3],{0,1},'opener discs outline')end
+            else say('Use //tsc opener discs fade <inner> <outer> | size <0.2-2> | outline <0-1>|same.')end
         elseif value=='preset'then
             local name=(args[2]or ''):lower()
             local choices={original={0,'color',false},gap={12,'color',false},

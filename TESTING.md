@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.14.2 unified Test4.2 — opener discs outline (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test4.0/4.1 (native 0.9.0 unchanged). Author: A.
+
+**Request:** add `//tsc opener discs outline`; keep moving the glyph to the white disc (stage 3) on hold.
+
+**Change:** `opener discs outline <0-1>|same` sets the glyph line opacity of opener property discs only; default `same` (stored as −1) follows `discs outline` exactly, so nothing changes until set. Links unaffected. `preset killala` → same.
+
+**Host verification (not FFXI):** full suite + new `test_opener_outline.lua` (both MB styles: default identical to before, 1 raises and .1 lowers opener line alpha, link lines unchanged; command range, `same` reset, size unaffected, killala) PASS. **Live pending:** opener glyph line strength over the new section arcs.
+
 ## TargetSC 0.14.1 unified Test4.1 — opener spin slowdown and minimum (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only over Test4.0 (native 0.9.0 unchanged). Author: A.

@@ -54,7 +54,9 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- for 1/2/3 properties); each element is one arc, stacked by height.
     opener_layout='sections',opener_spacing=.035,
     -- Test4.1: openers keep turning: gentler slowdown toward a minimum speed.
-    opener_spin_slowdown=1,opener_spin_minimum=.5}
+    opener_spin_slowdown=1,opener_spin_minimum=.5,
+    -- Test4.2: opener property-disc glyph line opacity; -1 = follow discs outline.
+    opener_disc_outline=-1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -63,7 +65,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     awakening_inner=1,awakening_outer=1,awakening_size=1,
     opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default',
     opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
-    opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0}
+    opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0,
+    opener_disc_outline=-1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -570,7 +573,11 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         local reveal=opener and smooth(progress*5)or 1
         local fill=option(opts,'disc_opacity')*opacity*life*reveal
-        local outline=option(opts,'disc_outline')*opacity*life*reveal
+        -- Test4.2: opener discs may use their own line opacity (-1 = same
+        -- as discs outline).
+        local line=option(opts,'disc_outline')
+        if opener and option(opts,'opener_disc_outline')>=0 then line=option(opts,'opener_disc_outline')end
+        local outline=line*opacity*life*reveal
         local base=option(opts,'disc_height')+details.ground_wave
         local glyph=option(opts,'disc_style')=='outline'and 2 or option(opts,'disc_style')=='fill'and 0 or 1
         local properties=opener and s.properties or {s.properties[1]}

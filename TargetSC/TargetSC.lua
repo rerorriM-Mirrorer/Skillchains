@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.1-unified-test4.1'
+_addon.version='0.14.2-unified-test4.2'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -166,6 +166,7 @@ local function help()
         {'opener fade lead|trail','Which end of each arc stays bright (default lead, facing the spin).'},
         {'opener fade glow <0-1>','How closely the opener glow band follows the arc fade (default 1).'},
         {'opener discs fade <inner 0-1> <outer 0-1>','Opener property-disc fill opacity at center/edge, as multipliers (default 1 1).'},
+        {'opener discs outline <0-1>|same','Opener property-disc glyph line opacity; same = follow discs outline (default).'},
         {'opener discs size <0.2-2>','Opener property-disc fill size; glyph lines keep their size (default 1).'},
         {'discs on|off|opacity <0-1>','Control procedural ground property glyphs.'},
         {'discs outline <0-1>','Glyph line opacity independent of elemental fill.'},

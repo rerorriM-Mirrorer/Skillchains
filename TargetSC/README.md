@@ -1,5 +1,10 @@
 # TargetSC — elemental resonance
 
+## 0.14.2 unified Test4.2 — opener discs outline
+
+Lua-only. `//tsc opener discs outline <0-1>|same` sets the glyph line opacity
+on opener property discs only; `same` (default) follows `discs outline`.
+
 ## 0.14.1 unified Test4.1 — opener spin slowdown and minimum
 
 Lua-only over Test4.0 (keep its 0.9.0 DLL). Openers now keep turning through
@@ -1021,3 +1026,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.0 (0.14.0): native 0.9.0; opener sections with stacked two-color arcs. Author: A.
 
 2026-11-17 unified Test4.1 (0.14.1): opener spin slowdown and minimum. Author: A.
+
+2026-11-17 unified Test4.2 (0.14.2): opener discs outline. Author: A.
