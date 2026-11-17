@@ -48,6 +48,14 @@ int main() {
         for(int i=0;i<sectors;++i)assert(counts[i]>=64/sectors && counts[i]<=64/sectors+1);
     }
     assert(targetsc::sector_index(31,64,2)==0 && targetsc::sector_index(32,64,2)==1);
+    // 0.7.0 radial fills scale only alpha, clamped to 0..1.
+    {
+        assert(targetsc::scale_alpha(0x80FF00FFu,1.f)==0x80FF00FFu);
+        assert(targetsc::scale_alpha(0x80FF00FFu,0.f)==0x00FF00FFu);
+        assert(targetsc::scale_alpha(0xFF123456u,.5f)==0x80123456u);
+        assert(targetsc::scale_alpha(0xFF123456u,2.f)==0xFF123456u);
+        assert(targetsc::scale_alpha(0xFF123456u,-1.f)==0x00123456u);
+    }
     // 0.6.0 gradient discs: pure color at each sector centre, smooth and
     // continuous around the rim, hub = average, alpha preserved.
     {

@@ -47,6 +47,14 @@ inline std::uint32_t average_color(std::uint32_t const* palette,int sectors) {
     }
     return out;
 }
+// Native 0.7.0 radial fills: multiply only the alpha byte (0..1), keeping RGB.
+// Templated so DWORD (unsigned long on Win32) and uint32_t both work.
+template<class C> inline C scale_alpha(C color,float k) {
+    k=k<0.f?0.f:(k>1.f?1.f:k);
+    const float a=static_cast<float>((static_cast<std::uint32_t>(color)>>24)&0xFFu)*k+.5f;
+    const std::uint32_t alpha=static_cast<std::uint32_t>(a>255.f?255.f:a);
+    return static_cast<C>((static_cast<std::uint32_t>(color)&0x00FFFFFFu)|(alpha<<24));
+}
 // Two opposite gaps split the ring into equal 32-segment open arcs.
 // Points 0..32 describe the first arc; 33..65 describe the opposite arc.
 inline float ring_angle(int point,int slices,float gap_degrees) {
