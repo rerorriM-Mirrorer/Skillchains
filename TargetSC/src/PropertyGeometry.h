@@ -55,6 +55,56 @@ template<class C> inline C scale_alpha(C color,float k) {
     const std::uint32_t alpha=static_cast<std::uint32_t>(a>255.f?255.f:a);
     return static_cast<C>((static_cast<std::uint32_t>(color)&0x00FFFFFFu)|(alpha<<24));
 }
+// Native 0.11.0 3D glyph (Umbra endings). Points are in glyph units (1 =
+// the radius), z up from the glyph's plane. `tilt` stands the whole glyph up
+// about its local x axis (gyroscope); per segment, `stand` (0..1) turns it up
+// to vertical about its own midpoint (axis level and perpendicular to it),
+// with every midpoint raised to lift x half the longest segment; `sink`
+// (0..1, eased in) lowers it fully below the plane and `pull` moves its
+// midpoint toward the center. `stagger` spreads each segment's start by its
+// order key (0 together, 1 outer first, 2 inner first).
+struct Point3 {float x,y,z;};
+struct Glyph3Params {float tilt=0,stand=0,lift=1,sink=0,pull=0,stagger=0;int order=0;};
+inline float glyph3_local(float progress,float key,float stagger) {
+    stagger=stagger<0.f?0.f:(stagger>.95f?.95f:stagger);
+    float t=(progress-key*stagger)/(1.f-stagger);
+    return t<0.f?0.f:(t>1.f?1.f:t);
+}
+inline float glyph3_key(GlyphPoint mid,float max_distance,int order) {
+    if(order==0||max_distance<=0.f)return 0.f;
+    const float d=std::sqrt(mid.x*mid.x+mid.y*mid.y)/max_distance;
+    return order==1?1.f-d:d;
+}
+inline Point3 glyph3_tilt(Point3 p,float tilt) {
+    const float c=std::cos(tilt),s=std::sin(tilt);
+    return {p.x,p.y*c-p.z*s,p.y*s+p.z*c};
+}
+// One segment's 3D ends. max_length / max_distance describe the whole glyph.
+inline void glyph3_segment(GlyphLine line,Glyph3Params const& g,float max_length,float max_distance,Point3& a,Point3& b) {
+    const GlyphPoint mid{(line.a.x+line.b.x)*.5f,(line.a.y+line.b.y)*.5f};
+    const float hx=(line.b.x-line.a.x)*.5f,hy=(line.b.y-line.a.y)*.5f;
+    const float half=std::sqrt(hx*hx+hy*hy);
+    const float key=glyph3_key(mid,max_distance,g.order);
+    const float s=glyph3_local(g.stand,key,g.stagger);
+    float q=glyph3_local(g.sink,key,g.stagger);q*=q; // pulled: accelerates
+    const float angle=s*1.57079632679f;
+    const float raise=s*g.lift*max_length*.5f;
+    const float depth=g.lift*max_length*.5f+half+.02f;
+    const float pull=1.f-g.pull*q;
+    const Point3 m{mid.x*pull,mid.y*pull,raise-q*depth};
+    const float c=std::cos(angle),up=std::sin(angle)*half;
+    a=glyph3_tilt({m.x-hx*c,m.y-hy*c,m.z-up},g.tilt);
+    b=glyph3_tilt({m.x+hx*c,m.y+hy*c,m.z+up},g.tilt);
+}
+// Keep only the part of a-b with z >= 0; false if none remains.
+inline bool glyph3_clip(Point3& a,Point3& b) {
+    if(a.z<0.f&&b.z<0.f)return false;
+    if(a.z>=0.f&&b.z>=0.f)return true;
+    const float t=a.z/(a.z-b.z);
+    const Point3 cut{a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,0.f};
+    if(a.z<0.f)a=cut;else b=cut;
+    return true;
+}
 // Native 0.10.0 three-stop radial fill: the optional middle ring sits at
 // `position` (0..1 of the radius). Its RGBA is the straight blend of the
 // unscaled center and rim colors there, with alpha then multiplied by `mid`

@@ -92,6 +92,30 @@ int main() {
         assert(targetsc::scale_alpha(0xFF123456u,.5f)==0x80123456u);
         assert(targetsc::scale_alpha(0xFF123456u,2.f)==0xFF123456u);
         assert(targetsc::scale_alpha(0xFF123456u,-1.f)==0x00123456u);
+        // 0.11.0 3D glyph: flat at rest; standing turns a segment vertical
+        // about its midpoint at lift x half the longest; sinking takes it
+        // fully below the plane; clipping keeps z >= 0; tilt stands it up.
+        {
+            const targetsc::GlyphLine line{{.2f,0.f},{.6f,0.f}};
+            targetsc::Glyph3Params g;targetsc::Point3 a{},b{};
+            targetsc::glyph3_segment(line,g,.8f,1.f,a,b);
+            assert(std::fabs(a.z)<1e-6f&&std::fabs(b.z)<1e-6f&&std::fabs(a.x-.2f)<1e-6f&&std::fabs(b.x-.6f)<1e-6f);
+            g.stand=1.f;targetsc::glyph3_segment(line,g,.8f,1.f,a,b);
+            assert(std::fabs(a.x-.4f)<1e-5f&&std::fabs(b.x-.4f)<1e-5f);          // vertical at the midpoint
+            assert(std::fabs((a.z+b.z)*.5f-.4f)<1e-5f&&std::fabs(b.z-a.z-.4f)<1e-5f); // centered at .4, length .4
+            g.sink=1.f;targetsc::glyph3_segment(line,g,.8f,1.f,a,b);
+            assert(a.z<0.f&&b.z<0.f);auto ca=a,cb=b;assert(!targetsc::glyph3_clip(ca,cb)); // fully swallowed
+            g.sink=.5f;g.pull=1.f;targetsc::glyph3_segment(line,g,.8f,1.f,a,b);
+            assert(a.x<.4f&&a.x>0.f);                                              // pulled toward the center
+            auto pa=a,pb=b;if(targetsc::glyph3_clip(pa,pb))assert(pa.z>=0.f&&pb.z>=0.f);
+            targetsc::Point3 u{0,0,-1},v{0,0,1};assert(targetsc::glyph3_clip(u,v)&&std::fabs(u.z)<1e-6f);
+            targetsc::Glyph3Params t;t.tilt=1.57079632679f;
+            targetsc::glyph3_segment({{0.f,.5f},{0.f,1.f}},t,.8f,1.f,a,b);
+            assert(std::fabs(a.y)<1e-5f&&std::fabs(a.z-.5f)<1e-5f&&std::fabs(b.z-1.f)<1e-5f); // stood upright
+            // Stagger: outer-first segments start before inner ones.
+            assert(targetsc::glyph3_local(.5f,0.f,.5f)>targetsc::glyph3_local(.5f,1.f,.5f));
+            assert(targetsc::glyph3_key({1.f,0.f},1.f,1)==0.f&&targetsc::glyph3_key({0.f,0.f},1.f,1)==1.f);
+        }
         // 0.10.0 middle radial stop: straight blend of unscaled center/rim
         // at the stop position, then its own alpha multiplier.
         assert(targetsc::radial_mid(0xFFFFFFFFu,0x00FF0000u,0.f,1.f)==0xFFFFFFFFu);

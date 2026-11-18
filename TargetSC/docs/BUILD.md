@@ -1,3 +1,11 @@
+# Building and verifying TargetSC 0.11.0 / unified Test5.7
+
+Native API 0.11.0 adds `native.glyph(radius,height,rotation,color,tilt,stand,
+lift,sink,pull,stagger,order,clip,circle)`: up to 4 property glyphs per frame
+drawn in 3D (geometry in `PropertyGeometry.h` glyph3_*). Bounded storage
+44,352 vertices; one draw call; all earlier calls unchanged. Build command
+unchanged (below).
+
 # Building and verifying TargetSC 0.10.0 / unified Test4.9
 
 Native API 0.10.0: `native.disc` takes optional args 15 (middle radial stop:
