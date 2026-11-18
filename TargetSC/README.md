@@ -1,5 +1,31 @@
 # TargetSC — elemental resonance
 
+## 0.18.0 unified Test6.1 — kill animations (new DLL 0.12.0; Skillchains updated)
+
+**New native DLL 0.12.0** (close every FFXI client before replacing
+`libs/_TargetSC.dll`), and **Skillchains.lua / targetsc_bridge.lua** changed
+too (replace them in `Windower/addons/Skillchains`).
+- **Detection (Skillchains):** a kill counts only when the weapon skill or the
+  magic burst itself was the last thing to hit the target before its "defeats" /
+  "falls to the ground" message (within 2 s, same attacker when named). Melee,
+  ordinary spells or anything else in between make it a plain death (the normal
+  detarget fade).
+- **MB kill** (Lua): the SC rings gather into the MB ring height and fade while
+  the property disc and glyphs jump there; then everything collapses inward and
+  a second bloom in the killing element bursts outward right after the MB's own.
+- **SC kill** (DLL 0.12.0): the animation freezes (`kill sc freeze` .2 s after
+  the kill), turns ghostly white, a seam flashes along the killing blow (from the
+  killer to the target), the MB glyphs and the disc's own lines flash out, and the
+  rings and disc fill split into halves that drift apart across the seam with a
+  very subtle counterclockwise turn, the sky halves sagging, buzzing out with the
+  level-4 flicker. On DLL 0.11.0 the halves cannot drift apart.
+- `//tsc kill on|off`, `kill time` (1.6 s), `kill mb gather|mb curve`,
+  `kill bloom delay|time|size|opacity`, `kill sc freeze|split|turn|sag|flash|seam|ghost`,
+  `kill seam angle`. Previews: `//tsc preview kill mb [element]`,
+  `//tsc preview kill sc`.
+- DLL 0.12.0 adds `native.shift(east,north)` (sideways offset for the pieces
+  that follow) and `native.line(...)` (straight lines).
+
 ## 0.17.0 unified Test6.0 — Umbra collapse ending, glyph lift
 
 Lua-only (`//lua reload TargetSC`; DLL 0.11.0 from Test5.7).
@@ -1307,3 +1333,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-18 unified Test5.9 (0.16.2): longer Umbra swallow ranges, MB deadline cap. Author: A.
 
 2026-11-18 unified Test6.0 (0.17.0): Umbra collapse ending and glyph lift. Author: A.
+
+2026-11-18 unified Test6.1 (0.18.0, native 0.12.0): kill animations (MB and SC), Skillchains kill detection. Author: A.

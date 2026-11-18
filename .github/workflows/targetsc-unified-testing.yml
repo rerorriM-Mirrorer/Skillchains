@@ -84,6 +84,9 @@ jobs:
           lua5.1 TargetSC/tests/test_umbra_glyph.lua
           lua5.1 TargetSC/tests/test_umbra_endings.lua
           lua5.1 TargetSC/tests/test_umbra_collapse.lua
+          lua5.1 TargetSC/tests/test_kill.lua
+          lua5.1 TargetSC/tests/test_native_kill.lua
+          lua5.1 TargetSC/tests/test_native_kill.lua 0.11.0
           lua5.1 TargetSC/tests/test_native_glyph.lua
           lua5.1 TargetSC/tests/test_native_glyph.lua 0.10.0
           lua5.1 TargetSC/tests/test_addon.lua
@@ -96,7 +99,7 @@ jobs:
       - name: Publish complete unified test package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Unified-0.17.0-Test6.0
-          path: dist/TargetSC-Unified-0.17.0-Test6.0.zip
+          name: TargetSC-Unified-0.18.0-Test6.1
+          path: dist/TargetSC-Unified-0.18.0-Test6.1.zip
           if-no-files-found: error
           retention-days: 30
