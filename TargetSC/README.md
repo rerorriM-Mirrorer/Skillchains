@@ -1,5 +1,29 @@
 # TargetSC — elemental resonance
 
+## 0.16.0 unified Test5.7 — Umbra endings (new DLL 0.11.0), Umbra controls
+
+**New native DLL 0.11.0** (close every FFXI client before replacing
+`libs/_TargetSC.dll`). Adds `native.glyph`: the property glyph drawn in 3D.
+- **Umbra endings** for the disc's own glyph (`umbra ending off|gyro|swallow`,
+  default off), during the MB ending (`ending when mb`) or from the flash-out for
+  `ending time` s (`ending when flash`):
+  - **gyro:** the glyph stands upright over `gyro rise` (.4 s) and spins about the
+    vertical axis at `gyro speed` turns/s (1.5), tracing a sphere around the disc;
+    it shrinks away over the last `gyro shrink` share (.5). `gyro below half` cuts
+    the lower dome at the disc.
+  - **swallow:** each of the 24 segments turns up to vertical about its own
+    midpoint over `stand time` (.5 s), midpoints at `swallow lift` × half the
+    longest segment; over the last `sink time` (1 s) they sink into the black disc,
+    accelerating and pulled inward (`swallow pull` .3), cut off at its surface,
+    staggered (`swallow stagger` .5, `swallow order outer|inner|together`).
+- `umbra lines size <x|same>` (the disc glyph sized × the Umbra MB ring, like the
+  floor glyph) and `umbra lines opacity <0-1|same>`.
+- `umbra disc inner|middle|outer|position`: Umbra-only disc shape.
+- `umbra disc steady on|off` (default on): the black disc holds its opacity
+  through the window-opening and burst flashes (it used to dip toward mb overall).
+- `umbra core <0-1|same>` (ring cores' direct opacity) and `umbra flicker <0-1>`
+  (how deep the level-4 flicker dips them, .28).
+
 ## 0.15.6 unified Test5.6 — Umbra spin, sky rings, two blooms, floor glyph, glyph copies
 
 Lua-only (`//lua reload TargetSC`).
@@ -1244,3 +1268,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-18 unified Test5.5 (0.15.5): Radiance three-disc stack. Author: A.
 
 2026-11-18 unified Test5.6 (0.15.6): Umbra spin, same-size sky rings, two blooms, floor glyph, glyph copies. Author: A.
+
+2026-11-18 unified Test5.7 (0.16.0, native 0.11.0): Umbra gyro/swallow endings, Umbra lines/disc/core controls. Author: A.
