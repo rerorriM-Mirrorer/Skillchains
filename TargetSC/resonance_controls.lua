@@ -91,9 +91,26 @@ function M.new(settings,defaults,save,say,killala)
             numeric(name=='middle'and 'mb_bloom_position'or 'mb_bloom_'..name,args[3],ranges[name],'mb bloom '..name)
         end
     end
+    -- Test5.1: //tsc discs level4 inner|middle|outer|position|size|height.
+    local function level4(args)
+        local name=(args[2]or ''):lower()
+        local raw=(args[3]or ''):lower()
+        local ranges={inner={0,1},middle={0,1},outer={0,1},size={.2,3},position={.05,.95},height={-.2,.5}}
+        if not ranges[name]then
+            say('Use //tsc discs level4 inner|middle|outer <0-1|same> | position <0.05-0.95> | size <0.2-3|same> | height <-0.2-0.5>.');return
+        end
+        if raw=='same'or raw=='off'then
+            if name=='position'or name=='height'then say('Use a number for discs level4 '..name..'.');return end
+            settings['disc_level4_'..name]=-1;save(settings)
+            say('Level 4 disc '..name..(name=='middle'and ': no middle point.'or ': same as discs.'))
+            return
+        end
+        numeric('disc_level4_'..name,args[3],ranges[name],'discs level4 '..name)
+    end
     local function discs(args,value)
         local stage=(args[2]or ''):lower()
-        if value=='speed'and (stage=='opener'or stage:match('^level[1-4]$'))then
+        if value=='level4'then level4(args)
+        elseif value=='speed'and (stage=='opener'or stage:match('^level[1-4]$'))then
             numeric('disc_speed_'..stage,args[3],{0,4},'discs speed '..stage)
         elseif disc_limits[value]then numeric('disc_'..value,args[2],disc_limits[value],'discs '..value)
         elseif value=='fade'then
@@ -219,6 +236,15 @@ function M.new(settings,defaults,save,say,killala)
             end
             numeric('mb_glow_'..name,args[3],ranges[name],'mb glow '..name)
         elseif command=='mb'and value=='bloom'then bloom(args)
+        elseif command=='mb'and value=='radiance'then
+            -- Test5.1 Radiance MB ring.
+            local name=(args[2]or ''):lower()
+            if name=='light'or name=='classic'then
+                settings.mb_radiance=name;save(settings)
+                say('Radiance MB ring '..(name=='light'and 'like a level-3 Light middle ring.'or 'classic.'))
+            elseif name=='glow'then numeric('mb_radiance_glow',args[3],{0,3},'mb radiance glow')
+            elseif name=='cycle'then numeric('mb_radiance_cycle',args[3],{.05,8},'mb radiance cycle')
+            else say('Use //tsc mb radiance light|classic | glow <0-3> | cycle <0.05-8>.')end
         elseif command=='mb'and value=='glyph'then
             -- Large lower glyph's confirmed-burst response (Test3).
             local name=(args[2]or ''):lower()

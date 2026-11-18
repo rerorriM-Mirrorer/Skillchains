@@ -88,7 +88,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test5.0 target handoff (seconds): untarget/ordinary death keeps the
     -- animation running on the old enemy while it dims from the first moment;
     -- switching to an enemy with resonance uses the quick out, then in.
-    detarget_time=1,switch_out=.25,switch_in=.35}
+    detarget_time=1,switch_out=.25,switch_in=.35,
+    -- Test5.1: Radiance MB ring drawn exactly like a level-3 Light middle SC
+    -- ring (white core, element-colored inner glow) at the MB ring's place,
+    -- with its own glow strength and a fast color shift.
+    mb_radiance='light',mb_radiance_glow=3,mb_radiance_cycle=.4,
+    -- Test5.1: level-4 (Radiance/Umbra) property disc. -1 = same as the
+    -- `discs` setting; middle -1 = no middle point (needs DLL 0.10.0).
+    disc_level4_inner=-1,disc_level4_middle=-1,disc_level4_position=.5,disc_level4_outer=-1,
+    disc_level4_size=-1,disc_level4_height=0}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -103,7 +111,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
     mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false,
-    detarget_time=0,switch_out=0,switch_in=0}
+    detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -366,6 +374,10 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- white, the same lit side and the same rotation (MB timing kept).
     local mb_like_ring=light_white(s,opts)and option(opts,'ring_light_mb')=='match'
     if light_white(s,opts)then mb_color=white end -- white breathing for Light
+    -- Test5.1: Radiance MB ring = a level-3 Light middle ring (white, lit
+    -- side, turns with the disc) with a strong, fast-shifting colored glow.
+    local radiance_mb=s.step>1 and s.level>=4 and s.properties[1]=='Radiance'and option(opts,'mb_radiance')=='light'
+    if radiance_mb then mb_like_ring,mb_color=true,white end
     if lightdark(s,opts)then
         -- Cycle through the four element colors; at multiplier 2 each color
         -- hands to the next twice as fast as level 2's two-color cycle.
@@ -736,11 +748,22 @@ function M.frame(model,s,now,radius,height,opts,context)
             local line_size=opener and 1 or option(opts,'disc_size_lines')
             local inner=opener and option(opts,'opener_disc_inner')or option(opts,'disc_inner')
             local outer=opener and option(opts,'opener_disc_outer')or option(opts,'disc_outer')
+            -- Test5.1: level-4 overrides (-1 = same as discs), optional middle point.
+            local middle,lift=nil,0
+            if terminal then
+                local function own(key,fallback)local v=option(opts,key)return v>=0 and v or fallback end
+                inner,outer=own('disc_level4_inner',inner),own('disc_level4_outer',outer)
+                fill_size=own('disc_level4_size',fill_size)
+                line_size=option(opts,'disc_level4_size')>=0 and fill_size or line_size
+                if option(opts,'disc_level4_middle')>=0 then middle=option(opts,'disc_level4_middle')end
+                lift=option(opts,'disc_level4_height')
+            end
             local function finish_fill(d,a)
-                if inner~=1 or outer~=1 then d.inner,d.outer=inner,outer end -- 1 1 = untouched
+                if inner~=1 or outer~=1 or middle then d.inner,d.outer=inner,outer end -- 1 1 = untouched
+                if middle then d.mid,d.mid_pos=middle,option(opts,'disc_level4_position')end
                 if hub then d.hub=context.argb(hub,a)end
             end
-            local h=base+.006+(j-1)*.008
+            local h=base+.006+(j-1)*.008+lift
             if terminal or clapper then
                 -- Separate planes let a struck trace lift while its fill
                 -- remains anchored. Terminal traces keep their .006 clearance.
@@ -811,7 +834,25 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- unless rings spin classic, where level 3 does not turn).
             mb_rotation=option(opts,'ring_spin')=='disc'and M.disc_rotation(s,now,opts)or 0
         end
-        ring(mb_radius,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
+        if radiance_mb then
+            -- The Light middle strand's inner glow, cycling Light's four
+            -- elements at `mb radiance cycle`; the glow band keeps the SC
+            -- ring's glow-to-core proportion at `mb radiance glow` strength.
+            local four=element_colors('Light',context)
+            local step=age/max(.05,option(opts,'mb_radiance_cycle'))
+            local k=math.floor(step)
+            local inner=mix(four[(1+k)%4+1],four[(2+k)%4+1],smooth(step-k))
+            local gain=option(opts,'mb_radiance_glow')
+            local buzz=.68+.32*sin(age*11)^2 -- level-3 electric
+            local a=alpha*mb_overall
+            if glow>0 then
+                band(mb_radius,ring_height,{inner},a*.32*glow*buzz*gain/max(.05,option(opts,'brightness')*.95*(.72+.28*buzz)),
+                    px+6*min(glow,3),'glow','mb',0,mb_rotation*option(opts,'ring_glow_spin'))
+            end
+            ring(mb_radius,ring_height,{color},a,'mb',0,mb_rotation,nil,{inner},gain)
+        else
+            ring(mb_radius,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
+        end
     end
     -- Test4.9 burst bloom: one per confirmed burst still in its life, oldest
     -- first so the newest draws on top. Lives on its own clock (burst time),

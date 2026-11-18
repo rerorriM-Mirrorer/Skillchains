@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.15.0-unified-test5.0'
+_addon.version='0.15.1-unified-test5.1'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -136,6 +136,13 @@ local function help()
         {'preview mb','Same four links with Wind/Earth/Water/Dark bursts; includes late-link overlaps.'},
         {'preview switch [preview]','The preview rides on the first two targets you pick (enemies or yourself) to try target handoffs.'},
         {'preview off','Stops a preview; it dims away like an untarget.'},
+        {'mb radiance light|classic','Radiance MB ring like a level-3 Light middle ring (white, colored inner glow) or classic (default light).'},
+        {'mb radiance glow <0-3>','Strength of that colored glow (default 3).'},
+        {'mb radiance cycle <0.05-8>','Seconds per color shift of the glow (default .4 = fast).'},
+        {'discs level4 inner|middle|outer <0-1|same>','Radiance/Umbra property disc opacity at center, middle point, edge (same = discs setting; middle same = none).'},
+        {'discs level4 position <0.05-0.95>','Where the middle point sits along the radius (default .5; needs DLL 0.10.0).'},
+        {'discs level4 size <0.2-3|same>','Radiance/Umbra disc size (fill and lines), same = discs size.'},
+        {'discs level4 height <-0.2-0.5>','Raise or lower the Radiance/Umbra disc (default 0).'},
         {'detarget time <0-3>','Untarget/ordinary death: the animation keeps running and dims over this many seconds (default 1; 0 = instant).'},
         {'switch out <0-1>','Switching to an enemy with resonance: seconds the old one takes to fade (default .25).'},
         {'switch in <0-1>','Then the new enemy fades in over this many seconds (default .35).'},
