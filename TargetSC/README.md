@@ -1,5 +1,24 @@
 # TargetSC — elemental resonance
 
+## 0.15.6 unified Test5.6 — Umbra spin, sky rings, two blooms, floor glyph, glyph copies
+
+Lua-only (`//lua reload TargetSC`).
+- `//tsc umbra spin <0-6|same>`: Umbra's own level-4 spin (the shared
+  `discs speed level4` stops at 4).
+- `umbra sky same|bell`: Umbra's sky rings keep the ground rings' size (default).
+- `umbra bloom height rings` (new default): one flash-out bloom at each SC ring
+  height; `ground|disc|mb` still give one.
+- **Floor glyph** (`umbra glyph breath|same`): breathes at rest, turns with the
+  disc (`glyph spin`, 1), sits at the black disc's exact height and is sized like
+  the Umbra MB ring (`glyph size` multiplies that). `glyph opacity` (the breath's
+  peak; same = mb overall) and `glyph over on|off` (draw it over the disc; off
+  = same plane, the opaque disc covers it).
+- **Glyph copies** (`umbra copies on|off`): a new copy every `copies every` s
+  (.6) through the opening until the flash-out, each growing from the floor
+  glyph's size to `copies size` (1.6x) and fading over `copies life` (1.2 s),
+  spinning with the disc (`copies spin`, 1), `copies depth` (.004) under the disc,
+  `copies opacity` (.5).
+
 ## 0.15.5 unified Test5.5 — Radiance three-disc stack
 
 Lua-only (`//lua reload TargetSC`). Radiance's disc becomes the top of a
@@ -1223,3 +1242,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-18 unified Test5.4 (0.15.4): level-4 open time, Umbra bloom/MB ring/disc size, Radiance glyph. Author: A.
 
 2026-11-18 unified Test5.5 (0.15.5): Radiance three-disc stack. Author: A.
+
+2026-11-18 unified Test5.6 (0.15.6): Umbra spin, same-size sky rings, two blooms, floor glyph, glyph copies. Author: A.
