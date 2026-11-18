@@ -1,5 +1,27 @@
 # TargetSC — elemental resonance
 
+## 0.15.4 unified Test5.4 — level-4 open time, Umbra bloom and MB ring, Radiance glyph
+
+Lua-only (`//lua reload TargetSC`).
+- `//tsc radiance open time <0-8|same>` / `umbra open time`: the visual length
+  of the level-4 opening (same = the game's timing, about 3 s). MB timing is
+  unchanged.
+- **Umbra flash-out bloom** (`umbra after bloom|smoke|off`, default bloom): one
+  ring-shaped black bloom where the rings flashed out, shaped by the MB bloom's
+  `opacity` center/middle/edge, `middle`, `ease` and `fade`; its own
+  `umbra bloom opacity` (.6), `time` (2.5 s), `size` (start, in SC ring radii, 1),
+  `growth` (-1..2: below 0 shrinks inward, 0 stays, above 0 grows; -.5) and
+  `height ground|disc|mb`.
+- **Umbra MB ring** (`umbra mb pulse|classic`): white pulses in the ending's
+  rhythm for the whole window, lined up so they flow straight into the real
+  ending; it only sinks in the ending. `umbra mb strength <0-1>`, `umbra mb size`.
+- `umbra disc size <0.2-10|same>`: Umbra's disc on its own, far past the shared
+  level-4 size (a black hole around everyone's feet).
+- **Radiance:** the disc's own glyph lines are hidden (`radiance disc lines
+  on|off`); the large MB glyph breathes at rest and never turns
+  (`radiance glyph breath|same`), with `glyph size`, `glyph opacity` (the breath's
+  peak, replacing mb overall/idle) and `glyph buzz on|off` (moves with the rings).
+
 ## 0.15.3 unified Test5.3 — preview umbra
 
 `//tsc preview umbra` now plays a Darkness window about to close, closed by
@@ -1186,3 +1208,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test5.2 (0.15.2): Radiance/Umbra ring looks and close sequences, shimmer, level-4 opacity overrides. Author: A.
 
 2026-11-17 unified Test5.3 (0.15.3): preview umbra = Darkness closed by Umbra. Author: A.
+
+2026-11-18 unified Test5.4 (0.15.4): level-4 open time, Umbra bloom/MB ring/disc size, Radiance glyph. Author: A.
