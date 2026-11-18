@@ -22,6 +22,7 @@ local function mb(f)
 end
 local o=copy(R.defaults)
 o.radiance_shimmer_mb=false -- Test5.2 shimmer brightens a patch; this file checks the plain 5.1 glow
+o.radiance_disc_lines=true -- Test5.4 hides them by default; 5.1 checks the trace
 -- Radiance MB ring: white core with colored glows that shift over time.
 local a=mb(run({'Radiance','4'},6,o))
 assert(a.core and rgb(a.core[1].color)==0xFFFFFF,'white core')

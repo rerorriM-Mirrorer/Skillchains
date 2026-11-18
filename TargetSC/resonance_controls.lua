@@ -113,12 +113,18 @@ function M.new(settings,defaults,save,say,killala)
             close={'c','sequence','classic'},['close time']={'n',.3,6},order={'c','lower','upper','together'},
             direction={'c','inner','outer'},lead={'n',.05,1},fade={'n',.05,2},flash={'n',0,3},
             shimmer={'n',0,1},['shimmer time']={'n',.2,8},['shimmer stagger']={'n',0,1},
-            ['shimmer angle']={'n',-180,180},['shimmer when']={'c','close','all'},['shimmer mb']={'b'}},
+            ['shimmer angle']={'n',-180,180},['shimmer when']={'c','close','all'},['shimmer mb']={'b'},
+            ['open time']={'n',0,8,same=true},['disc lines']={'b'},glyph={'c','breath','same'},
+            ['glyph size']={'n',.2,4},['glyph opacity']={'n',0,1,same=true},['glyph buzz']={'b'}},
         umbra={opacity={'n',0,1,same=true},['disc opacity']={'n',0,1,same=true},look={'c','black','classic'},
             glow={'c','white','violet'},close={'c','sequence','classic'},['close time']={'n',0,6},
             order={'c','upper','lower','together'},direction={'c','outer','inner'},gap={'n',0,.5},
             flash={'n',0,1},['flash time']={'n',.02,.5},smoke={'n',.1,4},['smoke opacity']={'n',0,2},
-            ['smoke spread']={'n',0,.3}}}
+            ['smoke spread']={'n',0,.3},
+            ['open time']={'n',0,8,same=true},after={'c','bloom','smoke','off'},['bloom opacity']={'n',0,1},
+            ['bloom time']={'n',.2,8},['bloom size']={'n',.2,4},['bloom growth']={'n',-1,2},
+            ['bloom height']={'c','ground','disc','mb'},mb={'c','pulse','classic'},['mb strength']={'n',0,1},
+            ['mb size']={'n',.2,4},['disc size']={'n',.2,10,same=true}}}
     local function level4_look(command,args)
         local spec=level4_spec[command]
         local a1,a2=(args[1]or ''):lower(),(args[2]or ''):lower()

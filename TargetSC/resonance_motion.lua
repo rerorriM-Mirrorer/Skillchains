@@ -114,7 +114,23 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- dissipates in place.
     umbra_opacity=-1,umbra_disc_opacity=-1,umbra_look='black',umbra_glow='white',umbra_close='sequence',
     umbra_close_time=3,umbra_order='upper',umbra_direction='outer',umbra_gap=.12,umbra_flash=.6,
-    umbra_flash_time=.08,umbra_smoke=1.5,umbra_smoke_opacity=.5,umbra_smoke_spread=.05}
+    umbra_flash_time=.08,umbra_smoke=1.5,umbra_smoke_opacity=.5,umbra_smoke_spread=.05,
+    -- Test5.4. open_time -1 = the game's window timing; otherwise the visual
+    -- length of the level-4 "opening" (MB timing unchanged).
+    radiance_open_time=-1,umbra_open_time=-1,
+    -- Umbra flash-out leaves one ring-shaped black bloom (after bloom) instead
+    -- of per-ring smoke; shaped by the MB bloom's center/middle/edge, middle
+    -- position, ease and fade; own opacity, time, start size (SC ring radii),
+    -- growth (-1..2: <0 shrinks inward, 0 stays, >0 grows) and height.
+    umbra_after='bloom',umbra_bloom_opacity=.6,umbra_bloom_time=2.5,umbra_bloom_size=1,
+    umbra_bloom_growth=-.5,umbra_bloom_height='ground',
+    -- Umbra MB ring: white pulses like the ending (same rhythm, lined up with
+    -- it) for the whole window; it still only sinks in the real ending.
+    umbra_mb='pulse',umbra_mb_strength=1,umbra_mb_size=1,umbra_disc_size=-1,
+    -- Radiance: the disc's own glyph lines hidden; the large MB floor glyph
+    -- breathes at rest (as before 4.8), never turns, may buzz with the rings.
+    radiance_disc_lines=false,radiance_glyph='breath',radiance_glyph_size=1,
+    radiance_glyph_opacity=-1,radiance_glyph_buzz=true}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -131,7 +147,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false,
     detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
-    umbra_look='classic',umbra_glow='violet',umbra_close='classic'}
+    umbra_look='classic',umbra_glow='violet',umbra_close='classic',
+    umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -358,7 +375,22 @@ function M.level4_end(s,opts,name,has_top)
     local _,count=level4_index(opts,name,'ground',1,4,has_top)
     if name=='radiance'then return s.sc_open+option(opts,'radiance_close_time')end
     return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+
-        option(opts,'umbra_flash_time')+option(opts,'umbra_smoke')
+        option(opts,'umbra_flash_time')+(option(opts,'umbra_after')=='smoke'and option(opts,'umbra_smoke')or 0)
+end
+-- Test5.4: when Umbra's last ring has flashed (its bloom starts here).
+function M.umbra_flashed(s,opts,has_top)
+    local _,count=level4_index(opts,'umbra','ground',1,4,has_top)
+    return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+option(opts,'umbra_flash_time')
+end
+-- Test5.4: the ending's pulse rhythm (soft: strong/half/strong per mb ending)
+-- continued backwards across the window, so it hands over seamlessly.
+function M.umbra_pulse(s,now,opts)
+    local ending=max(.1,option(opts,'mb_ending'))
+    local phase=(now-(s.mb_close-ending))/(ending/3)
+    local pulse=math.floor(phase)
+    local within=phase-pulse
+    if option(opts,'mb_ending_style')=='hard'then return within<.5 and 1 or 0 end
+    return (pulse%3==1 and .5 or 1)*math.sin(within*pi)^2
 end
 -- Returns {index, core, glow, white, smoke, spread} multipliers for one ring.
 function M.level4_ring(s,now,opts,name,part,j,n,has_top)
@@ -384,6 +416,7 @@ function M.level4_ring(s,now,opts,name,part,j,n,has_top)
         if now<m+ft then
             q.white=1
             q.core=1+option(opts,'umbra_flash')*4 -- toward full alpha (clamped)
+        elseif option(opts,'umbra_after')~='smoke'then q.core,q.glow=0,0
         else
             q.core=0
             local u=clamp((now-(m+ft))/max(.05,option(opts,'umbra_smoke')),0,1)
@@ -408,7 +441,26 @@ function M.level4_shimmer(s,now,opts,name,index,view)
     local base=(view or 0)+math.rad(option(opts,'radiance_shimmer_angle'))
     return {angle=base+pi*(.5-.5*math.cos(phase)),gain=g*ramp}
 end
+local function level4_name(s)
+    if s.step>1 and s.level>=4 then
+        if s.properties[1]=='Radiance'then return 'radiance'end
+        if s.properties[1]=='Umbra'then return 'umbra'end
+    end
+end
 function M.frame(model,s,now,radius,height,opts,context)
+    -- Test5.4: a level-4 link may see its own visual opening length, and
+    -- Radiance's large glyph breathes at rest (and falls back after bursts).
+    local l4n=level4_name(s)
+    if l4n then
+        local t=option(opts,l4n..'_open_time')
+        if t>=0 then
+            local open=s.created+t
+            s=setmetatable({sc_open=open,sc_close=max(s.sc_close,open)},{__index=s})
+        end
+        if l4n=='radiance'and option(opts,'radiance_glyph')=='breath'then
+            opts=setmetatable({mb_glyph_rest='breath',mb_glyph_after='fall'},{__index=opts})
+        end
+    end
     local out={discs={}}
     local display=option(opts,'display')
     local show_sc=display=='both'or display=='sc'
@@ -741,7 +793,17 @@ function M.frame(model,s,now,radius,height,opts,context)
         opening.radius=resting_radius
         opening.offset=option(opts,'disc_height')
         opening.rotation=clapper and -2*pi*option(opts,'mb_spin')*max(0,now-opening.created)or 0
+        -- Test5.4 Radiance glyph: still, own size, buzzing with the ground rings.
+        local radiance_glyph=l4name=='radiance'and option(opts,'radiance_glyph')=='breath'
+        if radiance_glyph then
+            opening.rotation=0
+            resting_radius=resting_radius*option(opts,'radiance_glyph_size');opening.radius=resting_radius
+        end
         opening.opacity=response.idle
+        if radiance_glyph and option(opts,'radiance_glyph_opacity')>=0 then
+            -- Own opacity: the breath itself (0-1 of its peak), not scaled by mb idle.
+            opening.opacity=min(1,response.idle/max(.001,option(opts,'mb_idle')*option(opts,'mb_breath_gain')))
+        end
         -- Test4.8 rest hidden: no floor breathing; the window-opening flash,
         -- bursts and the ending still light it.
         if clapper and option(opts,'mb_glyph_rest')=='hidden'and not response.ending then opening.opacity=0 end
@@ -793,7 +855,14 @@ function M.frame(model,s,now,radius,height,opts,context)
             color=white
             opening.opacity=response.end_flash*option(opts,'mb_effects')
         end
-        if role=='mb-glyph'then opening.opacity=opening.opacity*mb_overall end
+        if radiance_glyph and option(opts,'radiance_glyph_buzz')then
+            opening.offset=opening.offset+(details.ground_wave or 0)
+        end
+        if role=='mb-glyph'then
+            -- Test5.4: Radiance's glyph opacity replaces the MB overall opacity.
+            local own=radiance_glyph and option(opts,'radiance_glyph_opacity')or -1
+            opening.opacity=opening.opacity*(own>=0 and own or mb_overall)
+        end
         out.awakening_glyph=opening
         local before=#out.discs
         disc(opening.radius,opening.offset,fill>0 and 0 or opening.rotation,{white},fill,fill>0 and 0 or 2,
@@ -882,6 +951,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                 inner,outer=own('disc_level4_inner',inner),own('disc_level4_outer',outer)
                 fill_size=own('disc_level4_size',fill_size)
                 line_size=option(opts,'disc_level4_size')>=0 and fill_size or line_size
+                -- Test5.4: Umbra may grow far past the shared level-4 size.
+                if l4name=='umbra'and option(opts,'umbra_disc_size')>=0 then
+                    fill_size=option(opts,'umbra_disc_size');line_size=fill_size
+                end
                 if option(opts,'disc_level4_middle')>=0 then middle=option(opts,'disc_level4_middle')end
                 lift=option(opts,'disc_level4_height')
             end
@@ -904,8 +977,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                 if clapper and mb_overall>0 then
                     trace_height=trace_height+(response.lift or 0)*option(opts,'mb_floor')
                 end
+                -- Test5.4: Radiance's own disc lines may be hidden (its large MB glyph breathes instead).
+                local hide=l4name=='radiance'and not option(opts,'radiance_disc_lines')
                 disc(r*line_size,trace_height,angle,{white},0,2,
-                    (glyph==0 and not respond)and 0 or disc_outline,'property-trace',stroke)
+                    ((glyph==0 and not respond)or hide)and 0 or disc_outline,'property-trace',stroke)
                 if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
                     band(r*line_size,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
                         px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn)
@@ -933,6 +1008,13 @@ function M.frame(model,s,now,radius,height,opts,context)
         local color=mb_color
         local alpha=option(opts,'mb_opacity')+(1-option(opts,'mb_opacity'))*(1-mb_strength)
         if clapper then alpha=alpha*(response.breath or 1)end
+        -- Test5.4 Umbra MB ring: white ending-style pulses all window long.
+        local umbra_mb=l4name=='umbra'and option(opts,'umbra_mb')=='pulse'
+        if umbra_mb and not response.ending then
+            local fx=option(opts,'mb_effects')
+            color=mix(color,white,fx)
+            alpha=alpha*(1-fx)+M.umbra_pulse(s,now,opts)*option(opts,'umbra_mb_strength')*fx
+        end
         local strength=response.ring*option(opts,'mb_ring')
         if response.element and strength>0 then
             color=mix(color,mix(response.element,white,response.flicker),strength)
@@ -980,7 +1062,30 @@ function M.frame(model,s,now,radius,height,opts,context)
             end
             ring(mb_radius,ring_height,{color},a,'mb',0,mb_rotation,nil,{inner},gain,{lit=lit})
         else
-            ring(mb_radius,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
+            local r=mb_radius
+            if l4name=='umbra'then r=r*option(opts,'umbra_mb_size')end
+            ring(r,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
+        end
+    end
+    -- Test5.4 Umbra flash-out bloom: one ring-shaped black bloom where the
+    -- rings flashed out, shrinking (or holding/growing) as it fades.
+    if l4name=='umbra'and show_sc and option(opts,'umbra_close')=='sequence'and option(opts,'umbra_after')=='bloom'then
+        local start=M.umbra_flashed(s,opts,top~=nil)
+        local life=max(.05,option(opts,'umbra_bloom_time'))
+        local age=now-start
+        if age>=0 and age<life then
+            local t=age/life
+            local g=1-(1-t)^option(opts,'mb_bloom_ease')
+            local a=option(opts,'umbra_bloom_opacity')*smooth(age/.05)*(1-t)^option(opts,'mb_bloom_fade')
+            local where=option(opts,'umbra_bloom_height')
+            local h=where=='disc'and option(opts,'disc_height')+.01 or where=='mb'and mb_height or (bottom or option(opts,'disc_height'))
+            local before=#out.discs
+            disc(radius*option(opts,'umbra_bloom_size')*max(.01,1+option(opts,'umbra_bloom_growth')*g),h,0,{{0,0,0}},a,0,0,'umbra-bloom')
+            if #out.discs>before then
+                local d=out.discs[#out.discs]
+                d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
+                d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
+            end
         end
     end
     -- Test4.9 burst bloom: one per confirmed burst still in its life, oldest

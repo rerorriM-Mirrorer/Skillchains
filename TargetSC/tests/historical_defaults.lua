@@ -25,4 +25,5 @@ return {opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded'
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',mb_glyph_after='fall',mb_glyph_rest='breath',
     mb_bloom=false,detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
-    umbra_look='classic',umbra_glow='violet',umbra_close='classic'}
+    umbra_look='classic',umbra_glow='violet',umbra_close='classic',
+    umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same'}
