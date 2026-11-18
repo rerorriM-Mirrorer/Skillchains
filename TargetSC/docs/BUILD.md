@@ -1,3 +1,11 @@
+# Building and verifying TargetSC 0.12.0 / unified Test6.1
+
+Native API 0.12.0 adds `native.shift(east,north)` (a sideways offset stamped
+on every ring/arc/disc/glyph added after it in the frame; `begin` resets it)
+and `native.line(x1,y1,z1,x2,y2,z2,color,pixels)` (up to 8 straight lines,
+target-relative, z up). Bounded storage 44,400 vertices; earlier calls
+unchanged. Build command unchanged (below).
+
 # Building and verifying TargetSC 0.11.0 / unified Test5.7
 
 Native API 0.11.0 adds `native.glyph(radius,height,rotation,color,tilt,stand,

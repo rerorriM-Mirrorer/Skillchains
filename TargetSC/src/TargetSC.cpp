@@ -74,18 +74,25 @@ int g_object_mode=0;
 struct Ring {float radius=0, offset=0, width=0; DWORD color=0; float pixels=0;
     int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0,gap=0;int blend=0;
     float fade=0,fade_length=1,fade_curve=1;int fade_direction=1;
-    int arc=0;float arc_start=0,arc_span=0;DWORD tail=0;};
+    int arc=0;float arc_start=0,arc_span=0;DWORD tail=0;
+    float dx=0,dy=0;}; // 0.12.0 sideways shift (east, north) from native.shift
 struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     DWORD outline=0;int sectors=1;DWORD color2=0,color3=0,color4=0;int blend=0;float inner=1.f,outer=1.f;
     int has_hub=0;DWORD hub=0;
     // 0.10.0: optional middle radial stop (alpha multiplier, radius fraction).
-    int has_mid=0;float mid=1.f,mid_pos=.5f;};
+    int has_mid=0;float mid=1.f,mid_pos=.5f;
+    float dx=0,dy=0;}; // 0.12.0 sideways shift
 // 0.11.0: a 3D glyph (24 property-glyph segments, optional circle) for the
 // Umbra endings; geometry in PropertyGeometry.h (glyph3_*).
 constexpr int kMaxGlyphs3=4;
-struct Glyph3 {float radius=0,offset=0,rotation=0;DWORD color=0;targetsc::Glyph3Params params{};int clip=0,circle=0;};
-struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0,glyph_count=0;
-    Ring rings[kMaxRings]{};Disc discs[kMaxDiscs]{};Glyph3 glyphs[kMaxGlyphs3]{};};
+struct Glyph3 {float radius=0,offset=0,rotation=0;DWORD color=0;targetsc::Glyph3Params params{};int clip=0,circle=0;
+    float dx=0,dy=0;};
+// 0.12.0: straight lines (kill seams), target-relative world units, z up.
+constexpr int kMaxLines=8;
+struct Line {float x1=0,y1=0,z1=0,x2=0,y2=0,z2=0;DWORD color=0;float pixels=1;};
+struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0,glyph_count=0,line_count=0;
+    float shift_e=0,shift_n=0; // current native.shift, stamped on each piece added after it
+    Ring rings[kMaxRings]{};Disc discs[kMaxDiscs]{};Glyph3 glyphs[kMaxGlyphs3]{};Line lines[kMaxLines]{};};
 SRWLOCK g_frame_lock=SRWLOCK_INIT;
 Frame g_pending{}, g_frame{};
 volatile LONG g_frames=0, g_draws=0, g_tracking_failures=0, g_state_failures=0;
@@ -714,8 +721,9 @@ bool project(Position const& p,D3DVIEWPORT8 const& v, DrawVertex& out,DWORD colo
 // (3+6 vertices per slice) when it carries a middle radial stop.
 constexpr int kMaxVertices=(kMaxRings+kMaxDiscs)*ring_slices_*6+
     kMaxDiscs*(ring_slices_*9+targetsc::kGlyphLines*6)+
-    kMaxGlyphs3*(targetsc::kGlyphLines+ring_slices_)*6; // 0.11.0 3D glyph lines + circle
-static_assert(kMaxVertices==44352,"Review bounded storage when glyph complexity changes");
+    kMaxGlyphs3*(targetsc::kGlyphLines+ring_slices_)*6+ // 0.11.0 3D glyph lines + circle
+    kMaxLines*6; // 0.12.0 seam lines
+static_assert(kMaxVertices==44400,"Review bounded storage when glyph complexity changes");
 DrawVertex g_vertices[kMaxVertices]{};
 unsigned g_vertex_count=0;
 void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
@@ -940,11 +948,24 @@ void emit_glyph3(Position const& base,Glyph3 const& g,D3DVIEWPORT8 const& viewpo
             targetsc::glyph3_tilt({ring_cos_[n],ring_sin_[n],0.f},g.params.tilt),viewport);
     }
 }
+// 0.12.0: one straight line in target-relative world units (z up).
+void emit_line(Position const& base,Line const& l,D3DVIEWPORT8 const& viewport) {
+    if(!(l.color>>24))return;
+    DrawVertex a{},b{};
+    if(!project(Position{base.east+l.x1,base.north+l.y1,base.height-l.z1},viewport,a,l.color)||
+       !project(Position{base.east+l.x2,base.north+l.y2,base.height-l.z2},viewport,b,l.color))return;
+    const float dx=b.x-a.x,dy=b.y-a.y,length=std::hypot(dx,dy);
+    if(length<.0001f)return;
+    const float half=std::max(.5f,l.pixels*.5f);
+    const float nx=-dy*half/length,ny=dx*half/length;
+    auto c=a,d=b;a.x-=nx;a.y-=ny;b.x-=nx;b.y-=ny;
+    c.x+=nx;c.y+=ny;d.x+=nx;d.y+=ny;triangle(a,c,b);triangle(b,c,d);
+}
 void draw_all_rings() {
     Frame f{};
     AcquireSRWLockShared(&g_frame_lock); f=g_frame; ReleaseSRWLockShared(&g_frame_lock);
     // A stopped/erroring Lua state cannot leave a permanent frozen resonance.
-    if ((!f.count && !f.disc_count && !f.glyph_count) || GetTickCount()-f.tick>250 || !d3d_device_) return;
+    if ((!f.count && !f.disc_count && !f.glyph_count && !f.line_count) || GetTickCount()-f.tick>250 || !d3d_device_) return;
     Position base{};
     if (!live_position(f.index,base,nullptr)) {InterlockedIncrement(&g_tracking_failures); return;}
     auto* dev=static_cast<IDirect3DDevice8*>(d3d_device_);
@@ -979,9 +1000,11 @@ void draw_all_rings() {
         g_vertex_count=0;
         // Draw larger/lower glyphs first (Lua orders them), then ring glows and
         // cores. One bounded native submission per visible frame.
-        for(int i=0;i<f.disc_count;++i)emit_disc(base,f.discs[i],viewport);
-        for(int i=0;i<f.glyph_count;++i)emit_glyph3(base,f.glyphs[i],viewport);
-        for(int i=0;i<f.count;++i)emit_ring(base,f.rings[i],viewport);
+        auto shifted=[&](float dx,float dy){return Position{base.east+dx,base.north+dy,base.height};};
+        for(int i=0;i<f.disc_count;++i)emit_disc(shifted(f.discs[i].dx,f.discs[i].dy),f.discs[i],viewport);
+        for(int i=0;i<f.glyph_count;++i)emit_glyph3(shifted(f.glyphs[i].dx,f.glyphs[i].dy),f.glyphs[i],viewport);
+        for(int i=0;i<f.count;++i)emit_ring(shifted(f.rings[i].dx,f.rings[i].dy),f.rings[i],viewport);
+        for(int i=0;i<f.line_count;++i)emit_line(base,f.lines[i],viewport);
         if(g_vertex_count && SUCCEEDED(dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST,g_vertex_count/3,g_vertices,sizeof(DrawVertex))))
             InterlockedIncrement(&g_draws);
     } else InterlockedIncrement(&g_state_failures);
@@ -1067,6 +1090,7 @@ int __cdecl lua_ring(lua_State* L) {
     g_pending.rings[g_pending.count++]={static_cast<float>(r),static_cast<float>(h),static_cast<float>(w),static_cast<DWORD>(c),static_cast<float>(pixels),
         static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<float>(angle),static_cast<float>(gap),static_cast<int>(blend),
         static_cast<float>(fade),static_cast<float>(length),static_cast<float>(curve),static_cast<int>(direction)};
+    g_pending.rings[g_pending.count-1].dx=g_pending.shift_e;g_pending.rings[g_pending.count-1].dy=g_pending.shift_n;
     return 0;
 }
 // 0.9.0: native.arc(radius,offset,width,lead,tail,pixels,rotation,start_deg,span_deg,
@@ -1085,6 +1109,7 @@ int __cdecl lua_arc(lua_State* L) {
     ring.fade=static_cast<float>(fade);ring.fade_length=static_cast<float>(length);ring.fade_curve=static_cast<float>(curve);
     ring.fade_direction=static_cast<int>(direction);ring.arc=1;ring.arc_start=static_cast<float>(start*rad);
     ring.arc_span=static_cast<float>(span*rad);ring.tail=static_cast<DWORD>(tail);
+    ring.dx=g_pending.shift_e;ring.dy=g_pending.shift_n;
     g_pending.rings[g_pending.count++]=ring;
     return 0;
 }
@@ -1114,6 +1139,7 @@ int __cdecl lua_disc(lua_State* L) {
         static_cast<DWORD>(outline),static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<int>(blend),
         static_cast<float>(inner),static_cast<float>(outer),hub>=0?1:0,static_cast<DWORD>(hub>=0?hub:0),
         mid>=0?1:0,static_cast<float>(mid>=0?mid:1),static_cast<float>(mid_pos)};
+    g_pending.discs[g_pending.disc_count-1].dx=g_pending.shift_e;g_pending.discs[g_pending.disc_count-1].dy=g_pending.shift_n;
     return 0;
 }
 // 0.11.0 native.glyph(radius,height,rotation,color,tilt,stand,lift,sink,pull,
@@ -1129,18 +1155,40 @@ int __cdecl lua_glyph(lua_State* L) {
     g.params.tilt=static_cast<float>(v[4]);g.params.stand=static_cast<float>(v[5]);g.params.lift=static_cast<float>(v[6]);
     g.params.sink=static_cast<float>(v[7]);g.params.pull=static_cast<float>(v[8]);g.params.stagger=static_cast<float>(v[9]);
     g.params.order=static_cast<int>(v[10]);g.clip=static_cast<int>(v[11]);g.circle=static_cast<int>(v[12]);
+    g.dx=g_pending.shift_e;g.dy=g_pending.shift_n;
     g_pending.glyphs[g_pending.glyph_count++]=g;
+    return 0;
+}
+// 0.12.0 native.shift(east,north): sideways offset (world units) stamped on
+// every ring/arc/disc/glyph added after it this frame; begin resets it.
+int __cdecl lua_shift(lua_State* L) {
+    if(g_lua.gettop(L)<2)return 0;
+    const double e=g_lua.tonumber(L,1),n=g_lua.tonumber(L,2);
+    if(!std::isfinite(e)||!std::isfinite(n)||std::fabs(e)>100||std::fabs(n)>100)return 0;
+    g_pending.shift_e=static_cast<float>(e);g_pending.shift_n=static_cast<float>(n);
+    return 0;
+}
+// 0.12.0 native.line(x1,y1,z1,x2,y2,z2,color,pixels): target-relative, z up.
+int __cdecl lua_line(lua_State* L) {
+    if(!g_pending.index||g_pending.line_count>=kMaxLines||g_lua.gettop(L)<7)return 0;
+    double v[8];for(int i=0;i<8;++i){v[i]=i<g_lua.gettop(L)?g_lua.tonumber(L,i+1):1;if(!std::isfinite(v[i]))return 0;}
+    for(int i=0;i<6;++i)if(std::fabs(v[i])>100)return 0;
+    if(v[6]<0||v[6]>4294967295.0||v[7]<0||v[7]>64)return 0;
+    Line l{};l.x1=static_cast<float>(v[0]);l.y1=static_cast<float>(v[1]);l.z1=static_cast<float>(v[2]);
+    l.x2=static_cast<float>(v[3]);l.y2=static_cast<float>(v[4]);l.z2=static_cast<float>(v[5]);
+    l.color=static_cast<DWORD>(v[6]);l.pixels=static_cast<float>(v[7]);
+    g_pending.lines[g_pending.line_count++]=l;
     return 0;
 }
 int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.11.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.12.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.11.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.12.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;
@@ -1183,10 +1231,10 @@ bool bind_lua() {
 } // namespace
 extern "C" __declspec(dllexport) int __cdecl luaopen__TargetSC(lua_State* L) {
     if(!bind_lua())return 0;
-    build_tables();clear_frame();g_lua.createtable(L,0,11);
+    build_tables();clear_frame();g_lua.createtable(L,0,13);
     struct Entry {char const* name;lua_CFunction fn;};
     const Entry entries[]={{"start",lua_start},{"stop",lua_stop},{"clear",lua_clear},{"begin",lua_begin},
-        {"ring",lua_ring},{"arc",lua_arc},{"disc",lua_disc},{"glyph",lua_glyph},{"commit",lua_commit},{"status",lua_status},{"version",lua_version}};
+        {"ring",lua_ring},{"arc",lua_arc},{"disc",lua_disc},{"glyph",lua_glyph},{"shift",lua_shift},{"line",lua_line},{"commit",lua_commit},{"status",lua_status},{"version",lua_version}};
     for(auto const& e:entries){g_lua.pushcclosure(L,e.fn,0);g_lua.setfield(L,-2,e.name);}
     return 1;
 }
