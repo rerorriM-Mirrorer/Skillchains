@@ -1,5 +1,24 @@
 # TargetSC — elemental resonance
 
+## 0.15.0 unified Test5.0 — target handoff fades
+
+Lua-only (`//lua reload TargetSC`; DLL 0.10.0 unchanged). When you untarget an
+enemy or it dies normally, its animation keeps running exactly as normal and
+dims away from the first moment. Switching straight to an enemy that has its
+own resonance uses a quick fade out, then the new one fades in. (The DLL draws
+one target per frame, so this is a hand-off, not a crossfade.)
+- `//tsc detarget time <0-3>` (default 1 s; 0 = instant like before).
+- `//tsc switch out <0-1>` (default .25 s) and `//tsc switch in <0-1>` (.35 s),
+  used only when the new enemy has resonance; otherwise the old one takes the
+  full detarget time.
+- Re-targeting an enemy while it fades brightens it back from where it was.
+- `//tsc preview off` now dims away like an untarget.
+- `//tsc preview switch [preview]` lends the preview to the first two targets
+  you pick (enemies, or yourself) so you can try hand-offs; a third enemy stays
+  plain. Default preview: the four-link MB demo.
+- Cutscenes, zoning, logout, a despawned enemy or a recycled index still cut
+  out immediately. `preset killala` restores instant.
+
 ## 0.14.9 unified Test4.9 — MB burst bloom
 
 **New native DLL 0.10.0** (close every FFXI client before replacing
@@ -1117,3 +1136,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.8 (0.14.8): large glyph fades at its risen height; hidden at rest. Author: A.
 
 2026-11-17 unified Test4.9 (0.14.9): MB burst bloom with three opacity points and glyph-line copies; preview mb light/dark; native 0.10.0. Author: A.
+
+2026-11-17 unified Test5.0 (0.15.0): target handoff fades (detarget, switch out/in), preview off fade, preview switch. Author: A.

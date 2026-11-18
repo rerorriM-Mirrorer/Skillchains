@@ -1,5 +1,19 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.15.0 unified Test5.0 — target handoff fades; preview switch (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.10.0 unchanged). Author: A. Test4.9 was pushed at the start of this batch (the repo was attached to the session with the user's permission).
+
+**User feedback on Test4.9:** "we got something real good here"; the overlap interactions noted in Test4.9 don't look bad in game ("they kinda work"); keep an eye out. Supplied Cioara bloom values (center 0, middle 1 at .9, core 1, flash 1, ease 1.5, fade .9, size 1.1→1.21, time 4, to ring, lines delay .15 / size 1.06).
+
+**User request:** kill rule recorded for later: a kill only counts if the MB or WS itself drove the enemy to 0 HP; special SC-window and MB kill animations are postponed. Now: detarget/untarget and ordinary death keep the animation running exactly as normal on the old enemy and dim **from the first moment** (no hold), 1 s default, extendable to 3 s. Switching targets: quick fade out then fade in, but **only when the new enemy has resonance**; otherwise the old enemy uses the detarget duration. `preview off` should use the detarget animation. A preview for switching: on self, or apply the preview resonance to two enemies switched between.
+
+**Changes:** `detarget time <0-3>` (1), `switch out <0-1>` (.25), `switch in <0-1>` (.35). Implemented in `TargetSC.lua`'s render loop as a sequential hand-off (the DLL draws one target per frame): the frame is sent at a level by scaling every color's alpha (rings, tails, disc colors, outlines, hubs); the old target is redrawn by its index while its id still matches. Retargeting a fading enemy brightens it back from its current level over the remaining `switch in` share (a fading preview comes back too); a carrier target picked during a slow fade hurries it (`switch out` × level); the new target's fade-in starts when the old fade ends. `preview off` → detarget fade; a real state arriving for that target drops the fading preview. `preview switch [preview]` (default `mb`): the first two targets picked (enemies, or yourself) carry the preview; others stay plain. Cutscene/zone/logout/off/despawn/recycled index cut immediately. `preset killala` → 0/0/0 (instant). `test_addon.lua` death and self-preview checks updated to the new fade (previously instant cuts).
+
+**Host verification (not FFXI):** full suite PASS; new `test_handoff.lua` measures levels against an undimmed twin of the same preview: untarget 1.0 → .5 at .5 s → .1 at .9 s → gone after 1 s on the old enemy; retarget brightens from its fading level to full; switch to a plain enemy uses the full detarget time; switch preview A→B: A out over .25, then B in over .35 (half at .175 s); B→plain C: full detarget time; back to A during that: B hurried, A in; a third enemy never carries; recycled index and cutscene cut; preview off dims; commands, ranges, presets. **Live pending:** whether the DLL keeps drawing on a just-dead enemy during the fade (dead mobs stay a few seconds; if it stops, the fade will cut there); feel of the timings; `preview switch` with two enemies.
+
+**Next (user's order):** Radiance MB ring = like a level-3 Light middle SC ring with the colored glows, but strong (around the maximum, 3) and shifting fast, only on the MB ring. Later: Radiance disc/glyph/ring colors (gold ring with white glow and white ring with gold glow, reversing as they flicker like the xivcrossbar active-slot skillchain flicker; "buzzing with power"), a cleaner Radiance fade from opening to end (level 4 has no real "opening" window), the same review for Umbra/Darkness, possibly reusing the bloom around the property ring when a new skillchain opens, and the postponed kill animations.
+
 ## TargetSC 0.14.9 unified Test4.9 — MB burst bloom; preview mb light/dark (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.10.0).** Author: A.
