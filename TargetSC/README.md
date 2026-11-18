@@ -1,5 +1,19 @@
 # TargetSC — elemental resonance
 
+## 0.15.1 unified Test5.1 — Radiance MB ring; level-4 disc controls
+
+Lua-only (`//lua reload TargetSC`; DLL 0.10.0 needed for the middle point).
+- The Radiance MB ring now looks exactly like a middle ring of level-3 Light
+  (white core, lit side, turning with the disc, colored inner glow cycling
+  Fire/Wind/Thunder/Light), at the MB ring's place and size, with a full-strength
+  glow that shifts fast. `//tsc mb radiance light|classic` (default light),
+  `mb radiance glow <0-3>` (3), `mb radiance cycle <0.05-8>` (.4 s per shift).
+  The SC rings keep `rings light glow`/`cycle`.
+- Radiance/Umbra property disc: `//tsc discs level4 inner|middle|outer <0-1|same>`,
+  `position <0.05-0.95>` (where the middle point sits), `size <0.2-3|same>`
+  (fill and lines), `height <-0.2-0.5>`. `same` = the normal `discs` setting;
+  `middle same` = no middle point. Defaults change nothing.
+
 ## 0.15.0 unified Test5.0 — target handoff fades
 
 Lua-only (`//lua reload TargetSC`; DLL 0.10.0 unchanged). When you untarget an
@@ -1138,3 +1152,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test4.9 (0.14.9): MB burst bloom with three opacity points and glyph-line copies; preview mb light/dark; native 0.10.0. Author: A.
 
 2026-11-17 unified Test5.0 (0.15.0): target handoff fades (detarget, switch out/in), preview off fade, preview switch. Author: A.
+
+2026-11-17 unified Test5.1 (0.15.1): Radiance MB ring like a level-3 Light middle ring; level-4 disc inner/middle/outer/position/size/height. Author: A.

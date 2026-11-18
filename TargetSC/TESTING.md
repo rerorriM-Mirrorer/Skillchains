@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.15.1 unified Test5.1 — Radiance MB ring; level-4 disc controls (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.10.0 unchanged; its middle stop is used by the new disc option). Author: A.
+
+**User request:** the Radiance MB ring "exactly like one of the middle rings of the light skillchain, but in the location and size of the radiance mb ring, full glow strength, shifting fast" (their SC glows are at .9/.6; for this ring around the maximum, 3); options for the Radiance and Umbra "property disc" opacity (inner/outer, with a middle point), size and height. Direction for level 4 generally: it already has an in-game animation, so level-4 effects should just introduce the skillchain — subtle effects on what's already there. Ideas to come back to: Umbra's bloom drawn **inward**; Umbra's property disc as an opaque "black hole" with a thin white glowing ring; something different and special for both level-4 MB rings (not decided).
+
+**Changes:** `mb radiance light|classic` (default light; killala classic): on a Radiance link the MB ring is white with the lit side and the disc's rotation (Test4.7 match path), plus the Light middle strand's inner glow, which cycles Light's four elements (index 2, same mixing) every `mb radiance cycle` (.4 s) at `mb radiance glow` strength (3): the ring() glow uses the inner color × gain, and the SC-style glow band keeps the SC ring's glow-to-core proportion (.32·glow·electric·gain / (brightness·.95·(.72+.28·electric)), level-3 electric) relative to the MB core alpha. MB timing (breath, intro, bursts, ending) unchanged. Level-4 disc (terminal path, Radiance and Umbra): `discs level4 inner|middle|outer|position|size|height`; -1 = same as `discs` (middle -1 = none); size applies to fill and trace; height lifts both. Level 1–3 discs unaffected.
+
+**Host verification (not FFXI):** full suite PASS; new `test_radiance_level4.lua` (white core; two glows; glow color travels through several colors in 1.2 s, far less with cycle 8; strength 3 > 1; ring glow = core × .24 × glow × 3; MB ring rotation equals the disc's when the level-4 disc turns; classic has one plain glow; Umbra unchanged; level-4 disc defaults untouched; overrides on Radiance and Umbra: inner/outer/mid/position, 1.5× size for fill and lines, +.1 height for both; level 3 unaffected; commands, `same`, ranges, presets) PASS. **Live pending:** the look on a real Radiance (needs `discs speed level4` > 0 to see it turn; Cioara has 1); disc options on Radiance/Umbra.
+
 ## TargetSC 0.15.0 unified Test5.0 — target handoff fades; preview switch (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (native 0.10.0 unchanged). Author: A. Test4.9 was pushed at the start of this batch (the repo was attached to the session with the user's permission).
