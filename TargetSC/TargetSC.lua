@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.15.4-unified-test5.4'
+_addon.version='0.15.5-unified-test5.5'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -152,6 +152,10 @@ local function help()
         {'radiance disc lines on|off','The Radiance disc\'s own glyph lines (default off; the large MB glyph breathes instead).'},
         {'radiance glyph breath|same','Radiance large MB glyph breathes at rest and never turns (default breath).'},
         {'radiance glyph size|opacity <number|same> | glyph buzz on|off','Its size (1), opacity replacing mb overall (same), buzzing with the rings (on).'},
+        {'radiance stack on|off','Three-disc stack: white bottom, Fusion<->Fragmentation middle, the white disc on top (default on).'},
+        {'radiance stack height|spacing <number>','Raise/lower all three (0), gap between them (.01).'},
+        {'radiance bottom opacity|size <number>','Bottom white disc: direct opacity 0-1 (.6), size x level-4 disc size (1).'},
+        {'radiance middle opacity|size|cycle|spin <number>','Middle disc: opacity (.5), size (1), seconds Fusion->Fragmentation->Fusion (4), turn x level-4 speed (1).'},
         {'umbra open time <0-8|same>','Visual length of the Umbra opening (same = game timing).'},
         {'umbra after bloom|smoke|off','After the flash-out: one ring-shaped black bloom (default), per-ring smoke, or nothing.'},
         {'umbra bloom opacity|time|size|growth <number>','Bloom opacity (.6), seconds (2.5), start size in SC ring radii (1), growth -1..2 (<0 shrinks, 0 stays, >0 grows; -.5).'},

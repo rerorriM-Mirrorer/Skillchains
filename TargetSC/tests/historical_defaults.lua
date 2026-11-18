@@ -26,4 +26,4 @@ return {opacity=0.3,scale=2,height=1,intensity=1,motion='sine',layout='grounded'
     mb_bloom=false,detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
-    umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same'}
+    umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false}

@@ -130,7 +130,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Radiance: the disc's own glyph lines hidden; the large MB floor glyph
     -- breathes at rest (as before 4.8), never turns, may buzz with the rings.
     radiance_disc_lines=false,radiance_glyph='breath',radiance_glyph_size=1,
-    radiance_glyph_opacity=-1,radiance_glyph_buzz=true}
+    radiance_glyph_opacity=-1,radiance_glyph_buzz=true,
+    -- Test5.5 Radiance three-disc stack (bottom to top): a white disc, a disc
+    -- crossfading the Fusion and Fragmentation looks (own cycle, turning at
+    -- the level-4 disc speed x middle spin), then the existing white disc on
+    -- top. Opacities are direct (not scaled by the overall opacity); sizes
+    -- multiply the level-4 disc size; stack height moves all three.
+    radiance_stack=true,radiance_stack_height=0,radiance_stack_spacing=.01,
+    radiance_bottom_opacity=.6,radiance_bottom_size=1,
+    radiance_middle_opacity=.5,radiance_middle_size=1,radiance_middle_cycle=4,radiance_middle_spin=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -148,7 +156,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
-    umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same'}
+    umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -969,6 +977,25 @@ function M.frame(model,s,now,radius,height,opts,context)
                 -- remains anchored. Terminal traces keep their .006 clearance.
                 local r=terminal and radius*.92 or radius*(.78-(j-1)*.11)
                 local respond=flash>0 or disc_intro>0
+                if l4name=='radiance'and j==1 and option(opts,'radiance_stack')then
+                    -- Test5.5: bottom white, middle Fusion<->Fragmentation, then the top.
+                    local base_h=h+option(opts,'radiance_stack_height')
+                    local spacing=option(opts,'radiance_stack_spacing')
+                    local mark=#out.discs
+                    disc(r*fill_size*option(opts,'radiance_bottom_size'),base_h,angle,{white},
+                        option(opts,'radiance_bottom_opacity')*life,0,0,'radiance-bottom')
+                    if #out.discs>mark then finish_fill(out.discs[#out.discs],0)end
+                    local fusion,frag=property_palette('Fusion',context),property_palette('Fragmentation',context)
+                    local w=.5-.5*math.cos(2*pi*max(0,now-s.created)/max(.1,option(opts,'radiance_middle_cycle')))
+                    local mixed={}
+                    for i=1,max(#fusion,#frag)do mixed[i]=mix(fusion[i]or fusion[#fusion],frag[i]or frag[#frag],w)end
+                    mark=#out.discs
+                    disc(r*fill_size*option(opts,'radiance_middle_size'),base_h+spacing,
+                        M.disc_rotation(s,now,opts)*option(opts,'radiance_middle_spin'),mixed,
+                        option(opts,'radiance_middle_opacity')*life,0,0,'radiance-middle')
+                    if #out.discs>mark then finish_fill(out.discs[#out.discs],0)end
+                    h=base_h+2*spacing
+                end
                 local before=#out.discs
                 local fill_alpha=(glyph==2 and not respond)and 0 or disc_fill
                 disc(r*fill_size,h,angle,colors,fill_alpha,0,0,'property')
