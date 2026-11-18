@@ -123,7 +123,7 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- position, ease and fade; own opacity, time, start size (SC ring radii),
     -- growth (-1..2: <0 shrinks inward, 0 stays, >0 grows) and height.
     umbra_after='bloom',umbra_bloom_opacity=.6,umbra_bloom_time=2.5,umbra_bloom_size=1,
-    umbra_bloom_growth=-.5,umbra_bloom_height='ground',
+    umbra_bloom_growth=-.5,umbra_bloom_height='rings',
     -- Umbra MB ring: white pulses like the ending (same rhythm, lined up with
     -- it) for the whole window; it still only sinks in the real ending.
     umbra_mb='pulse',umbra_mb_strength=1,umbra_mb_size=1,umbra_disc_size=-1,
@@ -138,7 +138,16 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- multiply the level-4 disc size; stack height moves all three.
     radiance_stack=true,radiance_stack_height=0,radiance_stack_spacing=.01,
     radiance_bottom_opacity=.6,radiance_bottom_size=1,
-    radiance_middle_opacity=.5,radiance_middle_size=1,radiance_middle_cycle=4,radiance_middle_spin=1}
+    radiance_middle_opacity=.5,radiance_middle_size=1,radiance_middle_cycle=4,radiance_middle_spin=1,
+    -- Test5.6 Umbra: own level-4 spin (-1 = discs speed level4; up to 6);
+    -- sky rings the same size as the ground rings (no bell flare); a large
+    -- MB floor glyph that breathes, turns with the disc and sits at the
+    -- disc's exact height, sized like the Umbra MB ring; and glyph copies
+    -- that appear every `copies every` s through the opening, each growing
+    -- and fading over `copies life` s just under the disc, spinning.
+    umbra_spin=-1,umbra_sky='same',umbra_glyph='breath',umbra_glyph_size=1,umbra_glyph_opacity=-1,
+    umbra_glyph_spin=1,umbra_glyph_over=false,umbra_copies=true,umbra_copies_every=.6,umbra_copies_life=1.2,
+    umbra_copies_size=1.6,umbra_copies_opacity=.5,umbra_copies_spin=1,umbra_copies_depth=.004}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -156,7 +165,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
-    umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false}
+    umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
+    umbra_sky='bell',umbra_glyph='same',umbra_copies=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -385,6 +395,10 @@ function M.level4_end(s,opts,name,has_top)
     return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+
         option(opts,'umbra_flash_time')+(option(opts,'umbra_after')=='smoke'and option(opts,'umbra_smoke')or 0)
 end
+-- Test5.6: the Umbra property disc's fill plane (as the terminal disc path).
+function M.umbra_plane(opts,details)
+    return option(opts,'disc_height')+(details and details.ground_wave or 0)+.006+option(opts,'disc_level4_height')
+end
 -- Test5.4: when Umbra's last ring has flashed (its bloom starts here).
 function M.umbra_flashed(s,opts,has_top)
     local _,count=level4_index(opts,'umbra','ground',1,4,has_top)
@@ -465,9 +479,10 @@ function M.frame(model,s,now,radius,height,opts,context)
             local open=s.created+t
             s=setmetatable({sc_open=open,sc_close=max(s.sc_close,open)},{__index=s})
         end
-        if l4n=='radiance'and option(opts,'radiance_glyph')=='breath'then
-            opts=setmetatable({mb_glyph_rest='breath',mb_glyph_after='fall'},{__index=opts})
-        end
+        local over,any={},false
+        if option(opts,l4n..'_glyph')=='breath'then over.mb_glyph_rest,over.mb_glyph_after,any='breath','fall',true end
+        if l4n=='umbra'and option(opts,'umbra_spin')>=0 then over.disc_speed_level4,any=option(opts,'umbra_spin'),true end
+        if any then opts=setmetatable(over,{__index=opts})end
     end
     local out={discs={}}
     local display=option(opts,'display')
@@ -710,7 +725,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local h=place[1]+spec.stack
                     local draw_radius=r
                     if place[2]=='sky'then
-                        draw_radius=r*M.bell_factor(top-bottom,height,opts)
+                        -- Test5.6: Umbra's sky rings keep the ground rings' size.
+                        if not (l4name=='umbra'and option(opts,'umbra_sky')=='same')then
+                            draw_radius=r*M.bell_factor(top-bottom,height,opts)
+                        end
                     end
                     -- Test4.6: Light white look: the four inner rings (top to
                     -- bottom: sky middle, sky lower, ground upper, ground
@@ -802,13 +820,17 @@ function M.frame(model,s,now,radius,height,opts,context)
         opening.offset=option(opts,'disc_height')
         opening.rotation=clapper and -2*pi*option(opts,'mb_spin')*max(0,now-opening.created)or 0
         -- Test5.4 Radiance glyph: still, own size, buzzing with the ground rings.
-        local radiance_glyph=l4name=='radiance'and option(opts,'radiance_glyph')=='breath'
-        if radiance_glyph then
+        -- Test5.6 Umbra glyph: turns with the disc, sized like the Umbra MB ring.
+        local l4_glyph=l4name and option(opts,l4name..'_glyph')=='breath'
+        if l4_glyph and l4name=='radiance'then
             opening.rotation=0
             resting_radius=resting_radius*option(opts,'radiance_glyph_size');opening.radius=resting_radius
+        elseif l4_glyph then
+            opening.rotation=M.disc_rotation(s,now,opts)*option(opts,'umbra_glyph_spin')
+            resting_radius=mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_glyph_size');opening.radius=resting_radius
         end
         opening.opacity=response.idle
-        if radiance_glyph and option(opts,'radiance_glyph_opacity')>=0 then
+        if l4_glyph and option(opts,l4name..'_glyph_opacity')>=0 then
             -- Own opacity: the breath itself (0-1 of its peak), not scaled by mb idle.
             opening.opacity=min(1,response.idle/max(.001,option(opts,'mb_idle')*option(opts,'mb_breath_gain')))
         end
@@ -863,12 +885,16 @@ function M.frame(model,s,now,radius,height,opts,context)
             color=white
             opening.opacity=response.end_flash*option(opts,'mb_effects')
         end
-        if radiance_glyph and option(opts,'radiance_glyph_buzz')then
+        if l4_glyph and l4name=='radiance'and option(opts,'radiance_glyph_buzz')then
             opening.offset=opening.offset+(details.ground_wave or 0)
+        end
+        if l4_glyph and l4name=='umbra'then
+            -- Rest at the black disc's exact plane (a burst still lifts it from there).
+            opening.offset=opening.offset-option(opts,'disc_height')+M.umbra_plane(opts,details)
         end
         if role=='mb-glyph'then
             -- Test5.4: Radiance's glyph opacity replaces the MB overall opacity.
-            local own=radiance_glyph and option(opts,'radiance_glyph_opacity')or -1
+            local own=l4_glyph and option(opts,l4name..'_glyph_opacity')or -1
             opening.opacity=opening.opacity*(own>=0 and own or mb_overall)
         end
         out.awakening_glyph=opening
@@ -1105,14 +1131,61 @@ function M.frame(model,s,now,radius,height,opts,context)
             local g=1-(1-t)^option(opts,'mb_bloom_ease')
             local a=option(opts,'umbra_bloom_opacity')*smooth(age/.05)*(1-t)^option(opts,'mb_bloom_fade')
             local where=option(opts,'umbra_bloom_height')
-            local h=where=='disc'and option(opts,'disc_height')+.01 or where=='mb'and mb_height or (bottom or option(opts,'disc_height'))
-            local before=#out.discs
-            disc(radius*option(opts,'umbra_bloom_size')*max(.01,1+option(opts,'umbra_bloom_growth')*g),h,0,{{0,0,0}},a,0,0,'umbra-bloom')
-            if #out.discs>before then
-                local d=out.discs[#out.discs]
-                d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
-                d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
+            local base_r=radius*option(opts,'umbra_bloom_size')*max(.01,1+option(opts,'umbra_bloom_growth')*g)
+            -- Test5.6 rings: one bloom at each SC ring height (sky follows the bell if used).
+            local planes={}
+            if where=='rings'then
+                planes[1]={bottom or option(opts,'disc_height'),1}
+                if top then
+                    local bell=option(opts,'umbra_sky')=='bell'and M.bell_factor(top-bottom,height,opts)or 1
+                    planes[2]={top,bell}
+                end
+            else
+                planes[1]={where=='disc'and option(opts,'disc_height')+.01 or where=='mb'and mb_height or (bottom or option(opts,'disc_height')),1}
             end
+            for _,pl in ipairs(planes)do
+                local before=#out.discs
+                disc(base_r*pl[2],pl[1],0,{{0,0,0}},a,0,0,'umbra-bloom')
+                if #out.discs>before then
+                    local d=out.discs[#out.discs]
+                    d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
+                    d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
+                end
+            end
+        end
+    end
+    -- Test5.6 Umbra glyph copies: spawned every `copies every` s from the
+    -- link's creation until the rings have flashed out; each grows from the
+    -- floor glyph's size and fades over `copies life`, spinning with the disc
+    -- (x copies spin), just under the black disc (placed before it in the
+    -- draw order so the opaque disc covers what it overlaps).
+    if l4name=='umbra'and show_sc and option(opts,'umbra_copies')then
+        local every,life=max(.05,option(opts,'umbra_copies_every')),max(.05,option(opts,'umbra_copies_life'))
+        local stop=M.umbra_flashed(s,opts,top~=nil)
+        local r0=mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_glyph_size')
+        local h=M.umbra_plane(opts,details)-option(opts,'umbra_copies_depth')
+        local spin=M.disc_rotation(s,now,opts)*option(opts,'umbra_copies_spin')
+        local first=math.max(0,math.floor((now-life-s.created)/every))
+        local made={}
+        for k=first,math.floor((now-s.created)/every)do
+            local born=s.created+k*every
+            local age=now-born
+            if born<stop and age>=0 and age<life then
+                local t=age/life
+                local before=#out.discs
+                disc(r0*(1+(option(opts,'umbra_copies_size')-1)*(1-(1-t)^2)),h,spin,{white},0,2,
+                    option(opts,'umbra_copies_opacity')*smooth(age/.05)*(1-t),'umbra-copy',white)
+                if #out.discs>before then made[#made+1]=table.remove(out.discs)end
+            end
+        end
+        local at=#out.discs+1
+        for k,d in ipairs(out.discs)do if d.role=='property'then at=k break end end
+        for i,d in ipairs(made)do table.insert(out.discs,at+i-1,d)end
+    end
+    -- Test5.6: the Umbra floor glyph may be drawn over the black disc instead.
+    if l4name=='umbra'and option(opts,'umbra_glyph_over')then
+        for k,d in ipairs(out.discs)do
+            if d.role=='mb-glyph'then local moved=table.remove(out.discs,k);out.discs[#out.discs+1]=moved;break end
         end
     end
     -- Test4.9 burst bloom: one per confirmed burst still in its life, oldest

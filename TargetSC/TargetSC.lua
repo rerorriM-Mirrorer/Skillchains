@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.15.5-unified-test5.5'
+_addon.version='0.15.6-unified-test5.6'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -159,8 +159,14 @@ local function help()
         {'umbra open time <0-8|same>','Visual length of the Umbra opening (same = game timing).'},
         {'umbra after bloom|smoke|off','After the flash-out: one ring-shaped black bloom (default), per-ring smoke, or nothing.'},
         {'umbra bloom opacity|time|size|growth <number>','Bloom opacity (.6), seconds (2.5), start size in SC ring radii (1), growth -1..2 (<0 shrinks, 0 stays, >0 grows; -.5).'},
-        {'umbra bloom height ground|disc|mb','Where it sits (ground). Shape: mb bloom opacity/middle/ease/fade.'},
+        {'umbra bloom height rings|ground|disc|mb','rings: one bloom at each SC ring height (default); or one at the ground ring / disc / MB ring. Shape: mb bloom opacity/middle/ease/fade.'},
         {'umbra mb pulse|classic | mb strength <0-1> | mb size <0.2-4>','Umbra MB ring: white ending-style pulses all window (default pulse, 1), its size (1).'},
+        {'umbra spin <0-6|same>','Umbra\'s own level-4 spin, beyond discs speed level4 (same = that).'},
+        {'umbra sky same|bell','Sky rings the same size as the ground rings (default same) or flared like a bell.'},
+        {'umbra glyph breath|same','Umbra large MB glyph breathes at rest at the disc\'s exact height, sized like the Umbra MB ring (default breath).'},
+        {'umbra glyph size|opacity|spin <number> | glyph over on|off','Size x MB ring (1), opacity (same), turn x level-4 speed (1), draw it over the disc (off).'},
+        {'umbra copies on|off','Glyph copies growing out just under the disc through the opening (default on).'},
+        {'umbra copies every|life|size|opacity|spin|depth <number>','New copy every .6 s, each lasting 1.2 s, growing to 1.6x, opacity .5, spin 1, .004 under the disc.'},
         {'umbra disc size <0.2-10|same>','Umbra disc size, beyond discs level4 size (same = that).'},
         {'umbra opacity|disc opacity <0-1|same>','Umbra rings/glows and disc fill, ignoring the overall opacity (1 = total black).'},
         {'umbra look black|classic | glow white|violet','Black cores from the opening and a white glow (default black, white).'},

@@ -126,8 +126,13 @@ function M.new(settings,defaults,save,say,killala)
             ['smoke spread']={'n',0,.3},
             ['open time']={'n',0,8,same=true},after={'c','bloom','smoke','off'},['bloom opacity']={'n',0,1},
             ['bloom time']={'n',.2,8},['bloom size']={'n',.2,4},['bloom growth']={'n',-1,2},
-            ['bloom height']={'c','ground','disc','mb'},mb={'c','pulse','classic'},['mb strength']={'n',0,1},
-            ['mb size']={'n',.2,4},['disc size']={'n',.2,10,same=true}}}
+            ['bloom height']={'c','rings','ground','disc','mb'},mb={'c','pulse','classic'},['mb strength']={'n',0,1},
+            ['mb size']={'n',.2,4},['disc size']={'n',.2,10,same=true},
+            spin={'n',0,6,same=true},sky={'c','same','bell'},glyph={'c','breath','same'},
+            ['glyph size']={'n',.2,4},['glyph opacity']={'n',0,1,same=true},['glyph spin']={'n',-4,4},
+            ['glyph over']={'b'},copies={'b'},['copies every']={'n',.1,4},['copies life']={'n',.2,6},
+            ['copies size']={'n',.2,6},['copies opacity']={'n',0,1},['copies spin']={'n',-4,4},
+            ['copies depth']={'n',0,.1}}}
     local function level4_look(command,args)
         local spec=level4_spec[command]
         local a1,a2=(args[1]or ''):lower(),(args[2]or ''):lower()
