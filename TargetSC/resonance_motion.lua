@@ -188,7 +188,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
-    umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false}
+    umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
