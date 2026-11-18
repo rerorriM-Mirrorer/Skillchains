@@ -3,9 +3,10 @@
 ## 0.18.0 unified Test6.1 — kill animations (new DLL 0.12.0; Skillchains updated)
 
 **New native DLL 0.12.0** (close every FFXI client before replacing
-`libs/_TargetSC.dll`), and **Skillchains.lua / targetsc_bridge.lua** changed
-too (replace them in `Windower/addons/Skillchains`).
-- **Detection (Skillchains):** a kill counts only when the weapon skill or the
+`libs/_TargetSC.dll`). Kill detection lives in the embedded Skillchains engine
+(`sc_runtime.lua`, `TargetSC/targetsc_bridge.lua`); the standalone Skillchains
+addon is not touched.
+- **Detection (embedded engine):** a kill counts only when the weapon skill or the
   magic burst itself was the last thing to hit the target before its "defeats" /
   "falls to the ground" message (within 2 s, same attacker when named). Melee,
   ordinary spells or anything else in between make it a plain death (the normal
@@ -1334,4 +1335,4 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 
 2026-11-18 unified Test6.0 (0.17.0): Umbra collapse ending and glyph lift. Author: A.
 
-2026-11-18 unified Test6.1 (0.18.0, native 0.12.0): kill animations (MB and SC), Skillchains kill detection. Author: A.
+2026-11-18 unified Test6.1 (0.18.0, native 0.12.0): kill animations (MB and SC), kill detection in the embedded engine. Author: A.

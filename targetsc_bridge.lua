@@ -8,10 +8,6 @@ local burst_messages = {
     [755]=true,[803]=true,[804]=true,
 }
 local element_names = {[0]='Fire','Ice','Wind','Earth','Lightning','Water','Light','Dark'}
--- TargetSC 0.18 kill animations: a 0x029 "defeats"/"falls" message is a kill
--- by an SC (weapon skill) or MB only if that action was the last thing that
--- hit the target (melee, ordinary spells, etc. in between make it plain).
-local defeat_messages = {[6]=true,[20]=true,[97]=true}
 
 function M.new(definitions, resources, send, clock)
     clock = clock or os.clock
@@ -73,35 +69,6 @@ function M.new(definitions, resources, send, clock)
         -- One lifecycle notification. A loaded TargetSC requests a snapshot;
         -- an absent companion never changes Skillchains combat/UI behavior.
         pcall(send,'lua c TargetSC _ready')
-    end
-    -- Remember what last hit each target: weapon skill (sc), confirmed magic
-    -- burst (mb) or anything else (other).
-    self.last = {}
-    function self:observe(act)
-        if not self.subscribed then return end
-        local spell = act.category==4 and resources.spells[act.param]
-        local element = spell and element_names[spell.element]
-        for _,target in ipairs(act.targets or {}) do
-            local kind = act.category==3 and 'sc' or 'other'
-            if act.category==4 then
-                for _,action in ipairs(target.actions or {}) do
-                    if burst_messages[action.message] then kind='mb' break end
-                end
-            end
-            if target.id and target.id~=act.actor_id then
-                self.last[target.id] = {kind=kind, element=element, actor=act.actor_id, at=clock()}
-            end
-        end
-    end
-    -- A defeat message: publish a kill only when its own last hit was an SC
-    -- weapon skill or an MB, from the same actor (when the message names one).
-    function self:defeat(actor, target, message)
-        if not defeat_messages[message] then return end
-        local last = self.last[target]
-        self.last[target] = nil
-        if not self.subscribed or not last or last.kind=='other' or clock()-last.at>2 then return end
-        if message~=20 and actor and actor~=0 and last.actor and actor~=last.actor then return end
-        emit('kill', target, last.kind, last.element or 'None', last.actor or 0)
     end
     function self:bursts(act)
         if not self.subscribed then return end

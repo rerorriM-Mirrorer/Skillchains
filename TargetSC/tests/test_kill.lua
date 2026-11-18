@@ -5,7 +5,7 @@ package.path='./TargetSC/?.lua;./?.lua;'..package.path
 local now=100
 local sent={}
 local res={spells={[144]={element=1},[150]={element=0}}}
-local B=assert(loadfile('targetsc_bridge.lua'))()
+local B=assert(loadfile('TargetSC/targetsc_bridge.lua'))()
 local bridge=B.new({},res,function(text)sent[#sent+1]=text end,function()return now end)
 local function last()return sent[#sent]or ''end
 bridge:subscribe({})
@@ -105,3 +105,9 @@ assert(settings.kill_time==2 and settings.kill_mb_gather==.5 and settings.kill_b
 assert(settings.kill_sc_split==.2 and settings.kill_sc_turn==-.1 and settings.kill_seam_angle==90)
 cmd('preset',{'killala'});assert(settings.kill==false);cmd('preset',{'default'});assert(settings.kill==true)
 print('PASS 0.18 kills: bridge detection (WS/MB last hit, same actor, falls msg, melee/plain/stale/other actor/unsubscribed rejected), model event, MB kill (gather, glyph at ring, second element bloom, collapse, end), SC kill (seam, glyph flash-out, split halves across the seam, ghost white, half arcs, sag, end, off), commands, presets')
+-- The unified addon's embedded Skillchains engine (not the standalone
+-- Skillchains addon) must feed the bridge.
+local src=assert(io.open('TargetSC/sc_runtime.lua')):read('*a')
+assert(src:find('targetsc:observe%(act%)'),'sc_runtime observes actions')
+assert(src:find("if id == 0x29 then targetsc:defeat%("),'sc_runtime reports defeats')
+print('PASS 0.18 kills wired into the embedded engine (sc_runtime)')
