@@ -176,7 +176,19 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- ring does not sink and the black disc stays opaque meanwhile. glyph lift:
     -- the floor glyph always sits this far above the black disc (-1 = it
     -- rises on bursts as before).
-    umbra_collapse=true,umbra_collapse_curve=4,umbra_collapse_time=-1,umbra_glyph_lift=.004}
+    umbra_collapse=true,umbra_collapse_curve=4,umbra_collapse_time=-1,umbra_glyph_lift=.004,
+    -- 0.18 kill animations (only when Skillchains reports the SC weapon skill
+    -- or MB itself defeated the target). MB kill: SC rings gather into the
+    -- MB ring height and fade while the disc and glyphs jump there, then
+    -- everything collapses (1 - t^curve) and a second, element-colored bloom
+    -- bursts outward right after the MB's own. SC kill (needs native 0.12.0):
+    -- the frame freezes (`sc freeze` s after the kill), turns ghostly white,
+    -- a seam flashes along the killing blow, the glyphs flash out, and rings
+    -- and disc split into halves drifting apart with a subtle counterclockwise
+    -- turn, sky halves sagging, buzzing out with the level-4 flicker.
+    kill=true,kill_time=1.6,kill_mb_gather=.35,kill_mb_curve=4,kill_bloom_delay=.15,kill_bloom_time=1.2,
+    kill_bloom_size=2,kill_bloom_opacity=.8,kill_sc_freeze=.2,kill_sc_split=.12,kill_sc_turn=.15,
+    kill_sc_sag=.3,kill_sc_flash=.08,kill_sc_seam=.35,kill_sc_ghost=.85,kill_seam_angle=0}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -196,7 +208,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
     umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
-    umbra_collapse=false,umbra_glyph_lift=-1}
+    umbra_collapse=false,umbra_glyph_lift=-1,kill=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -425,6 +437,145 @@ function M.level4_end(s,opts,name,has_top)
     return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+
         option(opts,'umbra_flash_time')+(option(opts,'umbra_after')=='smoke'and option(opts,'umbra_smoke')or 0)
 end
+-- 0.18 kill animations (see the defaults). Mutates the finished frame.
+local function scale_alpha(c,k)
+    if type(c)~='number'then return c end
+    return math.floor(math.floor(c/16777216)*clamp(k,0,1)+.5)*16777216+c%16777216
+end
+local function whiten(c,k)
+    if type(c)~='number'then return c end
+    return math.floor(math.floor(c/16777216)*clamp(k,0,1)+.5)*16777216+0xFFFFFF
+end
+local function mb_kill(out,s,now,kill,start,opts,context,f)
+    local K=max(.2,option(opts,'kill_time'))
+    local k=now-start
+    local a=max(.05,option(opts,'kill_mb_gather'))
+    local g=smooth(k/a)
+    local c=k>a and max(0,1-((k-a)/max(.05,K-a))^max(1,option(opts,'kill_mb_curve')))or 1
+    local fill_h
+    for _,d in ipairs(out.discs)do if d.role=='property'then fill_h=d.offset break end end
+    local delta=fill_h and (f.mb_height-fill_h)or 0
+    local bloom={bloom=true,['umbra-bloom']=true,['kill-bloom']=true}
+    for _,v in ipairs(out)do
+        if v.part=='ground'or v.part=='sky'then
+            v.offset=v.offset+(f.mb_height-v.offset)*g
+            v.color,v.tail=scale_alpha(v.color,1-g),scale_alpha(v.tail,1-g)
+            if v.colors then for i,x in ipairs(v.colors)do v.colors[i]=scale_alpha(x,1-g)end end
+        end
+        v.radius=v.radius*c
+    end
+    for _,d in ipairs(out.discs)do
+        if d.role=='mb-glyph'then d.offset=f.mb_height;d.radius=d.radius*c -- the MB glyph meets the MB ring exactly
+        elseif not bloom[d.role]then d.offset=d.offset+delta;d.radius=d.radius*c end
+    end
+    for _,x in ipairs(out.glyphs3 or {})do x.offset=x.offset+delta;x.radius=x.radius*c end
+    -- Second bloom: the killing element bursting outward right after the MB's own.
+    local life=max(.1,option(opts,'kill_bloom_time'))
+    local age=now-(start+option(opts,'kill_bloom_delay'))
+    if age>=0 and age<life then
+        local t=age/life
+        local color=kill.color or {255,255,255}
+        local before=#out.discs
+        f.disc(f.mb_radius*(.3+(option(opts,'kill_bloom_size')-.3)*(1-(1-t)^2.5)),f.mb_height,0,{color},
+            option(opts,'kill_bloom_opacity')*smooth(age/.05)*(1-t)^1.5,0,0,'kill-bloom')
+        if #out.discs>before then
+            local d=out.discs[#out.discs]
+            d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
+            d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
+            d.hub=context.argb(mix(color,{255,255,255},option(opts,'mb_bloom_core')),option(opts,'kill_bloom_opacity'))
+        end
+    end
+    if k>=K then
+        for i=#out,1,-1 do table.remove(out,i)end
+        local kept={}
+        for _,d in ipairs(out.discs)do if bloom[d.role]then kept[#kept+1]=d end end
+        out.discs=kept;out.glyphs3=nil
+    end
+end
+local function sc_kill(out,s,now,kill,start,opts,context,f)
+    local K=max(.2,option(opts,'kill_time'))
+    local k=now-start
+    local flash=option(opts,'kill_sc_flash')
+    local phi=(kill.angle or context.view_angle or 0)+math.rad(option(opts,'kill_seam_angle'))
+    local nx,ny=math.cos(phi+pi/2),math.sin(phi+pi/2)
+    local sep=option(opts,'kill_sc_split')*f.radius*smooth((k-flash)/(K*.6))
+    local turn=option(opts,'kill_sc_turn')*smooth(k/K)
+    local span=(f.top and f.bottom)and (f.top-f.bottom)or f.height*.3
+    local sag=option(opts,'kill_sc_sag')*span*smooth(k/K)^2
+    local buzz=(.37+.63*sin(now*23)^2)*(.72+.28*sin(now*28)^2)
+    local vis=option(opts,'kill_sc_ghost')*(1-smooth((k-K*.3)/(K*.7)))*(k>flash and buzz or 1)
+    if k>=K then vis=0 end
+    -- Glyphs (MB glyphs, the disc's own lines, copies) and blooms flash out.
+    local glyph_role={['mb-glyph']=true,['property-trace']=true,['umbra-copy']=true,
+        bloom=true,['umbra-bloom']=true,['kill-bloom']=true,awakening=true}
+    local discs={}
+    for _,d in ipairs(out.discs)do
+        if glyph_role[d.role]or d.glyph==2 then
+            if k<flash then
+                d.color,d.outline=whiten(d.color,1),whiten(d.outline,1)
+                if d.colors then for i,x in ipairs(d.colors)do d.colors[i]=whiten(x,1)end end
+                discs[#discs+1]=d
+            end
+        elseif vis>0 then
+            local c=whiten(d.color,vis)
+            for side=1,2 do
+                local h={}for key,v in pairs(d)do h[key]=v end
+                h.glyph=0;h.outline=0;h.blend=0
+                h.colors={c,0x00FFFFFF};h.color=c
+                h.hub=d.hub and whiten(d.hub,vis)or nil
+                h.rotation=phi+(side==2 and pi or 0)+turn
+                local sign=side==1 and 1 or -1
+                h.dx,h.dy=nx*sep*sign,ny*sep*sign
+                discs[#discs+1]=h
+            end
+        end
+    end
+    out.discs=discs
+    if k>=flash then out.glyphs3=nil
+    else for _,x in ipairs(out.glyphs3 or {})do x.color=whiten(x.color,1)end end
+    -- Rings split into two half arcs along the seam.
+    local rings={}
+    for _,v in ipairs(out)do
+        if vis>0 then
+            local c=whiten(v.color,vis)
+            local h=v.offset-((v.part=='sky')and sag or 0)
+            if v.kind=='arc'then
+                local mid=(v.rotation or 0)+math.rad((v.arc_start or 0)+(v.arc_span or 0)/2)
+                local sign=math.cos(mid-(phi+pi/2))>=0 and 1 or -1
+                local a={}for key,x in pairs(v)do a[key]=x end
+                a.color,a.tail,a.colors=c,whiten(v.tail,vis),{c}
+                a.offset,a.rotation=h,(v.rotation or 0)+turn
+                a.dx,a.dy=nx*sep*sign,ny*sep*sign
+                rings[#rings+1]=a
+            else
+                for side=1,2 do
+                    local sign=side==1 and 1 or -1
+                    rings[#rings+1]={kind='arc',radius=v.radius,offset=h,width=v.width or 0,pixels=v.pixels,
+                        color=c,tail=c,colors={c},rotation=phi+turn,arc_start=side==1 and 0 or 180,arc_span=180,
+                        role=v.role,part=v.part,strand=v.strand,gap=0,blend=0,fade=0,fade_length=1,fade_curve=1,
+                        fade_direction=1,dx=nx*sep*sign,dy=ny*sep*sign}
+                end
+            end
+        end
+    end
+    for i=#out,1,-1 do table.remove(out,i)end
+    for i,v in ipairs(rings)do out[i]=v end
+    -- The seam: a bright line along the killing blow at each ring height.
+    local seam=option(opts,'kill_sc_seam')
+    if k<seam then
+        local alpha=1-smooth(k/max(.02,seam))
+        local L=f.radius*1.3
+        local ex,ey=math.cos(phi)*L,math.sin(phi)*L
+        out.lines={}
+        for _,h in ipairs({f.bottom or f.mb_height,f.top})do
+            out.lines[#out.lines+1]={-ex,-ey,h,ex,ey,h,context.argb({255,255,255},alpha),3}
+        end
+    end
+end
+function M.apply_kill(out,s,now,kill,start,opts,context,f)
+    if kill.kind=='mb'then mb_kill(out,s,now,kill,start,opts,context,f)
+    else sc_kill(out,s,now,kill,start,opts,context,f)end
+end
 -- Test6.0: Umbra collapse factor (1 = full size, 0 = gone at the deadline).
 function M.umbra_collapse(s,now,opts)
     local t=option(opts,'umbra_collapse_time')
@@ -556,6 +707,15 @@ function M.frame(model,s,now,radius,height,opts,context)
         if option(opts,l4n..'_glyph')=='breath'then over.mb_glyph_rest,over.mb_glyph_after,any='breath','fall',true end
         if l4n=='umbra'and option(opts,'umbra_spin')>=0 then over.disc_speed_level4,any=option(opts,'umbra_spin'),true end
         if any then opts=setmetatable(over,{__index=opts})end
+    end
+    -- 0.18 kill: an SC kill freezes the frame at its start; progress uses real time.
+    local real_now=now
+    local kill=option(opts,'kill')and model.kills and model.kills[s.id]or nil
+    local kill_start
+    if kill then
+        kill_start=kill.at+(kill.kind=='sc'and option(opts,'kill_sc_freeze')or 0)
+        if real_now<kill_start or real_now>kill_start+option(opts,'kill_time')+2 then kill=nil
+        elseif kill.kind=='sc'then now=kill_start end
     end
     local out={discs={}}
     local display=option(opts,'display')
@@ -1372,7 +1532,10 @@ function M.frame(model,s,now,radius,height,opts,context)
             for _,g in ipairs(out.glyphs3 or {})do g.radius=g.radius*c end
         end
     end
-    while #out>32 do table.remove(out,1)end
+    if kill then M.apply_kill(out,s,real_now,kill,kill_start,opts,context,
+        {mb_height=mb_height,radius=radius,bottom=bottom,top=top,height=height,mb_radius=mb_radius,disc=disc})end
+    -- Kill halves may use the DLL's full 64 rings.
+    while #out>(kill and 64 or 32)do table.remove(out,1)end
     return out
 end
 return M

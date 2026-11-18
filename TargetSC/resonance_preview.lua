@@ -32,6 +32,13 @@ function M.parse(args,resonance)
     -- Umbra (its full level-4 animation). The four-link demo stays on
     -- `preview demo` / `preview full`.
     if first=='umbra'then return {kind='umbraopen',properties={'Darkness'},level=3}end
+    -- 0.18: `preview kill mb [element]` / `preview kill sc`.
+    if first=='kill'then
+        if second=='sc'then return {kind='killsc',properties={'Scission'},level=1}end
+        local element=args[3]and (args[3]:sub(1,1):upper()..args[3]:sub(2):lower())or 'Fire'
+        if element=='Thunder'then element='Lightning'end
+        return {kind='killmb',properties={'Fusion'},level=2,element=element}
+    end
     if first=='demo' or first=='full'then
         return {kind='umbra',properties={'Scission'},level=1}
     elseif examples[first] then kind='chain';prop=examples[first]
@@ -104,6 +111,23 @@ function M.new(spec,id,now,resonance,opts)
         burst_at(umbra.mb_close-ending,'Dark')
         self.final=umbra
     end
+    if kind=='killmb'then
+        -- Fusion open; an MB at 1.5 s defeats the target.
+        s=state(now-1,2,{'Fusion'},2,false)
+        self.stage='Fusion window open (local visual preview)'
+        local element=resonance.element_color(spec.element)and spec.element or 'Fire'
+        burst_at(now+1.5,element)
+        self.events[#self.events+1]={at=now+1.5+1e-6,kind='kill',how='mb',element=element}
+        self.final={mb_close=now+1.5+(self.opts.kill_time or resonance.defaults.kill_time)+.6}
+    elseif kind=='killsc'then
+        -- Scission opener; at 2 s a weapon skill makes Fragmentation and defeats the target.
+        s=state(now,1,{'Scission'},1,false)
+        self.stage='Scission opener (local visual preview)'
+        chain_at(now+2,2,'Fragmentation',2,false,'Fragmentation (Level 2) defeats the target')
+        self.events[#self.events+1]={at=now+2+1e-6,kind='kill',how='sc'} -- just after the chain
+        self.final={mb_close=now+2+(self.opts.kill_sc_freeze or resonance.defaults.kill_sc_freeze)+
+            (self.opts.kill_time or resonance.defaults.kill_time)+.3}
+    end
     if kind=='umbraopen'then
         -- Darkness (level 3) opened 5 s ago; its SC window closes at 2 s.
         -- Umbra (level 4) lands at 1.2 s and plays out to its MB deadline.
@@ -153,6 +177,12 @@ function M.new(spec,id,now,resonance,opts)
                     bursts[#bursts+1]={at=event.at,color=event.color}
                     self.model.bursts[self.id]=bursts
                     self.stage=(event.element or spec.element)..' burst (local visual preview)'
+                elseif event.kind=='kill'then
+                    -- The killer is you: the seam runs from you toward the target.
+                    self.model.kills[self.id]={kind=event.how,element=event.element,
+                        color=event.element and resonance.element_color(event.element)or nil,at=event.at,
+                        angle=resonance.view_angle}
+                    self.stage=(event.how=='mb'and 'MB'or 'SC')..' kill (local visual preview)'
                 elseif event.kind=='chain' then
                     local next_state=event.state
                     local previous=self.model.states[self.id]
@@ -171,11 +201,13 @@ function M.new(spec,id,now,resonance,opts)
     local function list()
         local parts={}
         for _,e in ipairs(self.events)do
-            parts[#parts+1]=(e.kind=='burst'and (e.element..' MB ')or (e.state.properties[1]..' link '))..at(e.at)
+            parts[#parts+1]=(e.kind=='burst'and (e.element..' MB ')or e.kind=='kill'and 'kill 'or (e.state.properties[1]..' link '))..at(e.at)
         end
         return table.concat(parts,', ')
     end
-    self.description=kind=='umbraopen'and ('Umbra: Darkness window closing (2.0s); Umbra lands 1.2s; full Umbra animation, ends '..at(self.ends)..'; local visuals only.')or
+    self.description=kind=='killmb'and ('MB kill: Fusion open; '..tostring(spec.element)..' MB defeats the target at 1.5s; local visuals only.')or
+        kind=='killsc'and 'SC kill: Scission opener; Fragmentation weapon skill defeats the target at 2.0s; local visuals only.'or
+        kind=='umbraopen'and ('Umbra: Darkness window closing (2.0s); Umbra lands 1.2s; full Umbra animation, ends '..at(self.ends)..'; local visuals only.')or
         kind=='mblight'and ('MB Light overlap: Fusion window open (closes 3.0s); '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
         kind=='mbdark'and ('MB Dark overlap: Darkness link 0s; '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
         kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or

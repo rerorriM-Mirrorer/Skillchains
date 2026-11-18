@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.17.0-unified-test6.0'
+_addon.version='0.18.0-unified-test6.1'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -21,6 +21,7 @@ local native_level=0
 local preview,selected_id,next_frame,last_tracking_error=nil,nil,0,nil
 -- Test5.0 target handoff (see handoff() below the commands).
 local shown,outgoing,incoming
+local kill_angle -- 0.18 (defined with the hand-off helpers; used when a kill event arrives)
 local requested_at,source_wait_notice=0,false
 local log_size=0
 local addon_path=windower.addon_path:gsub('\\','/')
@@ -39,9 +40,10 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     -- 0.9.0 adds native.arc (opener sections) and a disc hub color (arg 14).
     -- 0.10.0 adds a middle radial stop on discs (args 15-16) and 16 discs.
     -- 0.11.0 adds native.glyph (3D property glyph for the Umbra endings).
-    local levels={['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
+    -- 0.12.0 adds native.shift (sideways offsets) and native.line (kill seams).
+    local levels={['0.12.0']=12,['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
     if version_ok and levels[version] and api_ok then native=result;native_version=version;native_level=levels[version]
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.11.0 (or 0.10.0-0.5.0), received '..tostring(version) end
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.12.0 (or 0.11.0-0.5.0), received '..tostring(version) end
     -- Older DLLs cannot draw section arcs; the layout falls back to rings.
     resonance.native_level=native_level
 else renderer_error=tostring(result) end
@@ -196,6 +198,13 @@ local function help()
         {'detarget time <0-3>','Untarget/ordinary death: the animation keeps running and dims over this many seconds (default 1; 0 = instant).'},
         {'switch out <0-1>','Switching to an enemy with resonance: seconds the old one takes to fade (default .25).'},
         {'switch in <0-1>','Then the new enemy fades in over this many seconds (default .35).'},
+        {'preview kill mb [element] | preview kill sc','Try the kill animations: an MB (default Fire) or an SC weapon skill defeats the target.'},
+        {'kill on|off','Kill animations when Skillchains reports the SC weapon skill or MB itself defeated the target (default on).'},
+        {'kill time <0.3-5>','Length of either kill animation (1.6 s).'},
+        {'kill mb gather|mb curve <number>','MB kill: seconds for the SC rings to gather at the MB ring (.35); collapse curve (4).'},
+        {'kill bloom delay|time|size|opacity <number>','MB kill second bloom: after the MB\'s own (.15 s), lasting 1.2 s, to 2x MB ring, opacity .8.'},
+        {'kill sc freeze|split|turn|sag <number>','SC kill: freeze .2 s after the kill, halves drift .12 x radius, turn .15 rad ccw, sky halves sag .3 of the bell.'},
+        {'kill sc flash|seam|ghost <number> | kill seam angle <deg>','Glyph flash-out (.08 s), seam flash (.35 s), ghost white opacity (.85); aim the seam (0).'},
         {'preview umbra','A Darkness window about to close is closed by Umbra; plays the full Umbra animation (old four-link demo: preview demo).'},
         {'preview mb light','Fusion nearly closed takes a Fire MB, Light opens; Light MB, then Wind as the ending begins.'},
         {'preview mb dark','Darkness: Ice then Dark MBs; Umbra late in the window; Ice, Earth, then Dark as the ending begins.'},
@@ -395,6 +404,18 @@ local function receive_frame(args)
         -- A real state replaces a preview that is still dimming away on that target.
         if args[4]=='state' and outgoing and outgoing.preview and tonumber(args[6])==outgoing.id then outgoing=nil end
         if args[4]=='offline' or args[4]=='reset' then clear() preview=nil shown,outgoing,incoming=nil,nil,nil end
+        if args[4]=='kill'then
+            local id=tonumber(args[6])
+            local k=model.kills[id]
+            if k then
+                k.angle=kill_angle(k,id)
+                -- The defeat may land after the death already started a plain fade.
+                local now=os.clock()
+                if settings.kill and outgoing and outgoing.id==id and not outgoing.kill then
+                    outgoing.kill,outgoing.start,outgoing.level,outgoing.duration=true,now,1,settings.kill_time+.05
+                end
+            end
+        end
         if math.abs(model.clock_warning)>.20 then debug('TIMING WARNING: source clock delta exceeds 200ms; absolute deadlines retained') end
     else debug('rejected event: '..tostring(why)) end
     if model.needs_sync and os.clock()-requested_at>1 then subscribe() end
@@ -499,7 +520,25 @@ local function current_mob()
     return selected_mob()
 end
 local function level_of(o,now)
+    -- A kill plays at full strength (the kill animation does its own fading).
+    if o.kill then return now<o.start+o.duration and 1 or 0 end
     return o.level*(1-math.min(1,(now-o.start)/math.max(o.duration,1e-6)))
+end
+-- TargetSC 0.18 kills: a recent SC/MB kill of this enemy replaces its detarget fade.
+local function recent_kill(id,now)
+    local k=settings.kill and model.kills[id]
+    return k and now-k.at>=-.1 and now-k.at<1.5 and k or nil
+end
+-- Seam direction for the SC kill: from the killer toward the target.
+kill_angle=function(k,id)
+    local by_id=windower.ffxi.get_mob_by_id
+    if not by_id then return 0 end
+    local actor=k.actor and k.actor>0 and by_id(k.actor)
+    local target=by_id(id)
+    if actor and target and actor.x and target.x and actor.id~=target.id then
+        return math.atan2(target.y-actor.y,target.x-actor.x)
+    end
+    return 0
 end
 local function has_resonance(id,mob,now)
     if not mob then return false end
@@ -533,7 +572,11 @@ local function handoff(id,mob,now,blocked)
         end
     elseif shown and shown.id==selected_id and shown.mob and shown.mob.index then
         local duration=(new_has and settings.switch_out or settings.detarget_time)*shown.level
-        if duration>0 then
+        local killed=recent_kill(shown.id,now)
+        if killed then
+            outgoing={id=shown.id,index=shown.mob.index,mob=shown.mob,preview=shown.preview,start=now,level=1,
+                duration=settings.kill_time+.05,kill=true}
+        elseif duration>0 then
             outgoing={id=shown.id,index=shown.mob.index,mob=shown.mob,preview=shown.preview,start=now,level=shown.level,duration=duration}
         end
     end
@@ -550,7 +593,7 @@ local function dim(c,level)
 end
 local function dim_frame(frame,level)
     if level>=1 then return frame end
-    local out={discs={},phase=frame.phase,glyphs3=frame.glyphs3} -- 3D glyph colors are dimmed when sent
+    local out={discs={},phase=frame.phase,glyphs3=frame.glyphs3,lines=frame.lines} -- 3D glyph/line colors are dimmed when sent
     for i,disc in ipairs(frame.discs or {})do
         local d={}for k,v in pairs(disc)do d[k]=v end
         if disc.colors then d.colors={}for j,c in ipairs(disc.colors)do d.colors[j]=dim(c,level)end end
@@ -571,11 +614,13 @@ local function draw(frame,mob,level)
     -- Test5.7: 3D glyphs (Umbra endings) need native 0.11.0; older DLLs skip them.
     if native_level>=11 and native.glyph then
         for _,g in ipairs(frame.glyphs3 or {})do
+            if native_level>=12 and native.shift then native.shift(g.dx or 0,g.dy or 0)end
             native.glyph(g.radius,g.offset,g.rotation,dim(g.color,level),g.tilt or 0,g.stand or 0,g.lift or 1,
                 g.sink or 0,g.pull or 0,g.stagger or 0,g.order or 0,g.clip and 1 or 0,g.circle and 1 or 0)
         end
     end
     for _,disc in ipairs(frame.discs or {})do
+        if native_level>=12 and native.shift then native.shift(disc.dx or 0,disc.dy or 0)end
         local colors=disc.colors or {disc.color}
         local blend=disc.blend or 0
         if native_version=='0.5.0'then
@@ -610,7 +655,15 @@ local function draw(frame,mob,level)
                 #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend)
         end
     end
+    if native_level>=12 and native.shift then native.shift(0,0)end
+    local shift_e,shift_n=0,0
+    local function shift(piece)
+        if native_level<12 or not native.shift then return end
+        local e,n=piece.dx or 0,piece.dy or 0
+        if e~=shift_e or n~=shift_n then native.shift(e,n);shift_e,shift_n=e,n end
+    end
     for _,ring in ipairs(frame) do
+      shift(ring)
       if ring.kind=='arc'then
         if native_level>=9 then
             native.arc(ring.radius,ring.offset,ring.width,ring.color,ring.tail,ring.pixels or settings.width,
@@ -638,6 +691,13 @@ local function draw(frame,mob,level)
                 #colors,colors[2]or ring.color,colors[3]or ring.color,colors[4]or ring.color,ring.rotation or 0,ring.gap or 0,blend)
         end
       end
+    end
+    -- 0.12.0: kill seams (straight lines).
+    if native_level>=12 and native.line then
+        native.shift(0,0)
+        for _,l in ipairs(frame.lines or {})do
+            native.line(l[1],l[2],l[3],l[4],l[5],l[6],dim(l[7],level),l[8]or 2)
+        end
     end
     native.commit()
 end

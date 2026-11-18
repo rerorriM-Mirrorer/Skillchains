@@ -128,9 +128,9 @@ local function draw_state(out,s,now,radius,height,opts)
     end
 end
 function M.new()
-    local self={states={},bursts={},awakening_glyphs={},connected=false,session=nil,sequence=0,events=0,
+    local self={states={},bursts={},awakening_glyphs={},kills={},connected=false,session=nil,sequence=0,events=0,
         gaps=0,rejected=0,clock_warning=0,unknown_bursts=0,synced=false}
-    function self:clear() self.states={} self.bursts={} self.awakening_glyphs={} end
+    function self:clear() self.states={} self.bursts={} self.awakening_glyphs={} self.kills={} end
     function self:opening_glyph(state)
         local glyph=self.awakening_glyphs[state.id]
         if not glyph or (state.step==1 and glyph.created~=state.created)then
@@ -193,6 +193,13 @@ function M.new()
                 if #bursts>4 then table.remove(bursts,1) end
                 self.bursts[id]=bursts
             end
+        elseif kind=='kill' then
+            -- TargetSC 0.18: the target was defeated by an SC weapon skill or
+            -- an MB itself (Skillchains decides); the frame plays the kill.
+            local id,how,element=tonumber(args[6]),args[7],args[8]
+            if not id or (how~='sc'and how~='mb')then return false,'invalid kill' end
+            self.kills[id]={kind=how,element=E[element]and element or nil,color=E[element],at=stamp,
+                actor=tonumber(args[9])}
         elseif kind=='expire' then
             local id=tonumber(args[6])
             if id then

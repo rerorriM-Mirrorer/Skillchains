@@ -142,6 +142,11 @@ function M.new(settings,defaults,save,say,killala)
             ['gyro speed']={'n',-8,8},['gyro rise']={'n',.05,3},['gyro shrink']={'n',0,1},['gyro below']={'c','full','half'},
             ['stand time']={'n',.05,8},['sink time']={'n',.05,10},['swallow stagger']={'n',0,.95},
             ['swallow order']={'c','outer','inner','together'},['swallow pull']={'n',0,1},['swallow lift']={'n',0,4}}}
+    -- 0.18 kill animations: //tsc kill ... (same table-driven parser).
+    level4_spec.kill={time={'n',.3,5},['mb gather']={'n',.05,2},['mb curve']={'n',1,10},
+        ['bloom delay']={'n',0,1},['bloom time']={'n',.2,4},['bloom size']={'n',.3,5},['bloom opacity']={'n',0,1},
+        ['sc freeze']={'n',0,1},['sc split']={'n',0,1},['sc turn']={'n',-1,1},['sc sag']={'n',0,1},
+        ['sc flash']={'n',0,.5},['sc seam']={'n',0,2},['sc ghost']={'n',0,1},['seam angle']={'n',-180,180}}
     local function level4_look(command,args)
         local spec=level4_spec[command]
         local a1,a2=(args[1]or ''):lower(),(args[2]or ''):lower()
@@ -269,7 +274,10 @@ function M.new(settings,defaults,save,say,killala)
     return function(command,args)
         local value=(args[1]or ''):lower()
         local group=groups[command]
-        if command=='radiance'or command=='umbra'then level4_look(command,args)
+        if command=='kill'and (value=='on'or value=='off'or value==nil)then
+            if value==nil then value=settings.kill and 'off'or 'on'end
+            settings.kill=value=='on';save(settings);say('Kill animations '..value..'.')
+        elseif command=='radiance'or command=='umbra'or command=='kill'then level4_look(command,args)
         elseif command=='detarget'then
             -- Test5.0: untarget/ordinary-death dim, from the first moment.
             local n=value=='time'and args[2]or args[1]
