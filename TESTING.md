@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.15.5 unified Test5.5 — Radiance three-disc stack (2026-11-18)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only. Author: A.
+
+**User request:** add the three-disc stack (from the 2026-11-17 notes: another rotating property disc beneath the current one, tied to the level-4 speed, fading between Fusion and Fragmentation appearances "like colored lights under cloud cover", with a third white disc beneath — "a different form of an opening weaponskill with transfixion, radiance, transfixion properties"; the lowest disc has an opacity override and controls the overall height of the three; the Fusion/Fragmentation crossfade gets its own setting). Asked what the current disc becomes (answer: the top of the stack, unchanged) and whether `radiance glyph opacity .9` makes the glyph's maximum .9 with the breath gain (answer: yes — with its own opacity the breath gain no longer matters; it breathes from .9 × `mb breath min` up to .9; Cioara's .7 → .63–.90).
+
+**Changes:** in the terminal (level-4) disc path for Radiance (first property) with `radiance stack`: a white `radiance-bottom` disc at the disc height + `stack height`, a `radiance-middle` disc one `stack spacing` above it whose colors blend pairwise Fusion → Fragmentation → Fusion (½−½cos over `middle cycle` from the link's creation) and which turns at `M.disc_rotation` × `middle spin`, then the existing top disc and its trace one spacing higher; bottom/middle opacity = setting × the disc's life (ending fade), not the overall opacity; sizes × the level-4 fill size; the level-4 inner/middle/outer shape applies to all three. Drawn bottom → middle → top. Defaults on; killala/historical off. The Test5.1 test pins the stack off where it compares Radiance and Umbra heights.
+
+**Host verification (not FFXI):** full suite PASS; new `test_radiance_stack.lua` PASS (three discs in draw order, .01 spacing, white bottom/top, direct opacities .6/.5, stack height +.1 moves all, spacing .03, Fusion colors at a cycle start and Fragmentation halfway, middle rotation = level-4 disc rotation and × −2, sizes, shared middle stop, off/Umbra/killala, glyph own opacity peak .90 and trough .63 with breath min .7, commands, presets). Host probe: bottom/middle/top at .073/.083/.093, middle shifting through the Light↔Lightning and Fire↔Wind pairs. **Live pending:** the look; how the white top disc's opacity over the colored middle reads (try `radiance disc opacity` .3–.6).
+
 ## TargetSC 0.15.4 unified Test5.4 — level-4 open time, Umbra bloom and MB ring, Radiance glyph (2026-11-18)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only. Author: A.

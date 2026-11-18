@@ -1,5 +1,16 @@
 # TargetSC — elemental resonance
 
+## 0.15.5 unified Test5.5 — Radiance three-disc stack
+
+Lua-only (`//lua reload TargetSC`). Radiance's disc becomes the top of a
+stack of three (`radiance stack on|off`, default on): a white bottom disc
+(`radiance bottom opacity` .6, `bottom size` 1), a middle disc crossfading the
+Fusion and Fragmentation looks (`middle opacity` .5, `middle size` 1,
+`middle cycle` 4 s, `middle spin` 1 = the level-4 disc turn), then the existing
+white disc on top. Opacities are direct (not scaled by the overall opacity);
+sizes multiply the level-4 disc size; all three share the `discs level4` shape.
+`radiance stack height` moves all three, `stack spacing` (.01) sets the gaps.
+
 ## 0.15.4 unified Test5.4 — level-4 open time, Umbra bloom and MB ring, Radiance glyph
 
 Lua-only (`//lua reload TargetSC`).
@@ -1210,3 +1221,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test5.3 (0.15.3): preview umbra = Darkness closed by Umbra. Author: A.
 
 2026-11-18 unified Test5.4 (0.15.4): level-4 open time, Umbra bloom/MB ring/disc size, Radiance glyph. Author: A.
+
+2026-11-18 unified Test5.5 (0.15.5): Radiance three-disc stack. Author: A.
