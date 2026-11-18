@@ -1,5 +1,16 @@
 # TargetSC — elemental resonance
 
+## 0.16.1 unified Test5.8 — Umbra swallow from the opening, white glyph, MB ring height
+
+Lua-only (`//lua reload TargetSC`; needs DLL 0.11.0 from Test5.7).
+- `umbra ending when open`: the ending starts with Umbra's opening and runs
+  for `umbra ending time` seconds.
+- The swallowed / gyro'd glyph (and Umbra's flat disc glyph) is pure white
+  (`umbra lines color white|cream`, default white).
+- After its ending the glyph stays gone (it no longer comes back flat).
+- `umbra mb height ring|disc`: Umbra's MB ring at its usual height or exactly
+  at the black disc's plane.
+
 ## 0.16.0 unified Test5.7 — Umbra endings (new DLL 0.11.0), Umbra controls
 
 **New native DLL 0.11.0** (close every FFXI client before replacing
@@ -1270,3 +1281,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-18 unified Test5.6 (0.15.6): Umbra spin, same-size sky rings, two blooms, floor glyph, glyph copies. Author: A.
 
 2026-11-18 unified Test5.7 (0.16.0, native 0.11.0): Umbra gyro/swallow endings, Umbra lines/disc/core controls. Author: A.
+
+2026-11-18 unified Test5.8 (0.16.1): Umbra ending when open, white glyph, stays gone, MB ring at the disc. Author: A.

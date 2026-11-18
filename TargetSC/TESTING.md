@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.16.1 unified Test5.8 — Umbra swallow from the opening; white glyph; MB ring height (2026-11-18)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (DLL 0.11.0). Author: A.
+
+**User feedback/request (Cioara 03:13):** "settling on swallow"; swallow should begin with Umbra's opening; make the swallowed/gyro'd glyph pure white; asked for timing suggestions; asked how to put the MB ring exactly at the property disc's height; ending animation to be revisited next. Cioara: umbra ending swallow, when flash, time 6, stand 1, sink 4, stagger .6, lift .6, lines size 1 / opacity 1, core 1, flicker .3, disc middle 1, gyro below half / rise .05 / shrink 0 / speed .6.
+
+**Changes:** `umbra ending when open` (window = link creation → + ending time). Ending glyph and Umbra's flat trace stroke white unless `umbra lines color cream`. After its window the glyph stays hidden (`umbra_ending_glyph` returns a gone flag) instead of the flat trace reappearing (affected `when flash` with a short time). `umbra mb height disc`: Umbra's `mb_height` = the black disc's fill plane (`M.umbra_plane`); MB-ring-relative pieces (glyph rise target, MB bloom from ring) follow it. Answer recorded: `mb position` 0 only reaches the normal disc plane (all levels), not Umbra's raised level-4 disc, hence the Umbra option.
+
+**Host verification (not FFXI):** full suite PASS; `test_umbra_endings.lua` adds: swallow under way at .5 s with `when open`, pure white, stays gone at 5 s, cream option, flat Umbra lines white, MB ring offset = the disc fill's offset with `mb height disc`. **Live pending:** the timing suggestion (open 2 / close 2.18: `ending time 4.2`, `stand time 2`, `sink time 2.2`).
+
 ## TargetSC 0.16.0 unified Test5.7 — Umbra endings (native 0.11.0) and Umbra controls (2026-11-18)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.11.0).** Author: A.

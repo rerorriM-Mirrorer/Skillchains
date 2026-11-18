@@ -136,7 +136,8 @@ function M.new(settings,defaults,save,say,killala)
             ['lines size']={'n',.2,4,same=true},['lines opacity']={'n',0,1,same=true},
             ['disc inner']={'n',0,1,same=true},['disc middle']={'n',0,1,same=true},['disc outer']={'n',0,1,same=true},
             ['disc position']={'n',.05,.95,same=true},['disc steady']={'b'},core={'n',0,1,same=true},flicker={'n',0,1},
-            ending={'c','off','gyro','swallow'},['ending when']={'c','mb','flash'},['ending time']={'n',.3,6},
+            ending={'c','off','gyro','swallow'},['ending when']={'c','open','mb','flash'},
+            ['lines color']={'c','white','cream'},['mb height']={'c','ring','disc'},['ending time']={'n',.3,6},
             ['gyro speed']={'n',-8,8},['gyro rise']={'n',.05,3},['gyro shrink']={'n',0,1},['gyro below']={'c','full','half'},
             ['stand time']={'n',.05,3},['sink time']={'n',.05,4},['swallow stagger']={'n',0,.95},
             ['swallow order']={'c','outer','inner','together'},['swallow pull']={'n',0,1},['swallow lift']={'n',0,4}}}

@@ -166,7 +166,10 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     umbra_ending='off',umbra_ending_when='mb',umbra_ending_time=2,
     umbra_gyro_speed=1.5,umbra_gyro_rise=.4,umbra_gyro_shrink=.5,umbra_gyro_below='full',
     umbra_stand_time=.5,umbra_sink_time=1,umbra_swallow_stagger=.5,umbra_swallow_order='outer',
-    umbra_swallow_pull=.3,umbra_swallow_lift=1}
+    umbra_swallow_pull=.3,umbra_swallow_lift=1,
+    -- Test5.8: the disc glyph's color (white, or the cream it had), and the
+    -- Umbra MB ring at its usual height or exactly at the black disc's plane.
+    umbra_lines_color='white',umbra_mb_height='ring'}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -416,6 +419,8 @@ function M.level4_end(s,opts,name,has_top)
 end
 -- Test5.7 Umbra endings: the window and the per-frame 3D glyph parameters.
 function M.umbra_ending_window(s,opts,has_top)
+    -- Test5.8: open = from the link's creation (Umbra's opening) for ending time.
+    if option(opts,'umbra_ending_when')=='open'then return s.created,s.created+max(.1,option(opts,'umbra_ending_time'))end
     if option(opts,'umbra_ending_when')=='flash'then
         local a=M.umbra_flashed(s,opts,has_top)
         return a,a+max(.1,option(opts,'umbra_ending_time'))
@@ -426,7 +431,8 @@ function M.umbra_ending_glyph(s,now,opts,has_top,angle)
     local style=option(opts,'umbra_ending')
     if style~='gyro'and style~='swallow'then return nil end
     local a,b=M.umbra_ending_window(s,opts,has_top)
-    if now<a or now>=b then return nil end
+    if now<a then return nil end
+    if now>=b then return nil,true end
     local u,d=now-a,b-a
     if style=='gyro'then
         -- Stand upright, then spin about the vertical axis; shrink away at the end.
@@ -566,6 +572,8 @@ function M.frame(model,s,now,radius,height,opts,context)
     local property_top=option(opts,'disc_height')+.006
     local floor_anchor=option(opts,'ground_height')+option(opts,'ground_lift')
     local mb_height=clapper and property_top+(floor_anchor-property_top)*option(opts,'mb_position')or height*.49
+    -- Test5.8: Umbra's MB ring may sit exactly at the black disc's plane.
+    if l4n=='umbra'and option(opts,'umbra_mb_height')=='disc'then mb_height=M.umbra_plane(opts,details)end
     local mb_colors=context.palette(s)
     local mb_color=mb_colors[#mb_colors]
     if clapper and s.level==2 and #mb_colors==2 then
@@ -1003,6 +1011,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                 local dark=p=='Umbra'or p=='Darkness'
                 colors={dark and {0,0,0}or white}
                 terminal_stroke=dark and {255,242,204}or {0,0,0}
+                -- Test5.8: Umbra's glyph lines pure white by default.
+                if l4name=='umbra'and option(opts,'umbra_lines_color')=='white'then terminal_stroke=white end
             end
             local flash=response.flash*option(opts,'mb_floor')
             if clapper then flash=mb_overall>0 and (response.property or 0)*option(opts,'mb_floor')or 0 end
@@ -1104,7 +1114,9 @@ function M.frame(model,s,now,radius,height,opts,context)
                     end
                     if option(opts,'umbra_lines_opacity')>=0 then trace_alpha=option(opts,'umbra_lines_opacity')*life end
                     -- Test5.7 endings: the glyph leaves its flat plane (native 0.11.0).
-                    local g3=(context.native_level or 0)>=11 and M.umbra_ending_glyph(s,now,opts,top~=nil,angle)or nil
+                    local g3,gone=nil,false
+                    if (context.native_level or 0)>=11 then g3,gone=M.umbra_ending_glyph(s,now,opts,top~=nil,angle)end
+                    if gone then hide=true end -- swallowed/shrunk away: it stays gone
                     if g3 then
                         g3.radius=trace_radius*(g3.scale or 1);g3.offset=trace_height
                         local a=option(opts,'umbra_lines_opacity')>=0 and option(opts,'umbra_lines_opacity')or line*opacity

@@ -96,3 +96,23 @@ cmd('umbra',{'core','.6'});cmd('umbra',{'flicker','.1'});assert(settings.umbra_c
 cmd('preset',{'killala'});assert(settings.umbra_disc_steady==false and settings.umbra_ending=='off')
 cmd('preset',{'default'});assert(settings.umbra_disc_steady==true and settings.umbra_ending=='off'and settings.umbra_flicker==.28)
 print('PASS Test5.7 Umbra endings (gyro stand/spin/shrink/half, swallow stand/sink/order/pull, mb or flash window, needs 0.11.0), lines size/opacity, disc shape, steady disc, core/flicker, commands, presets')
+-- Test5.8: white glyph, ending from the opening, stays gone, MB ring at the disc plane.
+do
+    local w2=copy(R.defaults);w2.umbra_ending='swallow';w2.umbra_ending_when='open';w2.umbra_ending_time=4.2
+    w2.umbra_stand_time=2;w2.umbra_sink_time=2.2
+    local p2,s2=link(w2)
+    local x=at(p2,.5,w2).glyphs3
+    assert(x and x[1].stand>0 and x[1].stand<1,'swallow starts with the opening')
+    assert(x[1].color%16777216==0xFFFFFF,'pure white')
+    local late=at(p2,5,w2)
+    assert(not late.glyphs3 and not role(late,'property-trace'),'stays gone after the ending')
+    local cream=copy(w2);cream.umbra_lines_color='cream'
+    assert(at(link(cream),.5,cream).glyphs3[1].color%16777216==0xFFF2CC,'cream option')
+    local flat=role(at(link(R.defaults),5,R.defaults),'property-trace')
+    assert(flat.outline%16777216==0xFFFFFF,'flat Umbra lines white too')
+    local mh=copy(R.defaults);mh.umbra_mb_height='disc'
+    local mf=at(link(mh),5,mh)
+    local ring;for _,v in ipairs(mf)do if v.part=='mb'and v.role=='core'then ring=v end end
+    near(ring.offset,role(mf,'property').offset,1e-9,'MB ring at the disc plane')
+    print('PASS Test5.8 white glyph, ending when open, stays gone, cream option, MB ring at the disc')
+end
