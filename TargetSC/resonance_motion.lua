@@ -169,7 +169,14 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     umbra_swallow_pull=.3,umbra_swallow_lift=1,
     -- Test5.8: the disc glyph's color (white, or the cream it had), and the
     -- Umbra MB ring at its usual height or exactly at the black disc's plane.
-    umbra_lines_color='white',umbra_mb_height='ring'}
+    umbra_lines_color='white',umbra_mb_height='ring',
+    -- Test6.0 Umbra collapse ending: over the last `collapse time` s (-1 =
+    -- mb ending) everything shrinks toward the center, radius x (1 - t^curve):
+    -- a very slow start into a quick whoosh, gone at the MB deadline. The MB
+    -- ring does not sink and the black disc stays opaque meanwhile. glyph lift:
+    -- the floor glyph always sits this far above the black disc (-1 = it
+    -- rises on bursts as before).
+    umbra_collapse=true,umbra_collapse_curve=4,umbra_collapse_time=-1,umbra_glyph_lift=.004}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -188,7 +195,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
-    umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream'}
+    umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
+    umbra_collapse=false,umbra_glyph_lift=-1}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -416,6 +424,14 @@ function M.level4_end(s,opts,name,has_top)
     if name=='radiance'then return s.sc_open+option(opts,'radiance_close_time')end
     return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+
         option(opts,'umbra_flash_time')+(option(opts,'umbra_after')=='smoke'and option(opts,'umbra_smoke')or 0)
+end
+-- Test6.0: Umbra collapse factor (1 = full size, 0 = gone at the deadline).
+function M.umbra_collapse(s,now,opts)
+    local t=option(opts,'umbra_collapse_time')
+    if t<0 then t=option(opts,'mb_ending')end
+    t=max(.05,t)
+    local u=clamp((now-(s.mb_close-t))/t,0,1)
+    return max(.001,1-u^max(1,option(opts,'umbra_collapse_curve')))
 end
 -- Test5.7 Umbra endings: the window and the per-frame 3D glyph parameters.
 function M.umbra_ending_window(s,opts,has_top)
@@ -955,6 +971,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         if l4_glyph and l4name=='umbra'then
             -- Rest at the black disc's exact plane (a burst still lifts it from there).
             opening.offset=opening.offset-option(opts,'disc_height')+M.umbra_plane(opts,details)
+            -- Test6.0: held just above the black hole the whole time (bursts included).
+            if option(opts,'umbra_glyph_lift')>=0 then opening.offset=M.umbra_plane(opts,details)+option(opts,'umbra_glyph_lift')end
         end
         if role=='mb-glyph'then
             -- Test5.4: Radiance's glyph opacity replaces the MB overall opacity.
@@ -984,6 +1002,8 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- Keep the elemental foundation steady, then gently extinguish
             -- it across the SAME ending interval as the white MB signals.
             life=mb_active and smooth((s.mb_close-now)/option(opts,'mb_ending'))or 0
+            -- Test6.0: with the collapse, Umbra's disc stays opaque to the end (it shrinks instead).
+            if l4name=='umbra'and option(opts,'umbra_collapse')then life=mb_active and 1 or 0 end
         end
         local reveal=opener and smooth(progress*5)or 1
         local fill=option(opts,'disc_opacity')*opacity*life*reveal
@@ -1177,7 +1197,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             alpha=alpha*(1-option(opts,'mb_effects'))+response.end_flash*option(opts,'mb_effects')
         end
         local ring_height=mb_height
-        if response.ending and clapper then
+        if response.ending and clapper and not (l4name=='umbra'and option(opts,'umbra_collapse'))then
             -- Through the closing pulses the MB ring settles down onto the
             -- large glyph's resting plane (same radius), reaching it at the
             -- real MB deadline when everything goes dark.
@@ -1341,6 +1361,15 @@ function M.frame(model,s,now,radius,height,opts,context)
                     end
                 end
             end
+        end
+    end
+    -- Test6.0 Umbra collapse: every piece of this frame shrinks toward the center.
+    if l4name=='umbra'and option(opts,'umbra_collapse')then
+        local c=M.umbra_collapse(s,now,opts)
+        if c<1 then
+            for _,v in ipairs(out)do v.radius=v.radius*c end
+            for _,d in ipairs(out.discs)do d.radius=d.radius*c end
+            for _,g in ipairs(out.glyphs3 or {})do g.radius=g.radius*c end
         end
     end
     while #out>32 do table.remove(out,1)end

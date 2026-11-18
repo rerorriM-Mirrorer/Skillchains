@@ -16,6 +16,7 @@ local function at(p,t,o)p:advance(t)return p.model:frame(71,t,2,4,o)end
 local function all(f,role)local r={}for k,d in ipairs(f.discs)do if d.role==role then r[#r+1]=d;d.index=k end end return r end
 local function ring(f,part,j)for _,v in ipairs(f)do if v.part==part and v.strand==j and v.role=='core'then return v end end end
 local o=copy(R.defaults);o.disc_speed_level4=3
+o.umbra_collapse=false;o.umbra_glyph_lift=-1 -- Test6.0 defaults; this file checks earlier behavior
 -- Own spin: faster than the level-4 setting.
 local function rot(opts,name)return all(at(link(opts,name),1,opts),'property')[1].rotation end
 local six=copy(o);six.umbra_spin=6
