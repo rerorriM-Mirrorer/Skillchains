@@ -1,5 +1,17 @@
 # TargetSC — elemental resonance
 
+## 0.18.1 unified Test6.2 — kill tuning (Lua only; DLL stays 0.12.0)
+
+- **SC kill calmer:** halves flicker less (`kill sc flicker`, .35; 1 = the
+  Test6.1 strength), turn less (`kill sc turn` .05) and sag less
+  (`kill sc sag` .12). The seam now flickers like the halves
+  (`kill seam flicker` 1) and lasts a bit longer (`kill sc seam` .5 s).
+- **MB kill:** the SC rings now freeze where they were at the kill and flicker
+  out in the element's color over `kill mb fade` (.6 s, flicker strength
+  `kill mb flicker` .6); `kill mb rings gather` restores the Test6.1 gathering.
+  The second bloom is faster (`kill bloom time` .55 s) and larger
+  (`kill bloom size` 1.25 = 1.25 × the MB bloom's own end size), overtaking it.
+
 ## 0.18.0 unified Test6.1 — kill animations (new DLL 0.12.0; Skillchains updated)
 
 **New native DLL 0.12.0** (close every FFXI client before replacing
@@ -1336,3 +1348,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-18 unified Test6.0 (0.17.0): Umbra collapse ending and glyph lift. Author: A.
 
 2026-11-18 unified Test6.1 (0.18.0, native 0.12.0): kill animations (MB and SC), kill detection in the embedded engine. Author: A.
+
+2026-11-18 unified Test6.2 (0.18.1): kill tuning (calmer SC halves, flickering seam, MB rings freeze and flicker out in the element color, faster larger second bloom). Author: A.

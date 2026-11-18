@@ -1,5 +1,13 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.18.1 unified Test6.2 — kill tuning (Lua only) (2026-11-18)
+
+**User feedback (05:23):** "The animations are pretty cool." SC halves' flicker too strong, rotation too much, sky sag too much; seam should be flickery like the halves; seam pointed the right way. MB: "maybe instead the sc rings should likewise freeze but flickering in the color of the element as they fade out"; second bloom should expand and fade faster and slightly larger than the first, overtaking it. Asked whether a vertical glyph could be the seam or go alongside it (answered as a plan, not built). Author: A.
+
+**Changes:** shared `flicker(now,strength)` (level-4 buzz scaled; 0 steady, 1 = Test6.1). New `kill sc flicker` (.35), `kill seam flicker` (1, own frequencies), `kill mb rings freeze|gather` (freeze default), `kill mb fade` (.6), `kill mb flicker` (.6). Defaults: `sc turn` .15→.05, `sc sag` .3→.12, `sc seam` .35→.5, `bloom delay` .15→.12, `bloom time` 1.2→.55, `bloom size` now a multiple of `mb bloom end` (1.25; starts at `mb bloom start`). Freeze renders the ground/sky rings from a second frame at the kill time (kill disabled), tinted to the element color, alpha × fade × flicker; MB ring, disc and glyphs behave as in 6.1.
+
+**Host verification (not FFXI):** suite ALL PASS; `test_kill.lua` extended (frozen ring height, not gathered, element color, fading, gone after `mb fade`; disc/glyph at the MB ring; bloom faster/larger and wider than the MB bloom late in its life; `mb rings gather` keeps the 6.1 gather; new commands). Probe: kill bloom passes the MB bloom ≈.2 s after it starts. **Live pending:** the look.
+
 ## TargetSC 0.18.0 unified Test6.1 — kill animations (native 0.12.0; Skillchains bridge) (2026-11-18)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. **Includes a new native DLL (0.12.0).** Kill detection is in the embedded engine (`sc_runtime.lua` + `TargetSC/targetsc_bridge.lua`); a first cut wrongly edited the standalone root `Skillchains.lua`/`targetsc_bridge.lua` and was moved (user caught it, 05:08); root files restored. Author: A.

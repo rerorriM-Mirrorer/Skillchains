@@ -143,7 +143,9 @@ function M.new(settings,defaults,save,say,killala)
             ['stand time']={'n',.05,8},['sink time']={'n',.05,10},['swallow stagger']={'n',0,.95},
             ['swallow order']={'c','outer','inner','together'},['swallow pull']={'n',0,1},['swallow lift']={'n',0,4}}}
     -- 0.18 kill animations: //tsc kill ... (same table-driven parser).
-    level4_spec.kill={time={'n',.3,5},['mb gather']={'n',.05,2},['mb curve']={'n',1,10},
+    level4_spec.kill={time={'n',.3,5},['mb rings']={'c','freeze','gather'},['mb fade']={'n',.05,3},
+        ['mb flicker']={'n',0,1},['sc flicker']={'n',0,1},['seam flicker']={'n',0,1},
+        ['mb gather']={'n',.05,2},['mb curve']={'n',1,10},
         ['bloom delay']={'n',0,1},['bloom time']={'n',.2,4},['bloom size']={'n',.3,5},['bloom opacity']={'n',0,1},
         ['sc freeze']={'n',0,1},['sc split']={'n',0,1},['sc turn']={'n',-1,1},['sc sag']={'n',0,1},
         ['sc flash']={'n',0,.5},['sc seam']={'n',0,2},['sc ghost']={'n',0,1},['seam angle']={'n',-180,180}}

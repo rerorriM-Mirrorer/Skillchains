@@ -186,9 +186,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- a seam flashes along the killing blow, the glyphs flash out, and rings
     -- and disc split into halves drifting apart with a subtle counterclockwise
     -- turn, sky halves sagging, buzzing out with the level-4 flicker.
-    kill=true,kill_time=1.6,kill_mb_gather=.35,kill_mb_curve=4,kill_bloom_delay=.15,kill_bloom_time=1.2,
-    kill_bloom_size=2,kill_bloom_opacity=.8,kill_sc_freeze=.2,kill_sc_split=.12,kill_sc_turn=.15,
-    kill_sc_sag=.3,kill_sc_flash=.08,kill_sc_seam=.35,kill_sc_ghost=.85,kill_seam_angle=0}
+    -- Test6.2: MB kill rings freeze and flicker out in the element color
+    -- (`kill mb rings freeze`, or `gather` = the Test6.1 look); the second
+    -- bloom is faster and larger than the MB's own (`bloom size` = multiple
+    -- of the MB bloom's end size). Flicker strengths 0 (steady) - 1 (full).
+    kill=true,kill_time=1.6,kill_mb_rings='freeze',kill_mb_fade=.6,kill_mb_flicker=.6,
+    kill_mb_gather=.35,kill_mb_curve=4,kill_bloom_delay=.12,kill_bloom_time=.55,
+    kill_bloom_size=1.25,kill_bloom_opacity=.8,kill_sc_freeze=.2,kill_sc_split=.12,kill_sc_turn=.05,
+    kill_sc_sag=.12,kill_sc_flicker=.35,kill_sc_flash=.08,kill_sc_seam=.5,kill_seam_flicker=1,
+    kill_sc_ghost=.85,kill_seam_angle=0}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -446,6 +452,15 @@ local function whiten(c,k)
     if type(c)~='number'then return c end
     return math.floor(math.floor(c/16777216)*clamp(k,0,1)+.5)*16777216+0xFFFFFF
 end
+-- Level-4 style flicker, scaled: strength 0 = steady 1, strength 1 = full buzz.
+local function flicker(now,strength,a,b)
+    local buzz=(.37+.63*sin(now*(a or 23))^2)*(.72+.28*sin(now*(b or 28))^2)
+    return 1-clamp(strength,0,1)*(1-buzz)
+end
+local function tint(c,rgb,k)
+    if type(c)~='number'then return c end
+    return math.floor(math.floor(c/16777216)*clamp(k,0,1)+.5)*16777216+rgb[1]*65536+rgb[2]*256+rgb[3]
+end
 local function mb_kill(out,s,now,kill,start,opts,context,f)
     local K=max(.2,option(opts,'kill_time'))
     local k=now-start
@@ -456,8 +471,26 @@ local function mb_kill(out,s,now,kill,start,opts,context,f)
     for _,d in ipairs(out.discs)do if d.role=='property'then fill_h=d.offset break end end
     local delta=fill_h and (f.mb_height-fill_h)or 0
     local bloom={bloom=true,['umbra-bloom']=true,['kill-bloom']=true}
+    if option(opts,'kill_mb_rings')=='freeze'and f.frozen then
+        -- The SC rings stop where they were at the kill and flicker out in the
+        -- element's color; the MB ring keeps going.
+        local rgb=kill.color or {255,255,255}
+        local fade=(1-smooth(k/max(.05,option(opts,'kill_mb_fade'))))*flicker(now,option(opts,'kill_mb_flicker'))
+        local rings={}
+        for _,v in ipairs(f.frozen)do
+            if (v.part=='ground'or v.part=='sky')and fade>0 then
+                v.color,v.tail=tint(v.color,rgb,fade),tint(v.tail,rgb,fade)
+                if v.colors then for i,x in ipairs(v.colors)do v.colors[i]=tint(x,rgb,fade)end end
+                rings[#rings+1]=v
+            end
+        end
+        for _,v in ipairs(out)do if v.part~='ground'and v.part~='sky'then rings[#rings+1]=v end end
+        for i=#out,1,-1 do table.remove(out,i)end
+        for i,v in ipairs(rings)do out[i]=v end
+        g=0
+    end
     for _,v in ipairs(out)do
-        if v.part=='ground'or v.part=='sky'then
+        if g>0 and (v.part=='ground'or v.part=='sky')then
             v.offset=v.offset+(f.mb_height-v.offset)*g
             v.color,v.tail=scale_alpha(v.color,1-g),scale_alpha(v.tail,1-g)
             if v.colors then for i,x in ipairs(v.colors)do v.colors[i]=scale_alpha(x,1-g)end end
@@ -476,7 +509,9 @@ local function mb_kill(out,s,now,kill,start,opts,context,f)
         local t=age/life
         local color=kill.color or {255,255,255}
         local before=#out.discs
-        f.disc(f.mb_radius*(.3+(option(opts,'kill_bloom_size')-.3)*(1-(1-t)^2.5)),f.mb_height,0,{color},
+        local from=option(opts,'mb_bloom_start')
+        local to=option(opts,'mb_bloom_end')*option(opts,'kill_bloom_size')
+        f.disc(f.mb_radius*(from+(to-from)*(1-(1-t)^2.5)),f.mb_height,0,{color},
             option(opts,'kill_bloom_opacity')*smooth(age/.05)*(1-t)^1.5,0,0,'kill-bloom')
         if #out.discs>before then
             local d=out.discs[#out.discs]
@@ -502,7 +537,7 @@ local function sc_kill(out,s,now,kill,start,opts,context,f)
     local turn=option(opts,'kill_sc_turn')*smooth(k/K)
     local span=(f.top and f.bottom)and (f.top-f.bottom)or f.height*.3
     local sag=option(opts,'kill_sc_sag')*span*smooth(k/K)^2
-    local buzz=(.37+.63*sin(now*23)^2)*(.72+.28*sin(now*28)^2)
+    local buzz=flicker(now,option(opts,'kill_sc_flicker'))
     local vis=option(opts,'kill_sc_ghost')*(1-smooth((k-K*.3)/(K*.7)))*(k>flash and buzz or 1)
     if k>=K then vis=0 end
     -- Glyphs (MB glyphs, the disc's own lines, copies) and blooms flash out.
@@ -563,7 +598,7 @@ local function sc_kill(out,s,now,kill,start,opts,context,f)
     -- The seam: a bright line along the killing blow at each ring height.
     local seam=option(opts,'kill_sc_seam')
     if k<seam then
-        local alpha=1-smooth(k/max(.02,seam))
+        local alpha=(1-smooth(k/max(.02,seam)))*flicker(now,option(opts,'kill_seam_flicker'),31,17)
         local L=f.radius*1.3
         local ex,ey=math.cos(phi)*L,math.sin(phi)*L
         out.lines={}
@@ -1532,8 +1567,12 @@ function M.frame(model,s,now,radius,height,opts,context)
             for _,g in ipairs(out.glyphs3 or {})do g.radius=g.radius*c end
         end
     end
+    local frozen
+    if kill and kill.kind=='mb'and option(opts,'kill_mb_rings')=='freeze'then
+        frozen=M.frame(model,s,kill.at,radius,height,setmetatable({kill=false},{__index=opts}),context)
+    end
     if kill then M.apply_kill(out,s,real_now,kill,kill_start,opts,context,
-        {mb_height=mb_height,radius=radius,bottom=bottom,top=top,height=height,mb_radius=mb_radius,disc=disc})end
+        {mb_height=mb_height,radius=radius,bottom=bottom,top=top,height=height,mb_radius=mb_radius,disc=disc,frozen=frozen})end
     -- Kill halves may use the DLL's full 64 rings.
     while #out>(kill and 64 or 32)do table.remove(out,1)end
     return out
