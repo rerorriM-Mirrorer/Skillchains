@@ -447,6 +447,7 @@ end
 
 function action_handler(act)
     targetsc:bursts(act)
+    targetsc:observe(act)
     local actionpacket = ActionPacket.new(act)
     local category = actionpacket:get_category_string()
 
@@ -490,6 +491,8 @@ end
 ActionPacket.open_listener(action_handler)
 
 windower.register_event('incoming chunk', function(id, data)
+    -- TargetSC kill animations: 0x029 action message (actor, target, message id).
+    if id == 0x29 then targetsc:defeat(data:unpack('I', 5), data:unpack('I', 9), data:unpack('H', 25)) end
     if id == 0x29 and data:unpack('H', 25) == 206 and data:unpack('I', 9) == info.player then
         buffs[info.player][data:unpack('H', 13)] = nil
     elseif id == 0x50 and data:byte(6) == 0 then
