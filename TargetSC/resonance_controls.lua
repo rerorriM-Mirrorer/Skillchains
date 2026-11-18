@@ -193,7 +193,15 @@ function M.new(settings,defaults,save,say,killala)
     return function(command,args)
         local value=(args[1]or ''):lower()
         local group=groups[command]
-        if command=='mb'and value=='style'then
+        if command=='detarget'then
+            -- Test5.0: untarget/ordinary-death dim, from the first moment.
+            local n=value=='time'and args[2]or args[1]
+            numeric('detarget_time',n,{0,3},'detarget time')
+        elseif command=='switch'then
+            -- Test5.0: quick handoff when the new target has resonance.
+            if value~='out'and value~='in'then say('Use //tsc switch out <0-1> | switch in <0-1>.');return true end
+            numeric('switch_'..value,args[2],{0,1},'switch '..value)
+        elseif command=='mb'and value=='style'then
             local style=(args[2]or ''):lower()
             if style~='classic'and style~='clapper'then say('Use //tsc mb style classic|clapper.');return true end
             settings.mb_style=style;save(settings);say('MB style '..style..'.')

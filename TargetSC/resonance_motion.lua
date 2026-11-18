@@ -84,7 +84,11 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     mb_bloom_time=1,mb_bloom_ease=2.5,mb_bloom_fade=1.5,
     mb_bloom_center=.7,mb_bloom_middle=.35,mb_bloom_edge=0,mb_bloom_position=.5,
     mb_bloom_flash=.6,mb_bloom_core=.5,
-    mb_bloom_lines=0,mb_bloom_lines_opacity=.6,mb_bloom_lines_delay=.12,mb_bloom_lines_size=1.8}
+    mb_bloom_lines=0,mb_bloom_lines_opacity=.6,mb_bloom_lines_delay=.12,mb_bloom_lines_size=1.8,
+    -- Test5.0 target handoff (seconds): untarget/ordinary death keeps the
+    -- animation running on the old enemy while it dims from the first moment;
+    -- switching to an enemy with resonance uses the quick out, then in.
+    detarget_time=1,switch_out=.25,switch_in=.35}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -98,7 +102,8 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
-    mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false}
+    mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false,
+    detarget_time=0,switch_out=0,switch_in=0}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.

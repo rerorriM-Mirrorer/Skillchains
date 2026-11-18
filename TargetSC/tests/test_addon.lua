@@ -139,9 +139,15 @@ now=42.3 events.prerender() assert(#native.rings>0)
 -- Position is resolved by the native sink from the unchanged index, so Lua
 -- movement never modifies event deadlines or replays a source state.
 mob.x=20 now=42.4 events.prerender() assert(native.id==71)
-mob.hpp=0 now=42.5 events.prerender() assert(#native.rings==0,'death clears')
-mob.hpp=100 mob.id=72 identity=72 now=42.6 events.prerender() assert(#native.rings==0,'new target has no invented state')
-mob=nil now=42.7 events.prerender() assert(#native.rings==0,'despawn clears')
+-- Test5.0: an ordinary death dims over `detarget time` (1 s) with the
+-- animation still running, instead of cutting out.
+local function brightest()local m=0 for _,r in ipairs(native.rings)do m=math.max(m,math.floor(r[4]/16777216))end return m end
+local before=brightest()
+mob.hpp=0 now=42.5 events.prerender() assert(#native.rings>0 and native.id==71,'death dims instead of cutting')
+now=43.0 events.prerender() assert(#native.rings>0 and brightest()<before*.75,'dimming from the first moment')
+now=43.55 events.prerender() assert(#native.rings==0,'gone after detarget time')
+mob.hpp=100 mob.id=72 identity=72 now=43.6 events.prerender() assert(#native.rings==0,'new target has no invented state')
+mob=nil now=43.7 events.prerender() assert(#native.rings==0,'despawn clears')
 events['zone change']() assert(#native.rings==0)
 mob={id=71,index=12,hpp=100,is_npc=true,spawn_type=16,model_size=1.5,model_scale=1,valid_target=true}
 identity=71;now=100;command('preview','mb')
@@ -176,7 +182,10 @@ do
  -- Targeting yourself: preview on you; live state never draws on you.
  target=me;now=203;command('preview','Distortion','2');now=203.3;events.prerender()
  assert(native.id==500,'self targeted: preview on self')
+ -- Test5.0: `preview off` dims away like an untarget (1 s), then nothing.
  command('preview','off');now=203.5;events.prerender()
+ assert(native.id==500 and #native.rings>0,'stopped preview dims away on you')
+ now=204.4;events.prerender()
  assert(#native.rings==0 and #native.discs==0,'no live resonance on yourself')
  windower.ffxi.get_mob_by_target,windower.ffxi.get_mob_by_index=get_target,get_index
 end

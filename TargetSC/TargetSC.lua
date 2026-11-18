@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.14.9-unified-test4.9'
+_addon.version='0.15.0-unified-test5.0'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -19,6 +19,8 @@ local model=resonance.new()
 local native,renderer_error,renderer_started,native_version
 local native_level=0
 local preview,selected_id,next_frame,last_tracking_error=nil,nil,0,nil
+-- Test5.0 target handoff (see handoff() below the commands).
+local shown,outgoing,incoming
 local requested_at,source_wait_notice=0,false
 local log_size=0
 local addon_path=windower.addon_path:gsub('\\','/')
@@ -132,6 +134,11 @@ local function help()
         {'preview burst [element]','Local MB response preview; no game actions or bridge events.'},
         {'preview demo','Five weaponskills: opener then L1/L2/L3/Umbra, no bursts.'},
         {'preview mb','Same four links with Wind/Earth/Water/Dark bursts; includes late-link overlaps.'},
+        {'preview switch [preview]','The preview rides on the first two targets you pick (enemies or yourself) to try target handoffs.'},
+        {'preview off','Stops a preview; it dims away like an untarget.'},
+        {'detarget time <0-3>','Untarget/ordinary death: the animation keeps running and dims over this many seconds (default 1; 0 = instant).'},
+        {'switch out <0-1>','Switching to an enemy with resonance: seconds the old one takes to fade (default .25).'},
+        {'switch in <0-1>','Then the new enemy fades in over this many seconds (default .35).'},
         {'preview mb light','Fusion nearly closed takes a Fire MB, Light opens; Light MB, then Wind as the ending begins.'},
         {'preview mb dark','Darkness: Ice then Dark MBs; Umbra late in the window; Ice, Earth, then Dark as the ending begins.'},
         {'mb style clapper|classic','Low breathing clapper / Test9 presentation comparison.'},
@@ -231,7 +238,6 @@ local function help()
         {'mb glow width <0.2-2>','MB glow thickness multiplier (default 1).'},
         {'mb ending drop <0-1>','How far the MB ring settles onto the large glyph during the closing pulses (default 1).'},
         {'preview self [scenario]','Preview on your own character (also automatic when targeting yourself or nothing).'},
-        {'preview off','End preview and return to live state.'},
         {'frames classic|even|full','World animation updates: previous 30 Hz, even 30 Hz steps, or every frame (default classic).'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
         {'scale <0.25-3>','Scale the model-relative rings.'},
@@ -289,6 +295,11 @@ local function status()
     if not model.connected then say('Embedded Skillchains not synchronized; use //tsc sync. Preview remains available.') end
 end
 local function begin_preview(args)
+    -- Test5.0: `preview switch [preview...]` lends the preview's resonance to
+    -- the first two targets you pick (enemies, or yourself), to try the
+    -- target handoff. Default: the four-link MB demo.
+    local switch=args[1]and args[1]:lower()=='switch'
+    if switch then table.remove(args,1)if not args[1]then args={'mb'}end end
     local on_self=args[1]and (args[1]:lower()=='self'or args[1]:lower()=='me')
     if on_self then table.remove(args,1)end
     local mob=not on_self and selected_mob()
@@ -301,8 +312,11 @@ local function begin_preview(args)
     local now=os.clock()
     preview=previews.new(spec,mob.id,now,resonance,settings)
     preview.on_self=on_self
+    if switch then preview.switch,preview.carriers,preview.count=true,{[mob.id]=true},1 end
     selected_id=mob.id
-    say('Preview '..table.concat(spec.properties,'/')..' level '..spec.level..(on_self and ' on yourself' or '')..'; '..preview.description)
+    shown,outgoing,incoming=nil,nil,nil
+    say('Preview '..table.concat(spec.properties,'/')..' level '..spec.level..(on_self and ' on yourself' or '')..
+        (switch and ' (switch: the first two targets you pick carry it)' or '')..'; '..preview.description)
     debug('preview begin target='..mob.id..' '..preview.description)
 end
 local function advance_preview(now)
@@ -320,7 +334,9 @@ local function receive_frame(args)
     if accepted then
         debug(('event %s seq=%s entity=%s clock_delta=%.6f'):format(tostring(why),tostring(args[3]),tostring(args[6]),model.clock_warning))
         if args[4]=='state' and preview and tonumber(args[6])==preview.id then preview=nil end
-        if args[4]=='offline' or args[4]=='reset' then clear() preview=nil end
+        -- A real state replaces a preview that is still dimming away on that target.
+        if args[4]=='state' and outgoing and outgoing.preview and tonumber(args[6])==outgoing.id then outgoing=nil end
+        if args[4]=='offline' or args[4]=='reset' then clear() preview=nil shown,outgoing,incoming=nil,nil,nil end
         if math.abs(model.clock_warning)>.20 then debug('TIMING WARNING: source clock delta exceeds 200ms; absolute deadlines retained') end
     else debug('rejected event: '..tostring(why)) end
     if model.needs_sync and os.clock()-requested_at>1 then subscribe() end
@@ -342,12 +358,19 @@ windower.register_event('addon command',function(command,...)
     elseif command=='on' then
         settings.enabled=true config.save(settings) start_renderer() subscribe() say('Enabled.')
     elseif command=='off' then
-        settings.enabled=false config.save(settings) preview=nil clear()
+        settings.enabled=false config.save(settings) preview=nil shown,outgoing,incoming=nil,nil,nil clear()
         if native then native.stop() renderer_started=false end
         local_bus.unsubscribe()
         model:clear() model.connected=false say('Disabled.')
     elseif command=='preview' then
-        if args[1] and args[1]:lower()=='off' then preview=nil clear() say('Preview stopped.')
+        if args[1] and args[1]:lower()=='off' then
+            -- Test5.0: the preview leaves like an untarget, dimming over `detarget time`.
+            if preview and shown and shown.preview==preview and shown.mob and settings.detarget_time>0 then
+                outgoing={id=shown.id,index=shown.mob.index,mob=shown.mob,preview=preview,start=os.clock(),
+                    level=shown.level,duration=settings.detarget_time*shown.level}
+                incoming,shown=nil,nil
+            else clear() end
+            preview=nil say('Preview stopped.')
         else begin_preview(args) end
     elseif command=='frames' then
         local mode=(args[1]or ''):lower()
@@ -374,41 +397,110 @@ windower.register_event('addon command',function(command,...)
         windower.send_command(command=='restart' and 'lua reload TargetSC' or 'lua unload TargetSC')
     else say('Unknown command: '..command) help() end
 end)
-windower.register_event('prerender',function()
-    if not settings.enabled or not native or not renderer_started then return end
-    local now=os.clock()
-    -- even: 2 ms tolerance so frame-time jitter landing a hair early does
-    -- not skip a beat (which would make a 3-frame step).
-    if now<next_frame-(settings.frames=='even'and .002 or 0)then return end
-    if settings.frames=='full'then next_frame=0
-    elseif settings.frames=='even'then
-        -- Fixed 1/30 s grid: a 60 fps client updates every other frame
-        -- evenly instead of alternating 2- and 3-frame steps.
-        next_frame=next_frame+1/30
-        if next_frame<=now then next_frame=now+1/30 end
-    else next_frame=now+1/30 end
-    -- Retry once the subscription throttle permits if the last event was the
-    -- only one that revealed a gap. No request is sent during healthy frames.
-    if model.needs_sync and now-requested_at>1 then subscribe() end
-    if not model.connected and not source_wait_notice and now-requested_at>2 then
-        source_wait_notice=true say('Waiting for compatible Skillchains. Load it, then //tsc sync; preview is available.')
+-- Test5.0 target handoff state. `shown` = the target drawn last frame with
+-- resonance; `outgoing` = a previous target fading out; `incoming` = the
+-- new target's fade-in (after any outgoing fade ends); declared at the top.
+local function world_blocked()
+    local info=windower.ffxi.get_info()
+    if not info or not info.logged_in then return true end
+    local player=windower.ffxi.get_player()
+    return not player or player.status==4
+end
+local function targeting_self()
+    local t=windower.ffxi.get_mob_by_target('t')
+    local me=windower.ffxi.get_mob_by_target('me')
+    return t~=nil and me~=nil and t.id==me.id
+end
+-- A switch preview lends its resonance to the first two targets you pick;
+-- other previews belong to the target they started on.
+local function carries(p,id)
+    if p.switch then return p.carriers[id]==true end
+    return p.id==id
+end
+local function frame_for(id,now,radius,height,p)
+    if p and carries(p,id)then return p.model:frame(p.id,now,radius,height,settings)end
+    return model:frame(id,now,radius,height,settings)
+end
+local function current_mob()
+    if preview and preview.switch then
+        local mob=selected_mob()
+        if mob then return mob end
+        if targeting_self()then return self_mob()end
+        return nil
     end
     -- A self preview keeps drawing on you whatever you target meanwhile.
-    local mob=(preview and preview.on_self)and self_mob()or selected_mob()
-    local id=mob and mob.id
-    if id~=selected_id then
-        debug('target changed '..tostring(selected_id)..' -> '..tostring(id))
-        if preview then preview=nil end
-        selected_id=id clear()
-    end
-    if not mob then
-        if not last_tracking_error then last_tracking_error='no living rendered enemy/cutscene/logged out' debug(last_tracking_error) end
-        clear() return
-    end
-    last_tracking_error=nil
-    if preview then advance_preview(now) end
+    if preview and preview.on_self then return self_mob()end
+    return selected_mob()
+end
+local function level_of(o,now)
+    return o.level*(1-math.min(1,(now-o.start)/math.max(o.duration,1e-6)))
+end
+local function has_resonance(id,mob,now)
+    if not mob then return false end
     local radius,height=resonance.dimensions(mob,settings)
-    local frame=(preview and preview.model or model):frame(id,now,radius,height,settings)
+    local f=frame_for(id,now,radius,height,preview)
+    return #f>0 or #(f.discs or {})>0
+end
+-- Untarget/ordinary death: the last target keeps animating as normal while
+-- it dims over `detarget time`. Switching to a target that has resonance
+-- uses the quick `switch out`, then the new one fades in over `switch in`.
+local function handoff(id,mob,now,blocked)
+    local p=preview
+    if p and p.switch and mob and not p.carriers[id] and p.count<2 then p.carriers[id]=true;p.count=p.count+1 end
+    if p and not p.switch then preview=nil end
+    local new_has=not blocked and has_resonance(id,mob,now)
+    incoming=nil
+    if outgoing and outgoing.id==id then
+        -- Back to the enemy that is fading: brighten from where it is (a
+        -- preview fading away on it comes back too).
+        local level=level_of(outgoing,now)
+        if outgoing.preview and not preview then preview=outgoing.preview end
+        outgoing=nil
+        if settings.switch_in>0 then incoming={start=now,duration=settings.switch_in*(1-level),from=level}end
+        shown=nil return
+    end
+    if blocked then outgoing,shown=nil,nil return end
+    if outgoing then
+        if new_has then
+            local level=level_of(outgoing,now)
+            outgoing.start,outgoing.level,outgoing.duration=now,level,settings.switch_out*level
+        end
+    elseif shown and shown.id==selected_id and shown.mob and shown.mob.index then
+        local duration=(new_has and settings.switch_out or settings.detarget_time)*shown.level
+        if duration>0 then
+            outgoing={id=shown.id,index=shown.mob.index,mob=shown.mob,preview=shown.preview,start=now,level=shown.level,duration=duration}
+        end
+    end
+    shown=nil
+    if new_has and settings.switch_in>0 then
+        incoming={start=outgoing and outgoing.start+outgoing.duration or now,duration=settings.switch_in,from=0}
+    end
+end
+-- Test5.0 target handoff: the frame is sent at `level` (0-1) by scaling
+-- every color's alpha; the animation itself runs exactly as normal.
+local function dim(c,level)
+    if type(c)~='number'or level>=1 then return c end
+    return resonance.scale_alpha(c,level)
+end
+local function dim_frame(frame,level)
+    if level>=1 then return frame end
+    local out={discs={},phase=frame.phase}
+    for i,disc in ipairs(frame.discs or {})do
+        local d={}for k,v in pairs(disc)do d[k]=v end
+        if disc.colors then d.colors={}for j,c in ipairs(disc.colors)do d.colors[j]=dim(c,level)end end
+        d.color,d.outline,d.hub=dim(disc.color,level),dim(disc.outline,level),dim(disc.hub,level)
+        out.discs[i]=d
+    end
+    for i,ring in ipairs(frame)do
+        local r={}for k,v in pairs(ring)do r[k]=v end
+        if ring.colors then r.colors={}for j,c in ipairs(ring.colors)do r.colors[j]=dim(c,level)end end
+        r.color,r.tail=dim(ring.color,level),dim(ring.tail,level)
+        out[i]=r
+    end
+    return out
+end
+local function draw(frame,mob,level)
+    frame=dim_frame(frame,level)
     native.begin(mob.index,mob.id)
     for _,disc in ipairs(frame.discs or {})do
         local colors=disc.colors or {disc.color}
@@ -475,12 +567,73 @@ windower.register_event('prerender',function()
       end
     end
     native.commit()
+end
+windower.register_event('prerender',function()
+    if not settings.enabled or not native or not renderer_started then return end
+    local now=os.clock()
+    -- even: 2 ms tolerance so frame-time jitter landing a hair early does
+    -- not skip a beat (which would make a 3-frame step).
+    if now<next_frame-(settings.frames=='even'and .002 or 0)then return end
+    if settings.frames=='full'then next_frame=0
+    elseif settings.frames=='even'then
+        -- Fixed 1/30 s grid: a 60 fps client updates every other frame
+        -- evenly instead of alternating 2- and 3-frame steps.
+        next_frame=next_frame+1/30
+        if next_frame<=now then next_frame=now+1/30 end
+    else next_frame=now+1/30 end
+    -- Retry once the subscription throttle permits if the last event was the
+    -- only one that revealed a gap. No request is sent during healthy frames.
+    if model.needs_sync and now-requested_at>1 then subscribe() end
+    if not model.connected and not source_wait_notice and now-requested_at>2 then
+        source_wait_notice=true say('Waiting for compatible Skillchains. Load it, then //tsc sync; preview is available.')
+    end
+    local blocked=world_blocked()
+    if blocked then outgoing,incoming,shown=nil,nil,nil end
+    local mob=current_mob()
+    local id=mob and mob.id
+    if id~=selected_id then
+        debug('target changed '..tostring(selected_id)..' -> '..tostring(id))
+        handoff(id,mob,now,blocked)
+        selected_id=id
+    end
+    -- The previous target, still fading, has the frame until it is done
+    -- (the DLL draws one target per frame, so the handoff is sequential).
+    if outgoing then
+        local o=outgoing
+        local live=windower.ffxi.get_mob_by_index(o.index)
+        local level=level_of(o,now)
+        if not live or live.id~=o.id or level<=0 then outgoing=nil
+        else
+            if o.preview then o.preview:advance(now)end
+            local radius,height=resonance.dimensions(o.mob,settings)
+            draw(frame_for(o.id,now,radius,height,o.preview),o.mob,level)
+            return
+        end
+    end
+    if not mob then
+        if not last_tracking_error then last_tracking_error='no living rendered enemy/cutscene/logged out' debug(last_tracking_error) end
+        clear() return
+    end
+    last_tracking_error=nil
+    if preview then advance_preview(now) end
+    local radius,height=resonance.dimensions(mob,settings)
+    local frame=frame_for(id,now,radius,height,preview)
+    local level=1
+    if incoming then
+        if now<incoming.start then clear() return end
+        level=incoming.from+(1-incoming.from)*math.min(1,(now-incoming.start)/math.max(incoming.duration,1e-6))
+        if level>=1 then incoming,level=nil,1 end
+    end
+    if #frame>0 or #(frame.discs or {})>0 then
+        shown={id=id,mob=mob,level=level,preview=(preview and carries(preview,id))and preview or nil}
+    else shown=nil end
+    draw(frame,mob,level)
 end)
 windower.register_event('load',function()
     if settings.enabled then start_renderer() subscribe() end
 end)
 windower.register_event('zone change','logout',function()
-    preview=nil selected_id=nil model:clear() clear() debug('world state cleared')
+    preview=nil selected_id=nil shown,outgoing,incoming=nil,nil,nil model:clear() clear() debug('world state cleared')
 end)
 windower.register_event('unload',function()
     local_bus.unsubscribe()
