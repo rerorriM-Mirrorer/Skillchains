@@ -1,5 +1,13 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.18.2 unified Test6.3 — MB kill freezes (Lua only) (2026-11-18)
+
+**User request (15:30):** "not have everything gather at the mb ring, rather have any rotation or whatever stop, animation freezes, and have MB ring flicker exactly like sc rings... and fade out with them. (or if multiple discs) also flicker the same way and fade out at same time as sc rings also... I want to try having the glyphs grow and fade out with the mb kill bloom. The regular mb bloom would be drawn in by the mb gathering with the other elements, also fading out in time with the sc rings." Interpreted "drawn in" as the MB bloom shrinking back inward while it fades (`kill mb bloom fade` keeps its size). Author: A.
+
+**Changes:** MB freeze mode now freezes the whole frame at kill + `kill mb freeze` (new, .2 s, so the MB's own bloom, which starts at the same moment as the kill, is already open). `M.mb_kill_freeze`: all rings tinted to the element color, alpha × (1 − smooth(k/`mb fade`)) × flicker; non-glyph discs: fill tinted (or `mb discs own`) and faded the same way, their glyph lines split off as an outline-only copy treated as a glyph; glyph roles (mb-glyph, property-trace, umbra-copy, awakening, glyph 2) and `glyphs3` scale 1 → `mb bloom end` × `bloom size` with the kill bloom's ease and take its fade (or, `mb glyphs fade`, fade with the rings); MB bloom radius × (1 − smooth) and alpha with the rings (`mb bloom fade` keeps the radius). The 6.2 ring-only freeze (second frame) is removed. `kill_bloom_disc` shared by both modes.
+
+**Host verification (not FFXI):** suite ALL PASS; `test_kill.lua` MB section rewritten (frozen MB ring and disc, MB and SC rings in the element color, nothing gathers, disc fill element-tinted, MB bloom shrinking, rings/discs/bloom gone after freeze + fade, kill bloom element color, glyph grows ≥1.3× with it and is gone with it, variants fade/fade/own, 6.1 gather and collapse); probe timeline: freeze 1.7, MB bloom 1.45 → .11, glyph 1.78 → 3.25 with the kill bloom, empty by 2.6 s. **Live pending:** the look.
+
 ## TargetSC 0.18.1 unified Test6.2 — kill tuning (Lua only) (2026-11-18)
 
 **User feedback (05:23):** "The animations are pretty cool." SC halves' flicker too strong, rotation too much, sky sag too much; seam should be flickery like the halves; seam pointed the right way. MB: "maybe instead the sc rings should likewise freeze but flickering in the color of the element as they fade out"; second bloom should expand and fade faster and slightly larger than the first, overtaking it. Asked whether a vertical glyph could be the seam or go alongside it (answered as a plan, not built). Author: A.

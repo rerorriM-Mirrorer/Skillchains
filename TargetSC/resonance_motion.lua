@@ -186,11 +186,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- a seam flashes along the killing blow, the glyphs flash out, and rings
     -- and disc split into halves drifting apart with a subtle counterclockwise
     -- turn, sky halves sagging, buzzing out with the level-4 flicker.
-    -- Test6.2: MB kill rings freeze and flicker out in the element color
-    -- (`kill mb rings freeze`, or `gather` = the Test6.1 look); the second
-    -- bloom is faster and larger than the MB's own (`bloom size` = multiple
-    -- of the MB bloom's end size). Flicker strengths 0 (steady) - 1 (full).
+    -- Test6.3 MB kill (`kill mb rings freeze`): the whole animation freezes at
+    -- the kill; every ring (SC and MB) and disc flickers in the element color
+    -- and fades out together over `mb fade`; the MB's own bloom is drawn back
+    -- in over the same time (`mb bloom in|fade`); the glyphs grow and fade
+    -- with the kill bloom (`mb glyphs bloom|fade`). `gather` = the Test6.1
+    -- look. The kill bloom is faster and larger than the MB's own (`bloom
+    -- size` = multiple of the MB bloom's end size). Flicker 0 steady - 1 full.
     kill=true,kill_time=1.6,kill_mb_rings='freeze',kill_mb_fade=.6,kill_mb_flicker=.6,
+    kill_mb_freeze=.2,kill_mb_discs='element',kill_mb_bloom='in',kill_mb_glyphs='bloom',
     kill_mb_gather=.35,kill_mb_curve=4,kill_bloom_delay=.12,kill_bloom_time=.55,
     kill_bloom_size=1.25,kill_bloom_opacity=.8,kill_sc_freeze=.2,kill_sc_split=.12,kill_sc_turn=.05,
     kill_sc_sag=.12,kill_sc_flicker=.35,kill_sc_flash=.08,kill_sc_seam=.5,kill_seam_flicker=1,
@@ -461,6 +465,101 @@ local function tint(c,rgb,k)
     if type(c)~='number'then return c end
     return math.floor(math.floor(c/16777216)*clamp(k,0,1)+.5)*16777216+rgb[1]*65536+rgb[2]*256+rgb[3]
 end
+local kill_glyph_role={['mb-glyph']=true,['property-trace']=true,['umbra-copy']=true,awakening=true}
+local function kill_bloom_disc(out,now,kill,start,opts,context,f)
+    local life=max(.1,option(opts,'kill_bloom_time'))
+    local age=now-(start+option(opts,'kill_bloom_delay'))
+    local from=option(opts,'mb_bloom_start')
+    local to=option(opts,'mb_bloom_end')*option(opts,'kill_bloom_size')
+    if age<0 then return 0,0,false end
+    local t=age/life
+    if t>=1 then return 1,0,true end
+    local e=1-(1-t)^2.5
+    local fade=(1-t)^1.5
+    local color=kill.color or {255,255,255}
+    local before=#out.discs
+    f.disc(f.mb_radius*(from+(to-from)*e),f.mb_height,0,{color},
+        option(opts,'kill_bloom_opacity')*smooth(age/.05)*fade,0,0,'kill-bloom')
+    if #out.discs>before then
+        local d=out.discs[#out.discs]
+        d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
+        d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
+        d.hub=context.argb(mix(color,{255,255,255},option(opts,'mb_bloom_core')),option(opts,'kill_bloom_opacity'))
+    end
+    return e,fade,false
+end
+-- Test6.3: the frame arrives frozen at the kill (M.frame); `now` is real time.
+function M.mb_kill_freeze(out,now,kill,start,opts,context,f)
+    local K=max(.2,option(opts,'kill_time'))
+    local k=now-start
+    local rgb=kill.color or {255,255,255}
+    local fl=flicker(now,option(opts,'kill_mb_flicker'))
+    local fade=(1-smooth(k/max(.05,option(opts,'kill_mb_fade'))))*fl
+    local drawn=1-smooth(k/max(.05,option(opts,'kill_mb_fade')))
+    local own=option(opts,'kill_mb_discs')=='own'
+    local function paint(c,a,keep)
+        if keep then return scale_alpha(c,a)end
+        return tint(c,rgb,a)
+    end
+    -- Rings: SC and MB alike flicker in the element color and fade together.
+    local rings={}
+    if fade>0 and k<K then
+        for _,v in ipairs(out)do
+            v.color,v.tail=tint(v.color,rgb,fade),tint(v.tail,rgb,fade)
+            if v.colors then for i,x in ipairs(v.colors)do v.colors[i]=tint(x,rgb,fade)end end
+            rings[#rings+1]=v
+        end
+    end
+    for i=#out,1,-1 do table.remove(out,i)end
+    for i,v in ipairs(rings)do out[i]=v end
+    -- Kill bloom first (its growth drives the glyphs).
+    local kb={discs={}}
+    local e,bfade,done=kill_bloom_disc(kb,now,kill,start,opts,context,{disc=function(...)
+        local saved=out.discs;out.discs=kb.discs;f.disc(...);out.discs=saved end,mb_radius=f.mb_radius,mb_height=f.mb_height})
+    local grow_to=option(opts,'mb_bloom_end')*option(opts,'kill_bloom_size')
+    local with_bloom=option(opts,'kill_mb_glyphs')=='bloom'
+    local gscale=1+(grow_to-1)*e
+    local galpha=with_bloom and (done and 0 or (k<option(opts,'kill_bloom_delay')and 1 or bfade))or fade
+    local discs={}
+    local function glyph_copy(d)
+        d.radius=d.radius*(with_bloom and gscale or 1)
+        d.color,d.outline=scale_alpha(d.color,galpha),scale_alpha(d.outline,galpha)
+        if d.colors then for i,x in ipairs(d.colors)do d.colors[i]=scale_alpha(x,galpha)end end
+        if d.hub then d.hub=scale_alpha(d.hub,galpha)end
+        if galpha>0 then discs[#discs+1]=d end
+    end
+    for _,d in ipairs(out.discs)do
+        if d.role=='bloom'or d.role=='umbra-bloom'then
+            -- The MB's own bloom is drawn back in and fades with the rings.
+            if option(opts,'kill_mb_bloom')=='in'then d.radius=d.radius*drawn end
+            local a=drawn*fl
+            d.color,d.hub=scale_alpha(d.color,a),d.hub and scale_alpha(d.hub,a)or nil
+            if d.colors then for i,x in ipairs(d.colors)do d.colors[i]=scale_alpha(x,a)end end
+            if a>0 and d.radius>0 then discs[#discs+1]=d end
+        elseif kill_glyph_role[d.role]or d.glyph==2 then glyph_copy(d)
+        else
+            -- Disc with its own glyph lines: the fill flickers out with the
+            -- rings; the lines go with the glyphs.
+            if (d.glyph or 0)~=0 and (d.outline or 0)~=0 then
+                local g={}for key,x in pairs(d)do g[key]=x end
+                g.colors={0x00FFFFFF,0x00FFFFFF};g.color=0x00FFFFFF;g.hub=nil;g.glyph=2
+                glyph_copy(g)
+            end
+            d.glyph=0;d.outline=0
+            d.color=paint(d.color,fade,own)
+            if d.colors then for i,x in ipairs(d.colors)do d.colors[i]=paint(x,fade,own)end end
+            if d.hub then d.hub=paint(d.hub,fade,own)end
+            if fade>0 then discs[#discs+1]=d end
+        end
+    end
+    for _,d in ipairs(kb.discs)do discs[#discs+1]=d end
+    out.discs=discs
+    for i=#(out.glyphs3 or {}),1,-1 do
+        local x=out.glyphs3[i]
+        x.radius=x.radius*(with_bloom and gscale or 1);x.color=scale_alpha(x.color,galpha)
+        if galpha<=0 then table.remove(out.glyphs3,i)end
+    end
+end
 local function mb_kill(out,s,now,kill,start,opts,context,f)
     local K=max(.2,option(opts,'kill_time'))
     local k=now-start
@@ -471,26 +570,9 @@ local function mb_kill(out,s,now,kill,start,opts,context,f)
     for _,d in ipairs(out.discs)do if d.role=='property'then fill_h=d.offset break end end
     local delta=fill_h and (f.mb_height-fill_h)or 0
     local bloom={bloom=true,['umbra-bloom']=true,['kill-bloom']=true}
-    if option(opts,'kill_mb_rings')=='freeze'and f.frozen then
-        -- The SC rings stop where they were at the kill and flicker out in the
-        -- element's color; the MB ring keeps going.
-        local rgb=kill.color or {255,255,255}
-        local fade=(1-smooth(k/max(.05,option(opts,'kill_mb_fade'))))*flicker(now,option(opts,'kill_mb_flicker'))
-        local rings={}
-        for _,v in ipairs(f.frozen)do
-            if (v.part=='ground'or v.part=='sky')and fade>0 then
-                v.color,v.tail=tint(v.color,rgb,fade),tint(v.tail,rgb,fade)
-                if v.colors then for i,x in ipairs(v.colors)do v.colors[i]=tint(x,rgb,fade)end end
-                rings[#rings+1]=v
-            end
-        end
-        for _,v in ipairs(out)do if v.part~='ground'and v.part~='sky'then rings[#rings+1]=v end end
-        for i=#out,1,-1 do table.remove(out,i)end
-        for i,v in ipairs(rings)do out[i]=v end
-        g=0
-    end
+    if option(opts,'kill_mb_rings')=='freeze'then return M.mb_kill_freeze(out,now,kill,start,opts,context,f)end
     for _,v in ipairs(out)do
-        if g>0 and (v.part=='ground'or v.part=='sky')then
+        if v.part=='ground'or v.part=='sky'then
             v.offset=v.offset+(f.mb_height-v.offset)*g
             v.color,v.tail=scale_alpha(v.color,1-g),scale_alpha(v.tail,1-g)
             if v.colors then for i,x in ipairs(v.colors)do v.colors[i]=scale_alpha(x,1-g)end end
@@ -503,23 +585,7 @@ local function mb_kill(out,s,now,kill,start,opts,context,f)
     end
     for _,x in ipairs(out.glyphs3 or {})do x.offset=x.offset+delta;x.radius=x.radius*c end
     -- Second bloom: the killing element bursting outward right after the MB's own.
-    local life=max(.1,option(opts,'kill_bloom_time'))
-    local age=now-(start+option(opts,'kill_bloom_delay'))
-    if age>=0 and age<life then
-        local t=age/life
-        local color=kill.color or {255,255,255}
-        local before=#out.discs
-        local from=option(opts,'mb_bloom_start')
-        local to=option(opts,'mb_bloom_end')*option(opts,'kill_bloom_size')
-        f.disc(f.mb_radius*(from+(to-from)*(1-(1-t)^2.5)),f.mb_height,0,{color},
-            option(opts,'kill_bloom_opacity')*smooth(age/.05)*(1-t)^1.5,0,0,'kill-bloom')
-        if #out.discs>before then
-            local d=out.discs[#out.discs]
-            d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
-            d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
-            d.hub=context.argb(mix(color,{255,255,255},option(opts,'mb_bloom_core')),option(opts,'kill_bloom_opacity'))
-        end
-    end
+    kill_bloom_disc(out,now,kill,start,opts,context,f)
     if k>=K then
         for i=#out,1,-1 do table.remove(out,i)end
         local kept={}
@@ -748,9 +814,10 @@ function M.frame(model,s,now,radius,height,opts,context)
     local kill=option(opts,'kill')and model.kills and model.kills[s.id]or nil
     local kill_start
     if kill then
-        kill_start=kill.at+(kill.kind=='sc'and option(opts,'kill_sc_freeze')or 0)
+        local mb_freeze=kill.kind=='mb'and option(opts,'kill_mb_rings')=='freeze'
+        kill_start=kill.at+(kill.kind=='sc'and option(opts,'kill_sc_freeze')or mb_freeze and option(opts,'kill_mb_freeze')or 0)
         if real_now<kill_start or real_now>kill_start+option(opts,'kill_time')+2 then kill=nil
-        elseif kill.kind=='sc'then now=kill_start end
+        elseif kill.kind=='sc'or option(opts,'kill_mb_rings')=='freeze'then now=kill_start end
     end
     local out={discs={}}
     local display=option(opts,'display')
@@ -1567,12 +1634,8 @@ function M.frame(model,s,now,radius,height,opts,context)
             for _,g in ipairs(out.glyphs3 or {})do g.radius=g.radius*c end
         end
     end
-    local frozen
-    if kill and kill.kind=='mb'and option(opts,'kill_mb_rings')=='freeze'then
-        frozen=M.frame(model,s,kill.at,radius,height,setmetatable({kill=false},{__index=opts}),context)
-    end
     if kill then M.apply_kill(out,s,real_now,kill,kill_start,opts,context,
-        {mb_height=mb_height,radius=radius,bottom=bottom,top=top,height=height,mb_radius=mb_radius,disc=disc,frozen=frozen})end
+        {mb_height=mb_height,radius=radius,bottom=bottom,top=top,height=height,mb_radius=mb_radius,disc=disc})end
     -- Kill halves may use the DLL's full 64 rings.
     while #out>(kill and 64 or 32)do table.remove(out,1)end
     return out

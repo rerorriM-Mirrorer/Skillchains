@@ -1,5 +1,18 @@
 # TargetSC — elemental resonance
 
+## 0.18.2 unified Test6.3 — MB kill freezes (Lua only; DLL stays 0.12.0)
+
+- **MB kill, new default (`kill mb rings freeze`):** `kill mb freeze` (.2 s)
+  after the kill the whole animation stops (no turning, breathing, rising).
+  Every ring, SC and MB alike, and the property disc(s) flicker in the
+  element's color and fade out together over `kill mb fade` (.6 s, flicker
+  `kill mb flicker` .6). The MB's own bloom is drawn back in and fades with
+  them (`kill mb bloom in|fade`). The glyphs (MB glyph, the disc's own lines)
+  grow and fade out with the kill bloom (`kill mb glyphs bloom|fade`).
+  `kill mb discs element|own`: discs flicker in the element color or keep
+  their own colors. Nothing gathers at the MB ring any more;
+  `kill mb rings gather` still gives the Test6.1 look.
+
 ## 0.18.1 unified Test6.2 — kill tuning (Lua only; DLL stays 0.12.0)
 
 - **SC kill calmer:** halves flicker less (`kill sc flicker`, .35; 1 = the
@@ -1350,3 +1363,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-18 unified Test6.1 (0.18.0, native 0.12.0): kill animations (MB and SC), kill detection in the embedded engine. Author: A.
 
 2026-11-18 unified Test6.2 (0.18.1): kill tuning (calmer SC halves, flickering seam, MB rings freeze and flicker out in the element color, faster larger second bloom). Author: A.
+
+2026-11-18 unified Test6.3 (0.18.2): MB kill freezes; rings and discs flicker out together in the element color; MB bloom drawn in; glyphs grow with the kill bloom. Author: A.

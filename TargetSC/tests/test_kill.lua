@@ -59,24 +59,45 @@ local function role(f,r)for _,d in ipairs(f.discs)do if d.role==r then return d 
 local K=o.kill_time
 local before=at(1.45)
 local mbh=find(before,'mb').offset
--- Test6.2 default: SC rings freeze where they were and flicker out in the element color.
-assert(o.kill_mb_rings=='freeze')
+-- Test6.3 default: the whole MB animation freezes (`mb freeze` after the
+-- kill); all rings and discs flicker in the element color and fade together;
+-- the MB's own bloom draws back in; the glyphs grow and fade with the kill bloom.
+assert(o.kill_mb_rings=='freeze'and o.kill_mb_bloom=='in'and o.kill_mb_glyphs=='bloom')
 local ice=R.argb(R.element_color('Ice'),1)%16777216
-local f1,f2=at(1.6),at(1.75)
-local g1,g2=find(f1,'ground'),find(f2,'ground')
-near(g1.offset,g2.offset,1e-9,'frozen height')
-assert(g1.offset~=mbh,'not gathered')
-assert(g1.color%16777216==ice,'element color')
-assert(alpha(g2.color)<=alpha(find(at(1.52),'ground').color),'fading')
-assert(not find(at(1.5+o.kill_mb_fade+.02),'ground'),'gone after mb fade')
-near(role(f1,'property').offset,mbh,1e-6,'disc jumped to the MB ring')
-near(role(f1,'mb-glyph').offset,mbh,1e-6,'MB glyph meets the MB ring')
--- Second bloom: element color, faster and larger than the MB's own.
+local z=1.5+o.kill_mb_freeze
+local f1,f2=at(z+.05),at(z+.15)
+local m1,m2=find(f1,'mb'),find(f2,'mb')
+near(m1.offset,m2.offset,1e-9,'frozen MB ring')
+near(m1.radius,m2.radius,1e-9,'no motion')
+assert(m1.color%16777216==ice and find(f1,'ground').color%16777216==ice,'MB and SC rings in the element color')
+assert(math.abs(find(f1,'ground').offset-m1.offset)>.01,'nothing gathers')
+assert(role(f1,'property').colors[1]%16777216==ice and role(f1,'property').glyph==0,'disc fill flickers in the element color')
+near(role(f1,'property').offset,role(at(z+.3),'property').offset,1e-9,'disc frozen in place')
+local b1,b2=role(f1,'bloom'),role(f2,'bloom')
+assert(b1 and b2 and b2.radius<b1.radius,'MB bloom drawn back in')
+local done=at(1.5+o.kill_mb_freeze+o.kill_mb_fade+.02)
+assert(#done==0 and not role(done,'property')and not role(done,'bloom'),'rings, discs and MB bloom fade out together')
+-- Second bloom: element color, faster and larger than the MB's own; glyphs grow with it.
 assert(o.kill_bloom_time<o.mb_bloom_time and o.kill_bloom_size>1)
-local kb=role(at(1.5+o.kill_bloom_delay+o.kill_bloom_time*.9),'kill-bloom')
+local before_bloom=role(at(z+o.kill_bloom_delay-.01),'mb-glyph').radius
+local fb=at(z+o.kill_bloom_delay+o.kill_bloom_time*.5)
+local kb=role(fb,'kill-bloom')
 assert(kb and kb.color%16777216==ice,'second bloom in the element color')
-local mbb=role(at(1.5+o.kill_bloom_delay+o.kill_bloom_time*.9),'bloom')
-assert(not mbb or kb.radius>mbb.radius,'overtakes the MB bloom')
+assert(role(fb,'mb-glyph').radius>before_bloom*1.3,'glyph grows with the kill bloom')
+assert(not role(at(z+o.kill_bloom_delay+o.kill_bloom_time+.02),'mb-glyph'),'glyph gone with the bloom')
+-- Variants.
+local ov=copy(o);ov.kill_mb_glyphs='fade';ov.kill_mb_bloom='fade';ov.kill_mb_discs='own'
+local pv=P.new(P.parse({'kill','mb','Ice'},R),71,0,R,ov)
+local function vat(t)pv:advance(t)return pv.model:frame(71,t,2,4,ov)end
+local v1,v2=vat(z+.05),vat(z+.15)
+near(role(v1,'bloom').radius,role(v2,'bloom').radius,1e-9,'mb bloom fade: stays its size')
+near(role(v2,'mb-glyph').radius,role(v1,'mb-glyph').radius,1e-9,'mb glyphs fade: no growth')
+do
+    local plain=copy(ov);plain.kill=false
+    local pp=P.new(P.parse({'kill','mb','Ice'},R),71,0,R,plain);pp:advance(z)
+    local ref=role(pp.model:frame(71,z,2,4,plain),'property')
+    for i,c in ipairs(role(v1,'property').colors)do assert(c%16777216==ref.colors[i]%16777216,'mb discs own: keeps its colors')end
+end
 -- Test6.1 look: kill mb rings gather.
 local og=copy(o);og.kill_mb_rings='gather'
 local pg=P.new(P.parse({'kill','mb','Ice'},R),71,0,R,og)
@@ -84,7 +105,8 @@ pg:advance(1.5+og.kill_mb_gather+.01)
 local gathered=pg.model:frame(71,1.5+og.kill_mb_gather+.01,2,4,og)
 near(find(gathered,'ground').offset,mbh,1e-6,'ground ring gathered at the MB ring')
 assert(alpha(find(gathered,'ground').color)<3,'and faded')
-assert(find(at(1.5+K*.9),'mb').radius<find(before,'mb').radius*.5,'collapsing')
+pg:advance(1.5+K*.9)
+assert(find(pg.model:frame(71,1.5+K*.9,2,4,og),'mb').radius<find(before,'mb').radius*.5,'gather: collapsing')
 assert(#at(1.5+K+.05)==0,'gone after kill time')
 -- SC kill animation.
 R.view_angle=0
@@ -119,12 +141,14 @@ local cmd=C.new(settings,R.defaults,function()end,function()end,R.killala)
 cmd('kill',{'off'});assert(settings.kill==false);cmd('kill',{'on'});assert(settings.kill==true)
 cmd('kill',{'time','2'});cmd('kill',{'mb','gather','.5'});cmd('kill',{'bloom','size','3'})
 cmd('kill',{'mb','rings','gather'});assert(settings.kill_mb_rings=='gather')
+cmd('kill',{'mb','freeze','.3'});cmd('kill',{'mb','bloom','fade'});cmd('kill',{'mb','glyphs','fade'});cmd('kill',{'mb','discs','own'})
+assert(settings.kill_mb_freeze==.3 and settings.kill_mb_bloom=='fade'and settings.kill_mb_glyphs=='fade'and settings.kill_mb_discs=='own')
 cmd('kill',{'sc','flicker','.2'});cmd('kill',{'seam','flicker','.5'});assert(settings.kill_sc_flicker==.2 and settings.kill_seam_flicker==.5)
 cmd('kill',{'sc','split','.2'});cmd('kill',{'sc','turn','-.1'});cmd('kill',{'seam','angle','90'})
 assert(settings.kill_time==2 and settings.kill_mb_gather==.5 and settings.kill_bloom_size==3)
 assert(settings.kill_sc_split==.2 and settings.kill_sc_turn==-.1 and settings.kill_seam_angle==90)
 cmd('preset',{'killala'});assert(settings.kill==false);cmd('preset',{'default'});assert(settings.kill==true)
-print('PASS 0.18 kills: bridge detection (WS/MB last hit, same actor, falls msg, melee/plain/stale/other actor/unsubscribed rejected), model event, MB kill (gather, glyph at ring, second element bloom, collapse, end), SC kill (seam, glyph flash-out, split halves across the seam, ghost white, half arcs, sag, end, off), commands, presets')
+print('PASS 0.18 kills: bridge detection (WS/MB last hit, same actor, falls msg, melee/plain/stale/other actor/unsubscribed rejected), model event, MB kill (6.3 freeze: frozen rings/discs in element color fading together, MB bloom drawn in, glyphs growing with the kill bloom, variants; 6.1 gather and collapse; end), SC kill (seam, glyph flash-out, split halves across the seam, ghost white, half arcs, sag, end, off), commands, presets')
 -- The unified addon's embedded Skillchains engine (not the standalone
 -- Skillchains addon) must feed the bridge.
 local src=assert(io.open('TargetSC/sc_runtime.lua')):read('*a')
