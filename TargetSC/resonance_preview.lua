@@ -28,7 +28,11 @@ function M.parse(args,resonance)
     if first=='mb'or first=='mbdemo'or (first=='demo'and (args[2]or ''):lower()=='mb')then
         return {kind='mbdemo',properties={'Scission'},level=1}
     end
-    if first=='demo' or first=='umbra' or first=='full'then
+    -- Test5.2: `preview umbra` = a Darkness window about to close, closed by
+    -- Umbra (its full level-4 animation). The four-link demo stays on
+    -- `preview demo` / `preview full`.
+    if first=='umbra'then return {kind='umbraopen',properties={'Darkness'},level=3}end
+    if first=='demo' or first=='full'then
         return {kind='umbra',properties={'Scission'},level=1}
     elseif examples[first] then kind='chain';prop=examples[first]
     elseif first=='opener' or first=='pre' or first=='window' or first=='expire' or first=='chain' or first=='closed' or first=='demo' then
@@ -100,6 +104,13 @@ function M.new(spec,id,now,resonance,opts)
         burst_at(umbra.mb_close-ending,'Dark')
         self.final=umbra
     end
+    if kind=='umbraopen'then
+        -- Darkness (level 3) opened 5 s ago; its SC window closes at 2 s.
+        -- Umbra (level 4) lands at 1.2 s and plays out to its MB deadline.
+        s=state(now-5,4,{'Darkness'},3,false)
+        self.stage='Darkness window open, about to close (local visual preview)'
+        self.final=chain_at(now+1.2,5,'Umbra',4,true,'Umbra (Level 4) closes the chain')
+    end
     if self.final then table.sort(self.events,function(a,b)return a.at<b.at end)end
     if kind=='window'or kind=='burst' then
         s=state(now-3,2,spec.properties,spec.level,false)
@@ -164,7 +175,8 @@ function M.new(spec,id,now,resonance,opts)
         end
         return table.concat(parts,', ')
     end
-    self.description=kind=='mblight'and ('MB Light overlap: Fusion window open (closes 3.0s); '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
+    self.description=kind=='umbraopen'and ('Umbra: Darkness window closing (2.0s); Umbra lands 1.2s; full Umbra animation, ends '..at(self.ends)..'; local visuals only.')or
+        kind=='mblight'and ('MB Light overlap: Fusion window open (closes 3.0s); '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
         kind=='mbdark'and ('MB Dark overlap: Darkness link 0s; '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
         kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or
         kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or

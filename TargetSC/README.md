@@ -1,5 +1,11 @@
 # TargetSC — elemental resonance
 
+## 0.15.3 unified Test5.3 — preview umbra
+
+`//tsc preview umbra` now plays a Darkness window about to close, closed by
+Umbra at 1.2 s, then the full Umbra animation (ends 11.2 s). The old four-link
+demo is `//tsc preview demo` (or `preview full`). Lua-only.
+
 ## 0.15.2 unified Test5.2 — Radiance and Umbra ring looks, level-4 opacity
 
 Lua-only (`//lua reload TargetSC`). All of it is adjustable; `preset killala`
@@ -1178,3 +1184,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test5.1 (0.15.1): Radiance MB ring like a level-3 Light middle ring; level-4 disc inner/middle/outer/position/size/height. Author: A.
 
 2026-11-17 unified Test5.2 (0.15.2): Radiance/Umbra ring looks and close sequences, shimmer, level-4 opacity overrides. Author: A.
+
+2026-11-17 unified Test5.3 (0.15.3): preview umbra = Darkness closed by Umbra. Author: A.

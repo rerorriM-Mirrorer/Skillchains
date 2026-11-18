@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.15.2-unified-test5.2'
+_addon.version='0.15.3-unified-test5.3'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -161,6 +161,7 @@ local function help()
         {'detarget time <0-3>','Untarget/ordinary death: the animation keeps running and dims over this many seconds (default 1; 0 = instant).'},
         {'switch out <0-1>','Switching to an enemy with resonance: seconds the old one takes to fade (default .25).'},
         {'switch in <0-1>','Then the new enemy fades in over this many seconds (default .35).'},
+        {'preview umbra','A Darkness window about to close is closed by Umbra; plays the full Umbra animation (old four-link demo: preview demo).'},
         {'preview mb light','Fusion nearly closed takes a Fire MB, Light opens; Light MB, then Wind as the ending begins.'},
         {'preview mb dark','Darkness: Ice then Dark MBs; Umbra late in the window; Ice, Earth, then Dark as the ending begins.'},
         {'mb style clapper|classic','Low breathing clapper / Test9 presentation comparison.'},

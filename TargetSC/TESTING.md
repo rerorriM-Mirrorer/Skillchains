@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.15.3 unified Test5.3 — `preview umbra` (2026-11-17)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only quick patch. Author: A.
+
+**User request:** "one quick patch with tsc preview umbra, a darkness skillchain closing is opened into the full umbra animation" (to test Test5.2's Umbra look ASAP).
+
+**Change:** `preview umbra` (any case) → Darkness level 3 link created 5 s before the preview (SC window closes at 2.0 s), Umbra level 4 closed link at 1.2 s, preview ends at Umbra's MB deadline (11.2 s). The four-link demo previously on `umbra` remains on `preview demo` / `preview full`.
+
+**Host verification (not FFXI):** full suite PASS; `test_level4_looks.lua` adds: Darkness window closing within 3 s, Umbra level 4 closed created at 1.2 s, preview ends after Umbra's MB deadline, `demo` still the sequence. **Live pending:** the Umbra look via this preview.
+
 ## TargetSC 0.15.2 unified Test5.2 — Radiance/Umbra ring looks (Batch A of the level-4 pass) (2026-11-17)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only. Author: A.

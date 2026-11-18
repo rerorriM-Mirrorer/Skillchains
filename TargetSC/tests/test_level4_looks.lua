@@ -134,4 +134,11 @@ assert(settings.radiance_look=='classic'and settings.radiance_close=='classic'an
 assert(settings.umbra_look=='classic'and settings.umbra_glow=='violet'and settings.umbra_close=='classic')
 cmd('preset',{'default'})
 assert(settings.radiance_look=='open'and settings.umbra_look=='black'and settings.umbra_smoke_opacity==.5)
-print('PASS Test5.2 level-4 looks: Radiance open white, lower/inner-first close over 3 s with glow flash before each ring, staggered far-to-near shimmer (+MB ring), opacity overrides; Umbra black cores/white glow, upper/outer-first white flash-out, black smoke; commands, presets')
+-- Test5.3: `preview umbra` = Darkness about to close, closed by Umbra.
+local pu=P.new(P.parse({'umbra'},R),71,0,R,o)
+assert(pu.model.states[71].properties[1]=='Darkness'and pu.model.states[71].sc_close>0 and pu.model.states[71].sc_close<3,'Darkness window about to close')
+for t=0,1.3,.1 do pu:advance(t)end
+local us=pu.model.states[71]
+assert(us.properties[1]=='Umbra'and us.level==4 and us.closed and math.abs(us.created-1.2)<1e-9,'Umbra lands at 1.2 s')
+assert(pu.ends>us.mb_close and P.parse({'demo'},R).kind=='umbra','demo sequence still on preview demo')
+print('PASS Test5.2 level-4 looks: Radiance open white, lower/inner-first close over 3 s with glow flash before each ring, staggered far-to-near shimmer (+MB ring), opacity overrides; Umbra black cores/white glow, upper/outer-first white flash-out, black smoke; commands, presets; preview umbra')
