@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.15.1-unified-test5.1'
+_addon.version='0.15.2-unified-test5.2'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -139,6 +139,21 @@ local function help()
         {'mb radiance light|classic','Radiance MB ring like a level-3 Light middle ring (white, colored inner glow) or classic (default light).'},
         {'mb radiance glow <0-3>','Strength of that colored glow (default 3).'},
         {'mb radiance cycle <0.05-8>','Seconds per color shift of the glow (default .4 = fast).'},
+        {'radiance opacity <0-1|same>','Radiance rings/glows/disc lines use this instead of the overall opacity (same = overall).'},
+        {'radiance disc opacity <0-1|same>','Radiance disc fill, ignoring overall and discs opacity (same = as before).'},
+        {'radiance look open|classic','open: rings keep their opening white; classic: turn gold (default open).'},
+        {'radiance close sequence|classic | close time <0.3-6>','Rings close one at a time over this many seconds (default sequence, 3).'},
+        {'radiance order lower|upper|together | direction inner|outer','Which set closes first, and from which strand (default lower, inner).'},
+        {'radiance lead|fade|flash <number>','Each glow flashes (flash 0-3, 1.5) and goes out lead s (.2) before its ring fades over fade s (.5).'},
+        {'radiance shimmer <0-1>','Bright patch traveling around each glow, far side to near side and back (default .6; 0 = off).'},
+        {'radiance shimmer time|stagger|angle <number>','Seconds per sweep (2), offset per ring 0-1 (.12), angle offset -180..180 to aim the far side (0).'},
+        {'radiance shimmer when close|all | shimmer mb on|off','Shimmer only while closing or the whole time (close); MB ring joins (on).'},
+        {'umbra opacity|disc opacity <0-1|same>','Umbra rings/glows and disc fill, ignoring the overall opacity (1 = total black).'},
+        {'umbra look black|classic | glow white|violet','Black cores from the opening and a white glow (default black, white).'},
+        {'umbra close sequence|classic | close time <0-6>','Hold this long after opening, then each ring flashes white and vanishes (default sequence, 3).'},
+        {'umbra order upper|lower|together | direction outer|inner','Which set goes first, and from which strand (default upper, outer).'},
+        {'umbra gap|flash|flash time <number>','Seconds between rings (.12), flash strength 0-1 (.6), flash length (.08).'},
+        {'umbra smoke|smoke opacity|smoke spread <number>','Leftover black glow: seconds (1.5), strength 0-2 (.5), spread while dissipating 0-.3 (.05).'},
         {'discs level4 inner|middle|outer <0-1|same>','Radiance/Umbra property disc opacity at center, middle point, edge (same = discs setting; middle same = none).'},
         {'discs level4 position <0.05-0.95>','Where the middle point sits along the radius (default .5; needs DLL 0.10.0).'},
         {'discs level4 size <0.2-3|same>','Radiance/Umbra disc size (fill and lines), same = discs size.'},
@@ -424,6 +439,14 @@ local function carries(p,id)
     if p.switch then return p.carriers[id]==true end
     return p.id==id
 end
+-- Test5.2: approximate camera direction for the Radiance shimmer: from you
+-- toward the target (the far side of its rings); 0 on yourself.
+local function view_toward(mob)
+    local me=windower.ffxi.get_mob_by_target('me')
+    if me and mob and me.id~=mob.id and mob.x and me.x and mob.y and me.y then
+        resonance.view_angle=math.atan2(mob.y-me.y,mob.x-me.x)
+    else resonance.view_angle=0 end
+end
 local function frame_for(id,now,radius,height,p)
     if p and carries(p,id)then return p.model:frame(p.id,now,radius,height,settings)end
     return model:frame(id,now,radius,height,settings)
@@ -613,6 +636,7 @@ windower.register_event('prerender',function()
         else
             if o.preview then o.preview:advance(now)end
             local radius,height=resonance.dimensions(o.mob,settings)
+            view_toward(live.x and live or o.mob)
             draw(frame_for(o.id,now,radius,height,o.preview),o.mob,level)
             return
         end
@@ -624,6 +648,7 @@ windower.register_event('prerender',function()
     last_tracking_error=nil
     if preview then advance_preview(now) end
     local radius,height=resonance.dimensions(mob,settings)
+    view_toward(mob)
     local frame=frame_for(id,now,radius,height,preview)
     local level=1
     if incoming then

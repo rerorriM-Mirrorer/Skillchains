@@ -21,6 +21,7 @@ local function mb(f)
     local r={}for _,v in ipairs(f)do if v.part=='mb'then r[v.role]=r[v.role]or {};table.insert(r[v.role],v)end end return r
 end
 local o=copy(R.defaults)
+o.radiance_shimmer_mb=false -- Test5.2 shimmer brightens a patch; this file checks the plain 5.1 glow
 -- Radiance MB ring: white core with colored glows that shift over time.
 local a=mb(run({'Radiance','4'},6,o))
 assert(a.core and rgb(a.core[1].color)==0xFFFFFF,'white core')

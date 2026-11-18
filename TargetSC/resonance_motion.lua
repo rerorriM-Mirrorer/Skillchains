@@ -96,7 +96,25 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test5.1: level-4 (Radiance/Umbra) property disc. -1 = same as the
     -- `discs` setting; middle -1 = no middle point (needs DLL 0.10.0).
     disc_level4_inner=-1,disc_level4_middle=-1,disc_level4_position=.5,disc_level4_outer=-1,
-    disc_level4_size=-1,disc_level4_height=0}
+    disc_level4_size=-1,disc_level4_height=0,
+    -- Test5.2 level-4 looks. opacity/disc_opacity -1 = use the overall
+    -- `opacity` (and `discs opacity`); 0-1 replaces it for that skillchain.
+    -- Radiance: rings keep their opening white (look open), then close one
+    -- at a time (lower set first, inner to outer) over `close time`, each
+    -- glow flashing briefly and going out just before its ring; a bright
+    -- patch travels around each glow from the far side to the near side and
+    -- back, staggered per ring (shimmer), the MB ring joining in.
+    radiance_opacity=-1,radiance_disc_opacity=-1,radiance_look='open',radiance_close='sequence',
+    radiance_close_time=3,radiance_order='lower',radiance_direction='inner',radiance_lead=.2,
+    radiance_fade=.5,radiance_flash=1.5,radiance_shimmer=.6,radiance_shimmer_time=2,
+    radiance_shimmer_stagger=.12,radiance_shimmer_angle=0,radiance_shimmer_when='close',radiance_shimmer_mb=true,
+    -- Umbra: black cores with a white glow from the opening; after `close
+    -- time` each ring flashes white and vanishes (upper set first, outer to
+    -- inner, `gap` apart), leaving its glow as faint black smoke that
+    -- dissipates in place.
+    umbra_opacity=-1,umbra_disc_opacity=-1,umbra_look='black',umbra_glow='white',umbra_close='sequence',
+    umbra_close_time=3,umbra_order='upper',umbra_direction='outer',umbra_gap=.12,umbra_flash=.6,
+    umbra_flash_time=.08,umbra_smoke=1.5,umbra_smoke_opacity=.5,umbra_smoke_spread=.05}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -111,7 +129,9 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
     mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false,
-    detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic'}
+    detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
+    radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
+    umbra_look='classic',umbra_glow='violet',umbra_close='classic'}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -324,6 +344,70 @@ local function specifications(s,context,opts)
     end
     return result
 end
+-- Test5.2 level-4 close sequences. Ring order index: the first set (lower =
+-- ground, upper = sky, or together) then the other, each from inner or
+-- outer strand (strand 1 = innermost at level 4).
+local function level4_index(opts,name,part,j,n,has_top)
+    local order,direction=option(opts,name..'_order'),option(opts,name..'_direction')
+    local jj=direction=='inner'and j-1 or n-j
+    if order=='together'or not has_top then return jj,n end
+    local first=order=='lower'and 'ground'or 'sky'
+    return (part==first and 0 or n)+jj,2*n
+end
+function M.level4_end(s,opts,name,has_top)
+    local _,count=level4_index(opts,name,'ground',1,4,has_top)
+    if name=='radiance'then return s.sc_open+option(opts,'radiance_close_time')end
+    return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+
+        option(opts,'umbra_flash_time')+option(opts,'umbra_smoke')
+end
+-- Returns {index, core, glow, white, smoke, spread} multipliers for one ring.
+function M.level4_ring(s,now,opts,name,part,j,n,has_top)
+    local index,count=level4_index(opts,name,part,j,n,has_top)
+    local q={index=index}
+    if option(opts,name..'_close')~='sequence'or now<s.sc_open then return q end
+    if name=='radiance'then
+        local close=option(opts,'radiance_close_time')
+        local lead,fade=option(opts,'radiance_lead'),option(opts,'radiance_fade')
+        local step=count>1 and max(0,(close-lead-fade)/(count-1))or 0
+        local b=s.sc_open+index*step
+        local u=(now-b)/max(.01,lead)
+        local gain=option(opts,'radiance_flash')
+        if u<0 then q.glow=1
+        elseif u<.3 then q.glow=1+gain*smooth(u/.3)
+        elseif u<1 then q.glow=(1+gain)*(1-smooth((u-.3)/.7))
+        else q.glow=0 end
+        q.core=1-smooth((now-(b+lead))/max(.01,fade))
+    else
+        local m=s.sc_open+option(opts,'umbra_close_time')+index*option(opts,'umbra_gap')
+        local ft=option(opts,'umbra_flash_time')
+        if now<m then return q end
+        if now<m+ft then
+            q.white=1
+            q.core=1+option(opts,'umbra_flash')*4 -- toward full alpha (clamped)
+        else
+            q.core=0
+            local u=clamp((now-(m+ft))/max(.05,option(opts,'umbra_smoke')),0,1)
+            q.smoke=smooth(min(1,u*4)) -- white glow to black over the first quarter
+            q.glow=option(opts,'umbra_smoke_opacity')*(1-smooth(u))
+            q.spread=option(opts,'umbra_smoke_spread')*smooth(u)
+        end
+    end
+    return q
+end
+-- Test5.2 Radiance shimmer: patch angle from the far side (view angle =
+-- approximate camera direction) to the near side and back.
+function M.level4_shimmer(s,now,opts,name,index,view)
+    if name~='radiance'then return nil end
+    local g=option(opts,'radiance_shimmer')
+    if g<=0 then return nil end
+    local ramp=1
+    if option(opts,'radiance_shimmer_when')=='close'then ramp=smooth((now-s.sc_open)/.3)end
+    if ramp<=0 then return nil end
+    local period=max(.1,option(opts,'radiance_shimmer_time'))
+    local phase=2*pi*(now/period+option(opts,'radiance_shimmer_stagger')*index)
+    local base=(view or 0)+math.rad(option(opts,'radiance_shimmer_angle'))
+    return {angle=base+pi*(.5-.5*math.cos(phase)),gain=g*ramp}
+end
 function M.frame(model,s,now,radius,height,opts,context)
     local out={discs={}}
     local display=option(opts,'display')
@@ -389,6 +473,11 @@ function M.frame(model,s,now,radius,height,opts,context)
     end
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
     local intensity,opacity=option(opts,'intensity'),option(opts,'opacity')
+    -- Test5.2 level-4 (Radiance/Umbra link) looks.
+    local l4=not opener and s.step>1 and s.level>=4 and (s.properties[1]=='Radiance'or s.properties[1]=='Umbra')
+    local l4name=l4 and (s.properties[1]=='Radiance'and 'radiance'or 'umbra')
+    local function l4opt(k)return option(opts,l4name..'_'..k)end
+    if l4 and l4opt('opacity')>=0 then opacity=l4opt('opacity')end
     local px,glow=max(1,option(opts,'width')),option(opts,'glow')
     local opener=s.step==1
     local progress=clamp(age/max(.1,s.sc_open-s.created),0,1)
@@ -400,7 +489,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     local function packed(colors,a)
         local r={}for _,c in ipairs(colors)do r[#r+1]=context.argb(c,a)end return r
     end
-    local function band(r,h,colors,a,pixels,role,part,strand,rotation)
+    local function band(r,h,colors,a,pixels,role,part,strand,rotation,lit)
         if a<=.002 or r<.01 then return end
         r=min(r,100)
         local p=packed(colors,a)
@@ -428,10 +517,19 @@ function M.frame(model,s,now,radius,height,opts,context)
                     context.argb(c2,a*(1-shade)),context.argb(middle,a)}
             end
         end
+        local forced
+        if lit and lit.gain>0 then
+            -- Test5.2 shimmer: a bright patch at `lit.angle` fading to a dim
+            -- opposite side (native four-stop gradient, which turns with the
+            -- ring rotation, so the rotation carries the patch angle).
+            local c,g=colors[1],lit.gain
+            p={context.argb(c,a*(1+g)),context.argb(c,a),context.argb(c,a*max(0,1-g)),context.argb(c,a)}
+            rotation,forced=lit.angle,1
+        end
         out[#out+1]={radius=r,offset=h,width=0,pixels=pixels,color=p[1],colors=p,
             rotation=rotation or 0,role=role,part=part,strand=strand,
             gap=opener and (part=='ground'or part=='sky')and option(opts,'opener_gap')or 0,
-            blend=(burst_glow or not opener)and #p>1 and smooth_mode and 1 or 0}
+            blend=forced or ((burst_glow or not opener)and #p>1 and smooth_mode and 1 or 0)}
         local entry=out[#out]
         if opener and (part=='ground'or part=='sky')and entry.gap>0 then
             -- Opener arc fade (native 0.8.0). Openers spin toward increasing
@@ -455,15 +553,18 @@ function M.frame(model,s,now,radius,height,opts,context)
             fade_curve=option(opts,'opener_fade_curve'),
             fade_direction=option(opts,'opener_fade_end')=='trail'and -1 or 1}
     end
-    local function ring(r,h,colors,a,part,strand,rotation,light,glow_colors,glow_gain)
+    -- extra (Test5.2): {lit=shimmer, glow=glow alpha scale, core=core alpha
+    -- scale, spread=glow radius growth} for the level-4 close sequences.
+    local function ring(r,h,colors,a,part,strand,rotation,light,glow_colors,glow_gain,extra)
+        extra=extra or {}
         local opening=opener and (part=='ground'or part=='sky')
         local mode=opening and option(opts,'opener_glow')or 'color'
         if glow>0 and light~=false and mode~='off'then
             local surround=mode=='black'and {{0,0,0}}or glow_colors or colors
-            band(r,h,surround,a*.24*glow*(glow_gain or 1),px+4*min(glow,3),'glow',part,strand,
-                opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin'))
+            band(r*(1+(extra.spread or 0)),h,surround,a*.24*glow*(glow_gain or 1)*(extra.glow or 1),px+4*min(glow,3),'glow',part,strand,
+                opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin'),extra.lit)
         end
-        band(r,h,colors,a,px,'core',part,strand,rotation)
+        band(r,h,colors,a*(extra.core or 1),px,'core',part,strand,rotation)
     end
     local disc_cap=(context.native_level or 9)>=10 and 16 or 8
     local function disc(r,h,angle,colors,a,glyph,outline,role,stroke_color)
@@ -519,17 +620,23 @@ function M.frame(model,s,now,radius,height,opts,context)
                 end
             end
         end
-    elseif show_sc and phase~='mb-only'and phase~='expired'then
+    elseif show_sc and phase~='expired'and (phase~='mb-only'or (l4 and l4opt('close')=='sequence'and now<M.level4_end(s,opts,l4name,top~=nil)))then
         local specs=specifications(s,context,opts)
         if not opener and s.level~=2 and age<.16 then specs={{colors={white},radial=1,stack=0}}end
         out.strands=#specs
-        local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*fade
+        local l4seq=l4 and l4opt('close')=='sequence'
+        local ring_fade=l4seq and 1 or fade -- the sequence does its own fading
+        local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*ring_fade
         if s.level>=3 and not opener then alpha=alpha*(.72+.28*electric)end
         for j,spec in ipairs(specs)do
             local colors={}
             for _,c in ipairs(spec.colors)do
                 local target=opener and option(opts,'opener_muted')and muted(c)or c
-                colors[#colors+1]=mix(mix(white,target,color_t),white,flash)
+                local t=color_t
+                -- Test5.2: Radiance keeps its opening white; Umbra is black throughout.
+                if l4 and l4name=='radiance'and l4opt('look')=='open'then t=0 end
+                if l4 and l4name=='umbra'and l4opt('look')=='black'then target,t={0,0,0},1 end
+                colors[#colors+1]=mix(mix(white,target,t),white,flash)
             end
             local r=radius*spec.radial
             -- classic: only openers and L2 turn, slowing to a stop. disc
@@ -560,17 +667,35 @@ function M.frame(model,s,now,radius,height,opts,context)
                             inner_glow=mix(a1,a2,smooth(step-k))
                         end
                     end
+                    -- Test5.2 level-4 close sequence and shimmer for this ring.
+                    local q={}
+                    if l4 then q=M.level4_ring(s,now,opts,l4name,place[2],j,#specs,top~=nil)end
+                    local lit=l4 and M.level4_shimmer(s,now,opts,l4name,q.index or 0,context.view_angle)or nil
+                    local umbra_white=l4 and l4name=='umbra'and l4opt('glow')=='white'
                     if glow>0 and not opener and s.level>=3 then
                         local tint=(s.properties[1]=='Darkness'or s.properties[1]=='Umbra')and {132,74,224}or gold
+                        if umbra_white then tint=white end
+                        if q.smoke then tint=mix(tint,{0,0,0},q.smoke)end
                         -- Light's gold glow reads close to Earth; the elements
                         -- look may use a white glow instead (rings lightdark tint).
                         if lightdark(s,opts)and s.properties[1]=='Light'and option(opts,'ring_lightdark_tint')=='white'then tint=white end
                         if light_white(s,opts)then tint=inner_glow or white end
-                        band(draw_radius,h,{tint},opacity*.32*glow*electric*fade*(inner_glow and option(opts,'ring_light_glow')*light_open or 1),px+6*min(glow,3),'glow',place[2],j,
-                            rotation*option(opts,'ring_glow_spin'))
+                        band(draw_radius*(1+(q.spread or 0)),h,{tint},opacity*.32*glow*electric*ring_fade*(q.glow or 1)*
+                            (inner_glow and option(opts,'ring_light_glow')*light_open or 1),px+6*min(glow,3),'glow',place[2],j,
+                            rotation*option(opts,'ring_glow_spin'),lit)
                     end
-                    ring(draw_radius,h,colors,alpha,place[2],j,rotation,nil,
-                        inner_glow and {inner_glow}or nil,inner_glow and option(opts,'ring_light_glow')*light_open or nil)
+                    local core_colors=colors
+                    if q.white then
+                        core_colors={}
+                        for i,c in ipairs(colors)do core_colors[i]=mix(c,white,q.white)end
+                    end
+                    local glow_colors=inner_glow and {inner_glow}or nil
+                    if umbra_white then glow_colors={white}end
+                    if q.smoke and glow_colors then glow_colors={mix(glow_colors[1],{0,0,0},q.smoke)}
+                    elseif q.smoke then glow_colors={}for i,c in ipairs(colors)do glow_colors[i]=mix(c,{0,0,0},q.smoke)end end
+                    ring(draw_radius,h,core_colors,alpha,place[2],j,rotation,nil,
+                        glow_colors,inner_glow and option(opts,'ring_light_glow')*light_open or nil,
+                        {lit=lit,glow=q.glow,core=q.core,spread=q.spread})
                 end
             end
         end
@@ -695,6 +820,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         local reveal=opener and smooth(progress*5)or 1
         local fill=option(opts,'disc_opacity')*opacity*life*reveal
+        -- Test5.2: a level-4 disc opacity replaces discs opacity x overall opacity.
+        if l4 and l4opt('disc_opacity')>=0 then fill=l4opt('disc_opacity')*life*reveal end
         -- Test4.2: opener discs may use their own line opacity (-1 = same
         -- as discs outline).
         local line=option(opts,'disc_outline')
@@ -845,11 +972,13 @@ function M.frame(model,s,now,radius,height,opts,context)
             local gain=option(opts,'mb_radiance_glow')
             local buzz=.68+.32*sin(age*11)^2 -- level-3 electric
             local a=alpha*mb_overall
+            -- Test5.2: the MB ring may join the rings' shimmer (after them in the stagger).
+            local lit=option(opts,'radiance_shimmer_mb')and M.level4_shimmer(s,now,opts,'radiance',8,context.view_angle)or nil
             if glow>0 then
                 band(mb_radius,ring_height,{inner},a*.32*glow*buzz*gain/max(.05,option(opts,'brightness')*.95*(.72+.28*buzz)),
-                    px+6*min(glow,3),'glow','mb',0,mb_rotation*option(opts,'ring_glow_spin'))
+                    px+6*min(glow,3),'glow','mb',0,mb_rotation*option(opts,'ring_glow_spin'),lit)
             end
-            ring(mb_radius,ring_height,{color},a,'mb',0,mb_rotation,nil,{inner},gain)
+            ring(mb_radius,ring_height,{color},a,'mb',0,mb_rotation,nil,{inner},gain,{lit=lit})
         else
             ring(mb_radius,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
         end

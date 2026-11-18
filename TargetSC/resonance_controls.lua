@@ -107,6 +107,42 @@ function M.new(settings,defaults,save,say,killala)
         end
         numeric('disc_level4_'..name,args[3],ranges[name],'discs level4 '..name)
     end
+    -- Test5.2: //tsc radiance ... and //tsc umbra ... (level-4 looks).
+    local level4_spec={
+        radiance={opacity={'n',0,1,same=true},['disc opacity']={'n',0,1,same=true},look={'c','open','classic'},
+            close={'c','sequence','classic'},['close time']={'n',.3,6},order={'c','lower','upper','together'},
+            direction={'c','inner','outer'},lead={'n',.05,1},fade={'n',.05,2},flash={'n',0,3},
+            shimmer={'n',0,1},['shimmer time']={'n',.2,8},['shimmer stagger']={'n',0,1},
+            ['shimmer angle']={'n',-180,180},['shimmer when']={'c','close','all'},['shimmer mb']={'b'}},
+        umbra={opacity={'n',0,1,same=true},['disc opacity']={'n',0,1,same=true},look={'c','black','classic'},
+            glow={'c','white','violet'},close={'c','sequence','classic'},['close time']={'n',0,6},
+            order={'c','upper','lower','together'},direction={'c','outer','inner'},gap={'n',0,.5},
+            flash={'n',0,1},['flash time']={'n',.02,.5},smoke={'n',.1,4},['smoke opacity']={'n',0,2},
+            ['smoke spread']={'n',0,.3}}}
+    local function level4_look(command,args)
+        local spec=level4_spec[command]
+        local a1,a2=(args[1]or ''):lower(),(args[2]or ''):lower()
+        local name,rest=a1..' '..a2,3
+        if not spec[name]then name,rest=a1,2 end
+        local entry=spec[name]
+        if not entry then
+            local names={}for k in pairs(spec)do names[#names+1]=k end table.sort(names)
+            say('Use //tsc '..command..' <setting> <value>. Settings: '..table.concat(names,', ')..'.')return
+        end
+        local key=command..'_'..name:gsub(' ','_')
+        local raw=(args[rest]or ''):lower()
+        if entry[1]=='n'then
+            if entry.same and raw=='same'then settings[key]=-1;save(settings);say(command..' '..name..': same as the overall setting.')return end
+            numeric(key,args[rest],{entry[2],entry[3]},command..' '..name)
+        elseif entry[1]=='b'then
+            if raw~='on'and raw~='off'then raw=settings[key]and 'off'or 'on'end
+            settings[key]=raw=='on';save(settings);say(command..' '..name..' '..raw..'.')
+        else
+            local ok=false for i=2,#entry do ok=ok or entry[i]==raw end
+            if not ok then say('Use //tsc '..command..' '..name..' '..table.concat({select(2,unpack(entry))},'|')..'.')return end
+            settings[key]=raw;save(settings);say(command..' '..name..' '..raw..'.')
+        end
+    end
     local function discs(args,value)
         local stage=(args[2]or ''):lower()
         if value=='level4'then level4(args)
@@ -210,7 +246,8 @@ function M.new(settings,defaults,save,say,killala)
     return function(command,args)
         local value=(args[1]or ''):lower()
         local group=groups[command]
-        if command=='detarget'then
+        if command=='radiance'or command=='umbra'then level4_look(command,args)
+        elseif command=='detarget'then
             -- Test5.0: untarget/ordinary-death dim, from the first moment.
             local n=value=='time'and args[2]or args[1]
             numeric('detarget_time',n,{0,3},'detarget time')

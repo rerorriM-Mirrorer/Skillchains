@@ -228,7 +228,8 @@ function M.new()
         if (opts.motion or motion.defaults.motion)~='legacy' then
             if s.previous and now-s.created>=.3 then s.previous=nil end
             return motion.frame(self,s,now,radius,height,opts,{palette=palette,argb=M.argb,level=M.level,
-                elements=M.elements,element_color=M.element_color,native_level=M.native_level})
+                elements=M.elements,element_color=M.element_color,native_level=M.native_level,
+                view_angle=M.view_angle})
         end
         if s.source_expired then return out end
         if s.previous and now-s.created<.12 then
