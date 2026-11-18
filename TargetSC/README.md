@@ -1,5 +1,27 @@
 # TargetSC — elemental resonance
 
+## 0.15.2 unified Test5.2 — Radiance and Umbra ring looks, level-4 opacity
+
+Lua-only (`//lua reload TargetSC`). All of it is adjustable; `preset killala`
+restores the old looks.
+- **Opacity overrides:** `//tsc radiance opacity <0-1|same>` / `umbra opacity`
+  replace the overall `opacity` for that skillchain's rings, glows and disc
+  lines; `radiance disc opacity` / `umbra disc opacity` set the disc fill
+  directly (`umbra disc opacity 1` = total black).
+- **Radiance:** rings keep their opening white (`radiance look open|classic`),
+  then close one at a time over `radiance close time` (3 s): lower set first,
+  inner to outer (`radiance order lower|upper|together`, `direction inner|outer`).
+  Each glow flashes (`flash`, 1.5) and goes out `lead` s (.2) before its ring
+  fades over `fade` s (.5). A bright patch travels around each glow from the far
+  side to the near side and back, staggered per ring (`radiance shimmer <0-1>`
+  .6, `shimmer time` 2 s, `shimmer stagger` .12, `shimmer angle` to aim it,
+  `shimmer when close|all`, `shimmer mb on|off` for the MB ring).
+- **Umbra:** black cores with a white glow from the opening (`umbra look`,
+  `umbra glow white|violet`); after `umbra close time` (3 s) each ring flashes
+  white and vanishes, upper set first, outer to inner, `gap` (.12 s) apart
+  (`flash` .6, `flash time` .08); its glow stays as faint black smoke that
+  dissipates in place (`smoke` 1.5 s, `smoke opacity` .5, `smoke spread` .05).
+
 ## 0.15.1 unified Test5.1 — Radiance MB ring; level-4 disc controls
 
 Lua-only (`//lua reload TargetSC`; DLL 0.10.0 needed for the middle point).
@@ -1154,3 +1176,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-17 unified Test5.0 (0.15.0): target handoff fades (detarget, switch out/in), preview off fade, preview switch. Author: A.
 
 2026-11-17 unified Test5.1 (0.15.1): Radiance MB ring like a level-3 Light middle ring; level-4 disc inner/middle/outer/position/size/height. Author: A.
+
+2026-11-17 unified Test5.2 (0.15.2): Radiance/Umbra ring looks and close sequences, shimmer, level-4 opacity overrides. Author: A.
