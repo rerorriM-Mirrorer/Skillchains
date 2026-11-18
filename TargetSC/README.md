@@ -1,5 +1,18 @@
 # TargetSC — elemental resonance
 
+## 0.17.0 unified Test6.0 — Umbra collapse ending, glyph lift
+
+Lua-only (`//lua reload TargetSC`; DLL 0.11.0 from Test5.7).
+- **Collapse** (`umbra collapse on|off`, default on): over the last
+  `umbra collapse time` seconds (same = the MB ending, 2 s) everything Umbra
+  shrinks toward the center, radius × (1 − t^curve), from a very slow start to a
+  quick whoosh, gone at the MB deadline. `umbra collapse curve <1-10>` (4; higher
+  = slower start, sharper whoosh). The MB ring no longer sinks (it keeps its
+  three flashes while it shrinks); the black disc stays opaque to the end.
+- **Glyph lift** (`umbra glyph lift <0-0.2|same>`, .004): the floor glyph always
+  sits that far above the black disc, including on bursts; `same` = it rises on
+  bursts as before; 0 = exactly at the disc's height.
+
 ## 0.16.2 unified Test5.9 — longer Umbra swallow
 
 Lua-only. `umbra ending time` now goes up to 12 s, `umbra sink time` up to 10 s
@@ -1292,3 +1305,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-18 unified Test5.8 (0.16.1): Umbra ending when open, white glyph, stays gone, MB ring at the disc. Author: A.
 
 2026-11-18 unified Test5.9 (0.16.2): longer Umbra swallow ranges, MB deadline cap. Author: A.
+
+2026-11-18 unified Test6.0 (0.17.0): Umbra collapse ending and glyph lift. Author: A.

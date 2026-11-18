@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.17.0 unified Test6.0 — Umbra collapse ending, glyph lift (2026-11-18)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (DLL 0.11.0). Author: A.
+
+**User request:** revisit the ending: in the last two seconds (the three flashes) everything shrinks rapidly to nothing, "easing in very slowly to a quick WHOOSH"; the black hole's disc stays opaque through those seconds; those seconds are the true cap for the swallow ending; only shrink inward (no sinking); the MB glyph's flash height capped just above the black hole (possibly the same height), and that lift applies the whole time for all MBs. Tried `umbra glyph lift 0` before it existed (the parser fell back to `umbra glyph breath|same`); explained.
+
+**Changes:** `M.umbra_collapse` = 1 − u^curve over the last collapse time (−1 = mb ending); applied at the end of an Umbra frame to every ring, disc and 3D glyph radius (MB ring, black disc, floor glyph, copies, blooms, swallow glyph). With the collapse on, Umbra's MB ring skips the ending sink and the disc's life stays 1 while the MB window is active. `umbra glyph lift` ≥ 0 places the floor glyph at the disc plane + lift at all times (after any burst rise). Defaults on/.004; killala/historical off/−1; two older tests pin them off where they check earlier behavior.
+
+**Host verification (not FFXI):** full suite PASS; new `test_umbra_collapse.lua` PASS (factor 1 before, >.9 half way, <.15 at the end; disc and MB ring scaled exactly by it, glyph smaller; MB ring height held vs sinking without collapse; disc alpha ≥254; swallow glyph shrinks; Radiance keeps its normal ending; curve 8 later whoosh; collapse time 4; glyph at disc + lift at rest and during a burst; commands incl. `same`; presets). **Live pending:** the whoosh feel and the glyph showing above the disc.
+
 ## TargetSC 0.16.2 unified Test5.9 — longer Umbra swallow (2026-11-18)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only. Author: A.
