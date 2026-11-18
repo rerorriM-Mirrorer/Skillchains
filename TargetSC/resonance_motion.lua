@@ -147,7 +147,26 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- and fading over `copies life` s just under the disc, spinning.
     umbra_spin=-1,umbra_sky='same',umbra_glyph='breath',umbra_glyph_size=1,umbra_glyph_opacity=-1,
     umbra_glyph_spin=1,umbra_glyph_over=false,umbra_copies=true,umbra_copies_every=.6,umbra_copies_life=1.2,
-    umbra_copies_size=1.6,umbra_copies_opacity=.5,umbra_copies_spin=1,umbra_copies_depth=.004}
+    umbra_copies_size=1.6,umbra_copies_opacity=.5,umbra_copies_spin=1,umbra_copies_depth=.004,
+    -- Test5.7 Umbra controls. lines = the disc's own glyph (cream lines on the
+    -- black disc): size -1 = the disc's size, else x the Umbra MB ring
+    -- radius (like the floor glyph); opacity -1 = discs outline x opacity.
+    -- Disc shape -1 = discs level4; disc steady keeps its opacity through the
+    -- window-opening and burst flashes. core -1 = opacity x brightness, else
+    -- the ring cores' direct opacity; flicker = how deep the level-4 flicker
+    -- dips them (.28 as before).
+    umbra_lines_size=-1,umbra_lines_opacity=-1,umbra_disc_inner=-1,umbra_disc_middle=-1,umbra_disc_outer=-1,
+    umbra_disc_position=-1,umbra_disc_steady=true,umbra_core=-1,umbra_flicker=.28,
+    -- Test5.7 Umbra endings for the disc's glyph (native 0.11.0): gyro stands
+    -- it upright spinning about the vertical axis (tracing a sphere/dome),
+    -- shrinking away at the end; swallow stands each segment up about its
+    -- midpoint then sinks them into the black disc, pulled inward, cut off at
+    -- the disc's surface. when mb = the MB ending; flash = from the flash-out
+    -- for `ending time`.
+    umbra_ending='off',umbra_ending_when='mb',umbra_ending_time=2,
+    umbra_gyro_speed=1.5,umbra_gyro_rise=.4,umbra_gyro_shrink=.5,umbra_gyro_below='full',
+    umbra_stand_time=.5,umbra_sink_time=1,umbra_swallow_stagger=.5,umbra_swallow_order='outer',
+    umbra_swallow_pull=.3,umbra_swallow_lift=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -166,7 +185,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
-    umbra_sky='bell',umbra_glyph='same',umbra_copies=false}
+    umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
@@ -394,6 +413,36 @@ function M.level4_end(s,opts,name,has_top)
     if name=='radiance'then return s.sc_open+option(opts,'radiance_close_time')end
     return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+
         option(opts,'umbra_flash_time')+(option(opts,'umbra_after')=='smoke'and option(opts,'umbra_smoke')or 0)
+end
+-- Test5.7 Umbra endings: the window and the per-frame 3D glyph parameters.
+function M.umbra_ending_window(s,opts,has_top)
+    if option(opts,'umbra_ending_when')=='flash'then
+        local a=M.umbra_flashed(s,opts,has_top)
+        return a,a+max(.1,option(opts,'umbra_ending_time'))
+    end
+    return s.mb_close-max(.1,option(opts,'mb_ending')),s.mb_close
+end
+function M.umbra_ending_glyph(s,now,opts,has_top,angle)
+    local style=option(opts,'umbra_ending')
+    if style~='gyro'and style~='swallow'then return nil end
+    local a,b=M.umbra_ending_window(s,opts,has_top)
+    if now<a or now>=b then return nil end
+    local u,d=now-a,b-a
+    if style=='gyro'then
+        -- Stand upright, then spin about the vertical axis; shrink away at the end.
+        local scale=1
+        local f=option(opts,'umbra_gyro_shrink')
+        if f>0 and u>d*(1-f)then scale=(1-clamp((u-d*(1-f))/(d*f),0,1))^2 end
+        return {tilt=pi/2*smooth(u/max(.05,option(opts,'umbra_gyro_rise'))),
+            rotation=angle+2*pi*option(opts,'umbra_gyro_speed')*u,scale=scale,
+            clip=option(opts,'umbra_gyro_below')=='half',circle=true,lift=1}
+    end
+    local orders={together=0,outer=1,inner=2}
+    local sink=max(.05,option(opts,'umbra_sink_time'))
+    return {rotation=angle,stand=clamp(u/max(.05,option(opts,'umbra_stand_time')),0,1),
+        sink=clamp((u-(d-sink))/sink,0,1),pull=option(opts,'umbra_swallow_pull'),
+        stagger=option(opts,'umbra_swallow_stagger'),order=orders[option(opts,'umbra_swallow_order')]or 1,
+        lift=option(opts,'umbra_swallow_lift'),clip=true,circle=false}
 end
 -- Test5.6: the Umbra property disc's fill plane (as the terminal disc path).
 function M.umbra_plane(opts,details)
@@ -702,7 +751,12 @@ function M.frame(model,s,now,radius,height,opts,context)
         local l4seq=l4 and l4opt('close')=='sequence'
         local ring_fade=l4seq and 1 or fade -- the sequence does its own fading
         local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*ring_fade
-        if s.level>=3 and not opener then alpha=alpha*(.72+.28*electric)end
+        if s.level>=3 and not opener then
+            -- Test5.7: Umbra's flicker depth and direct core opacity.
+            local depth=l4name=='umbra'and option(opts,'umbra_flicker')or .28
+            if l4name=='umbra'and option(opts,'umbra_core')>=0 then alpha=option(opts,'umbra_core')*ring_fade end
+            alpha=alpha*(1-depth+depth*electric)
+        end
         for j,spec in ipairs(specs)do
             local colors={}
             for _,c in ipairs(spec.colors)do
@@ -972,6 +1026,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                 for i,c in ipairs(colors)do colors[i]=mix(c,white,disc_intro)end
                 if hub then hub=mix(hub,white,disc_intro)end
             end
+            -- Test5.7: Umbra's disc may hold its opacity through the flashes.
+            if l4name=='umbra'and option(opts,'umbra_disc_steady')then disc_fill=fill end
             local angle=M.disc_rotation(s,now,opts)
             -- Stage-specific fill/line sizing and radial fade (opener or links).
             local fill_size=opener and option(opts,'opener_disc_size')or option(opts,'disc_size')
@@ -990,11 +1046,20 @@ function M.frame(model,s,now,radius,height,opts,context)
                     fill_size=option(opts,'umbra_disc_size');line_size=fill_size
                 end
                 if option(opts,'disc_level4_middle')>=0 then middle=option(opts,'disc_level4_middle')end
+                if l4name=='umbra'then
+                    -- Test5.7: Umbra's own disc shape (-1 = discs level4).
+                    inner,outer=own('umbra_disc_inner',inner),own('umbra_disc_outer',outer)
+                    if option(opts,'umbra_disc_middle')>=0 then middle=option(opts,'umbra_disc_middle')end
+                end
                 lift=option(opts,'disc_level4_height')
             end
             local function finish_fill(d,a)
                 if inner~=1 or outer~=1 or middle then d.inner,d.outer=inner,outer end -- 1 1 = untouched
-                if middle then d.mid,d.mid_pos=middle,option(opts,'disc_level4_position')end
+                if middle then
+                    local pos=option(opts,'disc_level4_position')
+                    if l4name=='umbra'and option(opts,'umbra_disc_position')>=0 then pos=option(opts,'umbra_disc_position')end
+                    d.mid,d.mid_pos=middle,pos
+                end
                 if hub then d.hub=context.argb(hub,a)end
             end
             local h=base+.006+(j-1)*.008+lift
@@ -1032,8 +1097,24 @@ function M.frame(model,s,now,radius,height,opts,context)
                 end
                 -- Test5.4: Radiance's own disc lines may be hidden (its large MB glyph breathes instead).
                 local hide=l4name=='radiance'and not option(opts,'radiance_disc_lines')
-                disc(r*line_size,trace_height,angle,{white},0,2,
-                    ((glyph==0 and not respond)or hide)and 0 or disc_outline,'property-trace',stroke)
+                local trace_radius,trace_alpha=r*line_size,disc_outline
+                if l4name=='umbra'then
+                    if option(opts,'umbra_lines_size')>=0 then
+                        trace_radius=mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_lines_size')
+                    end
+                    if option(opts,'umbra_lines_opacity')>=0 then trace_alpha=option(opts,'umbra_lines_opacity')*life end
+                    -- Test5.7 endings: the glyph leaves its flat plane (native 0.11.0).
+                    local g3=(context.native_level or 0)>=11 and M.umbra_ending_glyph(s,now,opts,top~=nil,angle)or nil
+                    if g3 then
+                        g3.radius=trace_radius*(g3.scale or 1);g3.offset=trace_height
+                        local a=option(opts,'umbra_lines_opacity')>=0 and option(opts,'umbra_lines_opacity')or line*opacity
+                        g3.color=context.argb(stroke,a)
+                        out.glyphs3=out.glyphs3 or {};out.glyphs3[#out.glyphs3+1]=g3
+                        hide=true
+                    end
+                end
+                disc(trace_radius,trace_height,angle,{white},0,2,
+                    ((glyph==0 and not respond)or hide)and 0 or trace_alpha,'property-trace',stroke)
                 if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
                     band(r*line_size,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
                         px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn)

@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.15.6-unified-test5.6'
+_addon.version='0.16.0-unified-test5.7'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -38,9 +38,10 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     -- 0.8.0 adds opener arc fades (ring arguments 13-16).
     -- 0.9.0 adds native.arc (opener sections) and a disc hub color (arg 14).
     -- 0.10.0 adds a middle radial stop on discs (args 15-16) and 16 discs.
-    local levels={['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
+    -- 0.11.0 adds native.glyph (3D property glyph for the Umbra endings).
+    local levels={['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
     if version_ok and levels[version] and api_ok then native=result;native_version=version;native_level=levels[version]
-    else renderer_error='Native API/version mismatch; expected TargetSC 0.10.0 (or 0.9.0-0.5.0), received '..tostring(version) end
+    else renderer_error='Native API/version mismatch; expected TargetSC 0.11.0 (or 0.10.0-0.5.0), received '..tostring(version) end
     -- Older DLLs cannot draw section arcs; the layout falls back to rings.
     resonance.native_level=native_level
 else renderer_error=tostring(result) end
@@ -167,6 +168,15 @@ local function help()
         {'umbra glyph size|opacity|spin <number> | glyph over on|off','Size x MB ring (1), opacity (same), turn x level-4 speed (1), draw it over the disc (off).'},
         {'umbra copies on|off','Glyph copies growing out just under the disc through the opening (default on).'},
         {'umbra copies every|life|size|opacity|spin|depth <number>','New copy every .6 s, each lasting 1.2 s, growing to 1.6x, opacity .5, spin 1, .004 under the disc.'},
+        {'umbra lines size <0.2-4|same> | lines opacity <0-1|same>','The disc\'s own glyph lines: size x the Umbra MB ring (same = disc size), direct opacity.'},
+        {'umbra disc inner|middle|outer|position <number|same>','Umbra-only disc shape (same = discs level4).'},
+        {'umbra disc steady on|off','Keep the black disc solid through window-opening and burst flashes (default on).'},
+        {'umbra core <0-1|same> | flicker <0-1>','Ring cores\' direct opacity (same = opacity x brightness); flicker depth (.28).'},
+        {'umbra ending off|gyro|swallow','Ending for the disc glyph (DLL 0.11.0): gyro = upright spinning; swallow = segments stand and sink in.'},
+        {'umbra ending when mb|flash | ending time <s>','During the MB ending (default) or from the flash-out for ending time (2).'},
+        {'umbra gyro speed|rise|shrink <number> | gyro below full|half','Turns/s (1.5), seconds to stand (.4), last share shrinking away (.5); half cuts the lower dome.'},
+        {'umbra stand time|sink time <s>','Swallow: seconds to stand up (.5), seconds to sink in at the end (1).'},
+        {'umbra swallow stagger|pull|lift <number> | swallow order outer|inner|together','Spread (.5), pull to center (.3), height x half the longest (1); who goes first (outer).'},
         {'umbra disc size <0.2-10|same>','Umbra disc size, beyond discs level4 size (same = that).'},
         {'umbra opacity|disc opacity <0-1|same>','Umbra rings/glows and disc fill, ignoring the overall opacity (1 = total black).'},
         {'umbra look black|classic | glow white|violet','Black cores from the opening and a white glow (default black, white).'},
@@ -535,7 +545,7 @@ local function dim(c,level)
 end
 local function dim_frame(frame,level)
     if level>=1 then return frame end
-    local out={discs={},phase=frame.phase}
+    local out={discs={},phase=frame.phase,glyphs3=frame.glyphs3} -- 3D glyph colors are dimmed when sent
     for i,disc in ipairs(frame.discs or {})do
         local d={}for k,v in pairs(disc)do d[k]=v end
         if disc.colors then d.colors={}for j,c in ipairs(disc.colors)do d.colors[j]=dim(c,level)end end
@@ -553,6 +563,13 @@ end
 local function draw(frame,mob,level)
     frame=dim_frame(frame,level)
     native.begin(mob.index,mob.id)
+    -- Test5.7: 3D glyphs (Umbra endings) need native 0.11.0; older DLLs skip them.
+    if native_level>=11 and native.glyph then
+        for _,g in ipairs(frame.glyphs3 or {})do
+            native.glyph(g.radius,g.offset,g.rotation,dim(g.color,level),g.tilt or 0,g.stand or 0,g.lift or 1,
+                g.sink or 0,g.pull or 0,g.stagger or 0,g.order or 0,g.clip and 1 or 0,g.circle and 1 or 0)
+        end
+    end
     for _,disc in ipairs(frame.discs or {})do
         local colors=disc.colors or {disc.color}
         local blend=disc.blend or 0
