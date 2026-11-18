@@ -116,3 +116,16 @@ do
     near(ring.offset,role(mf,'property').offset,1e-9,'MB ring at the disc plane')
     print('PASS Test5.8 white glyph, ending when open, stays gone, cream option, MB ring at the disc')
 end
+-- Test5.9: longer ranges; the MB deadline caps the ending window.
+do
+    local settings=copy(R.defaults)
+    local cmd=C.new(settings,R.defaults,function()end,function()end,R.killala)
+    cmd('umbra',{'ending','time','10'});cmd('umbra',{'sink','time','8'});cmd('umbra',{'stand','time','6'})
+    assert(settings.umbra_ending_time==10 and settings.umbra_sink_time==8 and settings.umbra_stand_time==6,'longer ranges')
+    local w3=copy(R.defaults);w3.umbra_ending='swallow';w3.umbra_ending_when='open';w3.umbra_ending_time=12;w3.umbra_sink_time=8
+    local p3,s3=link(w3)
+    local a,b=M.umbra_ending_window(s3,w3,true)
+    near(b,s3.mb_close,1e-9,'capped at the MB deadline')
+    near(at(p3,s3.mb_close-.01,w3).glyphs3[1].sink,1,.01,'fully swallowed right at the end')
+    print('PASS Test5.9 ending/sink/stand ranges, MB deadline cap')
+end

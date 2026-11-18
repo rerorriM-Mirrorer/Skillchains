@@ -420,10 +420,12 @@ end
 -- Test5.7 Umbra endings: the window and the per-frame 3D glyph parameters.
 function M.umbra_ending_window(s,opts,has_top)
     -- Test5.8: open = from the link's creation (Umbra's opening) for ending time.
-    if option(opts,'umbra_ending_when')=='open'then return s.created,s.created+max(.1,option(opts,'umbra_ending_time'))end
+    -- Test5.9: the real MB deadline is always the cap (an ending that would
+    -- run past it is squeezed to end exactly there).
+    if option(opts,'umbra_ending_when')=='open'then return s.created,min(s.mb_close,s.created+max(.1,option(opts,'umbra_ending_time')))end
     if option(opts,'umbra_ending_when')=='flash'then
         local a=M.umbra_flashed(s,opts,has_top)
-        return a,a+max(.1,option(opts,'umbra_ending_time'))
+        return a,min(s.mb_close,a+max(.1,option(opts,'umbra_ending_time')))
     end
     return s.mb_close-max(.1,option(opts,'mb_ending')),s.mb_close
 end

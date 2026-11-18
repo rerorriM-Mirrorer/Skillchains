@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.16.1-unified-test5.8'
+_addon.version='0.16.2-unified-test5.9'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -173,11 +173,11 @@ local function help()
         {'umbra disc steady on|off','Keep the black disc solid through window-opening and burst flashes (default on).'},
         {'umbra core <0-1|same> | flicker <0-1>','Ring cores\' direct opacity (same = opacity x brightness); flicker depth (.28).'},
         {'umbra ending off|gyro|swallow','Ending for the disc glyph (DLL 0.11.0): gyro = upright spinning; swallow = segments stand and sink in.'},
-        {'umbra ending when open|mb|flash | ending time <s>','From Umbra\'s opening for ending time, during the MB ending (default), or from the flash-out for ending time (2).'},
+        {'umbra ending when open|mb|flash | ending time <s>','From Umbra\'s opening for ending time, during the MB ending (default), or from the flash-out for ending time (2; up to 12, always ending by the MB deadline).'},
         {'umbra lines color white|cream','The disc glyph (and its ending) pure white (default) or the old cream.'},
         {'umbra mb height ring|disc','Umbra MB ring at its usual height or exactly at the black disc\'s plane.'},
         {'umbra gyro speed|rise|shrink <number> | gyro below full|half','Turns/s (1.5), seconds to stand (.4), last share shrinking away (.5); half cuts the lower dome.'},
-        {'umbra stand time|sink time <s>','Swallow: seconds to stand up (.5), seconds to sink in at the end (1).'},
+        {'umbra stand time|sink time <s>','Swallow: seconds to stand up (.5, up to 8), seconds to sink in at the end (1, up to 10).'},
         {'umbra swallow stagger|pull|lift <number> | swallow order outer|inner|together','Spread (.5), pull to center (.3), height x half the longest (1); who goes first (outer).'},
         {'umbra disc size <0.2-10|same>','Umbra disc size, beyond discs level4 size (same = that).'},
         {'umbra opacity|disc opacity <0-1|same>','Umbra rings/glows and disc fill, ignoring the overall opacity (1 = total black).'},

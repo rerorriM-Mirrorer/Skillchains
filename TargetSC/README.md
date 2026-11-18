@@ -1,5 +1,12 @@
 # TargetSC — elemental resonance
 
+## 0.16.2 unified Test5.9 — longer Umbra swallow
+
+Lua-only. `umbra ending time` now goes up to 12 s, `umbra sink time` up to 10 s
+and `umbra stand time` up to 8 s. The real MB deadline always caps the ending:
+one that would run longer is squeezed to finish exactly there (so
+`ending when open` + `ending time 10` lasts the whole Umbra window).
+
 ## 0.16.1 unified Test5.8 — Umbra swallow from the opening, white glyph, MB ring height
 
 Lua-only (`//lua reload TargetSC`; needs DLL 0.11.0 from Test5.7).
@@ -1283,3 +1290,5 @@ Bell-profile sky rings and post-deadline down/in close; independent original low
 2026-11-18 unified Test5.7 (0.16.0, native 0.11.0): Umbra gyro/swallow endings, Umbra lines/disc/core controls. Author: A.
 
 2026-11-18 unified Test5.8 (0.16.1): Umbra ending when open, white glyph, stays gone, MB ring at the disc. Author: A.
+
+2026-11-18 unified Test5.9 (0.16.2): longer Umbra swallow ranges, MB deadline cap. Author: A.

@@ -1,5 +1,15 @@
 # TESTING.md — Skillchains Resonance UI
 
+## TargetSC 0.16.2 unified Test5.9 — longer Umbra swallow (2026-11-18)
+
+**Branch:** `development/targetsc-mb-rise-gradient`. Lua-only. Author: A.
+
+**User feedback:** loves that the swallowed lines still take the MB's color on bursts. **Request:** let the swallow last to the very end (ending time ~10 s) with a longer sink. Ending revisit discussed next (collapse in the final two seconds; see the next batch).
+
+**Changes:** ranges ending time .3–12, stand time .05–8, sink time .05–10; the Umbra ending window's end is `min(MB deadline, start + ending time)` for `open` and `flash`.
+
+**Host verification (not FFXI):** full suite PASS; `test_umbra_endings.lua` adds the new ranges and a 12 s request capped at the MB deadline with sink ≈1 just before it.
+
 ## TargetSC 0.16.1 unified Test5.8 — Umbra swallow from the opening; white glyph; MB ring height (2026-11-18)
 
 **Branch:** `development/targetsc-mb-rise-gradient`. Lua-only (DLL 0.11.0). Author: A.
