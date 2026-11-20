@@ -1,6 +1,25 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: `a650e43` (Test6.6.2, per the 2026-11-20b handoff; Inferred, not re-diffed against A's folder).
+- Change: Test6.7, the white awakening disc now plays on every link that opens a new window (opener curve against the link's own wait; closing links none; .3 s hand-off); `//tsc awakening links on|off` (default on, killala off); version `0.18.5-unified-test6.7`.
+- Checks: Lua 5.1 parse on changed files; 56/56 CI invocations PASS incl. new `test_awakening_links.lua`; preview path: `preview mb demo` plays it at 0, 9, 17, 24 s (host only).
+- Live: none for Test6.7. Pending: the link disc look; converge in battle; Test6.3 kill items; vertical seam; merge to master.
+- Next: A tries `preview mb demo` and a real chain.
+
+## TargetSC 0.18.5 unified Test6.7 — awakening disc on every new window (Lua only) (2026-11-20)
+
+**Request (02:30):** the small white awakening disc that expands and quickly fades when an opening weapon skill lands (center opaque, transparent edge) should play on every newly opened skillchain.
+
+**Before (Verified):** only the opener drew it (`opening.opener_seen`); at a link the opener's disc finished over .3 s and the pooled glyph became the MB glyph, so links never had one (`test_mb_glyph` asserted no replay).
+
+**Changes:** the opener's timing moved into `M.awakening_level(created,open,close,now,opts)` (same numbers). For `step>1`, unless the link closes the chain, a separate `awakening` disc is drawn from the link's `created`/`sc_open`/`sc_close`: grows (cubic ease-out) over the first third of the wait to `radius*.96*awakening size`, fades per `awakening fade until`, radial `awakening fade` inner/outer, opacity `awakening opacity × opacity`. Tracked on the pooled glyph (`opening.link`); when the next link lands the previous one finishes over .3 s (`link_prev`). Role `awakening`, so kills treat it like the opener's. `awakening links on|off` (default on; killala off). Help/README; version `0.18.5-unified-test6.7`. `test_mb_glyph` and `test_awakening_until` now check their old no-replay assertions with links off.
+
+**Host verification (not FFXI):** 56/56 CI invocations PASS; new `test_awakening_links.lua`: opener unchanged, link disc grows/full/fades/gone at two-thirds, opener size, size/until apply, closing link none, hand-off, off/killala/awakening off, commands. Preview path: `preview mb demo` plays it at 0, 9, 17, 24 s; `preview Fusion 2` at 0. **Live pending:** the link disc look in previews and a real chain.
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
 - installed_base: `e9c2e83` (Test6.6.1; A tested it 02:15).
 - Change: Test6.6.2, `mb ending blooms linger` fades blooms over `mb ending fade` after the deadline (any style); version `0.18.4-unified-test6.6.2`.
 - Checks: 54/54 CI invocations PASS (host only).

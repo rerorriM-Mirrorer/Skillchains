@@ -1,5 +1,17 @@
 # TargetSC — elemental resonance
 
+## 0.18.5 unified Test6.7 — awakening disc on every new window (Lua only)
+
+- Every link that leaves a new skillchain window open now plays the same white
+  awakening disc as the opener: it expands over the first third of that link's
+  wait and fades over the middle third. `awakening size`, `awakening fade` and
+  `awakening fade until` apply to it too. A link that closes the chain (no new
+  window) plays none.
+- If the next link lands while the previous disc is still fading, the old one
+  finishes over .3 s instead of popping.
+- **`//tsc awakening links on|off`** (default on; `preset killala` = off).
+  `awakening off` still removes every awakening disc.
+
 ## 0.18.4 unified Test6.6 — converge fade after the deadline, blooms ride the ring
 
 - **`//tsc mb ending fade <0-1>`** (default .4): with `converge`, the ring and

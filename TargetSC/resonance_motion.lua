@@ -58,6 +58,8 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- as before), 'open' (window opens), 'close' (window ends) or '1'..'9'
     -- seconds after the window opens. A link fades it out over .3 s.
     awakening_until='default',
+    -- Test6.7: each link that opens a new window plays the awakening disc too.
+    awakening_links=true,
     -- Test3.8: opener arcs fade along their length from the bright end
     -- (lead = facing the spin); the glow band follows by opener_fade_glow.
     opener_fade=.6,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
@@ -216,7 +218,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     ring_spin='classic',ring_shade=0,ring_glow_spin=1,mb_ending_drop=0,
     mb_glow_shade=0,mb_glow_spin=0,mb_glow_flicker=1,mb_glow_width=1,
     awakening_inner=1,awakening_outer=1,awakening_size=1,
-    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default',
+    opener_disc_inner=1,opener_disc_outer=1,opener_disc_size=1,awakening_until='default',awakening_links=false,
     opener_fade=0,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
     opener_layout='rings',opener_spacing=.035,opener_spin_slowdown=3,opener_spin_minimum=0,
     opener_disc_outline=-1,
@@ -805,6 +807,23 @@ local function level4_name(s)
         if s.properties[1]=='Umbra'then return 'umbra'end
     end
 end
+-- White awakening disc level (0-1) for a wait from created to open and a
+-- window ending at close: full through the grow (first third of the wait),
+-- then fading until `awakening fade until` (default two-thirds of the wait).
+function M.awakening_level(created,open,close,now,opts)
+    local span=max(.1,open-created)
+    local start=created+span/3 -- the grow ends here, as before
+    local mode=tostring(option(opts,'awakening_until'))
+    local finish=created+span*2/3
+    if mode=='open'then finish=open
+    elseif mode=='close'then finish=max(open,close or open)
+    elseif tonumber(mode)then
+        -- Never outlast the window: past its end the whole display clears,
+        -- so cap the timed fade to finish cleanly.
+        finish=min(open+tonumber(mode),max(open,close or open))
+    end
+    return 1-smooth((now-start)/max(.05,finish-start))
+end
 function M.frame(model,s,now,radius,height,opts,context)
     -- Test5.4: a level-4 link may see its own visual opening length, and
     -- Radiance's large glyph breathes at rest (and falls back after bursts).
@@ -1162,18 +1181,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         local grow=1-(1-clamp(progress*3,0,1))^3
         local initial=0
         if show_sc and opening.opener_seen and option(opts,'awakening')then
-            local span=max(.1,opening.open-opening.created)
-            local start=opening.created+span/3 -- the grow ends here, as before
-            local mode=tostring(option(opts,'awakening_until'))
-            local finish=opening.created+span*2/3
-            if mode=='open'then finish=opening.open
-            elseif mode=='close'then finish=max(opening.open,opening.close or opening.open)
-            elseif tonumber(mode)then
-                -- Never outlast the opener's own window: past its end the whole
-                -- display clears, so cap the timed fade to finish cleanly.
-                finish=min(opening.open+tonumber(mode),max(opening.open,opening.close or opening.open))
-            end
-            local level=1-smooth((now-start)/max(.05,finish-start))
+            local level=M.awakening_level(opening.created,opening.open,opening.close,now,opts)
             -- A link takes over: finish quickly and continuously, no pop.
             if s.step>1 then level=level*(1-smooth((now-s.created)/.3))end
             initial=option(opts,'awakening_opacity')*opacity*level
@@ -1188,6 +1196,37 @@ function M.frame(model,s,now,radius,height,opts,context)
                 d.inner,d.outer=option(opts,'awakening_inner'),option(opts,'awakening_outer')
             end
             initial=0
+        end
+        -- Test6.7: every link that leaves a new window open gets its own
+        -- white awakening disc, on the opener's exact grow/fade curve measured
+        -- against the link's own wait (created -> sc_open). When the next link
+        -- lands, the previous disc finishes over .3 s instead of popping.
+        if show_sc and s.step>1 and option(opts,'awakening')and option(opts,'awakening_links')then
+            local cur=opening.link
+            if not cur or cur.created~=s.created then
+                if cur then opening.link_prev={created=cur.created,open=cur.open,close=cur.close,handoff=s.created}end
+                cur=not s.closed and {created=s.created,open=s.sc_open,close=s.sc_close}or nil
+                opening.link=cur
+            end
+            local function link_disc(a,level)
+                local fill=option(opts,'awakening_opacity')*opacity*level
+                if fill<=0 then return end
+                local p=clamp((now-a.created)/max(.1,a.open-a.created),0,1)
+                local g=1-(1-clamp(p*3,0,1))^3
+                local before=#out.discs
+                disc(radius*.96*g*option(opts,'awakening_size'),option(opts,'disc_height'),0,{white},fill,0,0,'awakening')
+                if #out.discs>before then
+                    local d=out.discs[#out.discs]
+                    d.inner,d.outer=option(opts,'awakening_inner'),option(opts,'awakening_outer')
+                end
+            end
+            local prev=opening.link_prev
+            if prev then
+                local k=1-smooth((now-prev.handoff)/.3)
+                if k<=0 or now<prev.handoff then opening.link_prev=nil
+                else link_disc(prev,M.awakening_level(prev.created,prev.open,prev.close,now,opts)*k)end
+            end
+            if cur and now>=cur.created then link_disc(cur,M.awakening_level(cur.created,cur.open,cur.close,now,opts))end
         end
         local role='mb-glyph'
         local fill=0

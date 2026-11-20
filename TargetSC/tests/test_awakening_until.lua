@@ -44,7 +44,8 @@ for _,mode in ipairs({'open','close','4'})do
  for _,t in ipairs({100.1,100.5,100.9})do near(level(model(),t,x),level(model(),t,base),1/255+1e-9,mode..' grow '..t)end
 end
 -- A link while it lingers: continuous fade-out over .3 s.
-local m=model();local x=copy(base);x.awakening_until='close'
+-- (Test6.7: the link's own new disc is off here; test_awakening_links covers it.)
+local m=model();local x=copy(base);x.awakening_until='close';x.awakening_links=false
 level(m,104,x)
 local before=level(m,104.99,x)
 m.states[71]={id=71,revision=2,created=105,sc_open=108,sc_close=113,mb_close=115,step=2,level=2,

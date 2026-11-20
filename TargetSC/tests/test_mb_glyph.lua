@@ -35,6 +35,9 @@ assert(hidden.awakening_glyph==glyph and glyph.opacity==0)
 assert(not layer(hidden,'disc','awakening')and not layer(hidden,'disc','ground-glyph'))
 near(glyph.radius,2*.96)
 -- Hidden opening object survives a successful chain; it must not replay.
+-- Test6.7: links replay a separate white disc by default; with
+-- `awakening links off` the old no-replay behavior must hold exactly.
+opts.awakening_links=false
 local chain=state(103,3,2,'Fusion');m.states[71]=chain
 for _,time in ipairs({103,103.2,104,107,111,112.5})do
     local f=m:frame(71,time,2,4,opts)

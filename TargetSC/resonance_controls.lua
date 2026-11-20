@@ -417,8 +417,12 @@ function M.new(settings,defaults,save,say,killala)
                 settings.awakening_inner,settings.awakening_outer=inner,outer;save(settings)
                 say(('Awakening fade: center %.2f, edge %.2f.'):format(inner,outer))
             elseif value=='size'then numeric('awakening_size',args[2],{.1,3},'awakening size')
+            elseif value=='links'then
+                if not toggle('awakening_links',(args[2]or ''):lower(),'Awakening on links')then
+                    say('Use //tsc awakening links on|off.')
+                end
             elseif not toggle('awakening',value,'Awakening')then
-                say('Use //tsc awakening on|off | opacity <0-1> | fade <inner> [outer] | size <0.1-3>.')
+                say('Use //tsc awakening on|off | opacity <0-1> | fade <inner> [outer] | size <0.1-3> | links on|off.')
             end
         elseif command=='preset'then preset(value)
         elseif command=='display'then
