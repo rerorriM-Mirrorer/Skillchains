@@ -24,6 +24,9 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- ring on a confirmed burst, stays white, and lands with the property
     -- trace. glyph_height 0 / glyph_tint 1 / intro_glyph 1 restore Killala.
     mb_glyph_height=1.1,mb_glyph_tint=0,mb_glyph_rise=.15,mb_intro_glyph=.5,mb_intro_disc=1,
+    -- Test6.4: opacity multiplier for the confirmed-MB response glyph only
+    -- (strike, rise and its fade/fall); 1 = unchanged, 0 = hidden.
+    mb_glyph_opacity=1,
     -- Two-element property discs blend smoothly instead of splitting in half.
     disc_blend='gradient',
     -- Multi-color SC rings (ground, sky and their glows) blend smoothly too.
@@ -1212,6 +1215,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                 opening.offset=option(opts,'disc_height')+height*option(opts,'mb_rise')*response.rise
                 opening.opacity=response.release
             end
+            -- Test6.4 mb glyph opacity: scales the confirmed response (and its
+            -- fade/fall) here, before the window-opening intro and the closing
+            -- flash, so neither of those signals is dimmed by it.
+            opening.opacity=opening.opacity*option(opts,'mb_glyph_opacity')
         end
         local glyph_intro=intro*option(opts,'mb_intro_glyph')
         if glyph_intro>0 then

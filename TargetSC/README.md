@@ -408,6 +408,7 @@ What changed, and the commands to tune or undo each:
   stays **white**, and falls back at the same time as the lifted property
   trace. Another MB while it is up keeps it up (no dip) and restarts the hold.
   - `//tsc mb glyph height <0-2>` — 1 = MB ring height, default 1.1; 0 = old rise.
+  - `//tsc mb glyph opacity <0-1>` — opacity of the confirmed-MB response glyph only (its strike, rise and fade); 1 = unchanged (default), 0.5 = half, 0 = hidden. Ring, discs, glow and the window flashes are unaffected.
   - `//tsc mb glyph tint <0-1>` — 0 white (default), 1 old elemental tint.
   - `//tsc mb glyph rise <0-1>` — seconds to rise (default .15); 0 = instant.
 - **Quieter new-window flash** on the large glyph:

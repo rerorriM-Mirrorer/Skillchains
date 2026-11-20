@@ -73,6 +73,7 @@ jobs:
           lua5.1 TargetSC/tests/test_light_white.lua
           lua5.1 TargetSC/tests/test_light_opening.lua
           lua5.1 TargetSC/tests/test_glyph_fade.lua
+          lua5.1 TargetSC/tests/test_mb_glyph_opacity.lua
           lua5.1 TargetSC/tests/test_burst_bloom.lua
           lua5.1 TargetSC/tests/test_native_bloom.lua
           lua5.1 TargetSC/tests/test_native_bloom.lua 0.9.0

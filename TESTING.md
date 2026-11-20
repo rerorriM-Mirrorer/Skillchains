@@ -1,11 +1,28 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: A's local `resonance_motion.lua`/`resonance_controls.lua` = `45246e6` (Test6.3) + A's own trial edits (Verified by diff); rest of the install Inferred `45246e6`.
+- Change: TargetSC unified Test6.4, `//tsc mb glyph opacity <0-1>` (details in the Test6.4 entry below and in `TargetSC/TESTING.md`).
+- Checks: Lua 5.1 parse of all TargetSC Lua; 53/53 CI test invocations PASS incl. new `test_mb_glyph_opacity.lua` (host only).
+- Live: none for Test6.4. Pending: Test6.4 look; Test6.3 kill look and real-packet detection; vertical-glyph seam decision.
+- Next: A's live feedback; merge to master after live confirmation.
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
 - Docs-only: removed the stale `TargetSC/AGENTS.md` and `TargetSC/WORKFLOW.md` (pre-canon copies; the TargetSC AGENTS still told agents to zip WORKFLOW/TESTING, which canon 2026-11-20.1 forbids). Root copies are canonical. `TargetSC/TESTING.md` kept as history. `tools/package_targetsc.py` no longer expects `TargetSC/WORKFLOW.md` (it would have failed CI otherwise). No runtime change, no FFXI test.
 - Docs sync to canon 2026-11-20.1 (`agents_shared_version` and `workflow_version`); project-specific lines moved to the AGENTS REPO block: none; no runtime change, no FFXI test.
 
 ---
 
 # TESTING.md — Skillchains Resonance UI
+
+## TargetSC unified Test6.4 — `mb glyph opacity` (Lua only; version string still 0.18.2-unified-test6.3) (2026-11-20)
+
+**User request (00:24):** add `//tsc mb glyph opacity <0-1>`: 0 hides the confirmed MB response glyph, .5 halves it, 1 unchanged; only that glyph incl. its fade/release; not the MB ring, property discs, idle breathing glyph or other primitives; timing unchanged; Radiance's per-glyph opacity intact; limited to `resonance_motion.lua` and `resonance_controls.lua`. User chose the plain multiply (accepts a blink of a visible resting breath glyph, keeps `mb glyph rest hidden`), no scaling of the burst glow (shimmer), and accepts that a kill landing mid-response inherits the scaled glyph. Author: A.
+
+**Changes:** default `mb_glyph_opacity=1`. In `M.frame` the multiplier is applied at the end of the `if response.responding then` block (clapper and classic), not in the later `role=='mb-glyph'` block as first proposed: there it would also have dimmed the window-opening intro flash and the closing (ending) flash whenever a burst overlapped them (Verified by a mutation run: the new test fails with that placement). Applied once per frame; the Test5.4 Radiance/Umbra `glyph opacity` vs `mb overall` logic is unchanged. Command: `opacity={0,1}` added to the existing `mb glyph` ranges (existing `numeric()` validation) and to its usage message; `TargetSC/README.md` line. A's local `resonance_motion.lua` edit was missing a comma after `mb_glyph_opacity=1` (defaults table failed to parse, Verified); superseded by this commit.
+
+**Host verification (not FFXI):** Lua 5.1 (lupa runtime; no system lua5.1 here) parse of every `TargetSC/*.lua` and `TargetSC/tests/*.lua`; all 53 CI test invocations PASS incl. the Skillchains regression against its baseline. New `TargetSC/tests/test_mb_glyph_opacity.lua` (added to CI): default = 1 exact; .5 halves the glyph alpha (±1/255) through strike and fade, same offset/radius/rotation; 0 removes it; every other ring/disc/trace/glow/bloom identical across 1/.5/0; fall and classic scaled; no-burst frames (rest, intro, ending) unchanged; intro and ending flashes unchanged when a burst overlaps them; Radiance breath unchanged, own glyph opacity still replaces mb overall, response scaled once; command set/reject/usage, presets restore 1. **Live pending:** everything in game.
 
 ## TargetSC 0.18.2 unified Test6.3 — MB kill freezes (Lua only) (2026-11-18)
 
