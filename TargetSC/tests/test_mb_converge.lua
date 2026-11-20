@@ -1,8 +1,9 @@
 -- Test6.5: //tsc mb ending style converge. Over the last `mb ending` s the MB
 -- ring descends onto the ground glyph and brightens toward white (no pulses,
 -- stays visible); the ground glyph emerges on the same shared progress;
--- rising glyphs are capped (and held) at the ring; ring-plane blooms start at
--- the ring's height at their burst; everything ends at the real MB deadline.
+-- rising glyphs are capped (and held) at the ring; ring-plane blooms ride the
+-- ring. Test6.6: after the real deadline everything fades over `mb ending
+-- fade` (0 = out at the deadline); `mb ending blooms linger` lets blooms finish.
 package.path='./TargetSC/?.lua;'..package.path
 local R=require('resonance')
 local C=require('resonance_controls')
@@ -66,20 +67,40 @@ do
     assert(math.abs(p.glyph.offset-rest)<1e-6,'ground glyph stays on the floor')
     assert(math.abs(alpha(p.ring.color)-peak)<=3 and rgb(p.ring.color)==0xFFFFFF,'ring brightest and white on arrival')
     assert(math.abs(alpha(p.glyph.outline)-peak)<=2,'glyph at peak opacity on arrival')
-    -- Final expiration: all of it at the real deadline.
-    for _,t in ipairs({112,112.05,113})do
-        local q=f(t)
-        assert(not q.ring and (not q.glyph or alpha(q.glyph.outline)==0)and #q.blooms==0 and not q.disc,'all out at the deadline '..t)
+    -- Test6.6 final expiration: the property discs are out at the deadline;
+    -- ring and glyph hold their peak at it, fade over mb ending fade (.4) on
+    -- the floor, and are gone after it.
+    local q=f(112)
+    assert(not q.disc and math.abs(alpha(q.ring.color)-peak)<=3 and math.abs(alpha(q.glyph.outline)-peak)<=3,'peak at the deadline, discs out')
+    local last=peak+1
+    for t=112,112.399,.02 do
+        local r=f(t)
+        local a=r.ring and alpha(r.ring.color)or 0
+        assert(a<=last and (not r.ring or math.abs(r.ring.offset-rest)<1e-6),'fades on the floor '..t)
+        assert(math.abs((r.glyph and alpha(r.glyph.outline)or 0)-a)<=2,'glyph fades with the ring '..t)
+        last=a
     end
+    assert(f(112.2).ring and alpha(f(112.2).ring.color)>40,'still visible mid-fade')
+    for _,t in ipairs({112.41,113})do
+        local r=f(t)
+        assert(not r.ring and (not r.glyph or alpha(r.glyph.outline)==0)and #r.blooms==0,'all out after the fade '..t)
+    end
+    -- mb ending fade 0: out exactly at the deadline (Test6.5 behavior).
+    local o0=copy(o);o0.mb_ending_fade=0
+    local z=run(nil,o0)(112)
+    assert(not z.ring and (not z.glyph or alpha(z.glyph.outline)==0),'fade 0: out at the deadline')
 end
 
--- 2. Synchronized with the ending duration: mb ending 1 starts at 111.
+-- 2. Synchronized with the ending duration: mb ending 1 starts at 111 (3 s at 109).
 do
     local o1=copy(o);o1.mb_ending=1
     local f=run(nil,o1)
     local mb_h=f(110.5).ring.offset
     assert(math.abs(f(110.99).ring.offset-mb_h)<1e-6,'mb ending 1: nothing before 111')
     assert(f(111.5).ring.offset<mb_h-.01 and math.abs(f(111.999).ring.offset-rest)<.002,'mb ending 1: full descent in 1 s')
+    local o3=copy(o);o3.mb_ending=3
+    local g=run(nil,o3)
+    assert(math.abs(g(108.99).ring.offset-mb_h)<1e-6 and g(109.5).ring.offset<mb_h-.001,'mb ending 3 starts at 109')
 end
 
 -- 3. A glyph already risen when the ending begins: no jump, then it is capped
@@ -97,31 +118,41 @@ do
         assert(alpha(p.glyph.outline)>=glyph_peak-1,'held glyph keeps its brightness '..t)
     end
     assert(math.abs(f(111.999).glyph.offset-rest)<.002,'held glyph arrives at the floor')
-    -- Its bloom (born before the ending) keeps the steady MB ring plane.
+    -- Its bloom (born before the ending): no jump at the start, then it rides the ring.
     local h0=f(109.99).blooms[1].offset
-    for t=110,110.45,.05 do local b=f(t).blooms[1];if b then assert(math.abs(b.offset-h0)<1e-6,'old bloom: no jump '..t)end end
+    assert(math.abs(f(110).blooms[1].offset-h0)<1e-6,'old bloom: no jump at the start')
+    for t=110,110.45,.05 do local p=f(t);if p.blooms[1]then assert(math.abs(p.blooms[1].offset-p.ring.offset)<1e-6,'old bloom rides the ring '..t)end end
 end
 
 -- 4. A burst during the ending: the rise stops at the ring and stays there;
--- its bloom starts at the ring's height at the burst and fades in place.
+-- Test6.6: its bloom rides the descending ring (where the held glyph is).
 do
     local f=run({110.8},o)
     local reached=false
-    local born=f(110.81).ring.offset
-    local first
+    local seen=0
     for t=110.8,111.999,.01 do
         local p=f(t)
         assert(p.glyph.offset<=p.ring.offset+1e-6,'rise capped at the ring '..t)
         if math.abs(p.glyph.offset-p.ring.offset)<1e-6 then reached=true
         else assert(not reached,'held once reached (no fall back) '..t)end
         if p.blooms[1]then
-            first=first or p.blooms[1].offset
-            assert(math.abs(p.blooms[1].offset-first)<1e-6,'bloom stays at its height '..t)
+            seen=seen+1
+            assert(math.abs(p.blooms[1].offset-p.ring.offset)<1e-6,'bloom at the ring height '..t)
         end
     end
-    assert(reached,'glyph reached the ring')
-    assert(first and math.abs(first-born)<.002,'bloom born at the ring height ('..tostring(first)..' vs '..born..')')
+    assert(reached and seen>20,'glyph reached the ring; bloom followed it')
     assert(alpha(f(111.999).glyph.outline)>=peak-2,'held glyph at peak on arrival')
+    -- Blooms: fade goes out with the converge fade; linger finishes its life.
+    local late=run({111.6},o)
+    assert(late(112.2).blooms[1]and #late(112.41).blooms==0,'blooms fade: out with the converge fade')
+    local l=copy(o);l.mb_ending_blooms='linger'
+    local lg=run({111.6},l)
+    local b1,b2=lg(112.2).blooms[1],lg(112.5).blooms[1]
+    assert(b1 and b2 and math.abs(b2.offset-rest)<1e-6 and alpha(b1.color)>alpha(late(112.2).blooms[1].color),'linger: bloom outlives the fade on the floor')
+    assert(#lg(112.7).blooms==0,'linger: bloom ends with its own life')
+    -- Linger also works for soft (no pre-deadline .25 s cut).
+    local sl=copy(R.defaults);sl.mb_ending_blooms='linger'
+    assert(run({111.6},sl)(111.95).blooms[1]and #run({111.6},copy(R.defaults))(112.01).blooms==0,'soft linger vs fade')
 end
 
 -- 5. mb glyph opacity does not dim the converge glyph.
@@ -164,5 +195,9 @@ assert(said=='MB ending style converge.',tostring(said))
 assert(cmd('mb',{'ending','style','bogus'})and settings.mb_ending_style=='converge'and said:find('converge'),'usage lists converge')
 assert(cmd('mb',{'ending','shrink','0.5'})and settings.mb_ending_shrink==.5,'shrink .5')
 assert(cmd('mb',{'ending','shrink','2'})and settings.mb_ending_shrink==.5,'shrink out of range rejected')
-assert(cmd('preset',{'default'})and settings.mb_ending_shrink==0 and settings.mb_ending_style=='soft','default restores')
-print('PASS Test6.5 converge: shared progress; ring descends + brightens to white without fading; glyph emerges to peak; deadline ends all; duration respected; cap/hold at the ring without jumps; blooms at the ring height at their burst; mb glyph opacity ignored; optional shrink; soft unchanged; commands')
+assert(cmd('mb',{'ending','3'})and settings.mb_ending==3,'mb ending 3 allowed')
+assert(cmd('mb',{'ending','fade','0.3'})and settings.mb_ending_fade==.3,'fade .3')
+assert(cmd('mb',{'ending','blooms','linger'})and settings.mb_ending_blooms=='linger','blooms linger')
+assert(cmd('mb',{'ending','blooms','x'})and settings.mb_ending_blooms=='linger'and said:find('linger'),'blooms usage')
+assert(cmd('preset',{'default'})and settings.mb_ending_shrink==0 and settings.mb_ending_style=='soft'and settings.mb_ending_fade==.4 and settings.mb_ending_blooms=='fade','default restores')
+print('PASS Test6.5/6.6 converge (post-deadline fade, blooms ride the ring, linger, ending up to 3 s): shared progress; ring descends + brightens to white without fading; glyph emerges to peak; deadline ends all; duration respected; cap/hold at the ring without jumps; blooms at the ring height at their burst; mb glyph opacity ignored; optional shrink; soft unchanged; commands')

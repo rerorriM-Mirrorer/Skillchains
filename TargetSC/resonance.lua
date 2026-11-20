@@ -225,7 +225,12 @@ function M.new()
         local boundary=s.closed and s.sc_open or s.sc_close
         local tail=0
         for _,burst in ipairs(self.bursts[id]or {})do tail=max(tail,burst.at+burst_effect.duration(opts))end
-        local expires=s.source_expired and tail or max(boundary+fade,s.mb_close,tail)
+        -- Test6.6: a converge ending fades out just after the MB deadline.
+        local mb_end=s.mb_close
+        if (opts.mb_ending_style or motion.defaults.mb_ending_style)=='converge'then
+            mb_end=mb_end+(opts.mb_ending_fade or motion.defaults.mb_ending_fade)
+        end
+        local expires=s.source_expired and tail or max(boundary+fade,mb_end,tail)
         if now>expires then
             local glyph=self.awakening_glyphs[id]
             if glyph then glyph.opacity=0 end

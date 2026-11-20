@@ -1,5 +1,19 @@
 # TargetSC — elemental resonance
 
+## 0.18.4 unified Test6.6 — converge fade after the deadline, blooms ride the ring
+
+- **`//tsc mb ending fade <0-1>`** (default .4): with `converge`, the ring and
+  ground glyph reach the floor at full brightness exactly at the MB deadline,
+  then fade out over this many seconds just after it. 0 = go out at the
+  deadline (Test6.5). The property discs still fade across the ending itself.
+- With `converge`, `mb bloom from ring` blooms now ride the descending ring
+  (where a capped glyph sits) through the ending and stay on the floor after
+  it. Outside the ending they're unchanged.
+- **`//tsc mb ending blooms fade|linger`** (default fade): `linger` lets every
+  bloom finish its own life and fade instead of going out with the MB ending
+  (any ending style).
+- `//tsc mb ending` now goes up to 3 s.
+
 ## 0.18.3 unified Test6.5 — converge MB ending (Lua only; DLL stays 0.12.0)
 
 - **`//tsc mb ending style converge`:** over the last `mb ending` seconds

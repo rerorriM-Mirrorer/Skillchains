@@ -40,6 +40,10 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test6.5 converge ending: ring and large glyph shrink toward the property
     -- glyph's size while they converge (0 = keep their size, 1 = reach it).
     mb_ending_shrink=0,
+    -- Test6.6: converge fades out over this many seconds just after the real
+    -- MB deadline (0 = out exactly at it). Blooms: fade (go out with the MB
+    -- ending) or linger (every bloom finishes its own life and fade).
+    mb_ending_fade=.4,mb_ending_blooms='fade',
     -- Test3.4: confirmed-MB glows on the two glyphs get a turning lit side,
     -- an added spin (turns/sec) over their glyph, and optional softening.
     mb_glow_shade=.5,mb_glow_spin=.5,mb_glow_flicker=1,mb_glow_width=1,
@@ -835,7 +839,14 @@ function M.frame(model,s,now,radius,height,opts,context)
     local opening=model:opening_glyph(s)
     local response=Burst.sample(model,s,now,function(k)return option(opts,k)end)
     if not show_mb then response={idle=0,flash=0,rise=0,release=0,ring=0,ending=false}end
-    if phase=='expired'and not response.responding then
+    -- Test6.6: lingering blooms (and the converge fade) may outlive the deadline.
+    local linger=show_mb and option(opts,'mb_ending_blooms')=='linger'and option(opts,'mb_bloom')
+    local function bloom_alive()
+        for _,b in ipairs(model.bursts and model.bursts[s.id]or {})do
+            if b.color and now>=b.at and now-b.at<Burst.bloom_life(nil,function(k)return option(opts,k)end)then return true end
+        end
+    end
+    if phase=='expired'and not response.responding and not response.extinguish and not (linger and bloom_alive())then
         if opening then opening.opacity=0 end
         return out
     end
@@ -1276,7 +1287,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- opacity, which only applies to the confirmed response above).
             local k=converge*option(opts,'mb_effects')
             color=mix(color,white,k)
-            opening.opacity=opening.opacity+(1-opening.opacity)*k
+            opening.opacity=(opening.opacity+(1-opening.opacity)*k)*(response.extinguish or 1)
             opening.radius=shrink_toward(opening.radius,property_radius*option(opts,'disc_size_lines'))
         elseif response.ending then
             -- A closing signal wins over a simultaneous hit's color/alpha,
@@ -1491,7 +1502,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     end
     -- MB ring remains tied to its original deadline; response overlays never
     -- reset its fade, the continuation phase, or the property-disc rotation.
-    if show_mb and mb_strength>0 then
+    if show_mb and (mb_strength>0 or response.extinguish)then
         local color=mb_color
         local alpha=option(opts,'mb_opacity')+(1-option(opts,'mb_opacity'))*(1-mb_strength)
         if clapper then alpha=alpha*(response.breath or 1)end
@@ -1516,7 +1527,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- the ring fully visible all the way down (no pulses, no fade).
             local k=converge*option(opts,'mb_effects')
             color=mix(color,white,k)
-            alpha=alpha+(1-alpha)*k
+            alpha=(alpha+(1-alpha)*k)*(response.extinguish or 1)
         elseif response.ending then
             color=mix(color,white,option(opts,'mb_effects'))
             alpha=alpha*(1-option(opts,'mb_effects'))+response.end_flash*option(opts,'mb_effects')
@@ -1633,18 +1644,22 @@ function M.frame(model,s,now,radius,height,opts,context)
         local effects=option(opts,'mb_effects')
         -- With a closing signal, blooms go out with the real MB deadline.
         local closing=1
-        if option(opts,'mb_ending_style')~='off'then closing=smooth((s.mb_close-now)/.25)end
-        -- Test6.5 converge: a ring-plane bloom starts at the MB ring's height at
-        -- the moment of its burst (which is mb height until the ending begins,
-        -- so a bloom already open never jumps) and stays there as it fades.
-        -- A glyph-plane bloom follows the large glyph, which converge caps.
+        local style=option(opts,'mb_ending_style')
+        if style=='converge'then
+            -- Test6.6: no pre-deadline cut; out with the converge fade after it.
+            closing=now<s.mb_close and 1 or response.extinguish or 0
+        elseif style~='off'then closing=smooth((s.mb_close-now)/.25)end
+        if linger then closing=1 end
+        -- Test6.6 converge (A 01:47): ring-plane blooms ride the descending MB
+        -- ring (where a capped glyph sits) through the ending and stay on the
+        -- floor after it; before the ending this is mb height, so no bloom
+        -- jumps. A glyph-plane bloom still follows the large glyph.
         local converging=option(opts,'mb_ending_style')=='converge'
-        local bopt=function(k)return option(opts,k)end
-        local function plane(where,born)
+        local ring_plane=converging and ring_at(Burst.ending_progress(s,now,function(k)return option(opts,k)end))or mb_height
+        local function plane(where)
             if where=='disc'then return option(opts,'disc_height')+.01 end -- just above the property fill
             if where=='glyph'then return opening and opening.offset or mb_height end
-            if converging and born and born<s.mb_close then return ring_at(Burst.ending_progress(s,born,bopt))end
-            return mb_height
+            return ring_plane
         end
         local from=option(opts,'mb_bloom_from')
         local to=option(opts,'mb_bloom_to')
@@ -1669,7 +1684,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local a=mb_overall*effects*env*closing
                     local color=tint(age)
                     local before=#out.discs
-                    disc(mb_radius*(start+(finish-start)*g),plane(from,burst.at)+(plane(to,burst.at)-plane(from,burst.at))*g,0,{color},a,0,0,'bloom')
+                    disc(mb_radius*(start+(finish-start)*g),plane(from)+(plane(to)-plane(from))*g,0,{color},a,0,0,'bloom')
                     if #out.discs>before then
                         local d=out.discs[#out.discs]
                         d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
@@ -1684,7 +1699,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     if at>=0 and at<life then
                         local g,env=growth(at)
                         local r=mb_radius*(1+(option(opts,'mb_bloom_lines_size')-1)*g)
-                        disc(r,plane(from,burst.at)+(plane(to,burst.at)-plane(from,burst.at))*g,opening and opening.rotation or 0,{white},0,2,
+                        disc(r,plane(from)+(plane(to)-plane(from))*g,opening and opening.rotation or 0,{white},0,2,
                             option(opts,'mb_bloom_lines_opacity')*mb_overall*effects*env*closing,'bloom-lines',tint(at))
                     end
                 end

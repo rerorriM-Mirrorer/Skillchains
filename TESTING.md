@@ -1,10 +1,19 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: `40176af` (Test6.5 zip over `ec26042`, A loaded it 01:47; Inferred from A's report).
+- Change: TargetSC unified Test6.6: converge fades out over `mb ending fade` (.4 s) after the MB deadline; ring-plane blooms ride the ring during converge; `mb ending blooms fade|linger`; `mb ending` up to 3 s; version `0.18.4-unified-test6.6`.
+- Checks: Lua 5.1 parse; 54/54 CI test invocations PASS (host only).
+- Live (A, 01:47): Test6.5 converge works as intended (details in the Test6.6 entry). Pending: Test6.6 look; shrink decision; Test6.3 kill look and real-packet detection; vertical-glyph seam decision.
+- Next: A tries Test6.6.
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
 - installed_base: `ec26042` (Test6.4, per the 2026-11-20 handoff; Inferred, not re-diffed against A's folder).
 - Change: TargetSC unified Test6.5, `//tsc mb ending style converge` + `//tsc mb ending shrink <0-1>`; version `0.18.3-unified-test6.5` (details in the Test6.5 entry below and in `TargetSC/TESTING.md`).
 - Checks: Lua 5.1 parse; 54/54 CI test invocations PASS incl. new `test_mb_converge.lua`; packaging script PASS (host only).
-- Live: none for Test6.5. Pending: the converge look; Test6.3 kill look and real-packet detection; vertical-glyph seam decision.
+- Live: ~~none for Test6.5. Pending: the converge look;~~ (2026-11-20 01:47: Test6.5 confirmed live, see the Test6.6 entry.) Pending: Test6.3 kill look and real-packet detection; vertical-glyph seam decision.
 - Next: A tries converge (and shrink) in game.
 
 ## Current Development Status — 2026-11-20 (America/Chicago)
@@ -26,6 +35,16 @@
 ---
 
 # TESTING.md — Skillchains Resonance UI
+
+## TargetSC 0.18.4 unified Test6.6 — converge fade after the deadline, blooms ride the ring (Lua only) (2026-11-20)
+
+**User feedback on Test6.5 (01:47):** loaded without errors; converge worked; rings meet; everything disappeared as the MB window closed; risen glyph slides onto the ring with no jump and rides to the floor without fading; glyph rises only to the ring and stays; bloom opened at ring height and stayed; mb ending 1 / 2 worked; shrink works (still deciding); Radiance and Umbra endings fine; soft unchanged. **Requests:** extend the extinguish just past the deadline with a clean .3-.5 s fade; blooms should follow the ring's (capped) height during the ending while keeping `mb bloom from ring` (`from glyph` almost worked but drops with the glyph during normal bursts); allow mb ending up to 3 s; maybe let blooms linger and fade naturally. Asked how long the old fades were and whether the SC ending fades inside or after its window. Author: A.
+
+**Answers (Verified by reading `40176af`):** SC rings meet exactly at the SC deadline (`descent_remaining` reaches 0 at sc_close; geometry frozen there) and then fade over `fade_duration` (.8 s) after it, i.e. already the requested order. The old MB endings fade before the deadline: soft's last pulse falls to dark over its last sixth (≈.33 s at a 2 s ending), blooms go out over the last .25 s, property discs fade across the whole ending; nothing remains after the deadline. Test6.5 converge cut ring and glyph at peak exactly at the deadline.
+
+**Changes:** `resonance_burst.lua`: for converge, `mb_close ≤ now < mb_close + mb ending fade` returns `ending`, progress 1, `converge` 1 and `extinguish = 1 − smooth(t/fade)`. `resonance.lua`: the model keeps the state through `mb_close + mb ending fade` for converge (the engine's own expire fires 1 s after the deadline, Verified in `sc_runtime.lua`). `resonance_motion.lua`: the expired-phase early return and the MB ring gate let the extinguish through; converge ring and glyph × extinguish; converge blooms: no .25 s pre-deadline cut, out with the extinguish; ring-plane blooms use the live `ring_at(progress now)` (mb height before the ending, the floor after it) instead of Test6.5's height at burst time; `mb ending blooms linger` (any style) sets the closing multiplier to 1 and keeps the frame alive while a bloom lives. Defaults `mb_ending_fade=.4`, `mb_ending_blooms='fade'`; commands `mb ending fade`, `mb ending blooms`; `mb ending` range .15-3; help/README; version `0.18.4-unified-test6.6`.
+
+**Host verification (not FFXI):** 54/54 CI test invocations PASS; `test_mb_converge.lua` updated: discs out at the deadline, ring and glyph at peak at it and fading together on the floor over .4 s, gone at 112.41; fade 0 = out at the deadline; an older bloom has no jump at the ending start and then rides the ring; a mid-ending bloom tracks the ring every frame; blooms fade vs linger (linger outlives the fade on the floor, ends with its life); soft linger; mb ending 3; new commands. Mutations (ring gate without extinguish; linger ignored) each fail. **Live pending:** the post-deadline fade, blooms riding the ring, linger, 3 s ending.
 
 ## TargetSC 0.18.3 unified Test6.5 — `mb ending style converge` (Lua only; DLL stays 0.12.0) (2026-11-20)
 

@@ -5,7 +5,7 @@ local direct={opacity={0,1},scale={.25,3},height={.25,3},intensity={0,4},width={
 local strike={prefix='',values={period={.05,.5},amplitude={0,1},damping={0,8}}}
 local groups={flutter=strike,strike=strike,
     hum={prefix='hum_',values={amplitude={0,.3},period={.05,1},slowdown={.1,4},gain={0,2}}},
-    mb={prefix='mb_',values={opacity={0,1},overall={0,1},intro={0,.6},duration={.2,4},effects={0,1},ending={.15,2},idle={0,1},burst={0,1},floor={0,1},ring={0,1},period={.2,6},rise={0,2},expand={0,2},
+    mb={prefix='mb_',values={opacity={0,1},overall={0,1},intro={0,.6},duration={.2,4},effects={0,1},ending={.15,3},idle={0,1},burst={0,1},floor={0,1},ring={0,1},period={.2,6},rise={0,2},expand={0,2},
         size={0,1},position={0,1},spin={0,.2},hold={0,.6},['return']={.1,2},lift={0,1},shimmer={0,2}}},
     breath={prefix='mb_breath_',values={min={0,1},gain={0,8}}},
     sky={prefix='sky_',values={expand={0,2},cutoff={.05,1},curve={1,8},hold={0,2},descent={-4,4}}},
@@ -340,6 +340,12 @@ function M.new(settings,defaults,save,say,killala)
             numeric('mb_ending_drop',args[3],{0,1},'mb ending drop')
         elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='shrink'then
             numeric('mb_ending_shrink',args[3],{0,1},'mb ending shrink')
+        elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='fade'then
+            numeric('mb_ending_fade',args[3],{0,1},'mb ending fade')
+        elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='blooms'then
+            local mode=(args[3]or ''):lower()
+            if mode~='fade'and mode~='linger'then say('Use //tsc mb ending blooms fade|linger.');return true end
+            settings.mb_ending_blooms=mode;save(settings);say('MB ending blooms '..mode..'.')
         elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='style'then
             local style=(args[3]or ''):lower()
             if not ({soft=true,hard=true,both=true,off=true,converge=true})[style]then

@@ -152,6 +152,16 @@ function M.sample(model,state,now,option)
         out.release=0;out.flash=0;out.ring=0;out.responding=false
         out.property=0;out.lift=0;out.shimmer=0
     end
+    -- Test6.6 converge: the converged ring and glyph fade out over `mb ending
+    -- fade` s just after the real deadline (extinguish 1 -> 0), still at the
+    -- end of the shared progress (1). 0 = go out exactly at the deadline.
+    local fade=option('mb_ending_fade')or 0
+    if option('mb_ending_style')=='converge'and not state.source_expired and state.step>1 and
+        fade>0 and now>=state.mb_close and now<state.mb_close+fade then
+        out.ending,out.ending_progress,out.converge,out.end_flash=true,1,1,1
+        out.extinguish=1-smooth((now-state.mb_close)/fade)
+        out.idle=0
+    end
     return out
 end
 return M

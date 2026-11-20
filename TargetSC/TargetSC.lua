@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.18.3-unified-test6.5'
+_addon.version='0.18.4-unified-test6.6'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -127,7 +127,7 @@ local function help()
         {'sky hold <0-2>','Seconds at full bell span after colors settle; 0 restores immediate descent.'},
         {'mb duration <0.2-4>','Ring hit-flash timing; bloom/trace hold through it, then use mb return.'},
         {'mb effects <0-1>','Overall MB animation strength; normal middle-ring opacity stays separate.'},
-        {'mb ending <0.15-2>','Total closing interval before the MB deadline, including both styles when selected.'},
+        {'mb ending <0.15-3>','Total closing interval before the MB deadline, including both styles when selected.'},
         {'mb ending style soft|hard|both|converge|off','Strong/half/strong pulses, hard on/off flickers, soft then hard, or converge (ring descends and brightens onto the emerging glyph).'},
         {'mb overall <0-1>','Master opacity for the middle ring, large MB glyph and MB flashes.'},
         {'mb intro <0-0.6>','Fresh MB-window white transition duration; 0 disables (default .6s).'},
@@ -305,6 +305,8 @@ local function help()
         {'mb glow width <0.2-2>','MB glow thickness multiplier (default 1).'},
         {'mb ending drop <0-1>','How far the MB ring settles onto the large glyph during the closing pulses (default 1).'},
         {'mb ending shrink <0-1>','Converge only: ring and large glyph shrink toward the property glyph size (default 0).'},
+        {'mb ending fade <0-1>','Converge only: seconds the converged ring and glyph take to fade out after the MB deadline (default .4).'},
+        {'mb ending blooms fade|linger','fade: blooms go out with the MB ending; linger: each bloom finishes its own fade.'},
         {'preview self [scenario]','Preview on your own character (also automatic when targeting yourself or nothing).'},
         {'frames classic|even|full','World animation updates: previous 30 Hz, even 30 Hz steps, or every frame (default classic).'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
