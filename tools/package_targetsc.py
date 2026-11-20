@@ -139,10 +139,12 @@ def main():
         names = z.namelist()
         assert set(n.split('/')[0] for n in names) == {'Skillchains', 'TargetSC'}
         for folder in ('Skillchains', 'TargetSC'):
-            for doc in ('TESTING.md', 'WORKFLOW.md', 'README.md', 'BUILD_INFO.json'):
+            for doc in ('TESTING.md', 'README.md', 'BUILD_INFO.json'):
                 assert folder + '/' + doc in names
-            workflow = z.read(folder + '/WORKFLOW.md')
-            assert all(s in workflow for s in (b'## AGATHOS', b'## DESIGN', b'## WORKFLOW'))
+        # 2026-11-20: TargetSC/ no longer carries its own WORKFLOW.md (the
+        # repo-root canon copy is the only one); Skillchains still ships it.
+        workflow = z.read('Skillchains/WORKFLOW.md')
+        assert all(s in workflow for s in (b'## AGATHOS', b'## DESIGN', b'## WORKFLOW'))
         assert 'TargetSC/src/SceneHook/SceneHook.h' in names
         assert 'TargetSC/licenses/TargetRing-BSD-3-Clause.txt' in names
         assert 'TargetSC/licenses/TargetLines-MIT.txt' in names
@@ -163,7 +165,7 @@ def main():
     # A minimal TargetSC patch preserves the user's independently updated HUD.
     patch_paths=set(git('diff','--name-only',PATCH_BASE,'--','TargetSC').splitlines())
     assert not any(name.endswith('.dll')for name in patch_paths), 'Lua-only patch must not include DLL'
-    patch_paths.update({'TargetSC/README.md','TargetSC/WORKFLOW.md','TargetSC/TESTING.md'})
+    patch_paths.update({'TargetSC/README.md','TargetSC/TESTING.md'})
     patch = DIST / 'TargetSC-0.11.1-Test11.1-White-Breath-Lua-Patch.zip'
     patch_checks={}
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED) as z:

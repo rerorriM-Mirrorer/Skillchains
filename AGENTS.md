@@ -63,5 +63,5 @@ TRUSTED: master (94762264, TargetSC unified Test2 0.12.1, Live known-good 2026-1
 ACTIVE: development/targetsc-mb-rise-gradient (0.18.2 unified Test6.3, host checks only, live Pending).
 LIVE_FILES: TargetSC/ folder is what runs (TargetSC.lua, sc_runtime.lua, targetsc_bridge.lua, targetsc_local.lua). Edit the TargetSC copies, not repo-root Skillchains.lua; standalone Skillchains is unloaded in A's setup (Verified in handoff doc).
 INTERFACES: GripRumble drives its SC-window vibration from its own chain_skills.lua (independent action-packet parsing; no file or message interface found, Inferred). Native _TargetSC.dll: replacing it needs all clients closed.
-NOTES: TargetSC/ carries its own AGENTS.md, WORKFLOW.md and TESTING.md copies; not synced in this pass (Pending).
+NOTES: Root AGENTS.md/WORKFLOW.md are the only copies (TargetSC/ copies removed 2026-11-20). TargetSC/TESTING.md is kept: it holds TargetSC's per-batch history (newest at top), mirrored into root TESTING.md; add new TargetSC batch entries to both.
 CHECKS: luac -p (5.1) on changed .lua; tests in TargetSC/tests (run method Inferred).

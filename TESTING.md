@@ -1,5 +1,6 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
+- Docs-only: removed the stale `TargetSC/AGENTS.md` and `TargetSC/WORKFLOW.md` (pre-canon copies; the TargetSC AGENTS still told agents to zip WORKFLOW/TESTING, which canon 2026-11-20.1 forbids). Root copies are canonical. `TargetSC/TESTING.md` kept as history. `tools/package_targetsc.py` no longer expects `TargetSC/WORKFLOW.md` (it would have failed CI otherwise). No runtime change, no FFXI test.
 - Docs sync to canon 2026-11-20.1 (`agents_shared_version` and `workflow_version`); project-specific lines moved to the AGENTS REPO block: none; no runtime change, no FFXI test.
 
 ---
