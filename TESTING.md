@@ -4,7 +4,7 @@
 - installed_base: `e9c2e83` (Test6.6.1; A tested it 02:15).
 - Change: Test6.6.2, `mb ending blooms linger` fades blooms over `mb ending fade` after the deadline (any style); version `0.18.4-unified-test6.6.2`.
 - Checks: 54/54 CI invocations PASS (host only).
-- Live (A, 02:15): Test6.6.1 fades look great in previews incl. `preview mb light`; A uses `mb ending fade 0.8`, `mb ending shrink 0.3`. Pending: Test6.6.2 linger; converge in battle; Test6.3 kill items; vertical seam; merge to master.
+- Live (A, 02:15): Test6.6.1 fades look great in previews incl. `preview mb light`; A uses `mb ending fade 0.8`, `mb ending shrink 0.3`. (02:26: Test6.6.2 confirmed, looks good.) Pending: converge in battle; Test6.3 kill items; vertical seam; merge to master.
 - Next: A plays with converge in battle.
 
 ## Current Development Status — 2026-11-20 (America/Chicago)
@@ -62,7 +62,7 @@
 
 **Changes:** `linger` now: blooms keep drawing past the deadline (no pre-deadline cut) and fade out over `mb ending fade` (closing = 1 − smooth((now − mb_close)/fade)), any ending style; with converge it equals `fade`, with soft/hard it replaces their .25 s pre-deadline cut. Expired-phase keep-alive and the preview tail use mb ending fade for linger. Defaults unchanged (`mb ending fade` .4; A's saved .8 stays). Help/README; version `0.18.4-unified-test6.6.2`.
 
-**Host verification (not FFXI):** 54/54 CI invocations PASS; `test_mb_converge.lua`: converge linger = fade frame for frame, out after the fade, follows fade .8; soft linger fades after the deadline and is out at +.4; preview tail = fade + .05. The old full-life linger fails the new checks. **Live pending:** linger with soft/hard; converge 0.8 + shrink 0.3 in battle.
+**Host verification (not FFXI):** 54/54 CI invocations PASS; `test_mb_converge.lua`: converge linger = fade frame for frame, out after the fade, follows fade .8; soft linger fades after the deadline and is out at +.4; preview tail = fade + .05. The old full-life linger fails the new checks. ~~**Live pending:** linger with soft/hard; converge 0.8 + shrink 0.3 in battle.~~ **Live (A, 2026-11-20 02:26):** Test6.6.2 "looks good", "I love ittttt". Still pending: linger with soft/hard; converge in battle.
 
 ## TargetSC 0.18.4 unified Test6.6.1 — previews play the converge fade (Lua only) (2026-11-20)
 
