@@ -14,7 +14,7 @@ MODULES={'TargetSC.lua','sc_runtime.lua','targetsc_local.lua','targetsc_bridge.l
          'skills.lua','resonance_ui.lua','resonance_fx.lua','learning_ui.lua',
          'skillchains_demo.lua','resonance.lua','resonance_motion.lua',
          'resonance_burst.lua','resonance_controls.lua','resonance_preview.lua',
-         'WORKFLOW.md','TESTING.md','AGENTS.md','README.md','INTEGRATION.md',
+         'TESTING.md','README.md','INTEGRATION.md',
          'THIRD_PARTY_NOTICES.md','libs/_TargetSC.dll'}
 for name in MODULES:
     assert (SRC/name).is_file(),f'missing required file: {name}'
