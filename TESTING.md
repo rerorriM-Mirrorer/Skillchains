@@ -6,7 +6,8 @@
 - Checks: Lua 5.1 parse of all TargetSC Lua; 53/53 CI test invocations PASS incl. new `test_mb_glyph_opacity.lua` (host only).
 - Live: ~~none for Test6.4. Pending: Test6.4 look;~~ (2026-11-20 01:07: Test6.4 confirmed live, below.) Pending: Test6.3 kill look and real-packet detection; vertical-glyph seam decision.
 - Live (A, 2026-11-20 01:07): Test6.4 loaded without errors; opacity 1 same as before; 0.5 and 0 "work great"; window flash still shows at 0; closing flashes full strength; 2 and x refused, old value kept; Umbra MB floor glyph works the same. "It looks great!"
-- Next: A's live feedback; merge to master after live confirmation.
+- GitHub CI: `ec26042` failed only in packaging (`tools/package_targetsc_unified.py` still required the removed `TargetSC/WORKFLOW.md`/`AGENTS.md`); fixed in `ff2f7fa`, CI success (Verified). Lua tests were not affected.
+- Next: new batch in a new conversation; merge to master when A is ready.
 
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
