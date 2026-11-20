@@ -3,6 +3,25 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: `cd390bf` (Test6.9 zip delivered 05:30 over `f3800fe`; Inferred that A installed it, not live-confirmed).
+- Change: Test7.0, `//tsc umbra under ...` (Gravitation<->Distortion disc turning just under the black disc, opaque center, clear edge; spin, direction, size, cycle, opacity, depth, center/edge) and `//tsc umbra haze ...` (flickering white bloom at the MB ring height all MB window; opacity, size, flicker, speed, center/edge). Both off by default and in killala. Version `0.19.0-unified-test7.0`.
+- Checks: Lua 5.1 (lupa) parse of every TargetSC `.lua`; 65/65 CI invocations PASS incl. new `test_umbra_under_haze.lua`; previews `preview umbra`, `preview Umbra 4` and `preview kill mb Ice`, 0-40 s: at most 9 of the 16 native disc slots, same burst-bloom frames with both on (host only). Mutation (no haze flicker) fails the test.
+- Live: none for Test6.8-7.0. Pending: the Test6.8 one-set look, the Test6.9 glyph look, the Test7.0 under disc and haze looks; earlier items unchanged.
+- Next: A tries `umbra under on` and `umbra haze on` with `preview umbra`.
+
+## TargetSC 0.19.0 unified Test7.0 — Umbra under disc and haze (Lua only) (2026-11-20)
+
+**Request (05:55):** (1) an option for a second rotating property disc just below Umbra's black disc, matching Radiance's stacked middle disc: opaque center, transparent edge, fading between Gravitation and Distortion, with spin speed, direction and size; (2) an option for a flickering persistent white "smoke" bloom at the MB ring's level, with flicker, size and opacity settings.
+
+**Before (Verified):** Radiance's middle disc (`radiance_stack`) crossfades Fusion and Fragmentation on a cosine cycle, turning at `disc_rotation x middle spin`. Umbra had no stack. The MB ring height is `mb_height` (the black disc's plane with `umbra mb height disc`); the collapse scales every disc at the end of the frame.
+
+**Changes:** `umbra-under` disc drawn just before the black disc (so the black disc covers the overlap) at `h - under depth`, radius `black x under size`, turn `black turn x under spin x (-1 if reverse)`, colors from the Gravitation/Distortion palettes mixed by `.5-.5cos(2pi age/cycle)`, `inner/outer = under center/edge`, alpha `under opacity x life`. `umbra-haze` disc at the MB ring height (`ring_at` during the ending), radius `mb_radius x umbra mb size x haze size`, white, `inner/outer = haze center/edge`, alpha `haze opacity x smooth(age/.3) x flicker(now, haze flicker, 23 x speed, 28 x speed)` while `mb_active` (x the mb-ending fade when the collapse is off). The gather kill puts the haze on the MB ring like the MB glyph. Commands/help/README; version.
+
+**Host verification (not FFXI):** 65/65 CI invocations PASS. New test: off by default; under disc ordered before the black disc, .01 below, same size and turn at defaults, center 1/edge 0, Gravitation at whole cycles and Distortion halfway, blended between; spin 2 reverse, size, depth, center/edge, opacity; Umbra only; collapses. Haze at the MB ring's height and x1.3 its radius, white, present .5 s to the deadline, flickers, at most its opacity, gone after; flicker 0 steady at opacity; size; follows mb height disc; fades without the collapse; both together under 16 discs. Commands and range rejects; killala off. **Live pending:** both looks in previews and a real chain.
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
 - installed_base: `bdca0c1` (Test6.8, delivered 05:20; Inferred that A installed it, not live-confirmed yet).
 - Change: Test6.9, `//tsc radiance glyph circle on|off` (off = the floor MB glyph drawn as a flat native 3D glyph with no circle) and `//tsc radiance glyph wobble rings|always` (always = keeps moving through the MB window and exit fade). Defaults and killala unchanged. Version `0.18.7-unified-test6.9`.
 - Checks: Lua 5.1 (lupa) parse of every TargetSC `.lua`; 64/64 CI invocations PASS incl. new `test_radiance_glyph.lua` (runs through `preview Radiance 4` and `preview kill mb`); two mutations each fail it (host only).

@@ -1,5 +1,23 @@
 # TargetSC — elemental resonance
 
+## 0.19.0 unified Test7.0 — Umbra under disc and haze (Lua only)
+
+- **`//tsc umbra under on|off`** (default off): a second turning property disc
+  just below Umbra's black disc, like Radiance's middle disc. Its colors fade
+  back and forth between the Gravitation and Distortion looks. It is opaque in
+  the center and clear at the edge, so it shows as moving turbulence where the
+  black disc thins out. Settings: `under spin <0-6>` (x the black disc's turn, 1),
+  `under direction same|reverse`, `under size` (x the black disc, 1),
+  `under cycle` (seconds per fade, 4), `under opacity` (.6), `under depth`
+  (distance below, .01), `under center|edge` (1, 0).
+- **`//tsc umbra haze on|off`** (default off): a white smoke bloom held at the
+  MB ring's height for the whole MB window, flickering. Settings: `haze opacity`
+  (.3), `haze size` (x the Umbra MB ring, 1.3), `haze flicker` (0 steady to 1
+  full buzz, .5), `haze speed` (flicker rate, 1), `haze center|edge` (.6, 0). It
+  fades in over .3 s and shrinks away with the collapse (or fades over
+  `mb ending` with the collapse off). It follows `umbra mb height disc`.
+- `preset killala` keeps both off.
+
 ## 0.18.7 unified Test6.9 — Radiance floor glyph: no circle, steady wobble (Lua only)
 
 - **`//tsc radiance glyph circle on|off`** (default on): off draws Radiance's

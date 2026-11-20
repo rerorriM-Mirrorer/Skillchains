@@ -152,6 +152,22 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- the hum's opening speed through the whole MB window and exit fade
     -- (rings = it follows the ground rings, which settle as they close).
     radiance_glyph_circle=true,radiance_glyph_wobble='rings',
+    -- Test7.0 Umbra under disc: a second turning property disc just below the
+    -- black one (like Radiance's middle disc), crossfading the Gravitation and
+    -- Distortion looks over `under cycle` s, opaque center to clear edge
+    -- (`under center`/`under edge`), showing where the black disc thins out.
+    -- Spin x the Umbra disc's turn; direction same|reverse; size x its size;
+    -- depth = how far below the black disc.
+    umbra_under=false,umbra_under_opacity=.6,umbra_under_size=1,umbra_under_spin=1,
+    umbra_under_direction='same',umbra_under_cycle=4,umbra_under_depth=.01,
+    umbra_under_center=1,umbra_under_edge=0,
+    -- Test7.0 Umbra haze: a white smoke bloom held at the MB ring's height for
+    -- the whole MB window, flickering (`haze flicker` depth 0-1 at `haze
+    -- speed` x the level-4 buzz rate); size x the Umbra MB ring; center/edge
+    -- = its radial opacity. Fades in over .3 s; shrinks with the collapse (or
+    -- fades over `mb ending` without it).
+    umbra_haze=false,umbra_haze_opacity=.3,umbra_haze_size=1.3,umbra_haze_flicker=.5,
+    umbra_haze_speed=1,umbra_haze_center=.6,umbra_haze_edge=0,
     -- Test5.5 Radiance three-disc stack (bottom to top): a white disc, a disc
     -- crossfading the Fusion and Fragmentation looks (own cycle, turning at
     -- the level-4 disc speed x middle spin), then the existing white disc on
@@ -238,7 +254,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
-    radiance_sky='bell',radiance_glyph_circle=true,radiance_glyph_wobble='rings',umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
+    radiance_sky='bell',radiance_glyph_circle=true,radiance_glyph_wobble='rings',umbra_under=false,umbra_haze=false,umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
     umbra_collapse=false,umbra_glyph_lift=-1,kill=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
@@ -609,7 +625,7 @@ local function mb_kill(out,s,now,kill,start,opts,context,f)
         v.radius=v.radius*c
     end
     for _,d in ipairs(out.discs)do
-        if d.role=='mb-glyph'then d.offset=f.mb_height;d.radius=d.radius*c -- the MB glyph meets the MB ring exactly
+        if d.role=='mb-glyph'or d.role=='umbra-haze'then d.offset=f.mb_height;d.radius=d.radius*c -- the MB glyph (and haze) meet the MB ring exactly
         elseif not bloom[d.role]then d.offset=d.offset+delta;d.radius=d.radius*c end
     end
     for _,x in ipairs(out.glyphs3 or {})do
@@ -1532,6 +1548,21 @@ function M.frame(model,s,now,radius,height,opts,context)
                     if #out.discs>mark then finish_fill(out.discs[#out.discs],0)end
                     h=base_h+2*spacing
                 end
+                if l4name=='umbra'and j==1 and option(opts,'umbra_under')then
+                    -- Test7.0: Gravitation<->Distortion disc just under the black disc.
+                    local grav,dist=property_palette('Gravitation',context),property_palette('Distortion',context)
+                    local w=.5-.5*math.cos(2*pi*max(0,now-s.created)/max(.1,option(opts,'umbra_under_cycle')))
+                    local mixed={}
+                    for i=1,max(#grav,#dist)do mixed[i]=mix(grav[i]or grav[#grav],dist[i]or dist[#dist],w)end
+                    local turn=angle*option(opts,'umbra_under_spin')*(option(opts,'umbra_under_direction')=='reverse'and -1 or 1)
+                    local mark=#out.discs
+                    disc(r*fill_size*option(opts,'umbra_under_size'),h-option(opts,'umbra_under_depth'),turn,mixed,
+                        option(opts,'umbra_under_opacity')*life,0,0,'umbra-under')
+                    if #out.discs>mark then
+                        local d=out.discs[#out.discs]
+                        d.inner,d.outer=option(opts,'umbra_under_center'),option(opts,'umbra_under_edge')
+                    end
+                end
                 local before=#out.discs
                 local fill_alpha=(glyph==2 and not respond)and 0 or disc_fill
                 disc(r*fill_size,h,angle,colors,fill_alpha,0,0,'property')
@@ -1648,6 +1679,20 @@ function M.frame(model,s,now,radius,height,opts,context)
             if l4name=='umbra'then r=r*option(opts,'umbra_mb_size')end
             r=shrink_toward(r,property_radius*option(opts,'disc_size_lines'))
             ring(r,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
+        end
+    end
+    -- Test7.0 Umbra haze: a flickering white smoke bloom at the MB ring's height.
+    if l4name=='umbra'and show_mb and option(opts,'umbra_haze')and mb_active then
+        local presence=smooth((now-s.created)/.3)
+        if not option(opts,'umbra_collapse')then presence=presence*smooth((s.mb_close-now)/max(.05,option(opts,'mb_ending')))end
+        local speed=option(opts,'umbra_haze_speed')
+        local a=option(opts,'umbra_haze_opacity')*presence*flicker(now,option(opts,'umbra_haze_flicker'),23*speed,28*speed)
+        local h=response.ending and ring_at(response.ending_progress)or mb_height
+        local mark=#out.discs
+        disc(mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_haze_size'),h,0,{white},a,0,0,'umbra-haze')
+        if #out.discs>mark then
+            local d=out.discs[#out.discs]
+            d.inner,d.outer=option(opts,'umbra_haze_center'),option(opts,'umbra_haze_edge')
         end
     end
     -- Test5.4 Umbra flash-out bloom: one ring-shaped black bloom where the

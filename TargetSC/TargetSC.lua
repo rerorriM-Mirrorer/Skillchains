@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.18.7-unified-test6.9'
+_addon.version='0.19.0-unified-test7.0'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -171,6 +171,11 @@ local function help()
         {'umbra sky same|bell|off','Sky rings the same size as the ground rings (default same), flared like a bell, or off (one set of rings).'},
         {'umbra glyph breath|same','Umbra large MB glyph breathes at rest at the disc\'s exact height, sized like the Umbra MB ring (default breath).'},
         {'umbra glyph size|opacity|spin <number> | glyph over on|off','Size x MB ring (1), opacity (same), turn x level-4 speed (1), draw it over the disc (off).'},
+        {'umbra under on|off','A second turning disc just under the black one, fading Gravitation <-> Distortion (default off).'},
+        {'umbra under opacity|size|spin|cycle|depth <number>','Its opacity (.6), size x the black disc (1), turn x the disc (1), seconds per fade (4), distance below (.01).'},
+        {'umbra under direction same|reverse | under center|edge <0-1>','Its turn direction (same); center and edge opacity (1, 0).'},
+        {'umbra haze on|off','A flickering white smoke bloom held at the MB ring height all MB window (default off).'},
+        {'umbra haze opacity|size|flicker|speed <number> | haze center|edge <0-1>','Opacity (.3), size x the Umbra MB ring (1.3), flicker depth 0-1 (.5), flicker speed (1), center/edge (.6, 0).'},
         {'umbra copies on|off','Glyph copies growing out just under the disc through the opening (default on).'},
         {'umbra copies every|life|size|opacity|spin|depth <number>','New copy every .6 s, each lasting 1.2 s, growing to 1.6x, opacity .5, spin 1, .004 under the disc.'},
         {'umbra lines size <0.2-4|same> | lines opacity <0-1|same>','The disc\'s own glyph lines: size x the Umbra MB ring (same = disc size), direct opacity.'},

@@ -89,6 +89,7 @@ jobs:
           lua5.1 TargetSC/tests/test_umbra_collapse.lua
           lua5.1 TargetSC/tests/test_level4_sky.lua
           lua5.1 TargetSC/tests/test_radiance_glyph.lua
+          lua5.1 TargetSC/tests/test_umbra_under_haze.lua
           lua5.1 TargetSC/tests/test_kill.lua
           lua5.1 TargetSC/tests/test_native_kill.lua
           lua5.1 TargetSC/tests/test_native_kill.lua 0.11.0
