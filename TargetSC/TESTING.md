@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.18.4 unified Test6.6.1 — previews play the converge fade (Lua only) (2026-11-20)
+
+**User report (02:00):** no reload errors; `//tsc status` showed 0.18.4 unified test6.6; with `mb ending fade 1` and `0.3` the animation still cut out instead of fading in `//tsc preview burst` and `//tsc preview mb light`. `mb ending 3` worked (prefers 2). Shrink decision waits for a working fade. Author: A.
+
+**Cause (Verified):** every preview ends itself .05 s after its last MB deadline (`resonance_preview.lua`, `self.ends`) and is then dropped at once, so Test6.6's post-deadline fade (drawn by the model up to mb_close + fade) was never reached in previews. ~~Test6.6 host check covered the model, not the preview path.~~ (2026-11-20: the Test6.6 tests drove the model directly; the preview runner was not tested.) Live combat goes through the model and was not checked by A (Inferred to fade).
+
+**Changes:** `resonance_preview.lua`: `M.mb_tail(opts,resonance)` = .05, or converge fade + .05, or a lingering bloom's life + .05 (largest); read live each frame so a setting changed mid-preview applies. Each preview remembers its MB deadline (`mb_end`: the window, the four-link demos' last link, `mb light`/`mb dark`'s final link; kill previews keep their fixed end) and finishes at max(old end, mb_end + tail). Version `0.18.4-unified-test6.6.1`.
+
+**Host verification (not FFXI):** 54/54 CI invocations PASS; `test_mb_converge.lua` section 9 runs the real `preview burst` and `preview mb light` with converge: the MB ring is still drawn between the deadline and +.35 s, and the preview ends .4-.6 s after the deadline; with soft both end ≤.065 s after it as before; tail values for fade/linger. Without the fix, section 9 fails. **Live pending:** the fade in previews and in combat.
+
 ## TargetSC 0.18.4 unified Test6.6 — converge fade after the deadline, blooms ride the ring (Lua only) (2026-11-20)
 
 **User feedback on Test6.5 (01:47):** loaded without errors; converge worked; rings meet; everything disappeared as the MB window closed; risen glyph slides onto the ring with no jump and rides to the floor without fading; glyph rises only to the ring and stays; bloom opened at ring height and stayed; mb ending 1 / 2 worked; shrink works (still deciding); Radiance and Umbra endings fine; soft unchanged. **Requests:** extend the extinguish just past the deadline with a clean .3-.5 s fade; blooms should follow the ring's (capped) height during the ending while keeping `mb bloom from ring` (`from glyph` almost worked but drops with the glyph during normal bursts); allow mb ending up to 3 s; maybe let blooms linger and fade naturally. Asked how long the old fades were and whether the SC ending fades inside or after its window. Author: A.

@@ -62,6 +62,19 @@ function M.parse(args,resonance)
     if not level or level%1~=0 or level<1 or level>4 then return nil,'Level must be 1–4.' end
     return {kind=kind,properties=properties,level=level}
 end
+-- Test6.6.1: how long the MB presentation still draws after its deadline
+-- (converge's fade; lingering blooms' life). Read live, so a changed setting
+-- applies to a running preview. Previews used to stop .05 s after the close.
+function M.mb_tail(opts,resonance)
+    local d=resonance.defaults
+    local function o(k)if opts[k]~=nil then return opts[k]end return d[k]end
+    local tail=.05
+    if o('mb_ending_style')=='converge'then tail=math.max(tail,(o('mb_ending_fade')or 0)+.05)end
+    if o('mb_ending_blooms')=='linger'and o('mb_bloom')then
+        tail=math.max(tail,(o('mb_bloom_time')or 1)+math.max(0,math.floor(o('mb_bloom_lines')or 0)-1)*(o('mb_bloom_lines_delay')or 0)+.05)
+    end
+    return tail
+end
 function M.new(spec,id,now,resonance,opts)
     local self={id=id,at=now,kind=spec.kind,properties=spec.properties,level=spec.level,
         model=resonance.new(),events={},phase=nil,opts=opts or resonance.defaults}
@@ -141,7 +154,11 @@ function M.new(spec,id,now,resonance,opts)
     elseif kind=='expire' then s=state(now-8,2,spec.properties,spec.level,false) end
     self.model.states[id]=s
     self.ends=kind=='pre' and now+3 or math.max(s.sc_close+1.05,s.mb_close)
-    if self.final then self.ends=self.final.mb_close+.05 end
+    -- Test6.6.1: the MB deadline the preview's ending tail counts from.
+    self.mb_end=kind~='pre'and s.step>1 and s.mb_close or nil
+    -- A real final link (mb light/dark) counts from its own deadline; kill
+    -- previews (no link) keep their fixed end.
+    if self.final then self.ends=self.final.mb_close+.05;self.mb_end=self.final.step and self.final.step>1 and self.final.mb_close or nil end
     if kind=='burst'then
         self.events[1]={at=now+.6,kind='burst',color=resonance.element_color(spec.element)}
     end
@@ -156,7 +173,7 @@ function M.new(spec,id,now,resonance,opts)
                 label=row.name..': '..row.property..' (Level '..row.level..')'}
             prior=next_state
         end
-        self.ends=prior.mb_close+.05
+        self.ends=prior.mb_close+.05;self.mb_end=prior.mb_close
         if kind=='mbdemo'then
             -- Same four successful links and clocks; middle hits deliberately
             -- overlap the next chain's white introduction.
@@ -194,7 +211,7 @@ function M.new(spec,id,now,resonance,opts)
         end
         local current=self.model.states[self.id]
         self.phase=current and resonance.phase(current,clock,self.opts) or 'expired'
-        return clock>=self.ends
+        return clock>=math.max(self.ends,self.mb_end and self.mb_end+M.mb_tail(self.opts,resonance)or 0)
     end
     local relative_open=s.sc_open-now
     local function at(t)return ('%.1fs'):format(t-now)end

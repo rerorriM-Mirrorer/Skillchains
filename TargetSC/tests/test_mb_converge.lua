@@ -186,6 +186,34 @@ do
     assert(math.abs(p.blooms[1].offset-f(109).ring.offset)<1e-6,'soft: bloom keeps the steady MB height')
 end
 
+-- 9. Test6.6.1 (A 02:00: no fade in `preview burst` / `preview mb light`):
+-- previews keep running through the converge fade (and lingering blooms).
+do
+    local P=require('resonance_preview')
+    for _,args in ipairs({{'burst'},{'mb','light'}})do
+        local pv=P.new(assert(P.parse(args,R)),71,200,R,o)
+        local close=pv.mb_end
+        assert(close,'preview has an MB deadline '..args[1])
+        local done_at,lit
+        for i=0,6000 do
+            local t=200+i/100
+            if pv:advance(t)then done_at=t break end
+            if t>close+.05 and t<close+.35 then
+                local f=pv.model:frame(71,t,2,4,o)
+                for _,v in ipairs(type(f)=='table'and f or {})do if v.part=='mb'and v.role=='core'and alpha(v.color)>0 then lit=true end end
+            end
+        end
+        assert(lit,'converge fade drawn after the deadline in preview '..table.concat(args,' '))
+        assert(done_at and done_at>=close+.4 and done_at<close+.6,'preview ends after the fade '..table.concat(args,' ')..' '..tostring(done_at and done_at-close))
+        local soft=P.new(assert(P.parse(args,R)),71,200,R,copy(R.defaults))
+        local sd
+        for i=0,6000 do local t=200+i/100;if soft:advance(t)then sd=t break end end
+        assert(sd and sd-soft.mb_end<=.065,'soft preview ends as before '..table.concat(args,' ')..' '..tostring(sd and sd-soft.mb_end))
+    end
+    local l=copy(o);l.mb_ending_blooms='linger'
+    assert(math.abs(P.mb_tail(l,R)-1.05)<1e-9 and math.abs(P.mb_tail(o,R)-.45)<1e-9,'tail: linger bloom life / fade')
+end
+
 -- 8. Commands.
 local settings=copy(R.defaults)
 local said

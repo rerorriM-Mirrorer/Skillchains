@@ -1,6 +1,15 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: `bf2ee4a` (Test6.6, A's status showed test6.6 at 02:00; Verified by A's report).
+- Change: Test6.6.1, previews run until the converge fade (and lingering blooms) finish instead of stopping .05 s after the MB deadline; version `0.18.4-unified-test6.6.1`.
+- Checks: 54/54 CI invocations PASS (host only).
+- Live (A, 02:00): Test6.6 fade did not show in `preview burst` / `preview mb light` (fixed here); `mb ending 3` works, prefers 2. Pending: the fade, linger, shrink decision; Test6.3 kill items; vertical seam.
+- Next: A retries the fade in previews and in a real fight.
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
 - installed_base: `40176af` (Test6.5 zip over `ec26042`, A loaded it 01:47; Inferred from A's report).
 - Change: TargetSC unified Test6.6: converge fades out over `mb ending fade` (.4 s) after the MB deadline; ring-plane blooms ride the ring during converge; `mb ending blooms fade|linger`; `mb ending` up to 3 s; version `0.18.4-unified-test6.6`.
 - Checks: Lua 5.1 parse; 54/54 CI test invocations PASS (host only).
@@ -35,6 +44,16 @@
 ---
 
 # TESTING.md — Skillchains Resonance UI
+
+## TargetSC 0.18.4 unified Test6.6.1 — previews play the converge fade (Lua only) (2026-11-20)
+
+**User report (02:00):** no reload errors; `//tsc status` showed 0.18.4 unified test6.6; with `mb ending fade 1` and `0.3` the animation still cut out instead of fading in `//tsc preview burst` and `//tsc preview mb light`. `mb ending 3` worked (prefers 2). Shrink decision waits for a working fade. Author: A.
+
+**Cause (Verified):** every preview ends itself .05 s after its last MB deadline (`resonance_preview.lua`, `self.ends`) and is then dropped at once, so Test6.6's post-deadline fade (drawn by the model up to mb_close + fade) was never reached in previews. ~~Test6.6 host check covered the model, not the preview path.~~ (2026-11-20: the Test6.6 tests drove the model directly; the preview runner was not tested.) Live combat goes through the model and was not checked by A (Inferred to fade).
+
+**Changes:** `resonance_preview.lua`: `M.mb_tail(opts,resonance)` = .05, or converge fade + .05, or a lingering bloom's life + .05 (largest); read live each frame so a setting changed mid-preview applies. Each preview remembers its MB deadline (`mb_end`: the window, the four-link demos' last link, `mb light`/`mb dark`'s final link; kill previews keep their fixed end) and finishes at max(old end, mb_end + tail). Version `0.18.4-unified-test6.6.1`.
+
+**Host verification (not FFXI):** 54/54 CI invocations PASS; `test_mb_converge.lua` section 9 runs the real `preview burst` and `preview mb light` with converge: the MB ring is still drawn between the deadline and +.35 s, and the preview ends .4-.6 s after the deadline; with soft both end ≤.065 s after it as before; tail values for fade/linger. Without the fix, section 9 fails. **Live pending:** the fade in previews and in combat.
 
 ## TargetSC 0.18.4 unified Test6.6 — converge fade after the deadline, blooms ride the ring (Lua only) (2026-11-20)
 
