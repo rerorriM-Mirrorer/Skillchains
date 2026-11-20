@@ -144,7 +144,7 @@ function M.new(settings,defaults,save,say,killala)
             haze={'b'},['haze opacity']={'n',0,1},['haze size']={'n',.2,6},['haze flicker']={'n',0,1},
             ['haze speed']={'n',0,4},['haze center']={'n',0,1},['haze edge']={'n',0,1},
             ['haze style']={'c','soft','glow'},['haze black']={'n',0,1},['haze lift']={'n',-1,1},['haze order']={'c','over','under'},
-            ['disc jitter']={'n',0,.5},['jitter speed']={'n',0,10},['under steady']={'b'},['copies steady']={'b'},
+            ['disc jitter']={'n',0,.5},['jitter speed']={'n',0,10},['under steady']={'b'},['copies steady']={'b'},['under ending']={'c','fade','shrink'},['copies until']={'c','flash','end'},
             collapse={'b'},['collapse curve']={'n',1,10},['collapse time']={'n',.2,6,same=true},['glyph lift']={'n',0,.2,same=true},['ending time']={'n',.3,12},
             ['gyro speed']={'n',-8,8},['gyro rise']={'n',.05,3},['gyro shrink']={'n',0,1},['gyro below']={'c','full','half'},
             ['stand time']={'n',.05,8},['sink time']={'n',.05,10},['swallow stagger']={'n',0,.95},

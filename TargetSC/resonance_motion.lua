@@ -178,6 +178,11 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     umbra_disc_jitter=0,umbra_jitter_speed=1,
     -- Test7.1: steady = keep the disc's opening turn speed (no slowdown).
     umbra_under_steady=false,umbra_copies_steady=false,
+    -- Test7.2: under ending fade = in the collapse the under disc keeps its
+    -- size and fades by the same curve (shrink = shrinks with the rest);
+    -- copies until end = glyph copies keep spawning to the MB deadline
+    -- (flash = they stop at the flash-out, as before).
+    umbra_under_ending='fade',umbra_copies_until='flash',
     -- Test7.1 Radiance MB ending: ride = the property discs move down with the
     -- MB ring and only fade in the final fade; ending glyph = the floor glyph
     -- brightens toward `ending peak` as the ring descends (off = as before).
@@ -1808,7 +1813,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- draw order so the opaque disc covers what it overlaps).
     if l4name=='umbra'and show_sc and option(opts,'umbra_copies')then
         local every,life=max(.05,option(opts,'umbra_copies_every')),max(.05,option(opts,'umbra_copies_life'))
-        local stop=M.umbra_flashed(s,opts,has_top)
+        local stop=option(opts,'umbra_copies_until')=='end'and s.mb_close or M.umbra_flashed(s,opts,has_top)
         local r0=mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_glyph_size')
         local h=M.umbra_plane(opts,details)-option(opts,'umbra_copies_depth')
         local spin=(option(opts,'umbra_copies_steady')and M.steady_rotation(s,now,opts)or M.disc_rotation(s,now,opts))*option(opts,'umbra_copies_spin')
@@ -1915,7 +1920,16 @@ function M.frame(model,s,now,radius,height,opts,context)
         local c=M.umbra_collapse(s,now,opts)
         if c<1 then
             for _,v in ipairs(out)do v.radius=v.radius*c end
-            for _,d in ipairs(out.discs)do d.radius=d.radius*c end
+            local fade_under=option(opts,'umbra_under_ending')=='fade'
+            for _,d in ipairs(out.discs)do
+                if fade_under and d.role=='umbra-under'then
+                    -- Test7.2: same size, alpha follows the collapse curve.
+                    for k,col in ipairs(d.colors or {})do
+                        d.colors[k]=math.floor(math.floor(col/16777216)*c+.5)*16777216+col%16777216
+                    end
+                    if d.color then d.color=math.floor(math.floor(d.color/16777216)*c+.5)*16777216+d.color%16777216 end
+                else d.radius=d.radius*c end
+            end
             for _,g in ipairs(out.glyphs3 or {})do g.radius=g.radius*c end
         end
     end

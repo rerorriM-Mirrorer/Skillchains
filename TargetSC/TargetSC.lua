@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.1-unified-test7.1'
+_addon.version='0.19.2-unified-test7.2'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -184,6 +184,8 @@ local function help()
         {'umbra haze lift <-1..1> | haze order over|under','Haze height from the MB ring (0); drawn over (default) or under the black disc.'},
         {'umbra disc jitter <0-.5> | jitter speed <n>','Black disc middle point swings by this much (0 = still) at this many cycles/s (1).'},
         {'umbra under steady on|off | copies steady on|off','Keep the under disc / glyph copies at the opening turn speed (default off).'},
+        {'umbra under ending fade|shrink','In the collapse the under disc keeps its size and fades (default) or shrinks with the rest.'},
+        {'umbra copies until flash|end','Glyph copies stop at the flash-out (default) or keep coming until the MB deadline.'},
         {'umbra copies on|off','Glyph copies growing out just under the disc through the opening (default on).'},
         {'umbra copies every|life|size|opacity|spin|depth <number>','New copy every .6 s, each lasting 1.2 s, growing to 1.6x, opacity .5, spin 1, .004 under the disc.'},
         {'umbra lines size <0.2-4|same> | lines opacity <0-1|same>','The disc\'s own glyph lines: size x the Umbra MB ring (same = disc size), direct opacity.'},

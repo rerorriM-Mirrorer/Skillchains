@@ -54,8 +54,9 @@ assert(alpha(dv.colors[1])<alpha(d.colors[1]),'opacity')
 -- Radiance unaffected; collapse shrinks it with everything else.
 assert(not find(at(link(u,'Radiance'),2,u),'umbra-under'),'Umbra only')
 local st=link(u).model.states[71]
-local late=at(link(u),st.mb_close-.1,u)
-assert(find(late,'umbra-under').radius<d.radius*.5,'collapses with the black disc')
+local sh=copy(u);sh.umbra_under_ending='shrink'
+local late=at(link(sh),st.mb_close-.1,sh)
+assert(find(late,'umbra-under').radius<d.radius*.5,'under ending shrink: collapses with the black disc')
 -- Haze.
 local hz=copy(o);hz.umbra_haze=true
 local hf=at(link(hz),5,hz)

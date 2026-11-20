@@ -1,5 +1,15 @@
 # TargetSC — elemental resonance
 
+## 0.19.2 unified Test7.2 — Umbra under disc fades, copies until the end (Lua only)
+
+- **`//tsc umbra under ending fade|shrink`** (default fade): in the Umbra
+  collapse the under disc keeps its full size and fades out on the same curve
+  and timing as everything else shrinks. `shrink` is the Test7.0 look.
+- **`//tsc umbra copies until flash|end`** (default flash): `end` keeps the glyph
+  copies coming until the MB deadline instead of stopping at the flash-out. They
+  still shrink with the collapse. Pair it with `umbra copies steady on` to keep
+  their full speed.
+
 ## 0.19.1 unified Test7.1 — Radiance demo and ending, Umbra haze glow, jitter, steady spin (Lua only)
 
 - **`//tsc preview demo radiance`**: five real weaponskills, the Light-side twin

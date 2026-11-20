@@ -1,5 +1,24 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Remote tip `6235b58` (Test7.0); Test7.1 `7b1260a` and Test7.2 are local until A OKs the push.
+- installed_base: `7b1260a` (Test7.1 zip, 15:40; A is testing it).
+- Live (A, 15:43): `umbra copies steady on` keeps the speed but the copies still stop at the flash-out (A wanted them through the whole animation); the haze glow does not look right yet (A drew it over the black disc, `haze order over`); A is trying `umbra after bloom`.
+- Change: Test7.2, `umbra under ending fade|shrink` (default fade: full size, alpha x the collapse factor) and `umbra copies until flash|end` (default flash). Version `0.19.2-unified-test7.2`. The default under ending changes the Test7.0/7.1 look when `umbra under` is on (A's request).
+- Checks: Lua 5.1 (lupa) parse of every TargetSC `.lua`; 67/67 CI invocations PASS incl. new `test_umbra_72.lua` (Test7.0 test now checks shrink explicitly). Previews with A's settings + copies until end: at most 9 discs (host only).
+- Pending: A's haze description (message cut off); Test7.1/7.2 looks in game.
+
+## TargetSC 0.19.2 unified Test7.2 — Umbra under disc fades, copies until the end (Lua only) (2026-11-20)
+
+**Request (15:43):** copies steady should keep the copies running through the whole animation; the under disc should fade out at the same size instead of shrinking, all else the same.
+
+**Before (Verified):** copies spawn only while `born < M.umbra_flashed(...)`; the collapse multiplies every ring, disc and glyph3 radius by `M.umbra_collapse` (1 - u^curve over the collapse time).
+
+**Changes:** copies stop at `s.mb_close` with `umbra copies until end`; in the collapse loop, an `umbra-under` disc with `umbra under ending fade` keeps its radius and has the alpha of `colors[]` and `color` multiplied by the same factor.
+
+**Host verification (not FFXI):** 67/67 CI. New test: fade keeps the radius while the black disc shrinks, alpha = early alpha x the collapse factor, `color` in step, nearly gone at the deadline; shrink = old radius x factor with unchanged alpha; flash: no copies after the flash-out + life; end: copies after it and near the deadline, same count before it; commands. **Live pending.**
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
 - installed_base: `6235b58` (Test7.0; Live, A 14:55: "Test7 loaded without issues"). A's local sink/stand edit to `resonance_motion.lua` is overwritten with A's OK (15:08).
 - Live (A, 14:55): Test6.8 `umbra sky off` / `radiance sky off` look good on both. Test6.9 `radiance glyph circle off` / `wobble always` work; A is undecided on the look and is leaving them on for now.
