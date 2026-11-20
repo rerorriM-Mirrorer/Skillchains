@@ -1,5 +1,17 @@
 # TargetSC — elemental resonance
 
+## 0.18.6 unified Test6.8 — Umbra and Radiance without sky rings (Lua only)
+
+- **`//tsc umbra sky off`** and **`//tsc radiance sky off`**: Umbra or Radiance
+  draws only the ground set of skillchain rings. A level-4 link opens no new
+  window, so there is nothing for a second set to close. The defaults are
+  unchanged (`umbra sky same`, `radiance sky bell`), and so is `preset killala`.
+- When the link lands, the previous link's sky rings drop onto the ground
+  rings over the usual .3 s hand-off instead of vanishing.
+- With sky off, the close sequences run over the one set: Umbra's rings flash
+  out sooner (no second set to wait for), Radiance's rings close one by one over
+  the same `close time`, and `umbra bloom height rings` gives one bloom.
+
 ## 0.18.5 unified Test6.7 — awakening disc on every new window (Lua only)
 
 - Every link that leaves a new skillchain window open now plays the same white

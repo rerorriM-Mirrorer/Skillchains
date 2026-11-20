@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.18.5-unified-test6.7'
+_addon.version='0.18.6-unified-test6.8'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -152,6 +152,7 @@ local function help()
         {'radiance shimmer time|stagger|angle <number>','Seconds per sweep (2), offset per ring 0-1 (.12), angle offset -180..180 to aim the far side (0).'},
         {'radiance shimmer when close|all | shimmer mb on|off','Shimmer only while closing or the whole time (close); MB ring joins (on).'},
         {'radiance open time <0-8|same>','Visual length of the Radiance opening (same = the game timing, about 3 s; MB timing unchanged).'},
+        {'radiance sky bell|off','Radiance sky rings flared like a bell (default) or off (one set of rings).'},
         {'radiance disc lines on|off','The Radiance disc\'s own glyph lines (default off; the large MB glyph breathes instead).'},
         {'radiance glyph breath|same','Radiance large MB glyph breathes at rest and never turns (default breath).'},
         {'radiance glyph size|opacity <number|same> | glyph buzz on|off','Its size (1), opacity replacing mb overall (same), buzzing with the rings (on).'},
@@ -165,7 +166,7 @@ local function help()
         {'umbra bloom height rings|ground|disc|mb','rings: one bloom at each SC ring height (default); or one at the ground ring / disc / MB ring. Shape: mb bloom opacity/middle/ease/fade.'},
         {'umbra mb pulse|classic | mb strength <0-1> | mb size <0.2-4>','Umbra MB ring: white ending-style pulses all window (default pulse, 1), its size (1).'},
         {'umbra spin <0-6|same>','Umbra\'s own level-4 spin, beyond discs speed level4 (same = that).'},
-        {'umbra sky same|bell','Sky rings the same size as the ground rings (default same) or flared like a bell.'},
+        {'umbra sky same|bell|off','Sky rings the same size as the ground rings (default same), flared like a bell, or off (one set of rings).'},
         {'umbra glyph breath|same','Umbra large MB glyph breathes at rest at the disc\'s exact height, sized like the Umbra MB ring (default breath).'},
         {'umbra glyph size|opacity|spin <number> | glyph over on|off','Size x MB ring (1), opacity (same), turn x level-4 speed (1), draw it over the disc (off).'},
         {'umbra copies on|off','Glyph copies growing out just under the disc through the opening (default on).'},

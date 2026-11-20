@@ -1,5 +1,25 @@
 # TargetSC TESTING.md — start here
 
+## Current Development Status — 2026-11-20 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: `f3800fe` (Test6.7 zip over `a650e43`, per the 2026-11-20c handoff; Inferred, not re-diffed against A's folder).
+- Change: Test6.8, `//tsc umbra sky same|bell|off` and new `//tsc radiance sky bell|off`: off draws only the ground SC rings for that level-4 link; the previous link's sky rings drop onto the ground over the .3 s hand-off; close sequences and blooms run as one set. Defaults and killala unchanged. Version `0.18.6-unified-test6.8`.
+- Correction: `test_integrated_loader.lua` still pinned `0.18.4-unified-test6.6.2`, so it failed at the Test6.7 head (Verified by running it on the unmodified tree); the Test6.7 "56/56 PASS" was wrong for that test. Pin updated.
+- Checks: Lua 5.1 (lupa) parse of every TargetSC `.lua`; 63/63 CI invocations PASS incl. new `test_level4_sky.lua`; preview path: `preview umbra`, `preview Radiance 4`, `preview Umbra 4` run 0-40 s with both off, no level-4 frame has sky rings after the hand-off (host only).
+- Live: none. Pending: the one-set look in previews and a real chain; earlier pending items unchanged (link disc in battle, converge in battle, Test6.3 kill items, vertical seam, merge to master).
+- Next: A tries `umbra sky off` / `radiance sky off` with `preview umbra` and `preview Radiance 4`.
+
+## TargetSC 0.18.6 unified Test6.8 — Umbra and Radiance without sky rings (Lua only) (2026-11-20)
+
+**Request (05:08):** an option to hide the sky SC rings in the Umbra and Radiance animations, since a level-4 link has no window to close.
+
+**Before (Verified):** every link draws a ground set and a sky set (`M.positions` returns `bottom,top`); Umbra's sky could be `same` or `bell`, Radiance's always used the bell. The close sequences, `umbra_flashed`, `level4_end` and the umbra endings already supported a single set through `has_top` (used for openers before they pair).
+
+**Changes:** in `M.frame`, for a level-4 link with `<name>_sky=off`, `top` becomes nil (one set), except during the .3 s hand-off from a previous link, where the sky rings are drawn moving from the interpolated top down onto the ground (bell factor returns to 1 as they meet) while `has_top` is already false. Every `top~=nil` passed to the level-4 helpers now passes `has_top`. New default `radiance_sky='bell'`, killala `radiance_sky='bell'`; `umbra sky` accepts `off`; help/README; version.
+
+**Host verification (not FFXI):** 63/63 CI invocations PASS. New `test_level4_sky.lua`: defaults draw both sets; off removes sky rings for Umbra and Radiance at .5/1/2.5 s with ground count, height and size unchanged; each setting only touches its own chain; Light keeps its sky; Umbra single set flashes out sooner with one bloom (two by default); hand-off: sky above ground at .15, lower at .25, never smaller than ground, gone at .35; commands set/reject; killala keeps both. Mutation (no hand-off drop) fails the test. Preview path as in the status block. **Live pending:** the look in previews and a real chain.
+
 ## TargetSC 0.18.5 unified Test6.7 — awakening disc on every new window (Lua only) (2026-11-20)
 
 **Request (02:30):** the small white awakening disc that expands and quickly fades when an opening weapon skill lands (center opaque, transparent edge) should play on every newly opened skillchain.

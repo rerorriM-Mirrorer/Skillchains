@@ -144,6 +144,9 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- breathes at rest (as before 4.8), never turns, may buzz with the rings.
     radiance_disc_lines=false,radiance_glyph='breath',radiance_glyph_size=1,
     radiance_glyph_opacity=-1,radiance_glyph_buzz=true,
+    -- Test6.8: `radiance sky off` / `umbra sky off` drop the sky rings (a
+    -- level-4 link opens no new window, so one set of rings is enough).
+    radiance_sky='bell',
     -- Test5.5 Radiance three-disc stack (bottom to top): a white disc, a disc
     -- crossfading the Fusion and Fragmentation looks (own cycle, turning at
     -- the level-4 disc speed x middle spin), then the existing white disc on
@@ -230,7 +233,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
-    umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
+    radiance_sky='bell',umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
     umbra_collapse=false,umbra_glyph_lift=-1,kill=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
@@ -943,6 +946,15 @@ function M.frame(model,s,now,radius,height,opts,context)
     local l4=not opener and s.step>1 and s.level>=4 and (s.properties[1]=='Radiance'or s.properties[1]=='Umbra')
     local l4name=l4 and (s.properties[1]=='Radiance'and 'radiance'or 'umbra')
     local function l4opt(k)return option(opts,l4name..'_'..k)end
+    -- Test6.8: sky off = one set of rings. The previous link's sky rings drop
+    -- onto the ground rings over the .3 s hand-off, then are gone; the close
+    -- sequences and blooms then run as for a single set (has_top false).
+    local sky_merge=false
+    if l4 and l4opt('sky')=='off'and top then
+        if s.previous and age<.3 then top,sky_merge=top+(bottom-top)*smooth(age/.3),true else top=nil end
+        out.sky=top
+    end
+    local has_top=top~=nil and not sky_merge
     if l4 and l4opt('opacity')>=0 then opacity=l4opt('opacity')end
     local px,glow=max(1,option(opts,'width')),option(opts,'glow')
     local opener=s.step==1
@@ -1086,7 +1098,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                 end
             end
         end
-    elseif show_sc and phase~='expired'and (phase~='mb-only'or (l4 and l4opt('close')=='sequence'and now<M.level4_end(s,opts,l4name,top~=nil)))then
+    elseif show_sc and phase~='expired'and (phase~='mb-only'or (l4 and l4opt('close')=='sequence'and now<M.level4_end(s,opts,l4name,has_top)))then
         local specs=specifications(s,context,opts)
         if not opener and s.level~=2 and age<.16 then specs={{colors={white},radial=1,stack=0}}end
         out.strands=#specs
@@ -1143,7 +1155,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     end
                     -- Test5.2 level-4 close sequence and shimmer for this ring.
                     local q={}
-                    if l4 then q=M.level4_ring(s,now,opts,l4name,place[2],j,#specs,top~=nil)end
+                    if l4 then q=M.level4_ring(s,now,opts,l4name,place[2],j,#specs,has_top)end
                     local lit=l4 and M.level4_shimmer(s,now,opts,l4name,q.index or 0,context.view_angle)or nil
                     local umbra_white=l4 and l4name=='umbra'and l4opt('glow')=='white'
                     if glow>0 and not opener and s.level>=3 then
@@ -1508,7 +1520,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     if option(opts,'umbra_lines_opacity')>=0 then trace_alpha=option(opts,'umbra_lines_opacity')*life end
                     -- Test5.7 endings: the glyph leaves its flat plane (native 0.11.0).
                     local g3,gone=nil,false
-                    if (context.native_level or 0)>=11 then g3,gone=M.umbra_ending_glyph(s,now,opts,top~=nil,angle)end
+                    if (context.native_level or 0)>=11 then g3,gone=M.umbra_ending_glyph(s,now,opts,has_top,angle)end
                     if gone then hide=true end -- swallowed/shrunk away: it stays gone
                     if g3 then
                         g3.radius=trace_radius*(g3.scale or 1);g3.offset=trace_height
@@ -1611,7 +1623,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- Test5.4 Umbra flash-out bloom: one ring-shaped black bloom where the
     -- rings flashed out, shrinking (or holding/growing) as it fades.
     if l4name=='umbra'and show_sc and option(opts,'umbra_close')=='sequence'and option(opts,'umbra_after')=='bloom'then
-        local start=M.umbra_flashed(s,opts,top~=nil)
+        local start=M.umbra_flashed(s,opts,has_top)
         local life=max(.05,option(opts,'umbra_bloom_time'))
         local age=now-start
         if age>=0 and age<life then
@@ -1649,7 +1661,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- draw order so the opaque disc covers what it overlaps).
     if l4name=='umbra'and show_sc and option(opts,'umbra_copies')then
         local every,life=max(.05,option(opts,'umbra_copies_every')),max(.05,option(opts,'umbra_copies_life'))
-        local stop=M.umbra_flashed(s,opts,top~=nil)
+        local stop=M.umbra_flashed(s,opts,has_top)
         local r0=mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_glyph_size')
         local h=M.umbra_plane(opts,details)-option(opts,'umbra_copies_depth')
         local spin=M.disc_rotation(s,now,opts)*option(opts,'umbra_copies_spin')
