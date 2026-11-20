@@ -147,6 +147,11 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test6.8: `radiance sky off` / `umbra sky off` drop the sky rings (a
     -- level-4 link opens no new window, so one set of rings is enough).
     radiance_sky='bell',
+    -- Test6.9 Radiance floor glyph: circle off drops the ring around it (drawn
+    -- as a flat native 3D glyph, 0.11.0+); wobble always keeps it moving at
+    -- the hum's opening speed through the whole MB window and exit fade
+    -- (rings = it follows the ground rings, which settle as they close).
+    radiance_glyph_circle=true,radiance_glyph_wobble='rings',
     -- Test5.5 Radiance three-disc stack (bottom to top): a white disc, a disc
     -- crossfading the Fusion and Fragmentation looks (own cycle, turning at
     -- the level-4 disc speed x middle spin), then the existing white disc on
@@ -233,7 +238,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
-    radiance_sky='bell',umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
+    radiance_sky='bell',radiance_glyph_circle=true,radiance_glyph_wobble='rings',umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
     umbra_collapse=false,umbra_glyph_lift=-1,kill=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
@@ -336,6 +341,14 @@ function M.vibration(s,now,opts)
     return strike+hum,strike,{strike=strike,hum=hum,
         hum_amplitude=option(opts,'hum_amplitude')*gain*option(opts,'intensity')*(1-decay),
         hum_hz=frequency*left^option(opts,'hum_slowdown')}
+end
+-- Test6.9: the ground wobble without the closing slowdown: the same strike
+-- and hum, with the hum running on plain time (identical before sc_open).
+function M.steady_wobble(s,now,opts)
+    local _,_,d=M.vibration(s,now,opts)
+    local level=s.step==1 and 1 or s.level
+    local frequency=(1+(level-1)*option(opts,'hum_gain'))/(2*option(opts,'hum_period'))
+    return d.strike+d.hum_amplitude*wave(frequency*max(0,now-s.created),opts)
 end
 function M.positions(s,now,height,opts)
     local phase=M.phase(s,now,opts)
@@ -599,7 +612,9 @@ local function mb_kill(out,s,now,kill,start,opts,context,f)
         if d.role=='mb-glyph'then d.offset=f.mb_height;d.radius=d.radius*c -- the MB glyph meets the MB ring exactly
         elseif not bloom[d.role]then d.offset=d.offset+delta;d.radius=d.radius*c end
     end
-    for _,x in ipairs(out.glyphs3 or {})do x.offset=x.offset+delta;x.radius=x.radius*c end
+    for _,x in ipairs(out.glyphs3 or {})do
+        x.offset=x.role=='mb-glyph'and f.mb_height or x.offset+delta;x.radius=x.radius*c
+    end
     -- Second bloom: the killing element bursting outward right after the MB's own.
     kill_bloom_disc(out,now,kill,start,opts,context,f)
     if k>=K then
@@ -1348,8 +1363,12 @@ function M.frame(model,s,now,radius,height,opts,context)
             color=white
             opening.opacity=response.end_flash*option(opts,'mb_effects')
         end
-        if l4_glyph and l4name=='radiance'and option(opts,'radiance_glyph_buzz')then
-            opening.offset=opening.offset+(details.ground_wave or 0)
+        if l4_glyph and l4name=='radiance'then
+            if option(opts,'radiance_glyph_wobble')=='always'then
+                opening.offset=opening.offset+M.steady_wobble(s,now,opts)
+            elseif option(opts,'radiance_glyph_buzz')then
+                opening.offset=opening.offset+(details.ground_wave or 0)
+            end
         end
         if l4_glyph and l4name=='umbra'then
             -- Rest at the black disc's exact plane (a burst still lifts it from there).
@@ -1364,8 +1383,19 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         out.awakening_glyph=opening
         local before=#out.discs
+        local bare=role=='mb-glyph'and l4_glyph and l4name=='radiance'and not option(opts,'radiance_glyph_circle')
+            and (context.native_level or 0)>=11
+        if bare then
+            -- Test6.9: the same strokes, flat, without the circle the 2D disc glyph always draws.
+            if opening.opacity>.002 and opening.radius>=.01 then
+                out.glyphs3=out.glyphs3 or {}
+                out.glyphs3[#out.glyphs3+1]={radius=min(opening.radius,100),offset=opening.offset,rotation=opening.rotation,
+                    color=context.argb(color,opening.opacity),role='mb-glyph',circle=false}
+            end
+        else
         disc(opening.radius,opening.offset,fill>0 and 0 or opening.rotation,{white},fill,fill>0 and 0 or 2,
             fill>0 and 0 or opening.opacity,role,color)
+        end
         if role=='awakening'and #out.discs>before then
             -- Radial fill: center and rim opacity multipliers (native 0.7.0).
             local d=out.discs[#out.discs]

@@ -1,5 +1,17 @@
 # TargetSC — elemental resonance
 
+## 0.18.7 unified Test6.9 — Radiance floor glyph: no circle, steady wobble (Lua only)
+
+- **`//tsc radiance glyph circle on|off`** (default on): off draws Radiance's
+  still floor MB glyph without the circle around it. It is the same strokes,
+  size, height and color, drawn as a flat native 3D glyph (needs the 0.11.0+ DLL;
+  older DLLs keep the circle).
+- **`//tsc radiance glyph wobble rings|always`** (default rings): `rings` is
+  the old behavior, where the glyph rides the ground rings' wobble and settles
+  when they do. `always` keeps it wobbling at the opening speed for the whole MB
+  window and the exit fade. It is identical to `rings` until the window opens.
+- `preset killala` keeps both as before (circle on, wobble rings).
+
 ## 0.18.6 unified Test6.8 — Umbra and Radiance without sky rings (Lua only)
 
 - **`//tsc umbra sky off`** and **`//tsc radiance sky off`**: Umbra or Radiance

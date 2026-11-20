@@ -1,6 +1,25 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: `bdca0c1` (Test6.8, delivered 05:20; Inferred that A installed it, not live-confirmed yet).
+- Change: Test6.9, `//tsc radiance glyph circle on|off` (off = the floor MB glyph drawn as a flat native 3D glyph with no circle) and `//tsc radiance glyph wobble rings|always` (always = keeps moving through the MB window and exit fade). Defaults and killala unchanged. Version `0.18.7-unified-test6.9`.
+- Checks: Lua 5.1 (lupa) parse of every TargetSC `.lua`; 64/64 CI invocations PASS incl. new `test_radiance_glyph.lua` (runs through `preview Radiance 4` and `preview kill mb`); two mutations each fail it (host only).
+- Live: none for Test6.8 or Test6.9. Pending: Test6.8 one-set look; Test6.9 glyph look; earlier items (link disc and converge in battle, Test6.3 kill items, vertical seam, merge to master).
+- Next: A tries `radiance glyph circle off` and `radiance glyph wobble always` with `preview Radiance 4`.
+
+## TargetSC 0.18.7 unified Test6.9 — Radiance floor glyph: no circle, steady wobble (Lua only) (2026-11-20)
+
+**Request (05:20):** an option for Radiance's stationary MB glyph near the ground to have no circle around it, and an option for it to keep wobbling after the sky rings disappear, for the whole MB window and exit fade.
+
+**Before (Verified):** the floor glyph is a 2D disc with glyph style 2, and native 0.12.0 always draws a 1-px rim ring with those strokes (`src/TargetSC.cpp`, `if(!disc.glyph...)` then `emit_ring`). Its wobble is `details.ground_wave` (with `radiance glyph buzz on`). On a closing link the hum speed eases to zero over `fade duration` after sc_open (`energy_time`), so the wave froze, in the Radiance preview at .0070 from about 4 s to the deadline.
+
+**Changes:** `radiance_glyph_circle=false` (with native >= 11) sends the glyph as a `glyphs3` entry: same radius, offset, rotation and argb, all motion params 0 (flat), `circle=false`, role `mb-glyph`, no disc. Gather kill moves a 3D `mb-glyph` onto the MB ring like the disc. `M.steady_wobble` = vibration's strike plus its hum amplitude on plain time (equal to ground_wave before sc_open); `radiance_glyph_wobble='always'` uses it instead of ground_wave (buzz not needed). Help/README; version.
+
+**Host verification (not FFXI):** 64/64 CI invocations PASS. New `test_radiance_glyph.lua`: default draws the disc; circle off gives the 3D glyph with radius, offset, rotation and color identical to the disc at 1/2.5/5/7/9.25 s, one fewer disc, nothing else changed; native 10 falls back; Umbra untouched; rings mode still 4.5-7.5 s; always moves 4.5-7.5 and 8.3-9.9 s and through a converge exit fade, identical before sc_open, continuous across it; works with circle off; buzz off still; gather kill puts the 3D glyph on the MB ring; commands; killala. Mutations (no gather fix; ground_wave for always) each fail. **Live pending:** the look in previews and a real chain.
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
 - installed_base: `f3800fe` (Test6.7 zip over `a650e43`, per the 2026-11-20c handoff; Inferred, not re-diffed against A's folder).
 - Change: Test6.8, `//tsc umbra sky same|bell|off` and new `//tsc radiance sky bell|off`: off draws only the ground SC rings for that level-4 link; the previous link's sky rings drop onto the ground over the .3 s hand-off; close sequences and blooms run as one set. Defaults and killala unchanged. Version `0.18.6-unified-test6.8`.
 - Correction: `test_integrated_loader.lua` still pinned `0.18.4-unified-test6.6.2`, so it failed at the Test6.7 head (Verified by running it on the unmodified tree); the Test6.7 "56/56 PASS" was wrong for that test. Pin updated.

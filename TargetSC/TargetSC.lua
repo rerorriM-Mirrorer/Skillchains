@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.18.6-unified-test6.8'
+_addon.version='0.18.7-unified-test6.9'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -156,6 +156,8 @@ local function help()
         {'radiance disc lines on|off','The Radiance disc\'s own glyph lines (default off; the large MB glyph breathes instead).'},
         {'radiance glyph breath|same','Radiance large MB glyph breathes at rest and never turns (default breath).'},
         {'radiance glyph size|opacity <number|same> | glyph buzz on|off','Its size (1), opacity replacing mb overall (same), buzzing with the rings (on).'},
+        {'radiance glyph circle on|off','The circle around the Radiance floor glyph (default on; off needs native 0.11.0).'},
+        {'radiance glyph wobble rings|always','Glyph wobble follows the ground rings (default) or keeps going through the MB window and exit fade.'},
         {'radiance stack on|off','Three-disc stack: white bottom, Fusion<->Fragmentation middle, the white disc on top (default on).'},
         {'radiance stack height|spacing <number>','Raise/lower all three (0), gap between them (.01).'},
         {'radiance bottom opacity|size <number>','Bottom white disc: direct opacity 0-1 (.6), size x level-4 disc size (1).'},
