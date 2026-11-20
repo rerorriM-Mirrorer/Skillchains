@@ -3,7 +3,8 @@
 -- stays visible); the ground glyph emerges on the same shared progress;
 -- rising glyphs are capped (and held) at the ring; ring-plane blooms ride the
 -- ring. Test6.6: after the real deadline everything fades over `mb ending
--- fade` (0 = out at the deadline); `mb ending blooms linger` lets blooms finish.
+-- fade` (0 = out at the deadline); `mb ending blooms linger` (6.6.2) carries blooms past the deadline,
+-- fading over `mb ending fade` in any style.
 package.path='./TargetSC/?.lua;'..package.path
 local R=require('resonance')
 local C=require('resonance_controls')
@@ -142,17 +143,25 @@ do
     end
     assert(reached and seen>20,'glyph reached the ring; bloom followed it')
     assert(alpha(f(111.999).glyph.outline)>=peak-2,'held glyph at peak on arrival')
-    -- Blooms: fade goes out with the converge fade; linger finishes its life.
+    -- Blooms: fade goes out with the converge fade; Test6.6.2 linger (A 02:15)
+    -- also fades over mb ending fade (with converge it equals fade).
     local late=run({111.6},o)
     assert(late(112.2).blooms[1]and #late(112.41).blooms==0,'blooms fade: out with the converge fade')
     local l=copy(o);l.mb_ending_blooms='linger'
     local lg=run({111.6},l)
-    local b1,b2=lg(112.2).blooms[1],lg(112.5).blooms[1]
-    assert(b1 and b2 and math.abs(b2.offset-rest)<1e-6 and alpha(b1.color)>alpha(late(112.2).blooms[1].color),'linger: bloom outlives the fade on the floor')
-    assert(#lg(112.7).blooms==0,'linger: bloom ends with its own life')
-    -- Linger also works for soft (no pre-deadline .25 s cut).
+    for _,t in ipairs({111.9,112,112.2,112.35})do
+        assert(lg(t).blooms[1].color==late(t).blooms[1].color,'converge: linger = fade '..t)
+    end
+    assert(#lg(112.41).blooms==0,'linger: out after mb ending fade')
+    local l8=copy(l);l8.mb_ending_fade=.8
+    local g8=run({111.6},l8)
+    assert(g8(112.5).blooms[1]and #g8(112.81).blooms==0,'linger follows mb ending fade .8')
+    -- Soft: fade cuts .25 s before the deadline; linger carries on and fades after it.
     local sl=copy(R.defaults);sl.mb_ending_blooms='linger'
-    assert(run({111.6},sl)(111.95).blooms[1]and #run({111.6},copy(R.defaults))(112.01).blooms==0,'soft linger vs fade')
+    local sg,sf=run({111.6},sl),run({111.6},copy(R.defaults))
+    assert(sg(111.95).blooms[1]and #sf(112.01).blooms==0,'soft linger vs fade')
+    local a1,a2=sg(112.1).blooms[1],sg(112.3).blooms[1]
+    assert(a1 and a2 and alpha(a2.color)<alpha(a1.color)and #sg(112.41).blooms==0,'soft linger fades over mb ending fade')
 end
 
 -- 5. mb glyph opacity does not dim the converge glyph.
@@ -211,7 +220,8 @@ do
         assert(sd and sd-soft.mb_end<=.065,'soft preview ends as before '..table.concat(args,' ')..' '..tostring(sd and sd-soft.mb_end))
     end
     local l=copy(o);l.mb_ending_blooms='linger'
-    assert(math.abs(P.mb_tail(l,R)-1.05)<1e-9 and math.abs(P.mb_tail(o,R)-.45)<1e-9,'tail: linger bloom life / fade')
+    local l8=copy(l);l8.mb_ending_fade=.8
+    assert(math.abs(P.mb_tail(l8,R)-.85)<1e-9 and math.abs(P.mb_tail(o,R)-.45)<1e-9,'tail: mb ending fade')
 end
 
 -- 8. Commands.

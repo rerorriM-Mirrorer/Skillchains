@@ -9,9 +9,10 @@
 - With `converge`, `mb bloom from ring` blooms now ride the descending ring
   (where a capped glyph sits) through the ending and stay on the floor after
   it. Outside the ending they're unchanged.
-- **`//tsc mb ending blooms fade|linger`** (default fade): `linger` lets every
-  bloom finish its own life and fade instead of going out with the MB ending
-  (any ending style).
+- **`//tsc mb ending blooms fade|linger`** (default fade): `linger` lets blooms
+  carry on past the deadline and fade out over `mb ending fade` (Test6.6.2; any
+  ending style). With converge, `fade` already does this; `linger` matters
+  for soft/hard, where `fade` cuts blooms over the last .25 s before it.
 - `//tsc mb ending` now goes up to 3 s.
 
 ## 0.18.3 unified Test6.5 — converge MB ending (Lua only; DLL stays 0.12.0)

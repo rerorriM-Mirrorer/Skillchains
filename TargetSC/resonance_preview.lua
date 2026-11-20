@@ -63,16 +63,14 @@ function M.parse(args,resonance)
     return {kind=kind,properties=properties,level=level}
 end
 -- Test6.6.1: how long the MB presentation still draws after its deadline
--- (converge's fade; lingering blooms' life). Read live, so a changed setting
+-- (converge's fade; lingering blooms, which also fade over mb ending fade). Read live, so a changed setting
 -- applies to a running preview. Previews used to stop .05 s after the close.
 function M.mb_tail(opts,resonance)
     local d=resonance.defaults
     local function o(k)if opts[k]~=nil then return opts[k]end return d[k]end
     local tail=.05
     if o('mb_ending_style')=='converge'then tail=math.max(tail,(o('mb_ending_fade')or 0)+.05)end
-    if o('mb_ending_blooms')=='linger'and o('mb_bloom')then
-        tail=math.max(tail,(o('mb_bloom_time')or 1)+math.max(0,math.floor(o('mb_bloom_lines')or 0)-1)*(o('mb_bloom_lines_delay')or 0)+.05)
-    end
+    if o('mb_ending_blooms')=='linger'and o('mb_bloom')then tail=math.max(tail,(o('mb_ending_fade')or 0)+.05)end
     return tail
 end
 function M.new(spec,id,now,resonance,opts)

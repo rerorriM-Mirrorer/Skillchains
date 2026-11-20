@@ -42,7 +42,8 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     mb_ending_shrink=0,
     -- Test6.6: converge fades out over this many seconds just after the real
     -- MB deadline (0 = out exactly at it). Blooms: fade (go out with the MB
-    -- ending) or linger (every bloom finishes its own life and fade).
+    -- ending) or linger (Test6.6.2: keep drawing past the deadline and fade
+    -- out over `mb ending fade`, whatever the ending style).
     mb_ending_fade=.4,mb_ending_blooms='fade',
     -- Test3.4: confirmed-MB glows on the two glyphs get a turning lit side,
     -- an added spin (turns/sec) over their glyph, and optional softening.
@@ -843,7 +844,8 @@ function M.frame(model,s,now,radius,height,opts,context)
     local linger=show_mb and option(opts,'mb_ending_blooms')=='linger'and option(opts,'mb_bloom')
     local function bloom_alive()
         for _,b in ipairs(model.bursts and model.bursts[s.id]or {})do
-            if b.color and now>=b.at and now-b.at<Burst.bloom_life(nil,function(k)return option(opts,k)end)then return true end
+            if b.color and now>=b.at and now-b.at<Burst.bloom_life(nil,function(k)return option(opts,k)end)and
+                now<s.mb_close+option(opts,'mb_ending_fade')then return true end
         end
     end
     if phase=='expired'and not response.responding and not response.extinguish and not (linger and bloom_alive())then
@@ -1649,7 +1651,11 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- Test6.6: no pre-deadline cut; out with the converge fade after it.
             closing=now<s.mb_close and 1 or response.extinguish or 0
         elseif style~='off'then closing=smooth((s.mb_close-now)/.25)end
-        if linger then closing=1 end
+        -- Test6.6.2 linger (A 02:15): past the deadline, out over mb ending fade.
+        if linger then
+            local fade=option(opts,'mb_ending_fade')
+            closing=now<s.mb_close and 1 or fade>0 and 1-smooth((now-s.mb_close)/fade)or 0
+        end
         -- Test6.6 converge (A 01:47): ring-plane blooms ride the descending MB
         -- ring (where a capped glyph sits) through the ending and stay on the
         -- floor after it; before the ending this is mb height, so no bloom

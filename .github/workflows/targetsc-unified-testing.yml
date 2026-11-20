@@ -101,7 +101,7 @@ jobs:
       - name: Publish complete unified test package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Unified-0.18.4-Test6.6.1
-          path: dist/TargetSC-Unified-0.18.4-Test6.6.1.zip
+          name: TargetSC-Unified-0.18.4-Test6.6.2
+          path: dist/TargetSC-Unified-0.18.4-Test6.6.2.zip
           if-no-files-found: error
           retention-days: 30

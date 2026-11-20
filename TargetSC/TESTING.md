@@ -1,5 +1,15 @@
 # TargetSC TESTING.md — start here
 
+## TargetSC 0.18.4 unified Test6.6.2 — lingering blooms fade over `mb ending fade` (Lua only) (2026-11-20)
+
+**User feedback (02:15):** "The fades look great!" (Test6.6.1 in previews, incl. `preview mb light`). Settling on `mb ending fade 0.8` to match the SC rings' end fade; keeping `mb ending shrink 0.3` to try in battle. Request: lingering MB blooms should last only as long as, and fade out with, the MB ending fade. Author: A.
+
+**Answer (Verified):** with converge, `mb ending blooms fade` already drew blooms past the deadline and faded them with the ring and glyph over `mb ending fade`; only `linger` let them run their full own life (≈1 s).
+
+**Changes:** `linger` now: blooms keep drawing past the deadline (no pre-deadline cut) and fade out over `mb ending fade` (closing = 1 − smooth((now − mb_close)/fade)), any ending style; with converge it equals `fade`, with soft/hard it replaces their .25 s pre-deadline cut. Expired-phase keep-alive and the preview tail use mb ending fade for linger. Defaults unchanged (`mb ending fade` .4; A's saved .8 stays). Help/README; version `0.18.4-unified-test6.6.2`.
+
+**Host verification (not FFXI):** 54/54 CI invocations PASS; `test_mb_converge.lua`: converge linger = fade frame for frame, out after the fade, follows fade .8; soft linger fades after the deadline and is out at +.4; preview tail = fade + .05. The old full-life linger fails the new checks. **Live pending:** linger with soft/hard; converge 0.8 + shrink 0.3 in battle.
+
 ## TargetSC 0.18.4 unified Test6.6.1 — previews play the converge fade (Lua only) (2026-11-20)
 
 **User report (02:00):** no reload errors; `//tsc status` showed 0.18.4 unified test6.6; with `mb ending fade 1` and `0.3` the animation still cut out instead of fading in `//tsc preview burst` and `//tsc preview mb light`. `mb ending 3` worked (prefers 2). Shrink decision waits for a working fade. Author: A.

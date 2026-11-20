@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.18.4-unified-test6.6.1'
+_addon.version='0.18.4-unified-test6.6.2'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -306,7 +306,7 @@ local function help()
         {'mb ending drop <0-1>','How far the MB ring settles onto the large glyph during the closing pulses (default 1).'},
         {'mb ending shrink <0-1>','Converge only: ring and large glyph shrink toward the property glyph size (default 0).'},
         {'mb ending fade <0-1>','Converge only: seconds the converged ring and glyph take to fade out after the MB deadline (default .4).'},
-        {'mb ending blooms fade|linger','fade: blooms go out with the MB ending; linger: each bloom finishes its own fade.'},
+        {'mb ending blooms fade|linger','fade: blooms go out with the MB ending; linger: blooms carry on past the deadline and fade over mb ending fade (any style).'},
         {'preview self [scenario]','Preview on your own character (also automatic when targeting yourself or nothing).'},
         {'frames classic|even|full','World animation updates: previous 30 Hz, even 30 Hz steps, or every frame (default classic).'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
