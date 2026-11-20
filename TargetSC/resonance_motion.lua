@@ -168,6 +168,20 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- fades over `mb ending` without it).
     umbra_haze=false,umbra_haze_opacity=.3,umbra_haze_size=1.3,umbra_haze_flicker=.5,
     umbra_haze_speed=1,umbra_haze_center=.6,umbra_haze_edge=0,
+    -- Test7.1 haze: style glow = black at the center blending to full white at
+    -- the black disc's middle point (its radius x disc position), clear at the
+    -- haze edge (two discs: white under, black `haze black` over). haze lift
+    -- moves it up/down from the MB ring; haze order over|under the black disc.
+    umbra_haze_style='soft',umbra_haze_black=1,umbra_haze_lift=0,umbra_haze_order='over',
+    -- Test7.1: the black disc's middle point swings sinusoidally by `disc
+    -- jitter` (radius fraction) at `jitter speed` cycles/s (0 = still).
+    umbra_disc_jitter=0,umbra_jitter_speed=1,
+    -- Test7.1: steady = keep the disc's opening turn speed (no slowdown).
+    umbra_under_steady=false,umbra_copies_steady=false,
+    -- Test7.1 Radiance MB ending: ride = the property discs move down with the
+    -- MB ring and only fade in the final fade; ending glyph = the floor glyph
+    -- brightens toward `ending peak` as the ring descends (off = as before).
+    radiance_ending_ride=false,radiance_ending_glyph='off',radiance_ending_peak=1,
     -- Test5.5 Radiance three-disc stack (bottom to top): a white disc, a disc
     -- crossfading the Fusion and Fragmentation looks (own cycle, turning at
     -- the level-4 disc speed x middle spin), then the existing white disc on
@@ -254,7 +268,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
-    radiance_sky='bell',radiance_glyph_circle=true,radiance_glyph_wobble='rings',umbra_under=false,umbra_haze=false,umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
+    radiance_sky='bell',radiance_glyph_circle=true,radiance_glyph_wobble='rings',umbra_under=false,umbra_haze=false,radiance_ending_ride=false,radiance_ending_glyph='off',umbra_disc_jitter=0,umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
     umbra_collapse=false,umbra_glyph_lift=-1,kill=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
@@ -358,6 +372,21 @@ function M.vibration(s,now,opts)
         hum_amplitude=option(opts,'hum_amplitude')*gain*option(opts,'intensity')*(1-decay),
         hum_hz=frequency*left^option(opts,'hum_slowdown')}
 end
+-- Test7.1: the disc's turn at its opening speed on plain time (no slowdown).
+function M.steady_rotation(s,now,opts)
+    return 2*pi*option(opts,'disc_speed')*option(opts,'disc_speed_level'..s.level)*max(0,now-s.created)
+end
+-- Test7.1: the Umbra black disc's middle point, with its sinusoidal jitter.
+function M.umbra_disc_position(s,now,opts)
+    local pos=option(opts,'disc_level4_position')
+    if option(opts,'umbra_disc_position')>=0 then pos=option(opts,'umbra_disc_position')end
+    local amp=option(opts,'umbra_disc_jitter')
+    if amp>0 then pos=pos+amp*sin(2*pi*option(opts,'umbra_jitter_speed')*max(0,now-s.created))end
+    return clamp(pos,.02,.98)
+end
+-- Test7.1: shapes for the Radiance ending glyph.
+local ending_curves={linear=function(x)return x end,quadratic=function(x)return x*x end,
+    cosine=function(x)return .5-.5*math.cos(pi*x)end,exponential=function(x)return (math.exp(4*x)-1)/(math.exp(4)-1)end}
 -- Test6.9: the ground wobble without the closing slowdown: the same strike
 -- and hum, with the hum running on plain time (identical before sc_open).
 function M.steady_wobble(s,now,opts)
@@ -981,6 +1010,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- onto the ground rings over the .3 s hand-off, then are gone; the close
     -- sequences and blooms then run as for a single set (has_top false).
     local sky_merge=false
+    local umbra_black -- Test7.1: the black disc drawn this frame (haze anchor)
     if l4 and l4opt('sky')=='off'and top then
         if s.previous and age<.3 then top,sky_merge=top+(bottom-top)*smooth(age/.3),true else top=nil end
         out.sky=top
@@ -1396,6 +1426,14 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- Test5.4: Radiance's glyph opacity replaces the MB overall opacity.
             local own=l4_glyph and option(opts,l4name..'_glyph_opacity')or -1
             opening.opacity=opening.opacity*(own>=0 and own or mb_overall)
+            -- Test7.1: the Radiance floor glyph brightens with the ring's descent.
+            local curve=l4_glyph and l4name=='radiance'and response.ending and ending_curves[option(opts,'radiance_ending_glyph')]
+            if curve then
+                local span=mb_height-ring_at(1)
+                local x=span>1e-6 and clamp((mb_height-ring_at(response.ending_progress))/span,0,1)or clamp(response.ending_progress or 0,0,1)
+                local peak=option(opts,'radiance_ending_peak')*(response.extinguish or 1)
+                opening.opacity=opening.opacity+(peak-opening.opacity)*curve(x)
+            end
         end
         out.awakening_glyph=opening
         local before=#out.discs
@@ -1433,6 +1471,8 @@ function M.frame(model,s,now,radius,height,opts,context)
             life=mb_active and smooth((s.mb_close-now)/option(opts,'mb_ending'))or 0
             -- Test6.0: with the collapse, Umbra's disc stays opaque to the end (it shrinks instead).
             if l4name=='umbra'and option(opts,'umbra_collapse')then life=mb_active and 1 or 0 end
+            -- Test7.1: riding Radiance discs stay until the final fade.
+            if l4name=='radiance'and option(opts,'radiance_ending_ride')then life=mb_active and 1 or (response.extinguish or 0)end
         end
         local reveal=opener and smooth(progress*5)or 1
         local fill=option(opts,'disc_opacity')*opacity*life*reveal
@@ -1444,6 +1484,9 @@ function M.frame(model,s,now,radius,height,opts,context)
         if opener and option(opts,'opener_disc_outline')>=0 then line=option(opts,'opener_disc_outline')end
         local outline=line*opacity*life*reveal
         local base=option(opts,'disc_height')+details.ground_wave
+        if l4name=='radiance'and option(opts,'radiance_ending_ride')and response.ending then
+            base=base+ring_at(response.ending_progress)-mb_height -- Test7.1: ride down with the MB ring
+        end
         local glyph=option(opts,'disc_style')=='outline'and 2 or option(opts,'disc_style')=='fill'and 0 or 1
         local properties=opener and s.properties or {s.properties[1]}
         for j,p in ipairs(properties)do
@@ -1518,7 +1561,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                 if inner~=1 or outer~=1 or middle then d.inner,d.outer=inner,outer end -- 1 1 = untouched
                 if middle then
                     local pos=option(opts,'disc_level4_position')
-                    if l4name=='umbra'and option(opts,'umbra_disc_position')>=0 then pos=option(opts,'umbra_disc_position')end
+                    if l4name=='umbra'then pos=M.umbra_disc_position(s,now,opts)end
                     d.mid,d.mid_pos=middle,pos
                 end
                 if hub then d.hub=context.argb(hub,a)end
@@ -1554,7 +1597,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local w=.5-.5*math.cos(2*pi*max(0,now-s.created)/max(.1,option(opts,'umbra_under_cycle')))
                     local mixed={}
                     for i=1,max(#grav,#dist)do mixed[i]=mix(grav[i]or grav[#grav],dist[i]or dist[#dist],w)end
-                    local turn=angle*option(opts,'umbra_under_spin')*(option(opts,'umbra_under_direction')=='reverse'and -1 or 1)
+                    local turn=(option(opts,'umbra_under_steady')and M.steady_rotation(s,now,opts)or angle)*option(opts,'umbra_under_spin')*(option(opts,'umbra_under_direction')=='reverse'and -1 or 1)
                     local mark=#out.discs
                     disc(r*fill_size*option(opts,'umbra_under_size'),h-option(opts,'umbra_under_depth'),turn,mixed,
                         option(opts,'umbra_under_opacity')*life,0,0,'umbra-under')
@@ -1567,6 +1610,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                 local fill_alpha=(glyph==2 and not respond)and 0 or disc_fill
                 disc(r*fill_size,h,angle,colors,fill_alpha,0,0,'property')
                 if #out.discs>before then finish_fill(out.discs[#out.discs],fill_alpha)end
+                if l4name=='umbra'and j==1 then
+                    local d=#out.discs>before and out.discs[#out.discs]or nil
+                    umbra_black={radius=r*fill_size,pos=d and d.mid_pos or M.umbra_disc_position(s,now,opts),index=d and #out.discs or nil}
+                end
                 local trace_height=h+(terminal and .006 or 0)
                 if clapper and mb_overall>0 then
                     trace_height=trace_height+(response.lift or 0)*option(opts,'mb_floor')
@@ -1687,12 +1734,37 @@ function M.frame(model,s,now,radius,height,opts,context)
         if not option(opts,'umbra_collapse')then presence=presence*smooth((s.mb_close-now)/max(.05,option(opts,'mb_ending')))end
         local speed=option(opts,'umbra_haze_speed')
         local a=option(opts,'umbra_haze_opacity')*presence*flicker(now,option(opts,'umbra_haze_flicker'),23*speed,28*speed)
-        local h=response.ending and ring_at(response.ending_progress)or mb_height
+        local h=(response.ending and ring_at(response.ending_progress)or mb_height)+option(opts,'umbra_haze_lift')
+        local R=mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_haze_size')
         local mark=#out.discs
-        disc(mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_haze_size'),h,0,{white},a,0,0,'umbra-haze')
-        if #out.discs>mark then
-            local d=out.discs[#out.discs]
-            d.inner,d.outer=option(opts,'umbra_haze_center'),option(opts,'umbra_haze_edge')
+        if option(opts,'umbra_haze_style')=='glow'and umbra_black then
+            -- Test7.1 glow: white (clear center -> full at the black disc's
+            -- middle point -> haze edge) under black (haze black -> clear there).
+            local p=umbra_black.radius*umbra_black.pos
+            R=max(R,p*1.02)
+            disc(R,h,0,{white},a,0,0,'umbra-haze')
+            if #out.discs>mark then
+                local d=out.discs[#out.discs]
+                d.inner,d.outer,d.mid,d.mid_pos=0,option(opts,'umbra_haze_edge'),1,p/R
+            end
+            local m2=#out.discs
+            disc(p,h,0,{{0,0,0}},a,0,0,'umbra-haze')
+            if #out.discs>m2 then
+                local d=out.discs[#out.discs]
+                d.inner,d.outer=option(opts,'umbra_haze_black'),0
+            end
+        else
+            disc(R,h,0,{white},a,0,0,'umbra-haze')
+            if #out.discs>mark then
+                local d=out.discs[#out.discs]
+                d.inner,d.outer=option(opts,'umbra_haze_center'),option(opts,'umbra_haze_edge')
+            end
+        end
+        -- Test7.1 order under: move the haze discs just before the black disc.
+        if option(opts,'umbra_haze_order')=='under'and umbra_black and umbra_black.index and #out.discs>mark then
+            local moved={}
+            for k=#out.discs,mark+1,-1 do table.insert(moved,1,table.remove(out.discs,k))end
+            for k,d in ipairs(moved)do table.insert(out.discs,umbra_black.index+k-1,d)end
         end
     end
     -- Test5.4 Umbra flash-out bloom: one ring-shaped black bloom where the
@@ -1739,7 +1811,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         local stop=M.umbra_flashed(s,opts,has_top)
         local r0=mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_glyph_size')
         local h=M.umbra_plane(opts,details)-option(opts,'umbra_copies_depth')
-        local spin=M.disc_rotation(s,now,opts)*option(opts,'umbra_copies_spin')
+        local spin=(option(opts,'umbra_copies_steady')and M.steady_rotation(s,now,opts)or M.disc_rotation(s,now,opts))*option(opts,'umbra_copies_spin')
         local first=math.max(0,math.floor((now-life-s.created)/every))
         local made={}
         for k=first,math.floor((now-s.created)/every)do

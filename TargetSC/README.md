@@ -1,5 +1,36 @@
 # TargetSC — elemental resonance
 
+## 0.19.1 unified Test7.1 — Radiance demo and ending, Umbra haze glow, jitter, steady spin (Lua only)
+
+- **`//tsc preview demo radiance`**: five real weaponskills, the Light-side twin
+  of `preview demo`. The chain is Fast Blade (Scission), Burning Blade
+  (Liquefaction, L1), Flat Blade (Impaction: Fusion, L2), Savage Blade
+  (Fragmentation: Light, L3), then Resolution (Lionheart + qualifying Aeonic
+  Aftermath: Radiance, L4), on the same clocks. **`//tsc preview mb radiance`**
+  adds Fire 12.6 s, Light 23.8 s, Lightning 29.8 s and Light 38.8 s bursts,
+  overlapping the next links' introductions and the final ending.
+- **`//tsc radiance ending ride on|off`** (default off): in the MB ending
+  Radiance's property discs move down with the MB ring. They stay at full
+  opacity until the deadline and fade only in the final fade
+  (`mb ending fade`).
+- **`//tsc radiance ending glyph off|linear|quadratic|cosine|exponential`**
+  (default off) and **`ending peak <0-1>`** (1): the floor glyph brightens from
+  its normal opacity to the peak in proportion to how far the MB ring has
+  descended, shaped by the curve, then fades with the final fade.
+- **`//tsc umbra haze style soft|glow`**: glow is black at the center
+  (`haze black`, 1) blending to full white at the black disc's middle point
+  (its size x `umbra disc position`), then clear at the haze edge (`haze
+  edge`, 0). It is drawn as a white disc with a black disc over it.
+  **`haze lift <-1..1>`** moves the haze up or down from the MB ring; **`haze order
+  over|under`** draws it over (default) or under the black disc.
+- **`//tsc umbra disc jitter <0-.5>`** and **`jitter speed <n>`**: the black disc's
+  middle point swings back and forth by that much at that many cycles per
+  second (0 = still). The glow haze follows it.
+- **`//tsc umbra under steady on|off`** and **`umbra copies steady on|off`**: keep the
+  under disc or the glyph copies turning at the disc's opening speed, instead
+  of slowing with it.
+- Defaults and `preset killala` are unchanged.
+
 ## 0.19.0 unified Test7.0 — Umbra under disc and haze (Lua only)
 
 - **`//tsc umbra under on|off`** (default off): a second turning property disc

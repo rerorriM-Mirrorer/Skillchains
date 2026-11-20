@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.0-unified-test7.0'
+_addon.version='0.19.1-unified-test7.1'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -137,6 +137,8 @@ local function help()
         {'preview burst [element]','Local MB response preview; no game actions or bridge events.'},
         {'preview demo','Five weaponskills: opener then L1/L2/L3/Umbra, no bursts.'},
         {'preview mb','Same four links with Wind/Earth/Water/Dark bursts; includes late-link overlaps.'},
+        {'preview demo radiance','Five weaponskills: Fast Blade, Burning Blade, Flat Blade, Savage Blade, Resolution (L1/L2/Light/Radiance), no bursts.'},
+        {'preview mb radiance','Same Radiance links with Fire/Light/Lightning/Light bursts at the MB demo overlap times.'},
         {'preview switch [preview]','The preview rides on the first two targets you pick (enemies or yourself) to try target handoffs.'},
         {'preview off','Stops a preview; it dims away like an untarget.'},
         {'mb radiance light|classic','Radiance MB ring like a level-3 Light middle ring (white, colored inner glow) or classic (default light).'},
@@ -157,6 +159,8 @@ local function help()
         {'radiance glyph breath|same','Radiance large MB glyph breathes at rest and never turns (default breath).'},
         {'radiance glyph size|opacity <number|same> | glyph buzz on|off','Its size (1), opacity replacing mb overall (same), buzzing with the rings (on).'},
         {'radiance glyph circle on|off','The circle around the Radiance floor glyph (default on; off needs native 0.11.0).'},
+        {'radiance ending ride on|off','Property discs move down with the MB ring in the ending and fade only at the final fade (default off).'},
+        {'radiance ending glyph off|linear|quadratic|cosine|exponential | ending peak <0-1>','Floor glyph brightens toward peak (1) as the MB ring descends, with this curve.'},
         {'radiance glyph wobble rings|always','Glyph wobble follows the ground rings (default) or keeps going through the MB window and exit fade.'},
         {'radiance stack on|off','Three-disc stack: white bottom, Fusion<->Fragmentation middle, the white disc on top (default on).'},
         {'radiance stack height|spacing <number>','Raise/lower all three (0), gap between them (.01).'},
@@ -176,6 +180,10 @@ local function help()
         {'umbra under direction same|reverse | under center|edge <0-1>','Its turn direction (same); center and edge opacity (1, 0).'},
         {'umbra haze on|off','A flickering white smoke bloom held at the MB ring height all MB window (default off).'},
         {'umbra haze opacity|size|flicker|speed <number> | haze center|edge <0-1>','Opacity (.3), size x the Umbra MB ring (1.3), flicker depth 0-1 (.5), flicker speed (1), center/edge (.6, 0).'},
+        {'umbra haze style soft|glow | haze black <0-1>','glow: black center blending to white at the black disc middle point, clear at the edge (haze black = center, 1).'},
+        {'umbra haze lift <-1..1> | haze order over|under','Haze height from the MB ring (0); drawn over (default) or under the black disc.'},
+        {'umbra disc jitter <0-.5> | jitter speed <n>','Black disc middle point swings by this much (0 = still) at this many cycles/s (1).'},
+        {'umbra under steady on|off | copies steady on|off','Keep the under disc / glyph copies at the opening turn speed (default off).'},
         {'umbra copies on|off','Glyph copies growing out just under the disc through the opening (default on).'},
         {'umbra copies every|life|size|opacity|spin|depth <number>','New copy every .6 s, each lasting 1.2 s, growing to 1.6x, opacity .5, spin 1, .004 under the disc.'},
         {'umbra lines size <0.2-4|same> | lines opacity <0-1|same>','The disc\'s own glyph lines: size x the Umbra MB ring (same = disc size), direct opacity.'},

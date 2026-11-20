@@ -13,6 +13,16 @@ M.umbra_sequence={
     {weapon=31,name="Rudra's Storm",property='Darkness',level=3,used='Distortion'},
     {weapon=109,name='Entropy (Anguta + qualifying Aeonic Aftermath)',property='Umbra',level=4,used='Darkness'},
 }
+-- Test7.1: the Light-side mirror, properties from skills.lua and the
+-- sc_runtime chain table: Scission > Liquefaction (Lv1) > Impaction = Fusion
+-- (Lv2) > Fragmentation = Light (Lv3) > Aeonic Light = Radiance (Lv4).
+M.radiance_sequence={
+    {weapon=32,name='Fast Blade',property='Scission',level=1,used='Scission'},
+    {weapon=33,name='Burning Blade',property='Liquefaction',level=1,used='Liquefaction'},
+    {weapon=35,name='Flat Blade',property='Fusion',level=2,used='Impaction'},
+    {weapon=42,name='Savage Blade',property='Light',level=3,used='Fragmentation'},
+    {weapon=60,name='Resolution (Lionheart + qualifying Aeonic Aftermath)',property='Radiance',level=4,used='Light'},
+}
 function M.parse(args,resonance)
     local first=(args[1] or 'opener'):lower()
     local kind=first
@@ -23,6 +33,12 @@ function M.parse(args,resonance)
         return {kind='burst',properties={'Fragmentation'},level=2,element=element}
     end
     local second=(args[2]or ''):lower()
+    -- Test7.1: `preview demo radiance` / `preview mb radiance` (with bursts).
+    if (first=='demo'or first=='full')and (second=='radiance'or second=='light')then
+        local mb=(args[3]or ''):lower()=='mb'
+        return {kind=mb and 'radiancemb'or 'radiancedemo',properties={'Scission'},level=1}
+    end
+    if first=='mb'and second=='radiance'then return {kind='radiancemb',properties={'Scission'},level=1}end
     if first=='mb'and second=='light'then return {kind='mblight',properties={'Fusion'},level=2}end
     if first=='mb'and (second=='dark'or second=='darkness')then return {kind='mbdark',properties={'Darkness'},level=3}end
     if first=='mb'or first=='mbdemo'or (first=='demo'and (args[2]or ''):lower()=='mb')then
@@ -83,7 +99,8 @@ function M.new(spec,id,now,resonance,opts)
     end
     local kind=spec.kind
     local s
-    if kind=='opener' or kind=='pre' or kind=='umbra' or kind=='mbdemo' then s=state(now,1,spec.properties,spec.level,false)
+    local demo=kind=='umbra'or kind=='mbdemo'or kind=='radiancedemo'or kind=='radiancemb'
+    if kind=='opener' or kind=='pre' or demo then s=state(now,1,spec.properties,spec.level,false)
     else s=state(now,2,spec.properties,spec.level,kind=='closed' or spec.level==4) end
     -- Test4.9 overlap previews (user-specified). Times are relative to the
     -- preview start; `ending` = the last mb ending seconds of a window.
@@ -160,22 +177,25 @@ function M.new(spec,id,now,resonance,opts)
     if kind=='burst'then
         self.events[1]={at=now+.6,kind='burst',color=resonance.element_color(spec.element)}
     end
-    if kind=='umbra'or kind=='mbdemo' then
+    if demo then
         local prior=s
+        local sequence=(kind=='radiancedemo'or kind=='radiancemb')and M.radiance_sequence or M.umbra_sequence
         self.stage='Fast Blade: Scission opener'
-        for step=2,#M.umbra_sequence do
-            local row=M.umbra_sequence[step]
+        for step=2,#sequence do
+            local row=sequence[step]
             local at=prior.sc_close-1
-            local next_state=state(at,step,{row.property},row.level,step==#M.umbra_sequence)
+            local next_state=state(at,step,{row.property},row.level,step==#sequence)
             self.events[#self.events+1]={at=at,kind='chain',state=next_state,
                 label=row.name..': '..row.property..' (Level '..row.level..')'}
             prior=next_state
         end
         self.ends=prior.mb_close+.05;self.mb_end=prior.mb_close
-        if kind=='mbdemo'then
+        if kind=='mbdemo'or kind=='radiancemb'then
             -- Same four successful links and clocks; middle hits deliberately
-            -- overlap the next chain's white introduction.
-            local hits={{12.6,'Wind'},{23.8,'Earth'},{29.8,'Water'},{38.8,'Dark'}}
+            -- overlap the next chain's white introduction (the last one lands
+            -- in the final MB ending).
+            local hits=kind=='radiancemb'and {{12.6,'Fire'},{23.8,'Light'},{29.8,'Lightning'},{38.8,'Light'}}
+                or {{12.6,'Wind'},{23.8,'Earth'},{29.8,'Water'},{38.8,'Dark'}}
             for _,hit in ipairs(hits)do
                 self.events[#self.events+1]={at=now+hit[1],kind='burst',element=hit[2],
                     color=resonance.element_color(hit[2])}
@@ -225,6 +245,8 @@ function M.new(spec,id,now,resonance,opts)
         kind=='umbraopen'and ('Umbra: Darkness window closing (2.0s); Umbra lands 1.2s; full Umbra animation, ends '..at(self.ends)..'; local visuals only.')or
         kind=='mblight'and ('MB Light overlap: Fusion window open (closes 3.0s); '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
         kind=='mbdark'and ('MB Dark overlap: Darkness link 0s; '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
+        kind=='radiancedemo'and 'Radiance demo: Fast Blade 0s; Burning Blade 9s; Flat Blade 17s; Savage Blade 24s; Resolution 30s. Four links; no burst events; final MB reminder ends 40s.'or
+        kind=='radiancemb'and 'Radiance MB demo: same four links; Fire 12.6s, Light 23.8s, Lightning 29.8s, Light 38.8s. Ends 40s; local visuals only.'or
         kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or
         kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or
         kind=='pre' and 'pre only: ground charge 0–3s; stops before countdown' or
