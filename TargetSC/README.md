@@ -1,5 +1,24 @@
 # TargetSC — elemental resonance
 
+## 0.18.3 unified Test6.5 — converge MB ending (Lua only; DLL stays 0.12.0)
+
+- **`//tsc mb ending style converge`:** over the last `mb ending` seconds
+  (default 2) of the MB window the MB ring travels down to the large ground
+  glyph (as far as `mb ending drop`, default 1), brightening steadily toward
+  white with no flashing, and stays fully visible on the way. The ground
+  glyph fades in and whitens beneath it, both on the same eased progress, so
+  the ring arrives at its brightest exactly as the glyph reaches full
+  strength. Everything goes out at the real MB deadline.
+- During converge a burst's rising glyph can't pass the descending ring. A
+  glyph that reaches the ring stays at the ring and rides it down instead of
+  fading or falling back. Blooms from `mb bloom from ring` start at the ring's
+  height at the moment of their burst and fade there; `glyph` blooms follow
+  the (capped) glyph.
+- **`//tsc mb ending shrink <0-1>`** (default 0, converge only): ring and
+  ground glyph shrink toward the property glyph's size as they converge.
+- `mb glyph opacity` doesn't dim the converge glyph. The other ending styles
+  are unchanged (`soft` is still the default).
+
 ## 0.18.2 unified Test6.3 — MB kill freezes (Lua only; DLL stays 0.12.0)
 
 - **MB kill, new default (`kill mb rings freeze`):** `kill mb freeze` (.2 s)
@@ -568,7 +587,8 @@ Your saved stage speeds and tuning stay intact; no preset reset is required.
 - `//tsc mb opacity 0.39`: middle-ring starting strength, increasing toward 1.
 - `//tsc mb overall 1`: MB master opacity, including full-strength white flashes.
 - `//tsc mb ending style soft`: strong/half/strong smooth white pulses.
-  Other choices: hard (three on/off flashes), both (soft then hard), off.
+  Other choices: hard (three on/off flashes), both (soft then hard), converge
+  (ring descends and brightens onto the emerging ground glyph), off.
 - `//tsc mb ending 0.9`: total ending duration; useful for inspecting both styles.
 - `//tsc sky hold 0.5`: hold full nominal bell span after color settles;
   0 restores immediate descent. Rings still meet at the original deadline.

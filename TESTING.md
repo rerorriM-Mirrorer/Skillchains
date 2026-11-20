@@ -1,6 +1,15 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: `ec26042` (Test6.4, per the 2026-11-20 handoff; Inferred, not re-diffed against A's folder).
+- Change: TargetSC unified Test6.5, `//tsc mb ending style converge` + `//tsc mb ending shrink <0-1>`; version `0.18.3-unified-test6.5` (details in the Test6.5 entry below and in `TargetSC/TESTING.md`).
+- Checks: Lua 5.1 parse; 54/54 CI test invocations PASS incl. new `test_mb_converge.lua`; packaging script PASS (host only).
+- Live: none for Test6.5. Pending: the converge look; Test6.3 kill look and real-packet detection; vertical-glyph seam decision.
+- Next: A tries converge (and shrink) in game.
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
 - installed_base: A's local `resonance_motion.lua`/`resonance_controls.lua` = `45246e6` (Test6.3) + A's own trial edits (Verified by diff); rest of the install Inferred `45246e6`.
 - Change: TargetSC unified Test6.4, `//tsc mb glyph opacity <0-1>` (details in the Test6.4 entry below and in `TargetSC/TESTING.md`).
 - Checks: Lua 5.1 parse of all TargetSC Lua; 53/53 CI test invocations PASS incl. new `test_mb_glyph_opacity.lua` (host only).
@@ -17,6 +26,16 @@
 ---
 
 # TESTING.md — Skillchains Resonance UI
+
+## TargetSC 0.18.3 unified Test6.5 — `mb ending style converge` (Lua only; DLL stays 0.12.0) (2026-11-20)
+
+**User request (01:17):** new MB ending `//tsc mb ending style converge` on the existing `mb ending` duration and the real MB deadline: the MB ring descends onto the ground MB glyph, brightening steadily toward white (no repeated flashes, stays visible), brightest on arrival; the ground glyph goes from its default transparency to peak opacity (and white) on the same normalized progress, not reduced by `mb glyph opacity`; while converging, a burst's rising glyph is capped at the descending ring (no jump when the ending starts or ends) and, once it reaches the ring, held there instead of fading/falling; burst blooms originate at the ring's current height and stay/fade there with their usual growth/color/size/timing; everything (ring, glyph and response, property discs, blooms) out at the real deadline; one shared progress value through the burst/response data. Shrink toward the property glyph size optional. Author: A.
+
+**Trace (Verified, `4c98bfa`):** `disc_height` = floor plane of the large glyph and property disc; `mb_height` = steady MB ring height (clapper: property top + (ground anchor − property top) × `mb position`; Umbra `mb height disc` = the black disc plane); `opening.offset` = live large-glyph height, rising on a burst to `rest + (mb_height − rest) × mb glyph height` (1.1); bloom `from/to`: `ring` = fixed `mb_height`, `glyph` = live `opening.offset`, `disc` = floor + .01. The soft/hard ending already descended the ring by `smooth(progress) × mb ending drop` with its own progress calculation in the ring code; blooms stayed at `mb_height`; a held/risen glyph went dark at the ending (end_flash overrode its opacity).
+
+**Changes:** `resonance_burst.lua`: `Burst.ending_progress(state,t,option)` (0 at ending start, 1 at the deadline) is the one progress; `sample()` exposes `ending_progress` and, for converge, `converge = smooth(progress)` (= `end_flash`); converge keeps the breathing idle's own fade (no override). `resonance_motion.lua`: `ring_at(progress)` = the existing descent formula, now the single source for the ring (all styles, unchanged result), the converge cap and converge blooms. Converge ring: `color → white`, `alpha + (1 − alpha) × converge × mb effects` (never dimmed). Glyph: `mb glyph rest hidden` stays hidden into converge (emerges from transparent), then `opacity + (1 − opacity) × converge`, color → white; applied after the Test6.4 multiplier, so `mb glyph opacity` does not reduce it; peak = `mb overall` like every MB signal. Cap = ring height + the glyph's normal overshoot above the ring × (1 − smooth(4 × progress)), i.e. it starts at the glyph's normal top (no jump) and is the ring height from a quarter of the way in; a glyph at the cap is held there (per glyph, per MB window, keeps its brightest response opacity) and rides the ring down. Ring-plane blooms (and their line copies) use `ring_at(progress at the burst time)` (= `mb_height` for bursts before the ending, so no bloom jumps); `glyph` blooms follow the capped glyph. Blooms still go out over the last .25 s before the deadline (existing `closing`). `mb ending shrink <0-1>` (default 0, converge only): ring and glyph radius → property radius × `disc size lines` by `shrink × converge`. Commands `mb ending style …|converge|…`, `mb ending shrink`; help lines; README; version `0.18.3-unified-test6.5` (loader test, CI zip name).
+
+**Host verification (not FFXI):** Lua 5.1 (lupa) parse; 54/54 CI test invocations PASS incl. new `TargetSC/tests/test_mb_converge.lua` (added to CI): shared progress values; no burst: ring only descends, never below alpha 40, ends white at `mb overall` on the glyph plane, glyph opacity never drops and reaches peak, all gone at 112.00; `mb ending 1` starts at 111; a glyph risen before the ending moves continuously (<.006/10 ms), sits on the ring from 110.5, keeps its brightness, lands on the floor; an older bloom doesn't jump; a burst at 110.8 is capped at the ring, held once reached, its bloom born at the ring height (.152) and stays there; `mb glyph opacity 0` doesn't change the converge glyph; shrink 0 unchanged, 1 reaches the property size, no step; soft ring descent and bloom height unchanged; commands/usage/preset. Mutation runs (no hold / blooms on the fixed plane / no glyph emergence) each fail the test. `tools/package_targetsc_unified.py` PASS. **Live pending:** everything in game.
 
 ## TargetSC unified Test6.4 — `mb glyph opacity` (Lua only; version string still 0.18.2-unified-test6.3) (2026-11-20)
 

@@ -74,6 +74,7 @@ jobs:
           lua5.1 TargetSC/tests/test_light_opening.lua
           lua5.1 TargetSC/tests/test_glyph_fade.lua
           lua5.1 TargetSC/tests/test_mb_glyph_opacity.lua
+          lua5.1 TargetSC/tests/test_mb_converge.lua
           lua5.1 TargetSC/tests/test_burst_bloom.lua
           lua5.1 TargetSC/tests/test_native_bloom.lua
           lua5.1 TargetSC/tests/test_native_bloom.lua 0.9.0
@@ -100,7 +101,7 @@ jobs:
       - name: Publish complete unified test package
         uses: actions/upload-artifact@v4
         with:
-          name: TargetSC-Unified-0.18.2-Test6.3
-          path: dist/TargetSC-Unified-0.18.2-Test6.3.zip
+          name: TargetSC-Unified-0.18.3-Test6.5
+          path: dist/TargetSC-Unified-0.18.3-Test6.5.zip
           if-no-files-found: error
           retention-days: 30

@@ -338,10 +338,12 @@ function M.new(settings,defaults,save,say,killala)
             settings.mb_intro_flashes=flashes;save(settings);say('MB intro flashes '..flashes..'.')
         elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='drop'then
             numeric('mb_ending_drop',args[3],{0,1},'mb ending drop')
+        elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='shrink'then
+            numeric('mb_ending_shrink',args[3],{0,1},'mb ending shrink')
         elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='style'then
             local style=(args[3]or ''):lower()
-            if not ({soft=true,hard=true,both=true,off=true})[style]then
-                say('Use //tsc mb ending style soft|hard|both|off.');return true
+            if not ({soft=true,hard=true,both=true,off=true,converge=true})[style]then
+                say('Use //tsc mb ending style soft|hard|both|converge|off.');return true
             end
             settings.mb_ending_style=style;save(settings);say('MB ending style '..style..'.')
         elseif direct[command]then numeric(command,args[1],direct[command],command)

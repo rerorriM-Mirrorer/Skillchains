@@ -36,8 +36,11 @@ function M.introduction(state,now,duration,flashes)
 end
 -- The soft ending is strong / half-strength / strong. Hard uses three
 -- rectangular white on/off flashes. Both fit, in order, inside one interval.
+-- Test6.5 converge: no pulses, one eased rise toward white that peaks as the
+-- MB ring arrives at the ground glyph (the same smooth() as the ring's descent).
 function M.ending(progress,style)
     if progress<0 or progress>=1 or style=='off'then return 0 end
+    if style=='converge'then return smooth(progress)end
     if style=='both'then
         style=progress<.5 and 'soft'or 'hard'
         progress=(progress*2)%1
@@ -47,6 +50,13 @@ function M.ending(progress,style)
     local within=phase-pulse
     if style=='hard'then return within<.5 and 1 or 0 end
     return (pulse==1 and .5 or 1)*math.sin(within*math.pi)^2
+end
+-- Test6.5: the one shared ending progress, 0 when the ending period starts,
+-- 1 at the real MB deadline. Every converge piece (ring, glyph, blooms) uses
+-- this, from response.ending_progress or, for another moment, this function.
+function M.ending_progress(state,t,option)
+    local ending=math.max(.001,option('mb_ending'))
+    return clamp(1-math.max(0,state.mb_close-t)/ending)
 end
 function M.sample(model,state,now,option)
     local duration=option('mb_duration')
@@ -67,9 +77,17 @@ function M.sample(model,state,now,option)
         end
         local ending=option('mb_ending')
         if left<=ending and option('mb_ending_style')~='off'then
-            out.end_flash=M.ending(clamp(1-left/ending),option('mb_ending_style'))
+            local style=option('mb_ending_style')
+            out.ending_progress=M.ending_progress(state,now,option)
+            out.end_flash=M.ending(out.ending_progress,style)
             out.ending=true
-            out.idle=option('mb_idle')*out.end_flash*effects
+            if style=='converge'then
+                -- Eased convergence (0 -> 1); the breathing idle keeps its own
+                -- fade so nothing steps when the ending begins.
+                out.converge=out.end_flash
+            else
+                out.idle=option('mb_idle')*out.end_flash*effects
+            end
         end
     end
     local bursts=model.bursts[state.id]or {}

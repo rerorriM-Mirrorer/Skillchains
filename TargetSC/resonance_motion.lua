@@ -37,6 +37,9 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- glows may turn faster, and the MB ring settles onto the large glyph
     -- during the closing pulses.
     ring_spin='disc',ring_shade=.25,ring_glow_spin=1,mb_ending_drop=1,
+    -- Test6.5 converge ending: ring and large glyph shrink toward the property
+    -- glyph's size while they converge (0 = keep their size, 1 = reach it).
+    mb_ending_shrink=0,
     -- Test3.4: confirmed-MB glows on the two glyphs get a turning lit side,
     -- an added spin (turns/sec) over their glyph, and optional softening.
     mb_glow_shade=.5,mb_glow_spin=.5,mb_glow_flicker=1,mb_glow_width=1,
@@ -857,6 +860,22 @@ function M.frame(model,s,now,radius,height,opts,context)
     local mb_height=clapper and property_top+(floor_anchor-property_top)*option(opts,'mb_position')or height*.49
     -- Test5.8: Umbra's MB ring may sit exactly at the black disc's plane.
     if l4n=='umbra'and option(opts,'umbra_mb_height')=='disc'then mb_height=M.umbra_plane(opts,details)end
+    -- Test6.5: the MB ring's height for a given ending progress (0..1). Through
+    -- the ending the ring settles onto the large glyph's resting plane; Umbra's
+    -- collapse keeps it in place. The ring, the converge glyph cap and the
+    -- converge blooms all read this one function.
+    local ring_descends=clapper and option(opts,'mb_ending_style')~='off'and
+        not (l4n=='umbra'and option(opts,'umbra_collapse'))
+    local function ring_at(progress)
+        if not ring_descends or not progress then return mb_height end
+        return mb_height+(option(opts,'disc_height')-mb_height)*option(opts,'mb_ending_drop')*smooth(progress)
+    end
+    -- Converge: e is the shared eased ending progress (nil outside it).
+    local converge=response.ending and response.converge or nil
+    local function shrink_toward(r,target)
+        local k=converge and option(opts,'mb_ending_shrink')*converge or 0
+        return k>0 and r+(target-r)*k or r
+    end
     local mb_colors=context.palette(s)
     local mb_color=mb_colors[#mb_colors]
     if clapper and s.level==2 and #mb_colors==2 then
@@ -1181,7 +1200,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         -- Test4.8 rest hidden: no floor breathing; the window-opening flash,
         -- bursts and the ending still light it.
-        if clapper and option(opts,'mb_glyph_rest')=='hidden'and not response.ending then opening.opacity=0 end
+        -- Test6.5 converge: stays hidden until the converge ramp brings it in.
+        if clapper and option(opts,'mb_glyph_rest')=='hidden'and (converge or not response.ending)then opening.opacity=0 end
         local fades=clapper and option(opts,'mb_glyph_after')=='fade'
         if initial>0 then
             role='awakening';fill=initial
@@ -1220,6 +1240,28 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- flash, so neither of those signals is dimmed by it.
             opening.opacity=opening.opacity*option(opts,'mb_glyph_opacity')
         end
+        if converge and clapper then
+            -- Test6.5: a rising glyph may not pass the descending MB ring. The
+            -- cap starts at the glyph's normal highest point (no jump when the
+            -- ending begins) and closes onto the ring over the first quarter
+            -- of the same shared progress, then is the ring's height.
+            -- A glyph that has reached it is held there (and keeps its
+            -- brightness) instead of fading or falling back to the floor.
+            local rest=option(opts,'disc_height')
+            local fraction=option(opts,'mb_glyph_height')
+            local top_normal=fraction>0 and rest+(mb_height-rest)*fraction or rest+height*option(opts,'mb_rise')
+            local ring_now=ring_at(response.ending_progress)
+            local cap=ring_now+max(0,top_normal-mb_height)*(1-smooth((response.ending_progress or 0)*4))
+            local hold=opening.converge_hold
+            if hold and (hold.close~=s.mb_close or now<hold.at)then hold=nil;opening.converge_hold=nil end
+            if response.responding and opening.offset>=cap-1e-4 then
+                if not hold then hold={close=s.mb_close,at=now,alpha=0};opening.converge_hold=hold end
+                hold.alpha=max(hold.alpha,opening.opacity)
+            end
+            if hold then
+                opening.offset=cap;opening.opacity=max(opening.opacity,hold.alpha)
+            elseif opening.offset>cap then opening.offset=cap end
+        end
         local glyph_intro=intro*option(opts,'mb_intro_glyph')
         if glyph_intro>0 then
             -- A new MB window may announce itself more quietly on the large
@@ -1228,7 +1270,15 @@ function M.frame(model,s,now,radius,height,opts,context)
             color=mix(color,white,glyph_intro)
             opening.opacity=opening.opacity+(1-opening.opacity)*glyph_intro
         end
-        if response.ending then
+        if converge then
+            -- Test6.5 converge: the ground glyph emerges and whitens as the
+            -- ring descends, peaking as it arrives (not scaled by mb glyph
+            -- opacity, which only applies to the confirmed response above).
+            local k=converge*option(opts,'mb_effects')
+            color=mix(color,white,k)
+            opening.opacity=opening.opacity+(1-opening.opacity)*k
+            opening.radius=shrink_toward(opening.radius,property_radius*option(opts,'disc_size_lines'))
+        elseif response.ending then
             -- A closing signal wins over a simultaneous hit's color/alpha,
             -- while an already rising glyph keeps its continuous trajectory.
             color=white
@@ -1461,19 +1511,20 @@ function M.frame(model,s,now,radius,height,opts,context)
             color=mix(color,white,intro)
             alpha=alpha+(1-alpha)*intro
         end
-        if response.ending then
+        if converge then
+            -- Test6.5 converge: one steady brightening toward white, keeping
+            -- the ring fully visible all the way down (no pulses, no fade).
+            local k=converge*option(opts,'mb_effects')
+            color=mix(color,white,k)
+            alpha=alpha+(1-alpha)*k
+        elseif response.ending then
             color=mix(color,white,option(opts,'mb_effects'))
             alpha=alpha*(1-option(opts,'mb_effects'))+response.end_flash*option(opts,'mb_effects')
         end
-        local ring_height=mb_height
-        if response.ending and clapper and not (l4name=='umbra'and option(opts,'umbra_collapse'))then
-            -- Through the closing pulses the MB ring settles down onto the
-            -- large glyph's resting plane (same radius), reaching it at the
-            -- real MB deadline when everything goes dark.
-            local progress=clamp(1-(s.mb_close-now)/option(opts,'mb_ending'),0,1)
-            ring_height=mb_height+(option(opts,'disc_height')-mb_height)*
-                option(opts,'mb_ending_drop')*smooth(progress)
-        end
+        -- Through the closing pulses the MB ring settles down onto the large
+        -- glyph's resting plane (same radius), reaching it at the real MB
+        -- deadline when everything goes dark (shared ring_at above).
+        local ring_height=response.ending and ring_at(response.ending_progress)or mb_height
         local mb_rotation=0
         if mb_like_ring then
             -- Same turn as the lowest SC ring (level 3 uses the disc spin
@@ -1494,13 +1545,14 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- Test5.2: the MB ring may join the rings' shimmer (after them in the stagger).
             local lit=option(opts,'radiance_shimmer_mb')and M.level4_shimmer(s,now,opts,'radiance',8,context.view_angle)or nil
             if glow>0 then
-                band(mb_radius,ring_height,{inner},a*.32*glow*buzz*gain/max(.05,option(opts,'brightness')*.95*(.72+.28*buzz)),
+                band(shrink_toward(mb_radius,property_radius*option(opts,'disc_size_lines')),ring_height,{inner},a*.32*glow*buzz*gain/max(.05,option(opts,'brightness')*.95*(.72+.28*buzz)),
                     px+6*min(glow,3),'glow','mb',0,mb_rotation*option(opts,'ring_glow_spin'),lit)
             end
-            ring(mb_radius,ring_height,{color},a,'mb',0,mb_rotation,nil,{inner},gain,{lit=lit})
+            ring(shrink_toward(mb_radius,property_radius*option(opts,'disc_size_lines')),ring_height,{color},a,'mb',0,mb_rotation,nil,{inner},gain,{lit=lit})
         else
             local r=mb_radius
             if l4name=='umbra'then r=r*option(opts,'umbra_mb_size')end
+            r=shrink_toward(r,property_radius*option(opts,'disc_size_lines'))
             ring(r,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
         end
     end
@@ -1582,9 +1634,16 @@ function M.frame(model,s,now,radius,height,opts,context)
         -- With a closing signal, blooms go out with the real MB deadline.
         local closing=1
         if option(opts,'mb_ending_style')~='off'then closing=smooth((s.mb_close-now)/.25)end
-        local function plane(where)
+        -- Test6.5 converge: a ring-plane bloom starts at the MB ring's height at
+        -- the moment of its burst (which is mb height until the ending begins,
+        -- so a bloom already open never jumps) and stays there as it fades.
+        -- A glyph-plane bloom follows the large glyph, which converge caps.
+        local converging=option(opts,'mb_ending_style')=='converge'
+        local bopt=function(k)return option(opts,k)end
+        local function plane(where,born)
             if where=='disc'then return option(opts,'disc_height')+.01 end -- just above the property fill
             if where=='glyph'then return opening and opening.offset or mb_height end
+            if converging and born and born<s.mb_close then return ring_at(Burst.ending_progress(s,born,bopt))end
             return mb_height
         end
         local from=option(opts,'mb_bloom_from')
@@ -1610,7 +1669,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local a=mb_overall*effects*env*closing
                     local color=tint(age)
                     local before=#out.discs
-                    disc(mb_radius*(start+(finish-start)*g),plane(from)+(plane(to)-plane(from))*g,0,{color},a,0,0,'bloom')
+                    disc(mb_radius*(start+(finish-start)*g),plane(from,burst.at)+(plane(to,burst.at)-plane(from,burst.at))*g,0,{color},a,0,0,'bloom')
                     if #out.discs>before then
                         local d=out.discs[#out.discs]
                         d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
@@ -1625,7 +1684,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     if at>=0 and at<life then
                         local g,env=growth(at)
                         local r=mb_radius*(1+(option(opts,'mb_bloom_lines_size')-1)*g)
-                        disc(r,plane(from)+(plane(to)-plane(from))*g,opening and opening.rotation or 0,{white},0,2,
+                        disc(r,plane(from,burst.at)+(plane(to,burst.at)-plane(from,burst.at))*g,opening and opening.rotation or 0,{white},0,2,
                             option(opts,'mb_bloom_lines_opacity')*mb_overall*effects*env*closing,'bloom-lines',tint(at))
                     end
                 end
