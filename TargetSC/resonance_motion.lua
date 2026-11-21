@@ -83,6 +83,11 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test4.7: Light's colored inner glows stay off until its window opens,
     -- then rise to `rings light glow`; its MB ring matches the lowest SC ring.
     ring_light_opening='off',ring_light_mb='match',
+    -- Test7.5: a level-3 link opens as three strands squeezed together
+    -- (spacing x ring_level3_start) that separate to their stacked spacing
+    -- over the same .3 s as the glide from the previous link's heights.
+    -- pop = the earlier single white ring for .16 s, then three strands.
+    ring_level3_open='spread',ring_level3_start=.5,
     -- Test4.8: large breathing glyph: after a burst it stays risen and fades
     -- (instead of falling); at the floor it shows only the window-opening
     -- flash (no breathing).
@@ -283,6 +288,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
+    ring_level3_open='pop',
     mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false,
     detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
@@ -1205,7 +1211,21 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
     elseif show_sc and phase~='expired'and (phase~='mb-only'or (l4 and l4opt('close')=='sequence'and now<M.level4_end(s,opts,l4name,has_top)))then
         local specs=specifications(s,context,opts)
-        if not opener and s.level~=2 and age<.16 then specs={{colors={white},radial=1,stack=0}}end
+        local l3spread=not opener and s.level==3 and option(opts,'ring_level3_open')=='spread'
+        if not opener and s.level~=2 and not l3spread and age<.16 then specs={{colors={white},radial=1,stack=0}}end
+        if l3spread and age<.3 then
+            -- Test7.5: three strands from the first frame, closer together,
+            -- separating in step with the .3 s glide (same smoothstep).
+            local start=clamp(option(opts,'ring_level3_start'),0,1)
+            local k=start+(1-start)*smooth(age/.3)
+            local spread={}
+            for j,spec in ipairs(specs)do
+                local copy={}for key,v in pairs(spec)do copy[key]=v end
+                copy.stack=(spec.stack or 0)*k
+                spread[j]=copy
+            end
+            specs=spread
+        end
         out.strands=#specs
         local l4seq=l4 and l4opt('close')=='sequence'
         local ring_fade=l4seq and 1 or fade -- the sequence does its own fading

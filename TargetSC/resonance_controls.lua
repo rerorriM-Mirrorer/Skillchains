@@ -393,6 +393,14 @@ function M.new(settings,defaults,save,say,killala)
                     settings.ring_lightdark_tint=args[3]:lower();save(settings);say('Light glow tint '..settings.ring_lightdark_tint..'.')
                 elseif name=='cycle'then numeric('mb_lightdark_cycle',args[3],{.25,6},'rings lightdark cycle')
                 else say('Use //tsc rings lightdark classic|elements | spin <-2-2> | tint gold|white | cycle <0.25-6>.')end
+            elseif value=='level3'then
+                -- Test7.5: how a level-3 link's three strands open.
+                local name=(args[2]or ''):lower()
+                if name=='open'and ((args[3]or ''):lower()=='spread'or (args[3]or ''):lower()=='pop')then
+                    settings.ring_level3_open=args[3]:lower();save(settings)
+                    say('Level 3 rings open: '..settings.ring_level3_open..'.')
+                elseif name=='start'then numeric('ring_level3_start',args[3],{0,1},'rings level3 start')
+                else say('Use //tsc rings level3 open spread|pop | start <0-1>.')end
             elseif value=='shade'then numeric('ring_shade',args[2],{0,1},'rings shade')
             elseif value=='glow'and choice=='spin'then numeric('ring_glow_spin',args[3],{0,4},'rings glow spin')
             else

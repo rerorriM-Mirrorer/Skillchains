@@ -1,5 +1,25 @@
 # TargetSC TESTING.md — start here
 
+## Current Development Status — 2026-11-21 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Remote tip `bcc67ad` (Test7.4); Test7.5 is a local commit until A pushes or OKs push access in this conversation.
+- installed_base: `76cf0e6` (Test7.3) per the 2026-11-20 status; the Test7.5 zip carries every file changed since it, so it also covers a Test7.4 install.
+- Live (A, 15:42): the level 3 preview already rises from the previous link's heights (confirms the 0.3 s glide); A wants the first frame to be three closely stacked strands that separate during the glide instead of one ring that pops into three at .16 s.
+- Change: Test7.5, `rings level3 open spread|pop` (default spread) and `rings level3 start <0-1>` (default .5). Killala keeps pop. Levels 1, 2, 4 unchanged. Version `0.19.5-unified-test7.5`.
+- Checks: Lua 5.1 (lupa 2.8) parse of 83 `.lua` files, 0 errors; 63/63 CI `lua5.1` invocations PASS incl. new `test_level3_spread.lua` (default and A's cioara profile; Light/Darkness in white, elements and classic looks). Mutation (no spread, k=1) fails it. Host only.
+- Pending: the spread in game (`preview level3` after `preview level2`, and a real chain).
+- Next: A compares spread vs pop and tunes `rings level3 start`; then Level 4 collapse (see plan in the 2026-11-21 handoff).
+
+## TargetSC 0.19.5 unified Test7.5 — Level 3 rings spread open (Lua only) (2026-11-21)
+
+**Request (16:03):** keep the level 3 opening the same, except the first frame should be three rings stacked closely together (like the level 2 rings with a third between them) that separate to the current level 3 stacking over the same .3 s as the glide, instead of suddenly becoming a stack of three.
+
+**Before (Verified):** in `M.frame`, every non-opener link other than level 2 drew one white ring (`radial 1, stack 0`) while `age < .16`, then its full spec list; level 3 specs stack at `(j-1) x .035`. Ground/sky heights glide from `s.previous` over .3 s (`M.positions`, smoothstep).
+
+**Changes:** with `ring_level3_open == 'spread'`, level 3 skips the .16 s single ring; while `age < .3` each spec's `stack` is multiplied by `k = start + (1-start) x smooth(age/.3)` (copies, so specs are not mutated). `pop` keeps the old branch.
+
+**Host verification (not FFXI):** 63/63 CI. New test: three ground strands on the first frame at .0175 spacing, growing monotonically to .035 by .3 s and holding; lowest strand's height identical to pop (same glide); pop shows one ring at .05 and three at .2; start 0/1; levels 1, 2, Radiance, Umbra frames identical under both settings; commands, bad values rejected, killala = pop, default = spread/.5. **Live pending.**
+
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).

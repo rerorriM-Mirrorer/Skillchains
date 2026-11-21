@@ -1,5 +1,21 @@
 # TargetSC — elemental resonance
 
+## 0.19.5 unified Test7.5 — Level 3 rings spread open (Lua only)
+
+- **`//tsc rings level3 open spread|pop`** (default spread): a level 3 link
+  now shows its three strands from the very first frame, squeezed together at
+  half their normal spacing (like the level 2 pair with a third ring between).
+  As the rings glide from the previous link's heights to their open positions
+  (.3 s), the strands separate to the normal level 3 stack in step with the
+  glide. Everything else about the level 3 opening is unchanged: white until
+  the window opens, the flicker, the glows.
+- `pop` is the earlier look: one white ring for .16 s, then three strands.
+  The killala preset keeps `pop`.
+- **`//tsc rings level3 start <0-1>`** (default .5): the starting spacing as a
+  fraction of the normal stack. 0 starts all three on one height; 1 starts at
+  full spacing (glide only).
+- Levels 1, 2 and 4 are unchanged.
+
 ## 0.19.4 unified Test7.4 — Radiance glow (Lua only)
 
 - **`//tsc radiance glow on|off`** (default off): two white blooms around the
@@ -433,6 +449,7 @@ white. Darkness keeps the four-color look.
 Lua-only. Level 3 Light/Darkness links now show white (or black) top and
 bottom strands with the four element colors around the middle strand, and
 the MB ring cycles through those four colors.
+- `//tsc rings level3 open spread|pop` (default spread), `rings level3 start <0-1>` (default .5).
 - `//tsc rings lightdark classic|elements` (default elements).
 - `//tsc rings lightdark spin <-2-2>` — middle strand turn rate (default 1).
 - `//tsc rings lightdark tint gold|white` — Light's glow color (default white).
