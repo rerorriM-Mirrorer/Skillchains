@@ -2,6 +2,26 @@
 
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0).
+- installed_base: `76cf0e6` (Test7.3).
+- Live (A, 18:50): Test7.3 vanish ending + black burst centers "looks good"; **the Umbra animation is settled for now** (A's cioara profile, see `tests/fixture_cioara.lua` plus vanish/burst center black).
+- Change: Test7.4, `radiance glow` (+ opacity, size, rise, hold, fall, dance, speed). Off by default and in killala. Version `0.19.4-unified-test7.4`.
+- Checks: Lua 5.1 (lupa) parse of every TargetSC `.lua`; 69/69 CI invocations PASS incl. new `test_radiance_glow.lua` (A's profile). Mutation (no height dance) fails it. `preview mb radiance` stays within 16 discs (host only).
+- Pending: the glow look in game; Test7.1/7.2 Radiance items.
+- Next: A tries `radiance glow on` with `preview Radiance 4` / `preview mb radiance`, then tunes rise/hold/fall/dance.
+
+## TargetSC 0.19.4 unified Test7.4 — Radiance glow (Lua only) (2026-11-20)
+
+**Request (18:50, details 18:54):** two white blooms like the Umbra after-bloom (ring-band shape), both around the ground ring height, dancing around each other. They start clear, slowly ease in, rush to full brightness as the first Radiance SC ring flashes, hold (setting), then ease out and fade quickly; the fade-out is a setting and may linger through the MB window. Motion: cosine growth and up/down, like a figure eight.
+
+**Before (Verified):** Radiance's first ring (index 0 of `level4_ring`) brightens from `sc_open` and peaks at `sc_open + .3 x radiance lead` (with `radiance close sequence`). The Umbra after-bloom uses the `mb bloom center/edge/middle/position` ring band.
+
+**Changes:** `M.radiance_glow_envelope`: peak as above (sc_open without sequence); before it `x^3` over `glow rise` (-1 = from landing); 1 for `glow hold`; then `1-u^3` over `glow fall`; times `smooth((mb_close-now)/.3)`. Frame: two `radiance-glow` discs at the ground ring height, white, MB bloom shape, radius `radius x glow size x (1 + dance cos phi)`, height `+ dance x radius x .08 x sin 2phi`, with `phi = 2pi speed age + k pi/2`.
+
+**Host verification (not FFXI):** 69/69 CI. New test (A's profile): peak = sc_open (open time 3) + .3 x lead; 0 at landing, <.2 halfway, >.6 at 90%, 1 at peak and through the hold, >.9 at 30% of the fall, <.35 at 90%, 0 after; two white discs with the MB bloom shape at the peak opacity; size and height-difference dance exact; a 30 s fall lingers at deadline-1 s and is gone after the deadline; hold 2 and rise .5; none on Umbra; `preview mb radiance` shows them within 16 discs; commands and rejects. **Live pending.**
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Test7.1/7.2 pushed at 18:25 (`4a7b067`); A authorized pushes indefinitely for this conversation (18:23).
 - installed_base: `4a7b067` (Test7.2; A's settings.xml of 18:23 carries its settings, so Inferred installed).
 - Change: Test7.3, `umbra ending vanish` (+ `vanish time`, `vanish shimmer`) and `umbra burst center normal|black`. Defaults unchanged. Version `0.19.3-unified-test7.3`.

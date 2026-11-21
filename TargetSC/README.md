@@ -1,5 +1,21 @@
 # TargetSC — elemental resonance
 
+## 0.19.4 unified Test7.4 — Radiance glow (Lua only)
+
+- **`//tsc radiance glow on|off`** (default off): two white blooms around the
+  ground rings, shaped like the MB bloom ring band (`mb bloom center/edge/
+  middle/position`). They start clear when Radiance lands, ease in slowly, then
+  rush to full brightness at the first ring's flash peak. They hold there, then
+  ease down and drop away. If the fade-out is long, they linger through the MB
+  window and end at the deadline.
+- While they glow they dance in a figure eight: each grows and shrinks
+  (`glow dance`) while drifting up and down at twice that speed. The two run a
+  quarter cycle apart, so they weave around each other.
+- Settings: `glow opacity` (.5), `glow size` (x ring radius, 1.2), `glow rise`
+  (fade-in seconds; -1 = from landing), `glow hold` (seconds at peak, .3),
+  `glow fall` (fade-out seconds, 1.5), `glow dance` (.08), `glow speed` (cycles
+  per second, .4).
+
 ## 0.19.3 unified Test7.3 — Umbra vanish ending, black burst centers (Lua only)
 
 - **`//tsc umbra ending vanish`**: at the ending start (with `umbra ending when

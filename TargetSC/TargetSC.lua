@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.3-unified-test7.3'
+_addon.version='0.19.4-unified-test7.4'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -159,6 +159,9 @@ local function help()
         {'radiance glyph breath|same','Radiance large MB glyph breathes at rest and never turns (default breath).'},
         {'radiance glyph size|opacity <number|same> | glyph buzz on|off','Its size (1), opacity replacing mb overall (same), buzzing with the rings (on).'},
         {'radiance glyph circle on|off','The circle around the Radiance floor glyph (default on; off needs native 0.11.0).'},
+        {'radiance glow on|off','Two white ring-band blooms dancing around the ground rings, peaking at the first ring flash (default off).'},
+        {'radiance glow opacity|size|rise|hold|fall <n>','Peak opacity (.5), size x ring (1.2), fade-in s (-1 = from landing), hold at peak s (.3), fade-out s (1.5, up to the MB deadline).'},
+        {'radiance glow dance|speed <n>','Figure-eight size swing (.08) and cycles per second (.4); height moves at twice the speed.'},
         {'radiance ending ride on|off','Property discs move down with the MB ring in the ending and fade only at the final fade (default off).'},
         {'radiance ending glyph off|linear|quadratic|cosine|exponential | ending peak <0-1>','Floor glyph brightens toward peak (1) as the MB ring descends, with this curve.'},
         {'radiance glyph wobble rings|always','Glyph wobble follows the ground rings (default) or keeps going through the MB window and exit fade.'},

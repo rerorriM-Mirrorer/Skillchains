@@ -189,6 +189,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- their place. `umbra burst center black`: MB burst blooms on an Umbra
     -- link get an opaque black center blending out to their color.
     umbra_vanish_time=.12,umbra_vanish_shimmer=30,umbra_burst_center='normal',
+    -- Test7.4 Radiance glow: two white ring-band blooms (the MB bloom shape)
+    -- around the ground ring height. Clear at landing, they ease in over
+    -- `glow rise` s (-1 = from landing) and rush to full at the first ring's
+    -- flash peak, hold `glow hold` s, then ease out and drop away over `glow
+    -- fall` s (at most to the MB deadline). They dance in a figure eight: size
+    -- +-`glow dance` at `glow speed` cycles/s, height at twice that, a quarter
+    -- cycle apart. Size x the ring radius.
+    radiance_glow=false,radiance_glow_opacity=.5,radiance_glow_size=1.2,radiance_glow_rise=-1,
+    radiance_glow_hold=.3,radiance_glow_fall=1.5,radiance_glow_dance=.08,radiance_glow_speed=.4,
     -- Test7.1 Radiance MB ending: ride = the property discs move down with the
     -- MB ring and only fade in the final fade; ending glyph = the floor glyph
     -- brightens toward `ending peak` as the ring descends (off = as before).
@@ -279,7 +288,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
     umbra_look='classic',umbra_glow='violet',umbra_close='classic',
     umbra_after='smoke',umbra_mb='classic',radiance_disc_lines=true,radiance_glyph='same',radiance_stack=false,
-    radiance_sky='bell',radiance_glyph_circle=true,radiance_glyph_wobble='rings',umbra_under=false,umbra_haze=false,radiance_ending_ride=false,radiance_ending_glyph='off',umbra_disc_jitter=0,umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
+    radiance_sky='bell',radiance_glyph_circle=true,radiance_glyph_wobble='rings',umbra_under=false,umbra_haze=false,radiance_ending_ride=false,radiance_ending_glyph='off',umbra_disc_jitter=0,radiance_glow=false,umbra_sky='bell',umbra_glyph='same',umbra_copies=false,umbra_disc_steady=false,umbra_lines_color='cream',
     umbra_collapse=false,umbra_glyph_lift=-1,kill=false}
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
@@ -783,6 +792,19 @@ function M.umbra_ending_window(s,opts,has_top)
         return a,min(s.mb_close,a+max(.1,option(opts,'umbra_ending_time')))
     end
     return s.mb_close-max(.1,option(opts,'mb_ending')),s.mb_close
+end
+-- Test7.4: the Radiance glow's brightness envelope (0..1) and its peak time.
+function M.radiance_glow_envelope(s,now,opts)
+    local peak=s.sc_open+(option(opts,'radiance_close')=='sequence'and .3*option(opts,'radiance_lead')or 0)
+    local rise=option(opts,'radiance_glow_rise')
+    if rise<0 then rise=peak-s.created end
+    rise=max(.05,rise)
+    local hold,fall=max(0,option(opts,'radiance_glow_hold')),max(.05,option(opts,'radiance_glow_fall'))
+    local env
+    if now<peak then local x=clamp(1-(peak-now)/rise,0,1);env=x*x*x -- slow ease-in, then a rush
+    elseif now<peak+hold then env=1
+    else local u=(now-peak-hold)/fall;env=u<1 and 1-u*u*u or 0 end -- ease out, then drop away
+    return env*smooth(clamp((s.mb_close-now)/.3,0,1)),peak
 end
 -- Test7.3: visibility (1 -> 0, shimmering) and blackness (0 -> 1) of the
 -- Umbra glyphs in the vanish ending.
@@ -1800,6 +1822,27 @@ function M.frame(model,s,now,radius,height,opts,context)
     end
     -- Test5.4 Umbra flash-out bloom: one ring-shaped black bloom where the
     -- rings flashed out, shrinking (or holding/growing) as it fades.
+    -- Test7.4 Radiance glow: two white blooms dancing around the ground rings.
+    if l4name=='radiance'and show_sc and option(opts,'radiance_glow')and now<s.mb_close then
+        local env=M.radiance_glow_envelope(s,now,opts)
+        local a=option(opts,'radiance_glow_opacity')*env
+        if a>.002 then
+            local theta=2*pi*option(opts,'radiance_glow_speed')*max(0,now-s.created)
+            local dance=option(opts,'radiance_glow_dance')
+            local ground=bottom or option(opts,'disc_height')
+            for k=0,1 do
+                local phi=theta+k*pi/2
+                local before=#out.discs
+                disc(radius*option(opts,'radiance_glow_size')*max(.05,1+dance*math.cos(phi)),
+                    ground+dance*radius*.08*sin(2*phi),0,{white},a,0,0,'radiance-glow')
+                if #out.discs>before then
+                    local d=out.discs[#out.discs]
+                    d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
+                    d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
+                end
+            end
+        end
+    end
     if l4name=='umbra'and show_sc and option(opts,'umbra_close')=='sequence'and option(opts,'umbra_after')=='bloom'then
         local start=M.umbra_flashed(s,opts,has_top)
         local life=max(.05,option(opts,'umbra_bloom_time'))

@@ -115,7 +115,7 @@ function M.new(settings,defaults,save,say,killala)
             shimmer={'n',0,1},['shimmer time']={'n',.2,8},['shimmer stagger']={'n',0,1},
             ['shimmer angle']={'n',-180,180},['shimmer when']={'c','close','all'},['shimmer mb']={'b'},
             ['open time']={'n',0,8,same=true},['disc lines']={'b'},glyph={'c','breath','same'},
-            ['glyph size']={'n',.2,4},['glyph opacity']={'n',0,1,same=true},['glyph buzz']={'b'},sky={'c','bell','off'},['glyph circle']={'b'},['glyph wobble']={'c','rings','always'},['ending ride']={'b'},['ending glyph']={'c','off','linear','quadratic','cosine','exponential'},['ending peak']={'n',0,1},
+            ['glyph size']={'n',.2,4},['glyph opacity']={'n',0,1,same=true},['glyph buzz']={'b'},sky={'c','bell','off'},['glyph circle']={'b'},['glyph wobble']={'c','rings','always'},['ending ride']={'b'},glow={'b'},['glow opacity']={'n',0,1},['glow size']={'n',.2,6},['glow rise']={'n',-1,20},['glow hold']={'n',0,20},['glow fall']={'n',.05,30},['glow dance']={'n',0,1},['glow speed']={'n',0,5},['ending glyph']={'c','off','linear','quadratic','cosine','exponential'},['ending peak']={'n',0,1},
             stack={'b'},['stack height']={'n',-.2,.5},['stack spacing']={'n',0,.1},
             ['bottom opacity']={'n',0,1},['bottom size']={'n',.2,4},['middle opacity']={'n',0,1},
             ['middle size']={'n',.2,4},['middle cycle']={'n',.2,20},['middle spin']={'n',-4,4}},
