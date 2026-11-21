@@ -136,7 +136,7 @@ function M.new(settings,defaults,save,say,killala)
             ['lines size']={'n',.2,4,same=true},['lines opacity']={'n',0,1,same=true},
             ['disc inner']={'n',0,1,same=true},['disc middle']={'n',0,1,same=true},['disc outer']={'n',0,1,same=true},
             ['disc position']={'n',.05,.95,same=true},['disc steady']={'b'},core={'n',0,1,same=true},flicker={'n',0,1},
-            ending={'c','off','gyro','swallow'},['ending when']={'c','open','mb','flash'},
+            ending={'c','off','gyro','swallow','vanish'},['vanish time']={'n',.02,2},['vanish shimmer']={'n',0,80},['burst center']={'c','normal','black'},['ending when']={'c','open','mb','flash'},
             ['lines color']={'c','white','cream'},['mb height']={'c','ring','disc'},
             under={'b'},['under opacity']={'n',0,1},['under size']={'n',.2,6},['under spin']={'n',0,6},
             ['under direction']={'c','same','reverse'},['under cycle']={'n',.2,20},['under depth']={'n',0,.1},

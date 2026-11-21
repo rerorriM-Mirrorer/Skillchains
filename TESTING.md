@@ -1,5 +1,24 @@
 ## Current Development Status — 2026-11-20 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Test7.1/7.2 pushed at 18:25 (`4a7b067`); A authorized pushes indefinitely for this conversation (18:23).
+- installed_base: `4a7b067` (Test7.2; A's settings.xml of 18:23 carries its settings, so Inferred installed).
+- Change: Test7.3, `umbra ending vanish` (+ `vanish time`, `vanish shimmer`) and `umbra burst center normal|black`. Defaults unchanged. Version `0.19.3-unified-test7.3`.
+- Checks: Lua 5.1 (lupa) parse of every TargetSC `.lua`; 68/68 CI invocations PASS incl. new `test_umbra_vanish.lua` (uses A's cioara profile as `tests/fixture_cioara.lua`). Mutation (MB glyph not vanishing) fails it (host only).
+- Live: none for 7.1-7.3 looks yet. A plans to settle the Umbra animation after this batch if it looks right.
+- Next: A sets `umbra ending vanish` and `umbra burst center black`, then `preview umbra` / `preview mb`.
+
+## TargetSC 0.19.3 unified Test7.3 — Umbra vanish ending, black burst centers (Lua only) (2026-11-20)
+
+**Request (18:23, confirmed 18:35):** an Umbra ending where the glyph (what would have become the gyro/lines) disappears at the flash with a very fast black shimmer and nothing replaces it, with no flash of the black disc; in that ending the MB glyph (which shrinks and brightens at the end) is gone too; and the centers of MB blooms during Umbra black and opaque.
+
+**Before (Verified, host sim with A's 18:23 settings):** with `umbra ending gyro` + `when flash`, the disc glyph lines were replaced at the flash-out (about link+4.05 s with `umbra open time 2`) by an upright spinning glyph3; the MB glyph stayed on the disc plane and brightened to about 253 alpha while collapsing. Bloom discs carry `hub` (the strike color mixed toward white by `mb bloom core`); native center alpha = hub alpha x `inner`.
+
+**Changes:** `M.umbra_vanish` gives visibility `(1-u)(.35+.65 x shimmer)` and blackness `smooth(3u)` over `vanish time` from `M.umbra_ending_window`'s start, then 0. The disc glyph (`property-trace`) and the Umbra MB glyph multiply their alpha by it and mix their stroke/color to black, hidden after. `umbra_ending_glyph` returns nothing for vanish, so no glyph3. Umbra burst blooms with `burst center black`: `hub = black at env x closing`, `inner = 1`.
+
+**Host verification (not FFXI):** 68/68 CI. New test (A's profile + vanish): the ending start equals the flash-out in the frame's view (`umbra open time`); both glyphs visible just before; the trace shimmers (min < max) and is near-black at 70%; after: no trace, no MB glyph, no glyph3 at +0.13 s, +1 s, deadline-1 s, deadline-0.1 s; the black disc's color is identical to the gyro profile around the flash; copies and the under disc stay; gyro still makes its glyph3. Bursts: on Umbra the hub is black, inner 1, at least the bloom's alpha, 250+ at peak outside the ending; non-Umbra and default unchanged. Commands and rejects. **Live pending.**
+
+## Current Development Status — 2026-11-20 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Remote tip `6235b58` (Test7.0); Test7.1 `7b1260a` and Test7.2 are local until A OKs the push.
 - installed_base: `7b1260a` (Test7.1 zip, 15:40; A is testing it).
 - Live (A, 15:43): `umbra copies steady on` keeps the speed but the copies still stop at the flash-out (A wanted them through the whole animation); the haze glow does not look right yet (A drew it over the black disc, `haze order over`); A is trying `umbra after bloom`.

@@ -183,6 +183,12 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- copies until end = glyph copies keep spawning to the MB deadline
     -- (flash = they stop at the flash-out, as before).
     umbra_under_ending='fade',umbra_copies_until='flash',
+    -- Test7.3 `umbra ending vanish`: at the ending start (`ending when`) the
+    -- glyph lines on the black disc and the MB glyph shimmer to black and are
+    -- gone within `vanish time` s (`vanish shimmer` flickers/s); nothing takes
+    -- their place. `umbra burst center black`: MB burst blooms on an Umbra
+    -- link get an opaque black center blending out to their color.
+    umbra_vanish_time=.12,umbra_vanish_shimmer=30,umbra_burst_center='normal',
     -- Test7.1 Radiance MB ending: ride = the property discs move down with the
     -- MB ring and only fade in the final fade; ending glyph = the floor glyph
     -- brightens toward `ending peak` as the ring descends (off = as before).
@@ -777,6 +783,17 @@ function M.umbra_ending_window(s,opts,has_top)
         return a,min(s.mb_close,a+max(.1,option(opts,'umbra_ending_time')))
     end
     return s.mb_close-max(.1,option(opts,'mb_ending')),s.mb_close
+end
+-- Test7.3: visibility (1 -> 0, shimmering) and blackness (0 -> 1) of the
+-- Umbra glyphs in the vanish ending.
+function M.umbra_vanish(s,now,opts,has_top)
+    if option(opts,'umbra_ending')~='vanish'then return 1,0 end
+    local a=M.umbra_ending_window(s,opts,has_top)
+    local u=(now-a)/max(.02,option(opts,'umbra_vanish_time'))
+    if u<0 then return 1,0 end
+    if u>=1 then return 0,1 end
+    local shimmer=.5+.5*math.cos(2*pi*option(opts,'umbra_vanish_shimmer')*(now-a))
+    return (1-u)*(.35+.65*shimmer),smooth(min(1,u*3))
 end
 function M.umbra_ending_glyph(s,now,opts,has_top,angle)
     local style=option(opts,'umbra_ending')
@@ -1440,6 +1457,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                 opening.opacity=opening.opacity+(peak-opening.opacity)*curve(x)
             end
         end
+        if role=='mb-glyph'and l4name=='umbra'then
+            local v,blk=M.umbra_vanish(s,now,opts,has_top)
+            if v<1 then opening.opacity=opening.opacity*v;color=mix(color,{0,0,0},blk)end -- Test7.3
+        end
         out.awakening_glyph=opening
         local before=#out.discs
         local bare=role=='mb-glyph'and l4_glyph and l4name=='radiance'and not option(opts,'radiance_glyph_circle')
@@ -1626,6 +1647,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                 -- Test5.4: Radiance's own disc lines may be hidden (its large MB glyph breathes instead).
                 local hide=l4name=='radiance'and not option(opts,'radiance_disc_lines')
                 local trace_radius,trace_alpha=r*line_size,disc_outline
+                local trace_stroke=stroke
                 if l4name=='umbra'then
                     if option(opts,'umbra_lines_size')>=0 then
                         trace_radius=mb_radius*option(opts,'umbra_mb_size')*option(opts,'umbra_lines_size')
@@ -1635,6 +1657,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local g3,gone=nil,false
                     if (context.native_level or 0)>=11 then g3,gone=M.umbra_ending_glyph(s,now,opts,has_top,angle)end
                     if gone then hide=true end -- swallowed/shrunk away: it stays gone
+                    local v,blk=M.umbra_vanish(s,now,opts,has_top)
+                    if v<=0 then hide=true elseif v<1 then
+                        trace_alpha=trace_alpha*v;trace_stroke=mix(stroke or white,{0,0,0},blk) -- Test7.3 black shimmer
+                    end
                     if g3 then
                         g3.radius=trace_radius*(g3.scale or 1);g3.offset=trace_height
                         local a=option(opts,'umbra_lines_opacity')>=0 and option(opts,'umbra_lines_opacity')or line*opacity
@@ -1644,7 +1670,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     end
                 end
                 disc(trace_radius,trace_height,angle,{white},0,2,
-                    ((glyph==0 and not respond)or hide)and 0 or trace_alpha,'property-trace',stroke)
+                    ((glyph==0 and not respond)or hide)and 0 or trace_alpha,'property-trace',trace_stroke)
                 if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
                     band(r*line_size,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
                         px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn)
@@ -1899,6 +1925,9 @@ function M.frame(model,s,now,radius,height,opts,context)
                         d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
                         d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
                         d.hub=context.argb(mix(color,white,option(opts,'mb_bloom_core')),a)
+                        if l4name=='umbra'and option(opts,'umbra_burst_center')=='black'then
+                            d.hub,d.inner=context.argb({0,0,0},env*closing),1 -- Test7.3 opaque black center
+                        end
                     end
                 end
                 -- Optional copies of the glyph lines grow out from the large

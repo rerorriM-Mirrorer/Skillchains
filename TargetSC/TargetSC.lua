@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.2-unified-test7.2'
+_addon.version='0.19.3-unified-test7.3'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -185,6 +185,8 @@ local function help()
         {'umbra disc jitter <0-.5> | jitter speed <n>','Black disc middle point swings by this much (0 = still) at this many cycles/s (1).'},
         {'umbra under steady on|off | copies steady on|off','Keep the under disc / glyph copies at the opening turn speed (default off).'},
         {'umbra under ending fade|shrink','In the collapse the under disc keeps its size and fades (default) or shrinks with the rest.'},
+        {'umbra ending vanish | vanish time <s> | vanish shimmer <n>','At the ending start the glyph lines and MB glyph shimmer to black and vanish (.12 s, 30 flickers/s); nothing replaces them.'},
+        {'umbra burst center normal|black','MB burst blooms on an Umbra link get an opaque black center (default normal).'},
         {'umbra copies until flash|end','Glyph copies stop at the flash-out (default) or keep coming until the MB deadline.'},
         {'umbra copies on|off','Glyph copies growing out just under the disc through the opening (default on).'},
         {'umbra copies every|life|size|opacity|spin|depth <number>','New copy every .6 s, each lasting 1.2 s, growing to 1.6x, opacity .5, spin 1, .004 under the disc.'},
@@ -192,7 +194,7 @@ local function help()
         {'umbra disc inner|middle|outer|position <number|same>','Umbra-only disc shape (same = discs level4).'},
         {'umbra disc steady on|off','Keep the black disc solid through window-opening and burst flashes (default on).'},
         {'umbra core <0-1|same> | flicker <0-1>','Ring cores\' direct opacity (same = opacity x brightness); flicker depth (.28).'},
-        {'umbra ending off|gyro|swallow','Ending for the disc glyph (DLL 0.11.0): gyro = upright spinning; swallow = segments stand and sink in.'},
+        {'umbra ending off|gyro|swallow|vanish','Ending for the disc glyph (DLL 0.11.0 for gyro/swallow): gyro = upright spinning; swallow = segments stand and sink in; vanish = shimmer to black and gone.'},
         {'umbra ending when open|mb|flash | ending time <s>','From Umbra\'s opening for ending time, during the MB ending (default), or from the flash-out for ending time (2; up to 12, always ending by the MB deadline).'},
         {'umbra lines color white|cream','The disc glyph (and its ending) pure white (default) or the old cream.'},
         {'umbra collapse on|off','Ending: everything shrinks to the center in the last seconds; MB ring does not sink, disc stays opaque (default on).'},

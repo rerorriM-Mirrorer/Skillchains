@@ -1,5 +1,18 @@
 # TargetSC — elemental resonance
 
+## 0.19.3 unified Test7.3 — Umbra vanish ending, black burst centers (Lua only)
+
+- **`//tsc umbra ending vanish`**: at the ending start (with `umbra ending when
+  flash`, the moment the rings flash out) the glyph lines on the black disc and
+  the MB glyph shimmer to black and are gone. Nothing takes their place, and the
+  black disc does not flash. **`vanish time <s>`** (.12) is how long that takes;
+  **`vanish shimmer <n>`** (30) is how many flickers per second. Everything else
+  carries on as before: black disc, under disc, glyph copies, MB rings and the
+  collapse.
+- **`//tsc umbra burst center normal|black`** (default normal): MB burst blooms
+  on an Umbra link get an opaque black center that blends out into the burst's
+  color. The black follows the bloom's own rise and fade, so it doesn't pop.
+
 ## 0.19.2 unified Test7.2 — Umbra under disc fades, copies until the end (Lua only)
 
 - **`//tsc umbra under ending fade|shrink`** (default fade): in the Umbra
