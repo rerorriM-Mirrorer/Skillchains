@@ -1,5 +1,15 @@
 ## Current Development Status — 2026-11-22 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.15 `2697238`, Test7.16 on top).
+- installed_base: Test7.15 (`2697238`; A tested it 03:01, Live). Package `TargetSC-0.19.16-Test7.16.zip` cumulative since `76cf0e6`.
+- Live (A, 03:01): opener property arcs closing liked. Awakening discs far too faint even at opacity 1 (cause Verified: alpha = awakening opacity x addon opacity .27 x curve). A wants the Dark element as pure black cores with a pure-hue violet / violet-blue glow (Dark Elemental), switchable.
+- Changes: Test7.16 `dark_look` classic|void, `dark_glow` elemental|indigo|tint|r,g,b, `dark_disc` black|violet|classic. Void: `apply_colors` sets E.Dark/E.Darkness to black in place; `resonance.burst_color` gives Dark bursts/kills their own table (violet in void); `M.dark_lift` turns glow colors with max channel < 60 toward violet (ring glow bands, non-L4); opener arcs touching the Dark element or in a Darkness section glow violet (overrides `opener_glow black` for those only); L3 Darkness tint band uses the violet; MB ring base color lifted (non-L4); property disc Dark parts per `dark_disc`. Awakening opacity ranges 0-4.
+- Tunables (defaults): `dark_look` classic, `dark_glow` elemental (130,70,255), `dark_disc` black.
+- Checks: 74/74 CI lua5.1 invocations PASS incl. new `test_dark_716.lua` (A's profile). Host only.
+- Pending: Test7.16 in game; Umbra second violet MB ring idea; MB ring hold + soft shimmer; later awakening ideas.
+
+## Current Development Status — 2026-11-22 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.14 `b4a2773`, Test7.15 on top).
 - installed_base: Test7.14 (`b4a2773`; A tested it 02:39, Live). Package `TargetSC-0.19.15-Test7.15.zip` cumulative since `76cf0e6`.
 - Live (A, 02:39): Umbra slow curve "looks really good". `rings converge from .09` for strands (earlier merging got in the way of the animations); converge from 1 liked for opener arcs. Dark violets rejected as the Dark element color; direction now = black core with a pure-hue violet glow (discussion, no code yet).

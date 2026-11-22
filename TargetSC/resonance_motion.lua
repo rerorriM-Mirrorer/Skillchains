@@ -344,7 +344,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- gold 230,190,70 (xivcrossbar spec); scission 255,165,0 (the Scission
     -- icon's orange); crystal 216,146,64 (the earth elemental's crystal body);
     -- or 'r,g,b' (0-255 each). `//tsc earth <choice>`.
-    earth_color='classic'}
+    earth_color='classic',
+    -- Test7.16 Dark recipe (Dark Elemental: black blades lit by violet).
+    -- dark_look classic (default) = flat 25,14,52; void = the Dark element
+    -- is pure black wherever it is a core color, and every glow on a dark
+    -- color, Dark bursts and the MB ring's dark phase use `dark_glow`
+    -- (elemental 130,70,255 | indigo 90,60,255 | tint 132,74,224 (the L3
+    -- Darkness halo) | 'r,g,b'). dark_disc (void only): black | violet | classic
+    -- for the Dark parts of property discs.
+    dark_look='classic',dark_glow='elemental',dark_disc='black'}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -1145,6 +1153,24 @@ function M.awakening_level(created,open,close,now,opts,stage)
     end
     return 1-smooth((now-start)/max(.05,finish-start))
 end
+-- Test7.16 Dark recipe helpers.
+M.dark_glows={elemental={130,70,255},indigo={90,60,255},tint={132,74,224}}
+function M.dark_glow_color(opts)
+    local v=tostring(option(opts,'dark_glow')or 'elemental'):lower()
+    if M.dark_glows[v]then return M.dark_glows[v]end
+    local r,g,b=v:match('^%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*$')
+    r,g,b=tonumber(r),tonumber(g),tonumber(b)
+    if r and r<=255 and g<=255 and b<=255 then return {r,g,b}end
+    return M.dark_glows.elemental
+end
+-- A glow color for c: in the void look, dark colors (max channel below 60)
+-- blend toward the violet (black -> full violet), others unchanged.
+function M.dark_lift(c,opts)
+    if option(opts,'dark_look')~='void'or not c then return c end
+    local k=clamp(max(c[1],c[2],c[3])/60,0,1)
+    if k>=1 then return c end
+    return mix(M.dark_glow_color(opts),c,k)
+end
 -- Test7.15: awakening disc opacity for a stage (-1 = awakening opacity).
 function M.awakening_opacity(opts,stage)
     local own=stage and option(opts,'awakening_opacity_'..stage)
@@ -1152,6 +1178,10 @@ function M.awakening_opacity(opts,stage)
     return option(opts,'awakening_opacity')
 end
 function M.frame(model,s,now,radius,height,opts,context)
+    -- Test7.16 Dark recipe (void look): black Dark element, violet glows.
+    local void=option(opts,'dark_look')=='void'
+    local violet=M.dark_glow_color(opts)
+    local dark_ref=context and context.element_color and context.element_color('Dark')
     -- Test5.4: a level-4 link may see its own visual opening length, and
     -- Radiance's large glyph breathes at rest (and falls back after bursts).
     local l4n=level4_name(s)
@@ -1267,6 +1297,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         local k=math.floor(position)
         mb_color=mix(four[k+1],four[(k+1)%#four+1],smooth(position-k))
     end
+    -- Test7.16 void: the MB ring is light; its dark phase shows the violet.
+    if not (s.level>=4)then mb_color=M.dark_lift(mb_color,opts)end
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
     local intensity,opacity=option(opts,'intensity'),option(opts,'opacity')
     -- Test5.2 level-4 (Radiance/Umbra link) looks.
@@ -1398,6 +1430,10 @@ function M.frame(model,s,now,radius,height,opts,context)
         local mode=opening and option(opts,'opener_glow')or 'color'
         if glow>0 and light~=false and mode~='off'then
             local surround=mode=='black'and {{0,0,0}}or glow_colors or colors
+            if void and not l4 then
+                local lifted={}for i,c in ipairs(surround)do lifted[i]=M.dark_lift(c,opts)end
+                surround=lifted
+            end
             band(r*(1+(extra.spread or 0)),h,surround,a*.24*glow*(glow_gain or 1)*(extra.glow or 1),px+4*min(glow,3),'glow',part,strand,
                 opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin'),extra.lit)
         end
@@ -1451,6 +1487,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                         if glow>0 and mode~='off'then
                             local gl,gt=lead,tail
                             if mode=='black'then gl,gt={0,0,0},{0,0,0}end
+                            -- Test7.16 void: Dark-element arcs and the Darkness section glow violet.
+                            if void and (pair[1]==dark_ref or pair[2]==dark_ref or p=='Darkness')then
+                                gl,gt=violet,violet
+                            elseif void and mode~='black'then gl,gt=M.dark_lift(gl,opts),M.dark_lift(gt,opts)end
                             arc(draw_radius,h,gl,gt,alpha*.24*glow,px+4*min(glow,3),'glow',place[2],strand,rotation,start,section)
                         end
                         arc(draw_radius,h,lead,tail,alpha,px,'core',place[2],strand,rotation,start,section)
@@ -1566,6 +1606,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local umbra_white=l4 and l4name=='umbra'and l4opt('glow')=='white'
                     if glow>0 and not opener and s.level>=3 then
                         local tint=(s.properties[1]=='Darkness'or s.properties[1]=='Umbra')and {132,74,224}or gold
+                        if void and s.properties[1]=='Darkness'then tint=violet end -- Test7.16
                         if umbra_white then tint=white end
                         if q.smoke then tint=mix(tint,{0,0,0},q.smoke)end
                         -- Light's gold glow reads close to Earth; the elements
@@ -1853,6 +1894,14 @@ function M.frame(model,s,now,radius,height,opts,context)
                 colors={}
                 for _,e in ipairs(context.elements(p))do colors[#colors+1]=context.element_color(e)or white end
                 hub=p=='Darkness'and {0,0,0}or white
+            end
+            -- Test7.16 void: the Dark parts of property discs (black by default).
+            if void and not terminal and option(opts,'dark_disc')~='black'then
+                local swap=option(opts,'dark_disc')=='violet'and violet or {25,14,52}
+                local mapped={}
+                for i,c in ipairs(colors)do mapped[i]=(c==dark_ref)and swap or c end
+                colors=mapped
+                if hub and p=='Darkness'then hub=swap end
             end
             local terminal_stroke=white
             if terminal then

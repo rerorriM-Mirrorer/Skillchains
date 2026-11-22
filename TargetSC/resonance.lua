@@ -37,13 +37,29 @@ function M.parse_color(value)
     r,g,b=tonumber(r),tonumber(g),tonumber(b)
     if r and r<=255 and g<=255 and b<=255 then return {r,g,b},('%d,%d,%d'):format(r,g,b)end
 end
-local applied_earth
+-- Test7.16: Dark bursts/kills draw from their own table so the void look
+-- (black Dark element) still shows them in the violet glow.
+local BURST_DARK={25,14,52}
+function M.burst_color(name)
+    if name=='Dark'or name=='Darkness'then return BURST_DARK end
+    return E[name]
+end
+local applied_earth,applied_dark
+local function set(t,rgb)t[1],t[2],t[3]=rgb[1],rgb[2],rgb[3]end
 function M.apply_colors(opts)
     local want=opts and opts.earth_color or 'classic'
-    if want==applied_earth then return end
-    local rgb=M.parse_color(want)or M.earth_colors.classic
-    E.Earth[1],E.Earth[2],E.Earth[3]=rgb[1],rgb[2],rgb[3]
-    applied_earth=want
+    if want~=applied_earth then
+        set(E.Earth,M.parse_color(want)or M.earth_colors.classic)
+        applied_earth=want
+    end
+    local look=opts and opts.dark_look or 'classic'
+    local key=look..'|'..tostring(opts and opts.dark_glow or 'elemental')
+    if key~=applied_dark then
+        local void=look=='void'
+        set(E.Dark,void and {0,0,0}or {25,14,52});set(E.Darkness,void and {0,0,0}or {25,14,52})
+        set(BURST_DARK,void and motion.dark_glow_color(opts)or {25,14,52})
+        applied_dark=key
+    end
 end
 function M.level(name) return levels[name] or 1 end
 function M.elements(name) return P[name] or ((name=='Light' or name=='Radiance') and {'Fire','Wind','Lightning','Light'} or {'Earth','Ice','Water','Dark'}) end
@@ -213,7 +229,7 @@ function M.new()
             local state=self.states[id]
             if state and not state.source_expired and state.mb_close>stamp then
                 local bursts=self.bursts[id] or {}
-                bursts[#bursts+1]={at=stamp,color=E[element]}
+                bursts[#bursts+1]={at=stamp,color=M.burst_color(element)}
                 if #bursts>4 then table.remove(bursts,1) end
                 self.bursts[id]=bursts
             end
@@ -222,7 +238,7 @@ function M.new()
             -- an MB itself (Skillchains decides); the frame plays the kill.
             local id,how,element=tonumber(args[6]),args[7],args[8]
             if not id or (how~='sc'and how~='mb')then return false,'invalid kill' end
-            self.kills[id]={kind=how,element=E[element]and element or nil,color=E[element],at=stamp,
+            self.kills[id]={kind=how,element=E[element]and element or nil,color=M.burst_color(element),at=stamp,
                 actor=tonumber(args[9])}
         elseif kind=='expire' then
             local id=tonumber(args[6])

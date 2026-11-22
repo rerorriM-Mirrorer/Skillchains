@@ -135,7 +135,7 @@ function M.new(spec,id,now,resonance,opts)
     -- preview start; `ending` = the last mb ending seconds of a window.
     local ending=(self.opts.mb_ending or resonance.defaults.mb_ending or 2)
     local function burst_at(at,element)
-        self.events[#self.events+1]={at=at,kind='burst',element=element,color=resonance.element_color(element)}
+        self.events[#self.events+1]={at=at,kind='burst',element=element,color=(resonance.burst_color or resonance.element_color)(element)}
     end
     local function chain_at(at,step,property,level,closed,label)
         local next_state=state(at,step,{property},level,closed)
@@ -204,7 +204,7 @@ function M.new(spec,id,now,resonance,opts)
     -- previews (no link) keep their fixed end.
     if self.final then self.ends=self.final.mb_close+.05;self.mb_end=self.final.step and self.final.step>1 and self.final.mb_close or nil end
     if kind=='burst'then
-        self.events[1]={at=now+.6,kind='burst',color=resonance.element_color(spec.element)}
+        self.events[1]={at=now+.6,kind='burst',color=(resonance.burst_color or resonance.element_color)(spec.element)}
     end
     if demo then
         local prior=s
@@ -233,13 +233,13 @@ function M.new(spec,id,now,resonance,opts)
                 or {{12.6,'Wind'},{23.8,'Earth'},{29.8,'Water'},{38.8,'Dark'}}
             for _,hit in ipairs(hits)do
                 self.events[#self.events+1]={at=now+hit[1],kind='burst',element=hit[2],
-                    color=resonance.element_color(hit[2])}
+                    color=(resonance.burst_color or resonance.element_color)(hit[2])}
             end
             table.sort(self.events,function(a,b)return a.at<b.at end)
         end
         if kind=='earthmb'then
             for _,t in ipairs(M.earth_hits)do
-                self.events[#self.events+1]={at=now+t,kind='burst',element='Earth',color=resonance.element_color('Earth')}
+                self.events[#self.events+1]={at=now+t,kind='burst',element='Earth',color=(resonance.burst_color or resonance.element_color)('Earth')}
             end
             table.sort(self.events,function(a,b)return a.at<b.at end)
         end
@@ -256,7 +256,7 @@ function M.new(spec,id,now,resonance,opts)
                 elseif event.kind=='kill'then
                     -- The killer is you: the seam runs from you toward the target.
                     self.model.kills[self.id]={kind=event.how,element=event.element,
-                        color=event.element and resonance.element_color(event.element)or nil,at=event.at,
+                        color=event.element and (resonance.burst_color or resonance.element_color)(event.element)or nil,at=event.at,
                         angle=resonance.view_angle}
                     self.stage=(event.how=='mb'and 'MB'or 'SC')..' kill (local visual preview)'
                 elseif event.kind=='chain' then

@@ -1,5 +1,20 @@
 # TargetSC — elemental resonance
 
+## 0.19.16 unified Test7.16 — Dark "void" look, stronger awakening discs (Lua only)
+
+- **`//tsc dark void`** (default `classic`): the Dark element (Compression,
+  Gravitation, Darkness, Dark bursts) is drawn like the Dark Elemental: pure
+  black cores lit by a violet glow. Every glow on a dark color turns violet, and
+  so do Dark magic bursts and the MB ring's dark phase, so they never vanish.
+  `//tsc dark classic` switches back.
+- **`//tsc dark glow elemental|indigo|tint|<r g b>`**: the violet. elemental
+  130,70,255 (default; the Dark Elemental's glow at full strength), indigo
+  90,60,255 (bluer), tint 132,74,224 (the L3 Darkness halo), or your own.
+- **`//tsc dark disc black|violet|classic`**: in the void look, the Dark parts of
+  property discs: pure black (default), the glow violet, or the old flat color.
+- **Awakening opacity now goes up to 4** (overall and per stage). It multiplies
+  the addon opacity, so at your .27 opacity even 1 could only reach .27; try 3-4.
+
 ## 0.19.15 unified Test7.15 — awakening disc per level, opener converge start (Lua only)
 
 - **`//tsc awakening opener|level1|level2|level3 opacity <0-1|same>`**: the

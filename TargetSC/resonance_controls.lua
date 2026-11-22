@@ -481,7 +481,7 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 if what=='opacity'then
                     if raw=='same'then settings['awakening_opacity_'..value]=-1;save(settings)
                         say('awakening '..value..' opacity: same as awakening opacity.')
-                    else numeric('awakening_opacity_'..value,args[3],{0,1},'awakening '..value..' opacity')end
+                    else numeric('awakening_opacity_'..value,args[3],{0,4},'awakening '..value..' opacity')end
                 elseif what=='fade'and raw=='until'then
                     local mode=(args[4]or ''):lower()
                     if mode=='window'then mode='open'end
@@ -496,7 +496,7 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 else
                     say('Use //tsc awakening '..value..' opacity <0-1|same> | fade until same|default|open|close|<1-9>.')
                 end
-            elseif value=='opacity'then numeric('awakening_opacity',args[2],{0,1},'awakening opacity')
+            elseif value=='opacity'then numeric('awakening_opacity',args[2],{0,4},'awakening opacity')
             elseif value=='fade'and (args[2]or ''):lower()=='until'then
                 local mode=(args[3]or ''):lower()
                 if mode=='window'then mode='open'end
@@ -525,6 +525,30 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 end
             elseif not toggle('awakening',value,'Awakening')then
                 say('Use //tsc awakening on|off | opacity <0-1> | fade <inner> [outer] | size <0.1-3> | links on|off.')
+            end
+        elseif command=='dark'then
+            -- Test7.16: //tsc dark classic|void | glow <elemental|indigo|tint|r g b> | disc black|violet|classic
+            if value=='classic'or value=='void'then
+                settings.dark_look=value;save(settings);say('Dark look '..value..'.')
+            elseif value=='glow'then
+                local named={elemental='130,70,255',indigo='90,60,255',tint='132,74,224'}
+                local name=(args[2]or ''):lower()
+                local rest={}for i=2,#args do rest[#rest+1]=args[i]end
+                local r,g,b=table.concat(rest,' '):match('^%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*$')
+                r,g,b=tonumber(r),tonumber(g),tonumber(b)
+                local choice=named[name]and name or (r and r<=255 and g<=255 and b<=255 and ('%d,%d,%d'):format(r,g,b))
+                if not choice then say('Use //tsc dark glow elemental|indigo|tint|<r g b>. Now '..tostring(settings.dark_glow or 'elemental')..'.');return true end
+                settings.dark_glow=choice;save(settings)
+                say('Dark glow '..choice..(named[choice]and (' ('..named[choice]..')')or '')..'.')
+            elseif value=='disc'then
+                local mode=(args[2]or ''):lower()
+                if mode~='black'and mode~='violet'and mode~='classic'then
+                    say('Use //tsc dark disc black|violet|classic. Now '..tostring(settings.dark_disc or 'black')..'.');return true
+                end
+                settings.dark_disc=mode;save(settings);say('Dark disc '..mode..' (void look).')
+            else
+                say('Use //tsc dark classic|void | glow elemental|indigo|tint|<r g b> | disc black|violet|classic. Now '..
+                    tostring(settings.dark_look or 'classic')..'.')
             end
         elseif command=='earth'then
             -- Test7.13 color pass: `//tsc earth classic|gold|scission|crystal|<r g b>`.

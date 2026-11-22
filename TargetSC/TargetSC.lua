@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.15-unified-test7.15'
+_addon.version='0.19.16-unified-test7.16'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -141,6 +141,9 @@ local function help()
         {'preview mb radiance','Same Radiance links with Fire/Light/Lightning/Light bursts at the MB demo overlap times.'},
         {'preview demo requiescat','Requiescat with Sequence (Gravitation+Scission+Darkness opener), Gust Slash, Nightmare Scythe, Rudra\'s Storm, Requiescat (Umbra); no bursts.'},
         {'preview earth mb','Same Requiescat links with ten Earth bursts (Gravitation, Darkness and Umbra windows), incl. overlaps and the final ending.'},
+        {'dark classic|void','Dark element: classic flat 25,14,52 (default), or void = pure black cores with violet glows (Dark Elemental look).'},
+        {'dark glow elemental|indigo|tint|<r g b>','Void glow color: elemental 130,70,255 (default), indigo 90,60,255, tint 132,74,224 (the L3 Darkness halo), or your own.'},
+        {'dark disc black|violet|classic','Void look: the Dark parts of property discs (Compression, Gravitation, Darkness): black (default), violet glow color, or classic.'},
         {'earth classic|gold|scission|crystal|<r g b>','Earth element color: classic 176,114,48 (default), gold 230,190,70, scission 255,165,0, crystal 216,146,64, or your own.'},
         {'preview switch [preview]','The preview rides on the first two targets you pick (enemies or yourself) to try target handoffs.'},
         {'preview off','Stops a preview; it dims away like an untarget.'},
@@ -287,8 +290,8 @@ local function help()
         {'mb floor|ring <0-1>','Confirmed-burst flash strength for floor disc / middle MB ring.'},
         {'mb period <0.2-6>','Large glyph full breathing cycle in seconds (default 2).'},
         {'mb rise|expand <0-2>','Burst glyph rise as model-height fraction / extra radial growth.'},
-        {'awakening on|off|opacity <0-1>','Filled white opening glyph; MB breathing/burst controls are independent.'},
-        {'awakening opener|level1|level2|level3 opacity <0-1|same>','Awakening disc opacity for the opening weaponskill or a link of that level (same = awakening opacity).'},
+        {'awakening on|off|opacity <0-4>','Filled white opening glyph (opacity x addon opacity; above 1 is stronger); MB breathing/burst controls are independent.'},
+        {'awakening opener|level1|level2|level3 opacity <0-4|same>','Awakening disc opacity (x addon opacity; above 1 makes it stronger) for the opening weaponskill or a link of that level (same = awakening opacity).'},
         {'awakening opener|level1|level2|level3 fade until same|default|open|close|<1-9>','When that stage\'s awakening disc finishes fading (same = awakening fade until).'},
         {'awakening fade <inner 0-1> [outer 0-1]','Center/edge opacity of the white opening disc, as multipliers; outer defaults to 0 (default 1 0).'},
         {'awakening size <0.1-3>','White opening disc size; 1 = previous size (default 1).'},
