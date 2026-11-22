@@ -2,7 +2,26 @@
 
 ## Current Development Status — 2026-11-21 (America/Chicago)
 
-- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Remote tip `bcc67ad` (Test7.4); Test7.5 is a local commit until A pushes or OKs push access in this conversation.
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@<this commit>`.
+- installed_base: `76cf0e6` (Test7.3) is the last Live-tagged install; whether Test7.5 (`b17bbb2`) was installed is Unknown, so the package is cumulative since `76cf0e6`.
+- Live (A, 15:42): the level 3 opening rises from the previous link's heights. Test7.5 spread in game: Pending.
+- Changes: Test7.5 (`b17bbb2`, pushed 2026-11-21 20:12) level 3 spread; `8b0b010` docs-only AGENTS shared sync to canon 2026-11-21.3; Test7.6 level 2 spread: `rings level2 open split|half|stacked`, `rings level2 start <0-1>`. Version `0.19.6-unified-test7.6`.
+- Tunables (defaults): `ring_level2_open` spread (split), `ring_level2_start` 0 (half = .5; killala = stacked); `ring_level3_open` spread (killala pop), `ring_level3_start` .5. A level 2 after a level 2 stays stacked.
+- Checks: `python3 -m pip install --break-system-packages lupa` + runner `lua5.1` (lupa.lua51); parse of 86 `.lua` files, 0 errors; 64/64 CI `lua5.1` invocations PASS incl. new `test_level2_spread.lua` and the preview-path cases (`preview demo`, `preview demo radiance`) in both spread tests. `test_motion.lua` L2 stacking assertion now allows equal heights on frame 1 (split). Mutations (no L2 spread; no L3 spread) fail. Host only.
+- Pending: both looks in game.
+- Next: A picks split vs half (and level 3 start); then Level 4 collapse.
+
+## TargetSC 0.19.6 unified Test7.6 — Level 2 rings split open (Lua only) (2026-11-21)
+
+**Request (20:12):** push Test7.5; try two level 2 openings: each SC ring a single ring splitting into the pair, and the pair starting at half its normal gap.
+
+**Changes:** with `ring_level2_open == 'spread'` and the previous link not level 2, the pair's `stack` is multiplied by `start + (1-start) x smooth(age/.3)` while `age < .3` (shared with the Test7.5 level 3 code). `rings level2 open split` = start 0 (default), `half` = .5, `stacked` = the earlier look.
+
+**Host verification (not FFXI):** 64/64 CI. New test: split/half gaps on frame 1 (0 / .0175), monotonic to .035 by .3 s and holding, from an opener, a level 1, and no previous link; stacked .035 on frame 1; level 2 after level 2 stays stacked; lowest-strand glide identical to stacked; demo and demo radiance previews split open; commands, bad values rejected, killala = stacked. **Live pending.**
+
+## Current Development Status — 2026-11-21 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). ~~Remote tip `bcc67ad` (Test7.4); Test7.5 is a local commit until A pushes or OKs push access in this conversation.~~ (2026-11-21 20:12: pushed as `b17bbb2`.)
 - installed_base: `76cf0e6` (Test7.3) per the 2026-11-20 status; the Test7.5 zip carries every file changed since it, so it also covers a Test7.4 install.
 - Live (A, 15:42): the level 3 preview already rises from the previous link's heights (confirms the 0.3 s glide); A wants the first frame to be three closely stacked strands that separate during the glide instead of one ring that pops into three at .16 s.
 - Change: Test7.5, `rings level3 open spread|pop` (default spread) and `rings level3 start <0-1>` (default .5). Killala keeps pop. Levels 1, 2, 4 unchanged. Version `0.19.5-unified-test7.5`.

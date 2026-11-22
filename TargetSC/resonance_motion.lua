@@ -88,6 +88,12 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- over the same .3 s as the glide from the previous link's heights.
     -- pop = the earlier single white ring for .16 s, then three strands.
     ring_level3_open='spread',ring_level3_start=.5,
+    -- Test7.6: a level-2 link (from an opener or level 1) opens as its pair
+    -- squeezed to spacing x ring_level2_start, separating to the normal .035
+    -- over the .3 s glide. split = start 0 (one ring splitting in two),
+    -- half = start .5; stacked = the earlier look (full pair from frame 1).
+    -- A level 2 after a level 2 keeps the stacked look.
+    ring_level2_open='spread',ring_level2_start=0,
     -- Test4.8: large breathing glyph: after a burst it stays risen and fades
     -- (instead of falling); at the floor it shows only the window-opening
     -- flash (no breathing).
@@ -288,7 +294,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
-    ring_level3_open='pop',
+    ring_level3_open='pop',ring_level2_open='stacked',
     mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false,
     detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
@@ -1213,10 +1219,12 @@ function M.frame(model,s,now,radius,height,opts,context)
         local specs=specifications(s,context,opts)
         local l3spread=not opener and s.level==3 and option(opts,'ring_level3_open')=='spread'
         if not opener and s.level~=2 and not l3spread and age<.16 then specs={{colors={white},radial=1,stack=0}}end
-        if l3spread and age<.3 then
-            -- Test7.5: three strands from the first frame, closer together,
-            -- separating in step with the .3 s glide (same smoothstep).
-            local start=clamp(option(opts,'ring_level3_start'),0,1)
+        local l2spread=not opener and s.level==2 and option(opts,'ring_level2_open')=='spread'
+            and not (s.previous and s.previous.level==2)
+        if (l3spread or l2spread) and age<.3 then
+            -- Test7.5/7.6: the full strand list from the first frame, closer
+            -- together, separating in step with the .3 s glide (same smoothstep).
+            local start=clamp(option(opts,l3spread and 'ring_level3_start'or 'ring_level2_start'),0,1)
             local k=start+(1-start)*smooth(age/.3)
             local spread={}
             for j,spec in ipairs(specs)do

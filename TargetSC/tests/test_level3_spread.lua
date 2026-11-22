@@ -100,3 +100,20 @@ assert(cmd('rings',{'level3','start','2'})and settings.ring_level3_start==.25)
 assert(cmd('preset',{'killala'})and settings.ring_level3_open=='pop')
 assert(cmd('preset',{'default'})and settings.ring_level3_open=='spread'and settings.ring_level3_start==.5)
 print('PASS Test7.5 level 3 spread: three strands from the first frame at half spacing, separating over the .3 s glide; pop keeps the old look; levels 1/2/4 unchanged; commands and presets')
+-- Preview path (E4b): the demos' level 2 -> level 3 links spread open.
+local P=require('resonance_preview')
+local opts=copy(R.defaults);opts.mb_intro=0
+for _,args in ipairs({{'demo'},{'demo','radiance'}})do
+    local preview=P.new(assert(P.parse(args,R)),75,200,R,opts)
+    local at
+    for _,e in ipairs(preview.events)do if e.kind=='chain'and e.state.level==3 then at=e.at end end
+    assert(at,'demo has a level 3 link')
+    preview:advance(at)
+    assert(preview.model.states[75].previous.level==2,'chained from level 2')
+    local g0=ground(preview.model:frame(75,at,2,4,opts))
+    local g2=ground(preview.model:frame(75,at+.4,2,4,opts))
+    assert(#g0==3,'demo three strands frame 1')
+    near(g0[2]-g0[1],.0175,1e-9,'demo half spacing frame 1')
+    near(g2[2]-g2[1],.035,1e-9,'demo settled')
+end
+print('PASS Test7.5 preview path: demo and demo radiance level 3 links spread open')

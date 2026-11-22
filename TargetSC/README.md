@@ -1,5 +1,16 @@
 # TargetSC — elemental resonance
 
+## 0.19.6 unified Test7.6 — Level 2 rings split open (Lua only)
+
+- **`//tsc rings level2 open split|half|stacked`** (default split): when a level 2
+  link opens from an opener or a level 1, each SC ring starts as one ring
+  (split) or as the pair at half its gap (half), and the pair separates to
+  its normal gap during the .3 s glide to the open position.
+- `stacked` is the earlier look (the full pair from the first frame). The
+  killala preset keeps `stacked`. A level 2 after a level 2 always stays stacked.
+- **`//tsc rings level2 start <0-1>`**: the starting gap as a fraction of the
+  normal one, for anything between split (0) and stacked (1).
+
 ## 0.19.5 unified Test7.5 — Level 3 rings spread open (Lua only)
 
 - **`//tsc rings level3 open spread|pop`** (default spread): a level 3 link
@@ -449,6 +460,7 @@ white. Darkness keeps the four-color look.
 Lua-only. Level 3 Light/Darkness links now show white (or black) top and
 bottom strands with the four element colors around the middle strand, and
 the MB ring cycles through those four colors.
+- `//tsc rings level2 open split|half|stacked` (default split), `rings level2 start <0-1>` (default 0).
 - `//tsc rings level3 open spread|pop` (default spread), `rings level3 start <0-1>` (default .5).
 - `//tsc rings lightdark classic|elements` (default elements).
 - `//tsc rings lightdark spin <-2-2>` — middle strand turn rate (default 1).

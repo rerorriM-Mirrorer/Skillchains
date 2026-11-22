@@ -393,6 +393,18 @@ function M.new(settings,defaults,save,say,killala)
                     settings.ring_lightdark_tint=args[3]:lower();save(settings);say('Light glow tint '..settings.ring_lightdark_tint..'.')
                 elseif name=='cycle'then numeric('mb_lightdark_cycle',args[3],{.25,6},'rings lightdark cycle')
                 else say('Use //tsc rings lightdark classic|elements | spin <-2-2> | tint gold|white | cycle <0.25-6>.')end
+            elseif value=='level2'then
+                -- Test7.6: how a level-2 pair opens. split/half set the start.
+                local name=(args[2]or ''):lower()
+                local mode=(args[3]or ''):lower()
+                if name=='open'and (mode=='split'or mode=='half')then
+                    settings.ring_level2_open='spread';settings.ring_level2_start=mode=='split'and 0 or .5;save(settings)
+                    say('Level 2 rings open: '..mode..' (start '..settings.ring_level2_start..').')
+                elseif name=='open'and (mode=='spread'or mode=='stacked')then
+                    settings.ring_level2_open=mode;save(settings)
+                    say('Level 2 rings open: '..mode..'.')
+                elseif name=='start'then numeric('ring_level2_start',args[3],{0,1},'rings level2 start')
+                else say('Use //tsc rings level2 open split|half|stacked | start <0-1>.')end
             elseif value=='level3'then
                 -- Test7.5: how a level-3 link's three strands open.
                 local name=(args[2]or ''):lower()

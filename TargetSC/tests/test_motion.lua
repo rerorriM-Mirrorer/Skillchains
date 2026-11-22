@@ -128,7 +128,8 @@ for _,property in ipairs({'Fusion','Fragmentation','Distortion','Gravitation'})d
    local pair=cores(current,part);assert(#pair==2 and #pair[1].colors==2 and #pair[2].colors==2)
    assert(pair[1].colors[1]==pair[2].colors[2]and pair[1].colors[2]==pair[2].colors[1])
    assert(pair[1].gap==0 and pair[2].gap==0 and pair[1].rotation==pair[2].rotation)
-   assert(pair[1].offset<pair[2].offset)
+   -- Test7.6: split (default) starts the pair on one height on frame 1.
+   assert(pair[1].offset<pair[2].offset or (at==100 and pair[1].offset==pair[2].offset))
   end
  end
  -- Opener toggles cannot alter a completed chain or its discs.
