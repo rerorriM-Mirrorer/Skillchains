@@ -1,5 +1,15 @@
 ## Current Development Status — 2026-11-22 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. NOT PUSHED: remote head `ff4a134`; local 7.17 `9a4e0e4`, 7.18 `f944e51`, 7.18.1 `17ceaf4`, Test7.19 on top. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (local).
+- installed_base: Test7.18.1 (`17ceaf4`; A's 05:21 settings.xml saved by it, Live). Package `TargetSC-0.19.19-Test7.19.zip` cumulative since `ff4a134`.
+- Live (A, 05:21): soft shimmer loved ("so much nicer"); picks in settings.xml: dark back compression gain .18, spin 3; mb ring hold 1.8, ease 3; shimmer soft .39, turn 3, decay 1.5; opener glow white; awakening opacity level1/2/3 = 1/2/3 (per-stage fade-until back to same). Wants Light MBs white-hot and Dark MBs total void.
+- Changes: Test7.19 `mb_pure` off|light|dark|both. For a Light (Dark) burst: the MB bloom is pure white (black) with no white core, its alpha ignores mb overall (the bright band reaches full opacity; the radial stops keep the rest clear); property disc fills go pure white (black) toward full opacity with the center forced clear and rims opaque, fading over `mb_pure_disc` 1.5 s; the lifted trace glyphs and bloom glyph copies over `mb_pure_glyph` 2.5 s; the large glyph at the MB ring over `mb_pure_ring_glyph` 4 s; `mb_pure_bloom_flash` 0 (Dark bloom white-hot strike). Envelope smooth(age/.08)*(1-smooth(age/T)), max over Light/Dark bursts. Burst entries now carry `element` (resonance.lua and preview). Terminal (L4) discs untouched. Preset `cioara` = A's 05:21 settings; fixture `tests/fixture_cioara_1122c.lua`. Version `0.19.19-unified-test7.19`.
+- Tunables (defaults): `mb_pure` off, `mb_pure_disc` 1.5, `mb_pure_glyph` 2.5, `mb_pure_ring_glyph` 4, `mb_pure_bloom_flash` 0.
+- Checks: 78/78 CI lua5.1 invocations PASS incl. new `test_mb_719.lua` (A's 05:21 profile; Fire untouched; light mode leaves Dark alone; plays `preview dark mb`). Host only.
+- Pending: Test7.19 in game; next: white SC rings full white for Light MBs (not glows), Radiance's dancing double bloom as the Light MB bloom; then the DLL batch (glyph cross ends, filled glyph, glyph line glow, tracing).
+
+## Current Development Status — 2026-11-22 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. NOT PUSHED: remote head `ff4a134`; local Test7.17 `9a4e0e4`, Test7.18 `f944e51`, Test7.18.1 on top. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (local).
 - installed_base: Test7.18 (`f944e51`; A loaded 0.19.18 at 04:22, Live). Package `TargetSC-0.19.18.1-Test7.18.1.zip` cumulative since `ff4a134`.
 - Live (A, 04:22): Windower config warnings on load and on every save: `awakening_until_level1/2/3` string expected (default same), got number (1, 4, 9); "Mismatched setting types".

@@ -1,5 +1,18 @@
 # TargetSC — elemental resonance
 
+## 0.19.19 unified Test7.19 — pure Light and Dark magic bursts (Lua only)
+
+- **`//tsc mb pure both`** (also `light`, `dark`; default `off`): a Light magic
+  burst turns the MB bloom, the rims of the property disc and every MB glyph
+  pure white at full opacity, past the addon's own opacity; a Dark burst turns
+  them pure black, a total void. The disc center stays clear. Each part fades
+  back on its own clock: **`mb pure disc <s>`** (1.5), **`mb pure glyph <s>`**
+  (2.5, the disc's lifted glyph and the bloom's glyph copies), **`mb pure ring
+  <s>`** (4, the large glyph at the MB ring).
+- **`//tsc mb pure flash <0-1>`** (default 0): lets the Dark bloom start with
+  its usual white-hot strike before going black.
+- **`//tsc preset cioara`** is now your 05:21 look.
+
 ## 0.19.18.1 unified Test7.18.1 — settings warning fix (Lua only)
 
 - Timed awakening fade ends (`//tsc awakening [stage] fade until <1-9>`) are now

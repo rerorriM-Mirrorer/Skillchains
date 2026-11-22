@@ -324,6 +324,15 @@ function M.new(settings,defaults,save,say,killala,cioara)
             elseif name=='turn'then numeric('mb_shimmer_turn',args[3],{-3,3},'mb shimmer turn')
             elseif name=='soft'then numeric('mb_shimmer_soft',args[3],{0,1},'mb shimmer soft')
             else say('Use //tsc mb shimmer <0-2> | style ripple|soft | decay <0.5-8> | turn <-3-3> | soft <0-1>.')end
+        elseif command=='mb'and value=='pure'then
+            -- Test7.19: //tsc mb pure off|light|dark|both | disc|glyph|ring <0.2-10> | flash <0-1>
+            local name=(args[2]or ''):lower()
+            if name=='off'or name=='light'or name=='dark'or name=='both'then
+                settings.mb_pure=name;save(settings);say('MB pure '..name..'.')
+            elseif name=='disc'or name=='glyph'or name=='ring'then
+                numeric(name=='ring'and 'mb_pure_ring_glyph'or 'mb_pure_'..name,args[3],{.2,10},'mb pure '..name)
+            elseif name=='flash'then numeric('mb_pure_bloom_flash',args[3],{0,1},'mb pure flash')
+            else say('Use //tsc mb pure off|light|dark|both | disc <s> | glyph <s> | ring <s> | flash <0-1>. Now '..tostring(settings.mb_pure or 'off')..'.')end
         elseif command=='mb'and value=='style'then
             local style=(args[2]or ''):lower()
             if style~='classic'and style~='clapper'then say('Use //tsc mb style classic|clapper.');return true end

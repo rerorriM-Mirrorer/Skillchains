@@ -230,7 +230,7 @@ function M.new()
             local state=self.states[id]
             if state and not state.source_expired and state.mb_close>stamp then
                 local bursts=self.bursts[id] or {}
-                bursts[#bursts+1]={at=stamp,color=M.burst_color(element)}
+                bursts[#bursts+1]={at=stamp,color=M.burst_color(element),element=element} -- Test7.19: element kept for mb pure
                 if #bursts>4 then table.remove(bursts,1) end
                 self.bursts[id]=bursts
             end

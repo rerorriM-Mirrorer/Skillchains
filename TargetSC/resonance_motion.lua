@@ -375,7 +375,16 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     mb_ring_hold=0,mb_ring_ease=-1,
     -- Test7.18 shimmer: ripple (9 Hz, default) | soft (a lit side turning at
     -- mb_shimmer_turn turns/s with gain mb_shimmer_soft 0-1); decay = 1/s.
-    mb_shimmer_style='ripple',mb_shimmer_decay=3,mb_shimmer_turn=.5,mb_shimmer_soft=.8}
+    mb_shimmer_style='ripple',mb_shimmer_decay=3,mb_shimmer_turn=.5,mb_shimmer_soft=.8,
+    -- Test7.19 mb pure: off (default) | light | dark | both. A Light MB turns
+    -- the bloom's bright band, the property disc rims and every MB glyph pure
+    -- white at full opacity (past the addon's opacity); a Dark MB turns them
+    -- pure black (total void). Each fades back on its own clock (s):
+    -- mb_pure_disc (property disc), mb_pure_glyph (lifted disc trace glyphs and
+    -- bloom glyph copies), mb_pure_ring_glyph (the large glyph that rises to
+    -- the MB ring). The bloom keeps its own life/fade; mb_pure_bloom_flash 0
+    -- = the Dark bloom skips its white-hot strike.
+    mb_pure='off',mb_pure_disc=1.5,mb_pure_glyph=2.5,mb_pure_ring_glyph=4,mb_pure_bloom_flash=0}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -400,17 +409,16 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
--- Test7.18 preset cioara: A's look on 2026-11-22 04:10 (settings.xml global +
--- cioara merged; enabled/debug left alone) plus A's 04:10 picks: opener glow
--- white, dark back compression (gain .5, glow spin 3). //tsc preset cioara.
+-- Test7.19 preset cioara: A's look on 2026-11-22 05:21 (settings.xml global +
+-- cioara merged; enabled/debug left alone). //tsc preset cioara.
 M.cioara={
     amplitude=0.3,awakening=true,awakening_inner=1,awakening_links=true,awakening_opacity=1,
-    awakening_opacity_level1=4,awakening_opacity_level2=4,awakening_opacity_level3=4,awakening_opacity_opener=-1,
+    awakening_opacity_level1=1,awakening_opacity_level2=2,awakening_opacity_level3=3,awakening_opacity_opener=-1,
     awakening_outer=0,awakening_size=1.2,awakening_until='open',awakening_until_level1='same',
-    awakening_until_level2='same',awakening_until_level3='close',awakening_until_opener='same',brightness=4,
+    awakening_until_level2='same',awakening_until_level3='same',awakening_until_opener='same',brightness=4,
     damping=3,dark_back_spin=3,dark_disc='black',dark_glow='0,0,0',dark_glow_burst='0,0,0',
     dark_glow_mb='elemental',dark_glow_opener='255,255,255',dark_glow_ring='same',dark_look='void',
-    dark_mb_core='black',dark_ring_back='compression',dark_ring_back_gain=0.5,detarget_time=0.15,
+    dark_mb_core='black',dark_ring_back='compression',dark_ring_back_gain=0.18,detarget_time=0.15,
     disc_blend='firm',disc_height=0.06,disc_inner=0,disc_level4_height=0.11,disc_level4_inner=1,
     disc_level4_middle=0.9,disc_level4_outer=0,disc_level4_position=0.9,disc_level4_size=1.2,
     disc_lightdark='elements',disc_minimum=0.5,disc_opacity=1,disc_outer=1,disc_outline=0.6,disc_size=1.03,
@@ -433,8 +441,9 @@ M.cioara={
     mb_idle=0.1,mb_intro=0.6,mb_intro_disc=1,mb_intro_flashes=1,mb_intro_glyph=0.5,mb_level4='flicker',
     mb_level4_depth=0.3,mb_lift=0,mb_lightdark_cycle=3,mb_opacity=0.39,mb_overall=0.66,mb_period=2,
     mb_position=0.5,mb_radiance='light',mb_radiance_cycle=0.15,mb_radiance_glow=3,mb_return=2,mb_ring=1,
-    mb_rise=0.01,mb_shimmer=1,mb_size=0.5,mb_spin=0.025,mb_style='clapper',motion='sine',opacity=0.27,
-    opener_disc_inner=1,opener_disc_outer=0,opener_disc_outline=0,opener_disc_size=1.2,opener_fade=1,
+    mb_ring_ease=3,mb_ring_hold=1.8,mb_rise=0.01,mb_shimmer=1,mb_shimmer_decay=1.5,mb_shimmer_soft=0.39,
+    mb_shimmer_style='soft',mb_shimmer_turn=3,mb_size=0.5,mb_spin=0.025,mb_style='clapper',motion='sine',
+    opacity=0.27,opener_disc_inner=1,opener_disc_outer=0,opener_disc_outline=0,opener_disc_size=1.2,opener_fade=1,
     opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,opener_fade_length=1,opener_gap=60,
     opener_glow='white',opener_layout='sections',opener_muted=true,opener_spacing=0.035,opener_spin_minimum=0.5,
     opener_spin_slowdown=1,period=0.09,radiance_bottom_opacity=0.3,radiance_bottom_size=0.9,
@@ -1278,6 +1287,30 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- Added glow spin (turns/sec, negative reverses) on top of each glyph's
     -- own angle; continuous clock so a re-strike never jumps the lit side.
     local glow_turn=2*pi*option(opts,'mb_glow_spin')*max(0,now-s.created)
+    -- Test7.19 mb pure: strength (0-1) of the latest Light/Dark burst's pure
+    -- white/black look, rising over .08 s and fading over `T` s.
+    local pure_mode=option(opts,'mb_pure')
+    local function pure_kind(element)
+        if pure_mode=='off'or not element then return nil end
+        local kind=element=='Light'and 'light'or (element=='Dark'or element=='Darkness')and 'dark'or nil
+        if kind and (pure_mode=='both'or pure_mode==kind)then return kind end
+    end
+    local pure_bursts={}
+    if show_mb and pure_mode~='off'and model.bursts and model.bursts[s.id]then
+        for _,b in ipairs(model.bursts[s.id])do
+            local kind=pure_kind(b.element)
+            if kind and now>=b.at then pure_bursts[#pure_bursts+1]={age=now-b.at,kind=kind}end
+        end
+    end
+    local function pure(T)
+        local best,kind=0,nil
+        for _,b in ipairs(pure_bursts)do
+            local v=b.age<T and smooth(b.age/.08)*(1-smooth(b.age/max(.05,T)))or 0
+            if v>best then best,kind=v,b.kind end
+        end
+        best=best*option(opts,'mb_effects')
+        return best,kind=='dark'and {0,0,0}or white
+    end
     -- Test7.18 soft shimmer: a bright side turning around the glyph glow.
     local function soft_lit(base)
         if option(opts,'mb_shimmer_style')~='soft'then return nil end
@@ -1897,6 +1930,11 @@ function M.frame(model,s,now,radius,height,opts,context)
             local v,blk=M.umbra_vanish(s,now,opts,has_top)
             if v<1 then opening.opacity=opening.opacity*v;color=mix(color,{0,0,0},blk)end -- Test7.3
         end
+        -- Test7.19 mb pure: the large glyph (risen to the MB ring) goes pure.
+        if role~='awakening'then
+            local k,pc=pure(option(opts,'mb_pure_ring_glyph'))
+            if k>0 then role='mb-glyph';color=mix(color,pc,k);opening.opacity=opening.opacity+(1-opening.opacity)*k end
+        end
         out.awakening_glyph=opening
         local before=#out.discs
         local bare=role=='mb-glyph'and l4_glyph and l4name=='radiance'and not option(opts,'radiance_glyph_circle')
@@ -2090,8 +2128,21 @@ function M.frame(model,s,now,radius,height,opts,context)
                         fill_alpha=fill_alpha+(1-fill_alpha)*w
                     end
                 end
+                -- Test7.19 mb pure: rims pure white/black at full opacity, center clear.
+                local pk,pc=pure(option(opts,'mb_pure_disc'))
+                if pk>0 and not terminal then
+                    local lit={}for i,c in ipairs(colors)do lit[i]=mix(c,pc,pk)end
+                    colors=lit;fill_alpha=fill_alpha+(1-fill_alpha)*pk
+                    if hub then hub=mix(hub,pc,pk)end
+                end
                 disc(r*fill_size,h,angle,colors,fill_alpha,0,0,'property')
-                if #out.discs>before then finish_fill(out.discs[#out.discs],fill_alpha)end
+                if #out.discs>before then
+                    finish_fill(out.discs[#out.discs],fill_alpha)
+                    if pk>0 and not terminal then
+                        local d=out.discs[#out.discs]
+                        d.inner=(d.inner or 1)*(1-pk);d.outer=(d.outer or 1)+(1-(d.outer or 1))*pk
+                    end
+                end
                 if l4name=='umbra'and j==1 then
                     local d=#out.discs>before and out.discs[#out.discs]or nil
                     umbra_black={radius=r*fill_size,pos=d and d.mid_pos or M.umbra_disc_position(s,now,opts),index=d and #out.discs or nil}
@@ -2124,6 +2175,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                         out.glyphs3=out.glyphs3 or {};out.glyphs3[#out.glyphs3+1]=g3
                         hide=true
                     end
+                end
+                local gk,gc=pure(option(opts,'mb_pure_glyph')) -- Test7.19 mb pure
+                if gk>0 and not terminal then
+                    trace_stroke=mix(trace_stroke or white,gc,gk);trace_alpha=trace_alpha+(1-trace_alpha)*gk;respond=true
                 end
                 disc(trace_radius,trace_height,angle,{white},0,2,
                     ((glyph==0 and not respond)or hide)and 0 or trace_alpha,'property-trace',trace_stroke)
@@ -2404,9 +2459,19 @@ function M.frame(model,s,now,radius,height,opts,context)
                     -- White-hot at the strike, settling into the element color.
                     return mix(burst.color,white,option(opts,'mb_bloom_flash')*(1-smooth(at/(life*.3))))
                 end
+                -- Test7.19 mb pure: Light = pure white, Dark = pure black; the bright
+                -- band at full opacity (the radial stops keep the rest clear).
+                local pk=pure_kind(burst.element)
+                if pk then
+                    local pc=pk=='dark'and {0,0,0}or white
+                    tint=function(at)
+                        if pk=='dark'then return mix(pc,white,option(opts,'mb_pure_bloom_flash')*(1-smooth(at/(life*.3))))end
+                        return pc
+                    end
+                end
                 if age<life then
                     local g,env=growth(age)
-                    local a=mb_overall*effects*env*closing
+                    local a=pk and effects*env*closing or mb_overall*effects*env*closing
                     local color=tint(age)
                     local before=#out.discs
                     disc(mb_radius*(start+(finish-start)*g),plane(from)+(plane(to)-plane(from))*g,0,{color},a,0,0,'bloom')
@@ -2415,6 +2480,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                         d.inner,d.outer=option(opts,'mb_bloom_center'),option(opts,'mb_bloom_edge')
                         d.mid,d.mid_pos=option(opts,'mb_bloom_middle'),option(opts,'mb_bloom_position')
                         d.hub=context.argb(mix(color,white,option(opts,'mb_bloom_core')),a)
+                        if pk then d.hub=context.argb(color,a)end -- Test7.19: no white core on a pure bloom
                         if l4name=='umbra'and option(opts,'umbra_burst_center')=='black'then
                             d.hub,d.inner=context.argb({0,0,0},env*closing),1 -- Test7.3 opaque black center
                         end
@@ -2427,8 +2493,10 @@ function M.frame(model,s,now,radius,height,opts,context)
                     if at>=0 and at<life then
                         local g,env=growth(at)
                         local r=mb_radius*(1+(option(opts,'mb_bloom_lines_size')-1)*g)
+                        local la=option(opts,'mb_bloom_lines_opacity')*mb_overall*effects*env*closing
+                        if pk then local gk=pure(option(opts,'mb_pure_glyph'));la=la+(effects*env*closing-la)*gk end -- Test7.19
                         disc(r,plane(from)+(plane(to)-plane(from))*g,opening and opening.rotation or 0,{white},0,2,
-                            option(opts,'mb_bloom_lines_opacity')*mb_overall*effects*env*closing,'bloom-lines',tint(at))
+                            la,'bloom-lines',tint(at))
                     end
                 end
             end

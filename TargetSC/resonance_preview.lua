@@ -262,7 +262,7 @@ function M.new(spec,id,now,resonance,opts)
                 event.done=true
                 if event.kind=='burst'then
                     local bursts=self.model.bursts[self.id]or {}
-                    bursts[#bursts+1]={at=event.at,color=event.color}
+                    bursts[#bursts+1]={at=event.at,color=event.color,element=event.element or spec.element}
                     self.model.bursts[self.id]=bursts
                     self.stage=(event.element or spec.element)..' burst (local visual preview)'
                 elseif event.kind=='kill'then

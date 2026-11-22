@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.18.1-unified-test7.18.1'
+_addon.version='0.19.19-unified-test7.19'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -163,6 +163,9 @@ local function help()
         {'dark back on|compression|off|<0-3>','Void: SC ring glows show the MB glow color on their Dark transparent side (on = all, compression = Compression rings only; default off); a number scales that side (default 1).'},
         {'dark back spin <1-6>','Void: glows with a back side turn this many times faster than their ring (default 1).'},
         {'mb ring hold <0-4> | ease <0.05-3|-1>','Burst color stays pure on the MB ring for hold s (color cycle paused), then eases back (default 0 = off; ease -1 = mb duration x .375).'},
+        {'mb pure off|light|dark|both','Light MBs turn the bloom band, property disc rims and every MB glyph pure white at full opacity; Dark MBs pure black (default off).'},
+        {'mb pure disc|glyph|ring <0.2-10>','Fade-back time (s) for the property disc (1.5), disc trace glyphs and bloom copies (2.5), and the large glyph at the MB ring (4).'},
+        {'mb pure flash <0-1>','Dark pure bloom: white-hot strike before the void (default 0 = straight to black).'},
         {'mb shimmer style ripple|soft','Burst glow on the glyph: 9 Hz ripple (default) or a soft lit side turning around it. Also: mb shimmer decay <0.5-8> (3), turn <-3-3> (.5 turns/s), soft <0-1> (.8).'},
         {'dark disc black|violet|classic','Void look: the Dark parts of property discs (Compression, Gravitation, Darkness): black (default), violet glow color, or classic.'},
         {'earth classic|gold|scission|crystal|<r g b>','Earth element color: classic 176,114,48 (default), gold 230,190,70, scission 255,165,0, crystal 216,146,64, or your own.'},

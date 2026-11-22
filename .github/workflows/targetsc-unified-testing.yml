@@ -108,6 +108,7 @@ jobs:
           lua5.1 TargetSC/tests/test_dark_717.lua
           lua5.1 TargetSC/tests/test_mb_718.lua
           lua5.1 TargetSC/tests/test_until_7181.lua
+          lua5.1 TargetSC/tests/test_mb_719.lua
           lua5.1 TargetSC/tests/test_radiance_glow.lua
           lua5.1 TargetSC/tests/test_kill.lua
           lua5.1 TargetSC/tests/test_native_kill.lua
