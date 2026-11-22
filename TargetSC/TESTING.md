@@ -1,3 +1,13 @@
+## Current Development Status — 2026-11-22 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.11 `e756eb2`).
+- installed_base: Test7.10 (`c868a3c` code; A tested it 00:01, Live). Package `TargetSC-0.19.11-Test7.11.zip` cumulative since `76cf0e6`.
+- Live (A, 00:01): Test7.8-7.10 "looking good"; `mb level4 depth .3` liked for Radiance; bare-setting values welcome. A asked for Umbra to grow from the MB ring like Radiance: host sim with A's profile (`preview demo`) shows the same geometry on Umbra (innermost 1.73 -> 1.79 against the MB ring 1.73; Verified host), so the difference A sees is Inferred to be the dim/pulsing Umbra MB ring; observation requested.
+- Changes: Test7.11 `radiance mb flicker` / `umbra mb flicker <0-1|same>` (Umbra on top of its pulse); `umbra wobble after on|off` + `wobble peak|curve|speed`.
+- Tunables (defaults): `radiance_mb_flicker` -1, `umbra_mb_flicker` -1 (= `mb_level4_depth` 1); `umbra_wobble_after` false, `umbra_wobble_peak` 4, `umbra_wobble_curve` 2, `umbra_wobble_speed` 2.
+- Checks: 69/69 CI lua5.1 invocations PASS incl. new `test_level4_mb_own.lua` (A's 11-21 profile; preview demo). Host only.
+- Pending: Test7.11 in game; bloom sizes for the wider ring sets (A tuning); color pass; glyph cross ends (DLL).
+
 ## Current Development Status — 2026-11-21 (America/Chicago)
 
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.7 `095b38e`, Test7.8 `b6766a3`, Test7.9 `bfe55cf`, Test7.10 `c868a3c`).
