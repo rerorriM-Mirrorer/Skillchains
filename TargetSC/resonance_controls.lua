@@ -304,6 +304,13 @@ function M.new(settings,defaults,save,say,killala)
             local range=groups.breath.values[name]
             if not range then say('Use //tsc mb breath min <0-1> or gain <0-8>.');return true end
             numeric('mb_breath_'..name,args[3],range,'mb breath '..name)
+        elseif command=='mb'and value=='level4'then
+            -- Test7.9: level-4 MB ring electric flicker instead of breathing.
+            local name=(args[2]or ''):lower()
+            if name=='flicker'or name=='breath'then
+                settings.mb_level4=name;save(settings);say('Level 4 MB ring: '..name..'.')
+            elseif name=='depth'then numeric('mb_level4_depth',args[3],{0,1},'mb level4 depth')
+            else say('Use //tsc mb level4 flicker|breath | depth <0-1>.')end
         elseif command=='mb'and value=='glow'then
             -- Confirmed-MB glows on the large glyph and the lifted trace.
             local name=(args[2]or ''):lower()

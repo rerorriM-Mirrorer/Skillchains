@@ -1,5 +1,16 @@
 # TargetSC — elemental resonance
 
+## 0.19.9 unified Test7.9 — Level 4 MB ring flicker (Lua only)
+
+- **`//tsc mb level4 flicker|breath`** (default flicker): on Radiance and Umbra
+  links the MB ring's brightness flickers like the skillchain bar's level 3/4
+  border, `(.37 + .63 sin^2 23t) x (.72 + .28 sin^2 28t)`, instead of breathing.
+  `breath` is the earlier look; the killala preset keeps it.
+- **`//tsc mb level4 depth <0-1>`** (default 1): 1 = the bar's full swing,
+  0 = steady.
+- Umbra's `umbra mb pulse` (the white pulses all window long) still replaces
+  the ring's brightness, so the flicker shows on Umbra only with `umbra mb classic`.
+
 ## 0.19.8 unified Test7.8 — Level 4 rings grow out of the MB ring (Lua only)
 
 - With `rings level4 expand mb`, the innermost level 4 ring now grows outward

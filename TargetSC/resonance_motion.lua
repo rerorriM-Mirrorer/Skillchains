@@ -114,6 +114,10 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     ring_level4_open='collapse',ring_level4_collapse='into',ring_level4_expand='mb',
     ring_level4_collapse_time=.12,ring_level4_expand_time=-1,ring_level4_ease=6,
     ring_level4_gap=.03,ring_level4_spacing=.075,
+    -- Test7.9: level-4 MB ring brightness flickers like the skillchain bar's
+    -- level 3/4 border ((.37+.63 sin^2 23t)(.72+.28 sin^2 28t)) instead of
+    -- breathing. flicker|breath; depth 0-1 (1 = the bar's full swing).
+    mb_level4='flicker',mb_level4_depth=1,
     -- Test4.8: large breathing glyph: after a burst it stays risen and fades
     -- (instead of falling); at the floor it shows only the window-opening
     -- flash (no breathing).
@@ -314,7 +318,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
-    ring_level3_open='pop',ring_level2_open='stacked',ring_level4_open='pop',
+    ring_level3_open='pop',ring_level2_open='stacked',ring_level4_open='pop',mb_level4='breath',
     mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false,
     detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
@@ -1830,7 +1834,11 @@ function M.frame(model,s,now,radius,height,opts,context)
     if show_mb and (mb_strength>0 or response.extinguish)then
         local color=mb_color
         local alpha=option(opts,'mb_opacity')+(1-option(opts,'mb_opacity'))*(1-mb_strength)
-        if clapper then alpha=alpha*(response.breath or 1)end
+        if clapper and l4 and option(opts,'mb_level4')=='flicker'then
+            -- Test7.9: the bar's level 3/4 electric flicker (`electric` above).
+            local d=clamp(option(opts,'mb_level4_depth'),0,1)
+            alpha=alpha*(1-d+d*electric)
+        elseif clapper then alpha=alpha*(response.breath or 1)end
         -- Test5.4 Umbra MB ring: white ending-style pulses all window long.
         local umbra_mb=l4name=='umbra'and option(opts,'umbra_mb')=='pulse'
         if umbra_mb and not response.ending then
