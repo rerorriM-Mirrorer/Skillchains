@@ -1,5 +1,26 @@
 ## Current Development Status — 2026-11-21 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.7 `095b38e`, Test7.8 `b6766a3`, Test7.9 `bfe55cf`, Test7.10 `c868a3c`).
+- installed_base: Test7.7 (`095b38e` content; A tested it at 22:43: collapse time good, expand mb better, L2/L3 single-ring starts preferred). Package `TargetSC-0.19.10-Test7.10.zip` is cumulative since `76cf0e6` (covers any earlier install).
+- Live (A, 22:43): L2 split and L3 spread starts look much better ("so much better"); `rings level4 collapse time` good; `expand mb` preferred; ground/mb/into hard to tell apart; rings spread apart at full size instead of growing out of the MB ring; Radiance rings overlapped its MB ring.
+- Changes: Test7.8 innermost L4 ring grows from the drawn MB ring (Umbra x `umbra mb size`) to `gap` outside it, outer rings spread at `spacing` on the same ease; collapse `into` aims at the drawn MB ring. Test7.9 L4 MB ring flicker (bar's L3/L4 border formula) instead of breath. Test7.10 bare number settings report the current value with the range.
+- Tunables (defaults): `ring_level4_gap` .03 (-.2-.3), `ring_level4_spacing` .075 (0-.2); `mb_level4` flicker (breath; killala breath), `mb_level4_depth` 1 (0-1). Earlier: `ring_level4_open` collapse, `_collapse` into, `_expand` mb, `_collapse_time` .12, `_expand_time` -1, `_ease` 6.
+- Checks: lupa `lua5.1` runner; parse of changed `.lua` OK; 68/68 CI invocations PASS incl. new `test_level4_geometry.lua` (defaults + A's 11-21 profile fixture `tests/fixture_cioara_1121.lua`), `test_mb_level4_flicker.lua` (incl. `preview demo radiance`), `test_bare_setting.lua`; `test_mb_glyph_opacity.lua` message pin updated. Host only.
+- Pending: Test7.8-7.10 in game; Test7.4 radiance glow; Test7.6 split vs half pick.
+- Next: A tries Test7.10; then the color pass (Earth, Darkness in Compression/Gravitation) with A's images; then the glyph cross ends (native DLL batch).
+
+## TargetSC 0.19.8-0.19.10 unified Test7.8-7.10 — Level 4 rings from the MB ring, L4 MB flicker, bare-setting values (Lua only) (2026-11-21)
+
+**Request (22:43, 23:34):** the L4 rings should grow out from the MB ring, the outer three spreading from the innermost on the same ease (they were spreading apart at full size); Radiance rings overlapped the MB ring; L4 MB ring should flicker like the skillchain bar's L4 border instead of breathing; bare settings should report their current value with the range. A's 11-21 settings attached.
+
+**Before (Verified):** rings went from one radius `c_r` to `1+(j-2.5)x.075`, so the innermost shrank; `into` used `mb_radius` (ignoring `umbra mb size`); with A's profile Radiance's MB ring is .96 x radius, inside the rings' .89-1.11 span. The bar flicker (`resonance_fx.lua`) is `(.37+.63 sin^2 23t)(.72+.28 sin^2 28t)` for L3+, the same as the rings' L4 `electric`. `numeric()` reported only the range.
+
+**Changes:** radius `c_r+(inner-c_r)e+(j-1)spacing e` with `inner = drawn MB/radius + gap` (expand mb) or `1-1.5 spacing` (ground). MB ring alpha `x (1-d+d electric)` on L4 with `mb level4 flicker`. `numeric()` adds `Now <value>` (saved, else default).
+
+**Host verification (not FFXI):** 68/68 CI. **Live pending.**
+
+## Current Development Status — 2026-11-21 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse` (new, stacked). Runtime TargetSC (Lua only; native DLL stays 0.12.0). Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248 (Test7.6)` → `development/targetsc-level4-collapse (Test7.7)`. ~~**NOT PUSHED:** attaching the repo with push access was refused in this session (2026-11-21 21:25), so per B3 the commits are local and delivered as `git format-patch` files.~~ (**2026-11-21 21:57 correction:** A re-authorized push; the patch was re-applied on `8624248` and pushed as `095b38e`, ls-remote verified.)
 - installed_base: `76cf0e6` (Test7.3) is the last Live-tagged install; Test7.4-7.6 installs are Unknown, so the package stays cumulative since `76cf0e6`.
 - Changes: Test7.7 level 4 collapse. A Radiance/Umbra link after a level 3 turns the level 3 rings (ground and sky) white where they were and collapses them into one ring in .12 s (accelerating), then its four rings expand concentrically out of that ring (ease-out until the window opens). Ground rings only (sky sets off while collapse is on, whatever `radiance sky` / `umbra sky` say). Radiance glow, Umbra ring-height blooms and kill halves follow the ring plane. Version `0.19.7-unified-test7.7`.
