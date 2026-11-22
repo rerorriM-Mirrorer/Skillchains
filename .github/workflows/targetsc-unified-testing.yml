@@ -99,6 +99,7 @@ jobs:
           lua5.1 TargetSC/tests/test_level4_geometry.lua
           lua5.1 TargetSC/tests/test_mb_level4_flicker.lua
           lua5.1 TargetSC/tests/test_bare_setting.lua
+          lua5.1 TargetSC/tests/test_level4_mb_own.lua
           lua5.1 TargetSC/tests/test_radiance_glow.lua
           lua5.1 TargetSC/tests/test_kill.lua
           lua5.1 TargetSC/tests/test_native_kill.lua

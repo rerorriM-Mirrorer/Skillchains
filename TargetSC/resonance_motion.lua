@@ -118,6 +118,14 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- level 3/4 border ((.37+.63 sin^2 23t)(.72+.28 sin^2 28t)) instead of
     -- breathing. flicker|breath; depth 0-1 (1 = the bar's full swing).
     mb_level4='flicker',mb_level4_depth=1,
+    -- Test7.11: own flicker depth per level 4 (-1 = mb level4 depth). Radiance's
+    -- flicker replaces its breath; Umbra's is added on top of its pulse/breath.
+    radiance_mb_flicker=-1,umbra_mb_flicker=-1,
+    -- Test7.11: Umbra wobble after the flash-out: the ground wobble (black
+    -- disc, MB ring at the disc, glyphs) starts again and grows toward the MB
+    -- deadline. peak = x the level-4 hum amplitude at the deadline (4);
+    -- curve = growth power (2); speed = wobble rate at the deadline x the hum (2).
+    umbra_wobble_after=false,umbra_wobble_peak=4,umbra_wobble_curve=2,umbra_wobble_speed=2,
     -- Test4.8: large breathing glyph: after a burst it stays risen and fades
     -- (instead of falling); at the floor it shows only the window-opening
     -- flash (no breathing).
@@ -885,6 +893,24 @@ function M.umbra_flashed(s,opts,has_top)
     local _,count=level4_index(opts,'umbra','ground',1,4,has_top)
     return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+option(opts,'umbra_flash_time')
 end
+-- Test7.11: extra height for the Umbra ground wobble after the flash-out,
+-- growing (g^curve) to `peak` x the level-4 hum amplitude at the MB deadline,
+-- its rate rising from the hum's to `speed` x it (phase = integral of rate).
+function M.umbra_wobble(s,now,opts)
+    if not option(opts,'umbra_wobble_after')then return 0 end
+    local sky=option(opts,'umbra_sky')~='off'and option(opts,'ring_level4_open')~='collapse'
+    local start=M.umbra_flashed(s,opts,sky)
+    local dt=now-start
+    if dt<=0 then return 0 end
+    local T=max(.1,s.mb_close-start)
+    local g=clamp(dt/T,0,1)
+    local gain=1+3*option(opts,'hum_gain')
+    local base=option(opts,'hum_amplitude')*gain*option(opts,'intensity')
+    local f=gain/(2*option(opts,'hum_period'))
+    local sp=option(opts,'umbra_wobble_speed')
+    local phase=f*(dt+(sp-1)*(T*g*g/2+max(0,dt-T)))
+    return base*option(opts,'umbra_wobble_peak')*g^max(.1,option(opts,'umbra_wobble_curve'))*wave(phase,opts)
+end
 -- Test5.4: the ending's pulse rhythm (soft: strong/half/strong per mb ending)
 -- continued backwards across the window, so it hands over seamlessly.
 function M.umbra_pulse(s,now,opts)
@@ -1023,6 +1049,9 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- own angle; continuous clock so a re-strike never jumps the lit side.
     local glow_turn=2*pi*option(opts,'mb_glow_spin')*max(0,now-s.created)
     local bottom,top,remaining,details=M.positions(s,now,height,opts)
+    -- Test7.11: Umbra's wobble after the flash-out rides the ground wave, so
+    -- everything that follows it (black disc, its plane, glyphs) wobbles.
+    if l4n=='umbra'then details.ground_wave=(details.ground_wave or 0)+M.umbra_wobble(s,now,opts)end
     local clapper=option(opts,'mb_style')=='clapper'
     local terminal=s.step>1 and s.level>=4
     local property_radius=radius*(terminal and .92 or .78)
@@ -1834,11 +1863,16 @@ function M.frame(model,s,now,radius,height,opts,context)
     if show_mb and (mb_strength>0 or response.extinguish)then
         local color=mb_color
         local alpha=option(opts,'mb_opacity')+(1-option(opts,'mb_opacity'))*(1-mb_strength)
-        if clapper and l4 and option(opts,'mb_level4')=='flicker'then
-            -- Test7.9: the bar's level 3/4 electric flicker (`electric` above).
-            local d=clamp(option(opts,'mb_level4_depth'),0,1)
-            alpha=alpha*(1-d+d*electric)
-        elseif clapper then alpha=alpha*(response.breath or 1)end
+        -- Test7.9/7.11: the bar's level 3/4 electric flicker (`electric`
+        -- above). Radiance: instead of the breath. Umbra: on top (below).
+        local l4flick=clapper and l4 and option(opts,'mb_level4')=='flicker'
+        local flick_d=0
+        if l4flick then
+            local own=option(opts,l4name..'_mb_flicker')
+            flick_d=clamp(own>=0 and own or option(opts,'mb_level4_depth'),0,1)
+        end
+        if clapper and not (l4flick and l4name=='radiance')then alpha=alpha*(response.breath or 1)end
+        if l4flick and l4name=='radiance'then alpha=alpha*(1-flick_d+flick_d*electric)end
         -- Test5.4 Umbra MB ring: white ending-style pulses all window long.
         local umbra_mb=l4name=='umbra'and option(opts,'umbra_mb')=='pulse'
         if umbra_mb and not response.ending then
@@ -1846,6 +1880,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             color=mix(color,white,fx)
             alpha=alpha*(1-fx)+M.umbra_pulse(s,now,opts)*option(opts,'umbra_mb_strength')*fx
         end
+        if l4flick and l4name=='umbra'then alpha=alpha*(1-flick_d+flick_d*electric)end
         local strength=response.ring*option(opts,'mb_ring')
         if response.element and strength>0 then
             color=mix(color,mix(response.element,white,response.flicker),strength)

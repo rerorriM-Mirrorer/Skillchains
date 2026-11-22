@@ -122,7 +122,8 @@ function M.new(settings,defaults,save,say,killala)
             ['glyph size']={'n',.2,4},['glyph opacity']={'n',0,1,same=true},['glyph buzz']={'b'},sky={'c','bell','off'},['glyph circle']={'b'},['glyph wobble']={'c','rings','always'},['ending ride']={'b'},glow={'b'},['glow opacity']={'n',0,1},['glow size']={'n',.2,6},['glow rise']={'n',-1,20},['glow hold']={'n',0,20},['glow fall']={'n',.05,30},['glow dance']={'n',0,1},['glow speed']={'n',0,5},['ending glyph']={'c','off','linear','quadratic','cosine','exponential'},['ending peak']={'n',0,1},
             stack={'b'},['stack height']={'n',-.2,.5},['stack spacing']={'n',0,.1},
             ['bottom opacity']={'n',0,1},['bottom size']={'n',.2,4},['middle opacity']={'n',0,1},
-            ['middle size']={'n',.2,4},['middle cycle']={'n',.2,20},['middle spin']={'n',-4,4}},
+            ['middle size']={'n',.2,4},['middle cycle']={'n',.2,20},['middle spin']={'n',-4,4},
+            ['mb flicker']={'n',0,1,same=true}},
         umbra={opacity={'n',0,1,same=true},['disc opacity']={'n',0,1,same=true},look={'c','black','classic'},
             glow={'c','white','violet'},close={'c','sequence','classic'},['close time']={'n',0,6},
             order={'c','upper','lower','together'},direction={'c','outer','inner'},gap={'n',0,.5},
@@ -152,7 +153,9 @@ function M.new(settings,defaults,save,say,killala)
             collapse={'b'},['collapse curve']={'n',1,10},['collapse time']={'n',.2,6,same=true},['glyph lift']={'n',0,.2,same=true},['ending time']={'n',.3,12},
             ['gyro speed']={'n',-8,8},['gyro rise']={'n',.05,3},['gyro shrink']={'n',0,1},['gyro below']={'c','full','half'},
             ['stand time']={'n',.05,8},['sink time']={'n',.05,10},['swallow stagger']={'n',0,.95},
-            ['swallow order']={'c','outer','inner','together'},['swallow pull']={'n',0,1},['swallow lift']={'n',0,4}}}
+            ['swallow order']={'c','outer','inner','together'},['swallow pull']={'n',0,1},['swallow lift']={'n',0,4},
+            ['mb flicker']={'n',0,1,same=true},['wobble after']={'b'},['wobble peak']={'n',0,40},
+            ['wobble curve']={'n',.2,6},['wobble speed']={'n',.2,6}}}
     -- 0.18 kill animations: //tsc kill ... (same table-driven parser).
     level4_spec.kill={time={'n',.3,5},['mb rings']={'c','freeze','gather'},['mb fade']={'n',.05,3},
         ['mb flicker']={'n',0,1},['mb freeze']={'n',0,1},['mb discs']={'c','element','own'},['mb bloom']={'c','in','fade'},['mb glyphs']={'c','bloom','fade'},['sc flicker']={'n',0,1},['seam flicker']={'n',0,1},

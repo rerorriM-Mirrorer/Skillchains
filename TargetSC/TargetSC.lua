@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.10-unified-test7.10'
+_addon.version='0.19.11-unified-test7.11'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -338,6 +338,9 @@ local function help()
         {'mb glow shade <0-1>','Lit side on the two MB burst glows (uses rings blend gradient|firm; default .5).'},
         {'mb glow spin <-2-2>','Turns/sec added to each MB glow over its glyph; negative reverses (default .5).'},
         {'mb level4 flicker|breath | depth <0-1>','Level 4 MB ring: the skillchain bar\'s electric flicker instead of breathing (default flicker, depth 1).'},
+        {'radiance mb flicker <0-1|same>','Radiance MB ring flicker depth, replacing its breath (same = mb level4 depth).'},
+        {'umbra mb flicker <0-1|same>','Umbra MB ring flicker depth, added on top of its pulse/breath (same = mb level4 depth).'},
+        {'umbra wobble after on|off | wobble peak|curve|speed <n>','After the flash-out the ground wobble returns and grows to the MB deadline: peak x hum (4), growth power (2), rate x hum at the end (2). Default off.'},
         {'mb glow flicker <0-1>','9 Hz ripple on the MB glows; 1 original, 0 steady (default 1).'},
         {'mb glow width <0.2-2>','MB glow thickness multiplier (default 1).'},
         {'mb ending drop <0-1>','How far the MB ring settles onto the large glyph during the closing pulses (default 1).'},

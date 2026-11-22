@@ -1,5 +1,17 @@
 # TargetSC — elemental resonance
 
+## 0.19.11 unified Test7.11 — own MB flicker per level 4, Umbra wobble after the flash (Lua only)
+
+- **`//tsc radiance mb flicker <0-1|same>`** and **`//tsc umbra mb flicker <0-1|same>`**
+  (default same = `mb level4 depth`). Radiance's flicker replaces its breath;
+  Umbra's is added on top of its pulse (or breath with `umbra mb classic`).
+  `mb level4 breath` still turns both off.
+- **`//tsc umbra wobble after on|off`** (default off): after the ring flash-out
+  the ground wobble (black disc, MB ring at the disc, glyphs) starts again and
+  grows shakier toward the MB deadline. `umbra wobble peak <0-40>` (4 x the
+  level 4 hum amplitude at the deadline), `wobble curve <0.2-6>` (2, higher =
+  stays calm longer), `wobble speed <0.2-6>` (2 x the hum rate at the deadline).
+
 ## 0.19.10 unified Test7.10 — bare settings report their value (Lua only)
 
 - Typing a number setting with no value (or a value outside its range) now
