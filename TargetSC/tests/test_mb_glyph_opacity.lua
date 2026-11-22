@@ -113,7 +113,7 @@ assert(cmd('mb',{'glyph','opacity','0.5'})and settings.mb_glyph_opacity==.5,'set
 assert(said=='mb glyph opacity = 0.500',tostring(said))
 assert(cmd('mb',{'glyph','opacity','0'})and settings.mb_glyph_opacity==0,'set 0')
 assert(cmd('mb',{'glyph','opacity','1.5'})and settings.mb_glyph_opacity==0,'out of range rejected')
-assert(said=='Use //tsc mb glyph opacity <0-1>.',tostring(said))
+assert(said=='Use //tsc mb glyph opacity <0-1>. Now 0.000.',tostring(said)) -- Test7.10 reports the current value
 assert(cmd('mb',{'glyph','opacity','x'})and settings.mb_glyph_opacity==0,'non-number rejected')
 assert(cmd('mb',{'glyph','height','1'})and settings.mb_glyph_height==1,'other mb glyph settings still work')
 assert(cmd('mb',{'glyph','bogus'})and said:find('opacity <0%-1>'),'usage lists opacity')

@@ -17,7 +17,11 @@ function M.new(settings,defaults,save,say,killala)
     local function numeric(key,value,range,syntax)
         local n=tonumber(value)
         if not n or n~=n or n<range[1]or n>range[2]then
-            say(('Use //tsc %s <%s-%s>.'):format(syntax,range[1],range[2]));return
+            -- Test7.10: a bare (or bad) value also reports the current one.
+            local now=settings[key]
+            if now==nil then now=defaults and defaults[key]end
+            local shown=type(now)=='number'and ('%.3f'):format(now)or tostring(now)
+            say(('Use //tsc %s <%s-%s>. Now %s.'):format(syntax,range[1],range[2],shown));return
         end
         settings[key]=n;save(settings);say(('%s = %.3f'):format(syntax,n))
     end

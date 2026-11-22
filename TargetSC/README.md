@@ -1,5 +1,13 @@
 # TargetSC — elemental resonance
 
+## 0.19.10 unified Test7.10 — bare settings report their value (Lua only)
+
+- Typing a number setting with no value (or a value outside its range) now
+  shows the current value along with the range, for example
+  `//tsc rings level4 gap` -> `Use //tsc rings level4 gap <-0.2-0.3>. Now 0.030.`
+  This covers the TargetSC animation settings (`rings`, `mb`, `discs`, `radiance`,
+  `umbra` and the rest); the skillchain bar's `//tsc sc ...` settings are unchanged.
+
 ## 0.19.9 unified Test7.9 — Level 4 MB ring flicker (Lua only)
 
 - **`//tsc mb level4 flicker|breath`** (default flicker): on Radiance and Umbra
