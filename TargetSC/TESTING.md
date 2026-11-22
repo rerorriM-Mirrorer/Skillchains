@@ -1,3 +1,23 @@
+## Current Development Status — 2026-11-21 (America/Chicago)
+
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse` (new, stacked). Runtime TargetSC (Lua only; native DLL stays 0.12.0). Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248 (Test7.6)` → `development/targetsc-level4-collapse (Test7.7)`. **NOT PUSHED:** attaching the repo with push access was refused in this session (2026-11-21 21:25), so per B3 the commits are local and delivered as `git format-patch` files.
+- installed_base: `76cf0e6` (Test7.3) is the last Live-tagged install; Test7.4-7.6 installs are Unknown, so the package stays cumulative since `76cf0e6`.
+- Changes: Test7.7 level 4 collapse. A Radiance/Umbra link after a level 3 turns the level 3 rings (ground and sky) white where they were and collapses them into one ring in .12 s (accelerating), then its four rings expand concentrically out of that ring (ease-out until the window opens). Ground rings only (sky sets off while collapse is on, whatever `radiance sky` / `umbra sky` say). Radiance glow, Umbra ring-height blooms and kill halves follow the ring plane. Version `0.19.7-unified-test7.7`.
+- Tunables (defaults): `ring_level4_open` collapse (killala pop), `ring_level4_collapse` into (ground|mb|into), `ring_level4_expand` mb (ground|mb), `ring_level4_collapse_time` .12 (0-.3), `ring_level4_expand_time` -1 (= until the window opens; up to 5), `ring_level4_ease` 6 (1-8). MB ring hidden (`display sc`) = ground for both.
+- Checks: lupa runner `lua5.1`; parse of every changed `.lua` OK; 65/65 CI `lua5.1` invocations PASS incl. new `test_level4_collapse.lua` (all six collapse/expand combos on defaults and A's cioara profile, MB-hidden fallback, no-previous, pop, levels 1-3 unchanged, commands/presets, `preview demo` and `preview demo radiance`). Six older level-4 tests now pin `ring_level4_open='pop'` because they check the sky-set opening. Host only.
+- Live: none for Test7.4-7.7. Pending: Test7.4 radiance glow; Test7.5 L3 spread; Test7.6 L2 split/half; Test7.7 collapse look.
+- Next: A pushes or re-authorizes push, installs Test7.7, tries `preview demo` / `preview demo radiance` with each `rings level4 collapse` and `expand` setting.
+
+## TargetSC 0.19.7 unified Test7.7 — Level 4 collapse (Lua only) (2026-11-21)
+
+**Request (21:09-21:21):** a level 4 starts from a level 3, so on its first frame turn all level 3 rings white where they are and collapse them very quickly into one ring, replace it with the four level 4 rings overlapping as one, then expand them into their concentric arrangement, fast at first and easing gently until their flashes. Ground rings only. Three collapse targets (ground ring height; MB ring height, concentric with it; into the MB ring, its glow showing) and two expand planes (around the MB ring, which sits below the SC rings, or the ground ring height). No extra MB flare.
+
+**Before (Verified):** level 4 drew one white ring for .16 s, then four rings at the same height (radial `1 + (j-2.5) x .075`), gliding from the previous link's heights over .3 s; `s.previous` is cleared at .3 s.
+
+**Changes:** in `M.frame`, `l4c` plan: collapse for `ring_level4_collapse_time` (previous L3 rings from `M.positions(previous, created)` and `specifications(previous)`, white, radius/height lerped by `(age/ct)^2` to the target); then the four rings at radius `c_r + (radial - c_r) x e` and height `c_h + (final - c_h) x e`, `e = 1-(1-u)^ease` over the expand time. MB plane = `mb_height` plus the ground strike/hum. `bottom = l4c.h` after the rings so later ring-relative effects follow. Command `rings level4 ...`, help, README.
+
+**Host verification (not FFXI):** 65/65 CI. **Live pending.**
+
 # TargetSC TESTING.md — start here
 
 ## Current Development Status — 2026-11-21 (America/Chicago)

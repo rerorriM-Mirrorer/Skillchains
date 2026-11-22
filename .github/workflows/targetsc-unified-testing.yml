@@ -95,6 +95,7 @@ jobs:
           lua5.1 TargetSC/tests/test_umbra_vanish.lua
           lua5.1 TargetSC/tests/test_level3_spread.lua
           lua5.1 TargetSC/tests/test_level2_spread.lua
+          lua5.1 TargetSC/tests/test_level4_collapse.lua
           lua5.1 TargetSC/tests/test_radiance_glow.lua
           lua5.1 TargetSC/tests/test_kill.lua
           lua5.1 TargetSC/tests/test_native_kill.lua

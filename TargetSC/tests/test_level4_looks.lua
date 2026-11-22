@@ -21,7 +21,7 @@ local function at(p,t,o)p:advance(t)return p.model:frame(71,t,2,4,o)end
 local function find(f,part,strand,role)
     for _,v in ipairs(f)do if v.part==part and v.strand==strand and v.role==role then return v end end
 end
-local o=copy(R.defaults)
+local o=copy(R.defaults);o.ring_level4_open='pop' -- Test7.7: these check the pre-collapse opening (sky sets on)
 o.umbra_after='smoke' -- Test5.4 default is one bloom; this file checks the 5.2 per-ring smoke
 local p=link('Radiance',o);local st=p.model.states[71]
 local open=st.sc_open

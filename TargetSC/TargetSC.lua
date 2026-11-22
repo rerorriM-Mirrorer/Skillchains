@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.6-unified-test7.6'
+_addon.version='0.19.7-unified-test7.7'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -320,6 +320,12 @@ local function help()
         {'rings level2 start <0-1>','Level 2 spread: starting spacing as a fraction of the pair gap (split 0, half 0.5).'},
         {'rings level3 open spread|pop','Level 3 opening: three strands squeezed together that separate during the .3 s glide, or the earlier single white ring then three (default spread).'},
         {'rings level3 start <0-1>','Level 3 spread: starting spacing as a fraction of the normal stack (default 0.5, like level 2 with a third ring between).'},
+        {'rings level4 open collapse|pop','Level 4 opening: the level 3 rings turn white and collapse into one ring, then the four rings expand out of it; or the earlier single white ring (default collapse).'},
+        {'rings level4 collapse ground|mb|into','Where the level 3 rings meet: ground ring height, MB ring height at SC size, or onto the MB ring itself (default into).'},
+        {'rings level4 expand ground|mb','Where the four level 4 rings live: around the MB ring or at the ground ring height (default mb). MB ring hidden = ground.'},
+        {'rings level4 collapse time <0-0.3>','Collapse length in seconds (default .12).'},
+        {'rings level4 expand time <-1-5>','Expansion length in seconds; -1 = until the window opens (default -1).'},
+        {'rings level4 ease <1-8>','Expansion ease-out: higher = faster start, gentler finish (default 6).'},
         {'rings lightdark classic|elements','Level 3 Darkness (and Light in its elements mode): outer strands, four element colors around the middle (default elements).'},
         {'rings lightdark spin <-2-2>','Middle (element) strand turn rate relative to the others; negative counter-turns (default 1).'},
         {'rings lightdark tint gold|white','Light level 3 glow color in the elements look (default white).'},

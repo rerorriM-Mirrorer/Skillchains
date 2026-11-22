@@ -1,5 +1,26 @@
 # TargetSC — elemental resonance
 
+## 0.19.7 unified Test7.7 — Level 4 collapse (Lua only)
+
+- **`//tsc rings level4 open collapse|pop`** (default collapse): a Radiance or
+  Umbra link that follows a level 3 starts by turning all the level 3 rings
+  (ground and sky) white where they were and collapsing them, very quickly
+  (.12 s), into one ring. The four level 4 rings then appear overlapping at
+  that spot and expand into their concentric arrangement: fast at first,
+  then easing gently until the window opens. Level 4 shows ground rings only.
+  `pop` is the earlier look (one white ring for .16 s); the killala preset keeps it.
+- **`//tsc rings level4 collapse ground|mb|into`** (default into): where the
+  level 3 rings meet. ground = the level 4 ground ring height; mb = the MB
+  ring's height at the SC ring size (one ring concentric with the MB ring);
+  into = onto the MB ring itself, so its glow shows through.
+- **`//tsc rings level4 expand ground|mb`** (default mb): where the four rings
+  live, around the MB ring or at the ground ring height. With the MB ring
+  hidden (`display sc`) both settings fall back to ground.
+- `rings level4 collapse time <0-0.3>` (.12), `rings level4 expand time <-1-5>`
+  (-1 = until the window opens), `rings level4 ease <1-8>` (6).
+- With no level 3 before it (`preview chain`), the four rings expand from one
+  ring on the first frame. Levels 1-3 are unchanged.
+
 ## 0.19.6 unified Test7.6 — Level 2 rings split open (Lua only)
 
 - **`//tsc rings level2 open split|half|stacked`** (default split): when a level 2
@@ -462,6 +483,7 @@ bottom strands with the four element colors around the middle strand, and
 the MB ring cycles through those four colors.
 - `//tsc rings level2 open split|half|stacked` (default split), `rings level2 start <0-1>` (default 0).
 - `//tsc rings level3 open spread|pop` (default spread), `rings level3 start <0-1>` (default .5).
+- `//tsc rings level4 open collapse|pop` (default collapse), `rings level4 collapse ground|mb|into` (into), `rings level4 expand ground|mb` (mb), `rings level4 collapse time` (.12), `expand time` (-1), `ease` (6).
 - `//tsc rings lightdark classic|elements` (default elements).
 - `//tsc rings lightdark spin <-2-2>` — middle strand turn rate (default 1).
 - `//tsc rings lightdark tint gold|white` — Light's glow color (default white).

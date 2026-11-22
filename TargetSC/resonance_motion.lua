@@ -94,6 +94,20 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- half = start .5; stacked = the earlier look (full pair from frame 1).
     -- A level 2 after a level 2 keeps the stacked look.
     ring_level2_open='spread',ring_level2_start=0,
+    -- Test7.7: a level-4 link (Radiance/Umbra) opens by collapsing the
+    -- previous level 3's rings, all white, from where they were into one ring,
+    -- then expanding its four rings concentrically out of it (fast, then easing
+    -- gently until the window opens). Ground rings only (no sky set).
+    -- open: collapse | pop (the earlier single white ring for .16 s).
+    -- collapse (where the L3 rings meet): ground = the L4 ground ring height;
+    --   mb = the MB ring's height at the SC ring size (concentric with it);
+    --   into = onto the MB ring itself (its glow shows through).
+    -- expand (where the four rings live): mb = around the MB ring; ground.
+    -- With the MB ring hidden both fall back to ground.
+    -- collapse_time s (.12, capped at .3); expand_time s (-1 = until the
+    -- window opens); ease = ease-out power (6; higher = faster start).
+    ring_level4_open='collapse',ring_level4_collapse='into',ring_level4_expand='mb',
+    ring_level4_collapse_time=.12,ring_level4_expand_time=-1,ring_level4_ease=6,
     -- Test4.8: large breathing glyph: after a burst it stays risen and fades
     -- (instead of falling); at the floor it shows only the window-opening
     -- flash (no breathing).
@@ -294,7 +308,7 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
     disc_inner=1,disc_outer=1,disc_size=1,disc_size_lines=1,disc_lightdark='classic',
     ring_lightdark='classic',ring_lightdark_spin=1,ring_lightdark_tint='gold',mb_lightdark_cycle=2,
     ring_light='classic',ring_light_cycle=4,ring_light_glow=1,ring_light_opening='on',ring_light_mb='white',
-    ring_level3_open='pop',ring_level2_open='stacked',
+    ring_level3_open='pop',ring_level2_open='stacked',ring_level4_open='pop',
     mb_glyph_after='fall',mb_glyph_rest='breath',mb_bloom=false,
     detarget_time=0,switch_out=0,switch_in=0,mb_radiance='classic',
     radiance_look='classic',radiance_close='classic',radiance_shimmer=0,
@@ -1066,6 +1080,29 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- onto the ground rings over the .3 s hand-off, then are gone; the close
     -- sequences and blooms then run as for a single set (has_top false).
     local sky_merge=false
+    -- Test7.7 level-4 collapse plan (ring_level4_* defaults). c_h/c_r: where
+    -- the previous level 3's rings meet (height, radius as a fraction of
+    -- `radius`); h: the four rings' plane this frame; e: expansion 0..1.
+    local l4c
+    if l4 and option(opts,'ring_level4_open')=='collapse'then
+        local target,plane=option(opts,'ring_level4_collapse'),option(opts,'ring_level4_expand')
+        if not show_mb then target,plane='ground','ground'end -- no MB ring to meet
+        local from=s.previous and s.previous.level==3 and s.previous or nil
+        local ct=from and clamp(option(opts,'ring_level4_collapse_time'),0,.3)or 0
+        local et=option(opts,'ring_level4_expand_time')
+        if et<0 then et=s.sc_open-s.created-ct end
+        et=max(.05,et)
+        -- The MB-plane rings keep the ground strike/hum so they still ring.
+        local wave=details.ground_wave or 0
+        local c_h=target=='ground'and bottom or mb_height+wave
+        local final=plane=='mb'and mb_height+wave or bottom
+        local c_r=target=='into'and mb_radius/radius or 1
+        local e=1-(1-clamp((age-ct)/et,0,1))^max(1,option(opts,'ring_level4_ease'))
+        l4c={from=from,ct=ct,c_h=c_h,c_r=c_r,h=c_h+(final-c_h)*e,e=e,target=target,plane=plane}
+        -- Ground rings only: the level 3's sky rings are drawn by the collapse.
+        if top then top=nil;out.sky=nil end
+        out.level4_open=l4c
+    end
     local umbra_black -- Test7.1: the black disc drawn this frame (haze anchor)
     if l4 and l4opt('sky')=='off'and top then
         if s.previous and age<.3 then top,sky_merge=top+(bottom-top)*smooth(age/.3),true else top=nil end
@@ -1218,7 +1255,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     elseif show_sc and phase~='expired'and (phase~='mb-only'or (l4 and l4opt('close')=='sequence'and now<M.level4_end(s,opts,l4name,has_top)))then
         local specs=specifications(s,context,opts)
         local l3spread=not opener and s.level==3 and option(opts,'ring_level3_open')=='spread'
-        if not opener and s.level~=2 and not l3spread and age<.16 then specs={{colors={white},radial=1,stack=0}}end
+        if not opener and s.level~=2 and not l3spread and not l4c and age<.16 then specs={{colors={white},radial=1,stack=0}}end
         local l2spread=not opener and s.level==2 and option(opts,'ring_level2_open')=='spread'
             and not (s.previous and s.previous.level==2)
         if (l3spread or l2spread) and age<.3 then
@@ -1235,6 +1272,29 @@ function M.frame(model,s,now,radius,height,opts,context)
             specs=spread
         end
         out.strands=#specs
+        if l4c and age<l4c.ct then
+            -- Test7.7: the previous level 3's rings (ground and sky), turned
+            -- white where they were, collapse into one ring, accelerating into
+            -- the strike. The four level-4 rings take over at that spot.
+            local from=l4c.from
+            local pb,pt=M.positions(from,s.created,height,opts)
+            local k=(age/l4c.ct)^2
+            local a=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95) -- as the L4 rings
+            local n=0
+            for _,spec in ipairs(specifications(from,context,opts))do
+                for _,place in ipairs({{pb,'ground'},{pt,'sky'}})do
+                    if place[1]then
+                        local r0=radius*spec.radial
+                        if place[2]=='sky'then r0=r0*M.bell_factor(pt-pb,height,opts)end
+                        local h0=place[1]+spec.stack
+                        n=n+1
+                        ring(r0+(radius*l4c.c_r-r0)*k,h0+(l4c.c_h-h0)*k,{white},a,place[2],n,0)
+                    end
+                end
+            end
+            out.strands=n
+            specs={}
+        end
         local l4seq=l4 and l4opt('close')=='sequence'
         local ring_fade=l4seq and 1 or fade -- the sequence does its own fading
         local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*ring_fade
@@ -1255,6 +1315,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                 colors[#colors+1]=mix(mix(white,target,t),white,flash)
             end
             local r=radius*spec.radial
+            -- Test7.7: level-4 rings expand from the collapsed ring's radius.
+            if l4c then r=radius*(l4c.c_r+(spec.radial-l4c.c_r)*l4c.e)end
             -- classic: only openers and L2 turn, slowing to a stop. disc
             -- (default): every link turns with the property disc, at its stage
             -- speed easing to the disc minimum, so rings and glyph stay in step.
@@ -1264,6 +1326,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
                 if place[1]then
                     local h=place[1]+spec.stack
+                    if l4c and place[2]=='ground'then h=l4c.h end -- Test7.7 plane
                     local draw_radius=r
                     if place[2]=='sky'then
                         -- Test5.6: Umbra's sky rings keep the ground rings' size.
@@ -1319,6 +1382,10 @@ function M.frame(model,s,now,radius,height,opts,context)
             end
         end
     end
+    -- Test7.7: from here on "the ground rings" means the level-4 ring plane,
+    -- so the Radiance glow, Umbra's ring-height blooms and the kill halves
+    -- follow the rings around the MB ring.
+    if l4c then bottom=l4c.h end
     -- One pooled large glyph: opener fill, continuous breath and layered MB
     -- bloom. Clapper strikes contract/settle along the property return curve.
     if opening then

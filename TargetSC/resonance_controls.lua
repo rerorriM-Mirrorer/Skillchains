@@ -413,6 +413,25 @@ function M.new(settings,defaults,save,say,killala)
                     say('Level 3 rings open: '..settings.ring_level3_open..'.')
                 elseif name=='start'then numeric('ring_level3_start',args[3],{0,1},'rings level3 start')
                 else say('Use //tsc rings level3 open spread|pop | start <0-1>.')end
+            elseif value=='level4'then
+                -- Test7.7: the level-4 collapse (L3 rings into one) and expansion.
+                local name=(args[2]or ''):lower()
+                local mode=(args[3]or ''):lower()
+                if name=='open'and (mode=='collapse'or mode=='pop')then
+                    settings.ring_level4_open=mode;save(settings)
+                    say('Level 4 rings open: '..mode..'.')
+                elseif name=='collapse'and mode=='time'then
+                    numeric('ring_level4_collapse_time',args[4],{0,.3},'rings level4 collapse time')
+                elseif name=='collapse'and (mode=='ground'or mode=='mb'or mode=='into')then
+                    settings.ring_level4_collapse=mode;save(settings)
+                    say('Level 3 rings collapse: '..mode..'.')
+                elseif name=='expand'and mode=='time'then
+                    numeric('ring_level4_expand_time',args[4],{-1,5},'rings level4 expand time')
+                elseif name=='expand'and (mode=='ground'or mode=='mb')then
+                    settings.ring_level4_expand=mode;save(settings)
+                    say('Level 4 rings expand: '..mode..'.')
+                elseif name=='ease'then numeric('ring_level4_ease',args[3],{1,8},'rings level4 ease')
+                else say('Use //tsc rings level4 open collapse|pop | collapse ground|mb|into | expand ground|mb | collapse time <0-0.3> | expand time <-1-5> | ease <1-8>.')end
             elseif value=='shade'then numeric('ring_shade',args[2],{0,1},'rings shade')
             elseif value=='glow'and choice=='spin'then numeric('ring_glow_spin',args[3],{0,4},'rings glow spin')
             else

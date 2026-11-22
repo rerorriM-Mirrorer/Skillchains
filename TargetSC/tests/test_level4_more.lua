@@ -19,7 +19,7 @@ end
 local function at(p,t,o)p:advance(t)return p.model:frame(71,t,2,4,o)end
 local function disc(f,role)for _,d in ipairs(f.discs)do if d.role==role then return d end end end
 local function mbcore(f)for _,v in ipairs(f)do if v.part=='mb'and v.role=='core'then return v end end end
-local o=copy(R.defaults)
+local o=copy(R.defaults);o.ring_level4_open='pop' -- Test7.7: these check the pre-collapse opening (sky sets on)
 o.umbra_collapse=false;o.umbra_glyph_lift=-1 -- Test6.0 defaults; this file checks earlier behavior
 local st=link('Umbra',o).model.states[71]
 -- Open time: the visual opening ends at created + open time.

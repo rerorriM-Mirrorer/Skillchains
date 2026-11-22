@@ -17,7 +17,7 @@ local function at(p,t,o)p:advance(t)return p.model:frame(71,t,2,4,o)end
 local function count(f,part)local n=0 for _,v in ipairs(f)do if v.part==part then n=n+1 end end return n end
 local function ring(f,part,j)for _,v in ipairs(f)do if v.part==part and v.strand==j and v.role=='core'then return v end end end
 local function blooms(f)local n=0 for _,d in ipairs(f.discs)do if d.role=='umbra-bloom'then n=n+1 end end return n end
-local o=copy(R.defaults)
+local o=copy(R.defaults);o.ring_level4_open='pop' -- Test7.7: these check the pre-collapse opening (sky sets on)
 -- Defaults unchanged: both sets drawn.
 assert(o.umbra_sky=='same'and o.radiance_sky=='bell','defaults')
 for _,name in ipairs({'Umbra','Radiance'})do

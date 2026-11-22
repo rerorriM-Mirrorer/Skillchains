@@ -14,7 +14,7 @@ end
 local function at(p,t,o)p:advance(t)return p.model:frame(71,t,2,4,o)end
 local function role(f,r)for _,d in ipairs(f.discs)do if d.role==r then return d end end end
 R.native_level=11
-local o=copy(R.defaults)
+local o=copy(R.defaults);o.ring_level4_open='pop' -- Test7.7: these check the pre-collapse opening (sky sets on)
 local _,st=link(o)
 local ending=o.mb_ending
 -- Off by default: no 3D glyph.

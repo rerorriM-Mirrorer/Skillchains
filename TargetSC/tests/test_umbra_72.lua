@@ -10,7 +10,7 @@ local function alpha(c)return math.floor(c/16777216)end
 local function link(o)local p=P.new(P.parse({'Radiance','4'},R),71,0,R,o)local st=p.model.states[71];st.properties={'Umbra'};st.elements=R.elements('Umbra')return p end
 local function at(p,t,o)p:advance(t)return p.model:frame(71,t,2,4,o)end
 local function all(f,role)local r={}if f and f.discs then for _,d in ipairs(f.discs)do if d.role==role then r[#r+1]=d end end end return r end
-local o=copy(R.defaults)
+local o=copy(R.defaults);o.ring_level4_open='pop' -- Test7.7: these check the pre-collapse opening (sky sets on)
 assert(o.umbra_under_ending=='fade'and o.umbra_copies_until=='flash','defaults')
 local u=copy(o);u.umbra_under=true;u.umbra_collapse_time=3;u.umbra_collapse_curve=2
 local st=link(u).model.states[71]
