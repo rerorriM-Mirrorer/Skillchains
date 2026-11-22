@@ -2,7 +2,7 @@
 
 ## Current Development Status — 2026-11-21 (America/Chicago)
 
-- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@<this commit>`.
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-mb-rise-gradient`. Runtime TargetSC (Lua only; native DLL stays 0.12.0). Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@fa610f9 (Test7.6)`.
 - installed_base: `76cf0e6` (Test7.3) is the last Live-tagged install; whether Test7.5 (`b17bbb2`) was installed is Unknown, so the package is cumulative since `76cf0e6`.
 - Live (A, 15:42): the level 3 opening rises from the previous link's heights. Test7.5 spread in game: Pending.
 - Changes: Test7.5 (`b17bbb2`, pushed 2026-11-21 20:12) level 3 spread; `8b0b010` docs-only AGENTS shared sync to canon 2026-11-21.3; Test7.6 level 2 spread: `rings level2 open split|half|stacked`, `rings level2 start <0-1>`. Version `0.19.6-unified-test7.6`.
