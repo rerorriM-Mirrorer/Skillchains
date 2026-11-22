@@ -352,7 +352,21 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- (elemental 130,70,255 | indigo 90,60,255 | tint 132,74,224 (the L3
     -- Darkness halo) | 'r,g,b'). dark_disc (void only): black | violet | classic
     -- for the Dark parts of property discs.
-    dark_look='classic',dark_glow='elemental',dark_disc='black'}
+    dark_look='classic',dark_glow='elemental',dark_disc='black',
+    -- Test7.17 per-surface Dark glows (void only). Each is 'same' (=
+    -- dark_glow) or a choice as dark_glow: opener = opener section arcs;
+    -- ring = SC ring glows and the L3 Darkness halo; mb = the MB ring's
+    -- glow (and its core in the glow core mode); burst = Dark bursts and
+    -- kills ('mb' = follow dark_glow_mb, the default).
+    dark_glow_opener='same',dark_glow_ring='same',dark_glow_mb='same',dark_glow_burst='mb',
+    -- dark_mb_core: glow (Test7.16) = the MB ring's dark phase shows the MB
+    -- glow color in its core; black = the core stays black, only its glow
+    -- takes the MB glow color.
+    dark_mb_core='glow',
+    -- dark_ring_back off|on: SC ring glows whose transparent (dim) side is
+    -- Dark show the MB glow color there; dark_ring_back_gain x that side's
+    -- alpha (1 = the ring shade's own alpha; 0-3).
+    dark_ring_back='off',dark_ring_back_gain=1}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -1155,7 +1169,12 @@ function M.awakening_level(created,open,close,now,opts,stage)
 end
 -- Test7.16 Dark recipe helpers.
 M.dark_glows={elemental={130,70,255},indigo={90,60,255},tint={132,74,224}}
-function M.dark_glow_color(opts)
+function M.dark_glow_color(opts,where)
+    if where then
+        local own=tostring(option(opts,'dark_glow_'..where)or 'same'):lower()
+        if where=='burst'and own=='mb'then return M.dark_glow_color(opts,'mb')end
+        if own~='same'and own~='mb'then return M.dark_glow_color({dark_glow=own})end
+    end
     local v=tostring(option(opts,'dark_glow')or 'elemental'):lower()
     if M.dark_glows[v]then return M.dark_glows[v]end
     local r,g,b=v:match('^%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*$')
@@ -1165,11 +1184,11 @@ function M.dark_glow_color(opts)
 end
 -- A glow color for c: in the void look, dark colors (max channel below 60)
 -- blend toward the violet (black -> full violet), others unchanged.
-function M.dark_lift(c,opts)
+function M.dark_lift(c,opts,target)
     if option(opts,'dark_look')~='void'or not c then return c end
     local k=clamp(max(c[1],c[2],c[3])/60,0,1)
     if k>=1 then return c end
-    return mix(M.dark_glow_color(opts),c,k)
+    return mix(target or M.dark_glow_color(opts),c,k)
 end
 -- Test7.15: awakening disc opacity for a stage (-1 = awakening opacity).
 function M.awakening_opacity(opts,stage)
@@ -1181,6 +1200,8 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- Test7.16 Dark recipe (void look): black Dark element, violet glows.
     local void=option(opts,'dark_look')=='void'
     local violet=M.dark_glow_color(opts)
+    -- Test7.17: per-surface glow colors (each 'same' = violet above).
+    local glow_ring,glow_mb,glow_opener=M.dark_glow_color(opts,'ring'),M.dark_glow_color(opts,'mb'),M.dark_glow_color(opts,'opener')
     local dark_ref=context and context.element_color and context.element_color('Dark')
     -- Test5.4: a level-4 link may see its own visual opening length, and
     -- Radiance's large glyph breathes at rest (and falls back after bursts).
@@ -1298,7 +1319,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         mb_color=mix(four[k+1],four[(k+1)%#four+1],smooth(position-k))
     end
     -- Test7.16 void: the MB ring is light; its dark phase shows the violet.
-    if not (s.level>=4)then mb_color=M.dark_lift(mb_color,opts)end
+    -- Test7.17: dark_mb_core black keeps the core black (its glow still lifts).
+    if not (s.level>=4)and option(opts,'dark_mb_core')~='black'then mb_color=M.dark_lift(mb_color,opts,glow_mb)end
     out.ground,out.sky,out.remaining,out.vibration=bottom,top,remaining,details
     local intensity,opacity=option(opts,'intensity'),option(opts,'opacity')
     -- Test5.2 level-4 (Radiance/Umbra link) looks.
@@ -1358,7 +1380,7 @@ function M.frame(model,s,now,radius,height,opts,context)
     local function packed(colors,a)
         local r={}for _,c in ipairs(colors)do r[#r+1]=context.argb(c,a)end return r
     end
-    local function band(r,h,colors,a,pixels,role,part,strand,rotation,lit)
+    local function band(r,h,colors,a,pixels,role,part,strand,rotation,lit,back)
         if a<=.002 or r<.01 then return end
         r=min(r,100)
         local p=packed(colors,a)
@@ -1375,15 +1397,16 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- firm: A+ | A | B- | B — each color holds through its half and
             -- the fade concentrates where they meet (four-stop "harder" blend).
             local c1,c2=colors[1],colors[#colors]
+            local b=back or 1 -- Test7.17: gain on the dim (transparent) side
             if mode=='firm'then
                 p={context.argb(c1,a*(1+shade)),context.argb(c1,a*(1+shade*.35)),
-                    context.argb(c2,a*(1-shade)),context.argb(c2,a*(1-shade*.35))}
+                    context.argb(c2,a*(1-shade)*b),context.argb(c2,a*(1-shade*.35)*b)}
             elseif #colors==1 then
                 p={context.argb(c1,a*(1+shade)),context.argb(c1,a*(1-shade))}
             else
                 local middle=mix(c1,c2,.5)
                 p={context.argb(c1,a*(1+shade)),context.argb(middle,a),
-                    context.argb(c2,a*(1-shade)),context.argb(middle,a)}
+                    context.argb(c2,a*(1-shade)*b),context.argb(middle,a)}
             end
         end
         local forced
@@ -1430,12 +1453,23 @@ function M.frame(model,s,now,radius,height,opts,context)
         local mode=opening and option(opts,'opener_glow')or 'color'
         if glow>0 and light~=false and mode~='off'then
             local surround=mode=='black'and {{0,0,0}}or glow_colors or colors
+            local back
             if void and not l4 then
-                local lifted={}for i,c in ipairs(surround)do lifted[i]=M.dark_lift(c,opts)end
+                -- Test7.17: SC rings lift toward the ring glow, the MB ring toward the MB glow.
+                local target=part=='mb'and glow_mb or glow_ring
+                local lifted={}for i,c in ipairs(surround)do lifted[i]=M.dark_lift(c,opts,target)end
+                -- Test7.17 dark_ring_back: a Dark dim side glows in the MB glow color.
+                if (part=='ground'or part=='sky')and not opening and #surround<=2 and option(opts,'dark_ring_back')=='on'then
+                    local last=surround[#surround]
+                    if max(last[1],last[2],last[3])<60 then
+                        lifted={lifted[1],M.dark_lift(last,opts,glow_mb)}
+                        back=option(opts,'dark_ring_back_gain')
+                    end
+                end
                 surround=lifted
             end
             band(r*(1+(extra.spread or 0)),h,surround,a*.24*glow*(glow_gain or 1)*(extra.glow or 1),px+4*min(glow,3),'glow',part,strand,
-                opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin'),extra.lit)
+                opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin'),extra.lit,back)
         end
         band(r,h,colors,a*(extra.core or 1),px,'core',part,strand,rotation)
     end
@@ -1489,8 +1523,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                             if mode=='black'then gl,gt={0,0,0},{0,0,0}end
                             -- Test7.16 void: Dark-element arcs and the Darkness section glow violet.
                             if void and (pair[1]==dark_ref or pair[2]==dark_ref or p=='Darkness')then
-                                gl,gt=violet,violet
-                            elseif void and mode~='black'then gl,gt=M.dark_lift(gl,opts),M.dark_lift(gt,opts)end
+                                gl,gt=glow_opener,glow_opener -- Test7.17 dark_glow_opener
+                            elseif void and mode~='black'then gl,gt=M.dark_lift(gl,opts,glow_opener),M.dark_lift(gt,opts,glow_opener)end
                             arc(draw_radius,h,gl,gt,alpha*.24*glow,px+4*min(glow,3),'glow',place[2],strand,rotation,start,section)
                         end
                         arc(draw_radius,h,lead,tail,alpha,px,'core',place[2],strand,rotation,start,section)
@@ -1606,7 +1640,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local umbra_white=l4 and l4name=='umbra'and l4opt('glow')=='white'
                     if glow>0 and not opener and s.level>=3 then
                         local tint=(s.properties[1]=='Darkness'or s.properties[1]=='Umbra')and {132,74,224}or gold
-                        if void and s.properties[1]=='Darkness'then tint=violet end -- Test7.16
+                        if void and s.properties[1]=='Darkness'then tint=glow_ring end -- Test7.16/7.17
                         if umbra_white then tint=white end
                         if q.smoke then tint=mix(tint,{0,0,0},q.smoke)end
                         -- Light's gold glow reads close to Earth; the elements

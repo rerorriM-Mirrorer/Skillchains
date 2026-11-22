@@ -1,5 +1,21 @@
 # TargetSC — elemental resonance
 
+## 0.19.17 unified Test7.17 — Dark glow per surface, black MB ring core, `preview dark mb` (Lua only)
+
+- **`//tsc dark glow opener|rings|mb|burst <choice>`**: in the void look, each
+  surface can have its own glow color (same choices as `dark glow`, plus `same`
+  to follow `dark glow`). opener = the opening weaponskill's Dark arcs; rings =
+  SC ring glows and the Darkness halo; mb = the MB ring's glow; burst = Dark
+  magic bursts (default `mb`: they follow the MB glow).
+- **`//tsc dark mb core black|glow`** (default glow): `black` keeps the MB
+  ring's Dark phase pure black, with only its glow in the MB glow color.
+- **`//tsc dark back on|off`** (default off): an SC ring's glow has an opaque
+  side and a transparent side; with `on`, a Dark transparent side glows in the
+  MB glow color instead. `//tsc dark back <0-3>` scales that side (default 1).
+- **`//tsc preview dark mb`**: the Requiescat demo with fifteen Dark bursts
+  (before windows open, inside them, over the next link's white intro, through
+  Umbra's collapse and the final ending).
+
 ## 0.19.16 unified Test7.16 — Dark "void" look, stronger awakening discs (Lua only)
 
 - **`//tsc dark void`** (default `classic`): the Dark element (Compression,

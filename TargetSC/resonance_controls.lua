@@ -531,15 +531,38 @@ function M.new(settings,defaults,save,say,killala,cioara)
             if value=='classic'or value=='void'then
                 settings.dark_look=value;save(settings);say('Dark look '..value..'.')
             elseif value=='glow'then
+                -- Test7.17: //tsc dark glow [opener|rings|mb|burst] <choice> (surface: also 'same'; burst: 'mb').
                 local named={elemental='130,70,255',indigo='90,60,255',tint='132,74,224'}
-                local name=(args[2]or ''):lower()
-                local rest={}for i=2,#args do rest[#rest+1]=args[i]end
+                local surfaces={opener='opener',ring='ring',rings='ring',mb='mb',burst='burst',bursts='burst'}
+                local first=2
+                local where=surfaces[(args[2]or ''):lower()]
+                if where then first=3 end
+                local name=(args[first]or ''):lower()
+                local rest={}for i=first,#args do rest[#rest+1]=args[i]end
                 local r,g,b=table.concat(rest,' '):match('^%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*$')
                 r,g,b=tonumber(r),tonumber(g),tonumber(b)
                 local choice=named[name]and name or (r and r<=255 and g<=255 and b<=255 and ('%d,%d,%d'):format(r,g,b))
-                if not choice then say('Use //tsc dark glow elemental|indigo|tint|<r g b>. Now '..tostring(settings.dark_glow or 'elemental')..'.');return true end
-                settings.dark_glow=choice;save(settings)
-                say('Dark glow '..choice..(named[choice]and (' ('..named[choice]..')')or '')..'.')
+                if where and (name=='same'or (where=='burst'and name=='mb'))then choice=name end
+                local key=where and ('dark_glow_'..where)or 'dark_glow'
+                if not choice then
+                    say('Use //tsc dark glow [opener|rings|mb|burst] elemental|indigo|tint|<r g b>'..(where and '|same'or '')..
+                        (where=='burst'and '|mb'or '')..'. Now '..tostring(settings[key]or (where=='burst'and 'mb'or where and 'same'or 'elemental'))..'.')
+                    return true
+                end
+                settings[key]=choice;save(settings)
+                say('Dark glow'..(where and (' '..where)or '')..' '..choice..(named[choice]and (' ('..named[choice]..')')or '')..'.')
+            elseif value=='mb'and (args[2]or ''):lower()=='core'then
+                local mode=(args[3]or ''):lower()
+                if mode~='black'and mode~='glow'then
+                    say('Use //tsc dark mb core black|glow. Now '..tostring(settings.dark_mb_core or 'glow')..'.');return true
+                end
+                settings.dark_mb_core=mode;save(settings);say('Dark MB ring core '..mode..' (void look).')
+            elseif value=='back'then
+                local v=(args[2]or ''):lower()
+                if v=='on'or v=='off'then
+                    settings.dark_ring_back=v;save(settings);say('Dark ring back side '..v..' (void look).')
+                elseif tonumber(v)then numeric('dark_ring_back_gain',args[2],{0,3},'dark back')
+                else say('Use //tsc dark back on|off|<gain 0-3>. Now '..tostring(settings.dark_ring_back or 'off')..'.')end
             elseif value=='disc'then
                 local mode=(args[2]or ''):lower()
                 if mode~='black'and mode~='violet'and mode~='classic'then
@@ -547,7 +570,7 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 end
                 settings.dark_disc=mode;save(settings);say('Dark disc '..mode..' (void look).')
             else
-                say('Use //tsc dark classic|void | glow elemental|indigo|tint|<r g b> | disc black|violet|classic. Now '..
+                say('Use //tsc dark classic|void | glow [opener|rings|mb|burst] <choice> | mb core black|glow | back on|off|<gain> | disc black|violet|classic. Now '..
                     tostring(settings.dark_look or 'classic')..'.')
             end
         elseif command=='earth'then

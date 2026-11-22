@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.16-unified-test7.16'
+_addon.version='0.19.17-unified-test7.17'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -140,9 +140,13 @@ local function help()
         {'preview demo radiance','Five weaponskills: Fast Blade, Burning Blade, Flat Blade, Savage Blade, Resolution (L1/L2/Light/Radiance), no bursts.'},
         {'preview mb radiance','Same Radiance links with Fire/Light/Lightning/Light bursts at the MB demo overlap times.'},
         {'preview demo requiescat','Requiescat with Sequence (Gravitation+Scission+Darkness opener), Gust Slash, Nightmare Scythe, Rudra\'s Storm, Requiescat (Umbra); no bursts.'},
+        {'preview dark mb','Same Requiescat links with fifteen Dark bursts (Gravitation, Darkness and Umbra windows: before windows open, overlaps, the final ending).'},
         {'preview earth mb','Same Requiescat links with ten Earth bursts (Gravitation, Darkness and Umbra windows), incl. overlaps and the final ending.'},
         {'dark classic|void','Dark element: classic flat 25,14,52 (default), or void = pure black cores with violet glows (Dark Elemental look).'},
         {'dark glow elemental|indigo|tint|<r g b>','Void glow color: elemental 130,70,255 (default), indigo 90,60,255, tint 132,74,224 (the L3 Darkness halo), or your own.'},
+        {'dark glow opener|rings|mb|burst <choice>|same','Void: per-surface glow color (opener arcs; SC ring glows and the Darkness halo; MB ring glow; Dark bursts, which follow mb by default).'},
+        {'dark mb core black|glow','Void: MB ring dark phase keeps a black core with the MB glow around it, or shows the glow color in the core (default glow).'},
+        {'dark back on|off|<0-3>','Void: SC ring glows show the MB glow color on their Dark transparent side (default off); a number scales that side (default 1).'},
         {'dark disc black|violet|classic','Void look: the Dark parts of property discs (Compression, Gravitation, Darkness): black (default), violet glow color, or classic.'},
         {'earth classic|gold|scission|crystal|<r g b>','Earth element color: classic 176,114,48 (default), gold 230,190,70, scission 255,165,0, crystal 216,146,64, or your own.'},
         {'preview switch [preview]','The preview rides on the first two targets you pick (enemies or yourself) to try target handoffs.'},

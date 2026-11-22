@@ -53,11 +53,12 @@ function M.apply_colors(opts)
         applied_earth=want
     end
     local look=opts and opts.dark_look or 'classic'
-    local key=look..'|'..tostring(opts and opts.dark_glow or 'elemental')
+    local key=look..'|'..tostring(opts and opts.dark_glow or 'elemental')..'|'..
+        tostring(opts and opts.dark_glow_mb)..'|'..tostring(opts and opts.dark_glow_burst)
     if key~=applied_dark then
         local void=look=='void'
         set(E.Dark,void and {0,0,0}or {25,14,52});set(E.Darkness,void and {0,0,0}or {25,14,52})
-        set(BURST_DARK,void and motion.dark_glow_color(opts)or {25,14,52})
+        set(BURST_DARK,void and motion.dark_glow_color(opts,'burst')or {25,14,52}) -- Test7.17
         applied_dark=key
     end
 end

@@ -43,6 +43,12 @@ M.requiescat_sequence={
 -- doubles, overlaps with the next link's white intro (23.8, 29.6), and the
 -- final MB ending (38.0 = as a 2 s ending begins, 38.8 inside it).
 M.earth_hits={20.6,22.2,23.8,27.5,29.6,33.6,34.4,36.5,38.0,38.8}
+-- Test7.17: Dark MBs through the same chain (Dark bursts on Gravitation,
+-- Darkness and Umbra; never Detonation): Gravitation before its window
+-- opens (18.4), inside it, against Rudra's white intro (23.8); Darkness
+-- before and after it opens, against Requiescat's intro (29.6); Umbra
+-- through its collapse (31.2, 32.6), inside, and the final MB ending.
+M.dark_hits={18.4,20.6,22.2,23.8,25.0,26.4,27.5,29.6,31.2,32.6,33.6,34.4,36.5,38.0,38.8}
 function M.parse(args,resonance)
     local first=(args[1] or 'opener'):lower()
     local kind=first
@@ -57,6 +63,11 @@ function M.parse(args,resonance)
     if (first=='demo'or first=='full')and (second=='radiance'or second=='light')then
         local mb=(args[3]or ''):lower()=='mb'
         return {kind=mb and 'radiancemb'or 'radiancedemo',properties={'Scission'},level=1}
+    end
+    -- Test7.17: `preview dark mb` (also `preview requiescat dark`): Dark bursts
+    -- throughout. (`preview mb dark` stays the short Darkness overlap preview.)
+    if (first=='dark'and second=='mb')or (first=='requiescat'and second=='dark')then
+        return {kind='darkmb',properties=M.requiescat_opener,level=3}
     end
     -- Test7.13: `preview demo requiescat` (no bursts) and `preview earth mb`
     -- / `preview mb earth` / `preview mb requiescat` (Earth bursts throughout).
@@ -127,7 +138,7 @@ function M.new(spec,id,now,resonance,opts)
     end
     local kind=spec.kind
     local s
-    local requiescat=kind=='requiescatdemo'or kind=='earthmb'
+    local requiescat=kind=='requiescatdemo'or kind=='earthmb'or kind=='darkmb'
     local demo=kind=='umbra'or kind=='mbdemo'or kind=='radiancedemo'or kind=='radiancemb'or requiescat
     if kind=='opener' or kind=='pre' or demo then s=state(now,1,spec.properties,spec.level,false)
     else s=state(now,2,spec.properties,spec.level,kind=='closed' or spec.level==4) end
@@ -237,9 +248,10 @@ function M.new(spec,id,now,resonance,opts)
             end
             table.sort(self.events,function(a,b)return a.at<b.at end)
         end
-        if kind=='earthmb'then
-            for _,t in ipairs(M.earth_hits)do
-                self.events[#self.events+1]={at=now+t,kind='burst',element='Earth',color=(resonance.burst_color or resonance.element_color)('Earth')}
+        if kind=='earthmb'or kind=='darkmb'then
+            local element=kind=='darkmb'and 'Dark'or 'Earth'
+            for _,t in ipairs(kind=='darkmb'and M.dark_hits or M.earth_hits)do
+                self.events[#self.events+1]={at=now+t,kind='burst',element=element,color=(resonance.burst_color or resonance.element_color)(element)}
             end
             table.sort(self.events,function(a,b)return a.at<b.at end)
         end
@@ -289,6 +301,7 @@ function M.new(spec,id,now,resonance,opts)
         kind=='radiancedemo'and 'Radiance demo: Fast Blade 0s; Burning Blade 9s; Flat Blade 17s; Savage Blade 24s; Resolution 30s. Four links; no burst events; final MB reminder ends 40s.'or
         kind=='radiancemb'and 'Radiance MB demo: same four links; Fire 12.6s, Light 23.8s, Lightning 29.8s, Light 38.8s. Ends 40s; local visuals only.'or
         kind=='requiescatdemo'and 'Requiescat demo: Requiescat 0s (Gravitation+Scission+Darkness opener); Gust Slash 9s (Detonation); Nightmare Scythe 17s (Gravitation); Rudra\'s Storm 24s (Darkness); Requiescat 30s (Umbra). No bursts; final MB reminder ends 40s.'or
+        kind=='darkmb'and ('Dark MB demo: Requiescat links as in demo requiescat; Dark MBs at '..table.concat(M.dark_hits,', ')..'s. Ends 40s; local visuals only.')or
         kind=='earthmb'and ('Earth MB demo: Requiescat links as in demo requiescat; Earth MBs at '..table.concat(M.earth_hits,', ')..'s. Ends 40s; local visuals only.')or
         kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or
         kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or

@@ -1,5 +1,16 @@
 ## Current Development Status — 2026-11-22 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.16 `ff4a134`, Test7.17 on top).
+- installed_base: Test7.16 (`ff4a134`; A ran `//tsc dark void` / `dark glow` 03:40, Live). Package `TargetSC-0.19.17-Test7.17.zip` = files changed since `ff4a134` + README.md.
+- Live (A, 03:40): void liked. `dark glow 255 255 255` liked for the opener's Dark arcs, `dark glow 0 0 0` for everything else; wants the MB ring's Dark phase pure black with a violet (elemental) glow, SC rings and their glows pure black; asks to also try the Dark transparent side of ring glows in the violet. Awakening discs looking good (opacity/duration still being tuned).
+- Changes: Test7.17 per-surface Dark glows `dark_glow_opener|ring|mb` ('same' = `dark_glow`) and `dark_glow_burst` ('mb' default = follow the MB glow; `resonance.apply_colors` keys on it); `dark_mb_core` glow|black (black skips the MB core lift, the MB ring glow still lifts toward `dark_glow_mb`); `dark_ring_back` off|on + `dark_ring_back_gain` 1 (SC ring glows of <=2 colors whose dim stop is dark take the MB glow there; gain scales that side's alpha in firm/gradient blends). `M.dark_glow_color(opts,where)`, `M.dark_lift(c,opts,target)`, band() `back` arg. Commands `//tsc dark glow [opener|rings|mb|burst] <choice|same>`, `dark mb core black|glow`, `dark back on|off|<0-3>`. New preview `preview dark mb` (alias `preview requiescat dark`): Requiescat links with 15 Dark MBs at 18.4, 20.6, 22.2, 23.8, 25.0, 26.4, 27.5, 29.6, 31.2, 32.6, 33.6, 34.4, 36.5, 38.0, 38.8 s. Version `0.19.17-unified-test7.17`.
+- Note (Verified): Gravitation's two strands are mirrored, so with `dark back on` only the strand with Dark on its dim side shows the violet; the other keeps a black glow on its lit side.
+- Tunables (defaults): `dark_glow_opener` same, `dark_glow_ring` same, `dark_glow_mb` same, `dark_glow_burst` mb, `dark_mb_core` glow, `dark_ring_back` off, `dark_ring_back_gain` 1. Defaults reproduce Test7.16 exactly.
+- Checks: 75/75 CI lua5.1 invocations PASS incl. new `test_dark_717.lua` (A's profile; plays `preview dark mb` to the end). Host only (lupa runner).
+- Pending: Test7.17 in game (option 1 back off vs option 2 back on); Umbra second violet MB ring idea; MB ring hold + soft shimmer; later awakening ideas.
+
+## Current Development Status — 2026-11-22 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.15 `2697238`, Test7.16 on top).
 - installed_base: Test7.15 (`2697238`; A tested it 03:01, Live). Package `TargetSC-0.19.16-Test7.16.zip` cumulative since `76cf0e6`.
 - Live (A, 03:01): opener property arcs closing liked. Awakening discs far too faint even at opacity 1 (cause Verified: alpha = awakening opacity x addon opacity .27 x curve). A wants the Dark element as pure black cores with a pure-hue violet / violet-blue glow (Dark Elemental), switchable.
