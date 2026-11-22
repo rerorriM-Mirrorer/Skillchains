@@ -1,5 +1,14 @@
 ## Current Development Status — 2026-11-22 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.14 `b4a2773`, Test7.15 on top).
+- installed_base: Test7.14 (`b4a2773`; A tested it 02:39, Live). Package `TargetSC-0.19.15-Test7.15.zip` cumulative since `76cf0e6`.
+- Live (A, 02:39): Umbra slow curve "looks really good". `rings converge from .09` for strands (earlier merging got in the way of the animations); converge from 1 liked for opener arcs. Dark violets rejected as the Dark element color; direction now = black core with a pure-hue violet glow (discussion, no code yet).
+- Changes: Test7.15 `awakening_opacity_<stage>` (-1) and `awakening_until_<stage>` ('same') for opener/level1/level2/level3 (`M.awakening_opacity`, stage arg to `M.awakening_level`; link discs carry their level); `ring_converge_opener` 1 (-1 = converge from).
+- Checks: 73/73 CI lua5.1 invocations PASS incl. new `test_awakening_715.lua` (defaults identical; stage 0 hides only that stage in `preview demo` on A's profile). `test_opener_sections.lua` pins converge off; `test_converge_714.lua` opener block pins opener -1. Host only.
+- Pending: Test7.15 in game; Dark recipe (black core + violet glow); MB ring burst-color hold and shimmer look (discussion).
+
+## Current Development Status — 2026-11-22 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.13 `358dfc3`, Test7.14 on top).
 - installed_base: Test7.13 (`358dfc3`; A tried it 02:02, Live: Earth candidates seen). Package `TargetSC-0.19.14-Test7.14.zip` cumulative since `76cf0e6`.
 - Live (A, 02:02): Earth gold > classic; `scission` (255,165,0) "feels GOOD", the pick for now (may revisit with the Darkness color). Crystal "cool".

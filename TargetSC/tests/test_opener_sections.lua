@@ -13,6 +13,7 @@ local function opener(props)
 end
 local function frame(s,t,o)local m=R.new();m.states[71]=copy(s);return m:frame(71,t,2,4,o)end
 local o=copy(R.defaults);o.opener_muted=false
+o.ring_converge=false -- Test7.15: section geometry without the closing convergence
 local function arcs(f,part,role)local r={}for _,a in ipairs(f)do if a.kind=='arc'and a.part==part and a.role==role then r[#r+1]=a end end return r end
 -- Gaps and equal sections for 1, 2, 3 properties.
 for n,props in ipairs({{'Liquefaction'},{'Liquefaction','Fusion'},{'Liquefaction','Fusion','Light'}})do

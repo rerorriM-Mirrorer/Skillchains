@@ -1,5 +1,15 @@
 # TargetSC — elemental resonance
 
+## 0.19.15 unified Test7.15 — awakening disc per level, opener converge start (Lua only)
+
+- **`//tsc awakening opener|level1|level2|level3 opacity <0-1|same>`**: the
+  white awakening disc's opacity for the opening weaponskill, or for a link of
+  that level. `same` (default) uses `awakening opacity`.
+- **`//tsc awakening opener|level1|level2|level3 fade until same|default|open|close|<1-9>`**:
+  when that stage's disc finishes fading. `same` (default) uses `awakening fade until`.
+- **`//tsc rings converge opener <0.05-1|same>`** (default 1): opener arcs start
+  closing from the top of the sky's descent; L2/L3 strands keep `converge from`.
+
 ## 0.19.14 unified Test7.14 — strands and opener arcs converge, Umbra slow curve, Requiescat with Sequence (Lua only)
 
 - **`//tsc rings converge on|off`** (default on): as the sky ring lands at the

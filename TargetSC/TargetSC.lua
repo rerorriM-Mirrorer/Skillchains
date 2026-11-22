@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.14-unified-test7.14'
+_addon.version='0.19.15-unified-test7.15'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -288,6 +288,8 @@ local function help()
         {'mb period <0.2-6>','Large glyph full breathing cycle in seconds (default 2).'},
         {'mb rise|expand <0-2>','Burst glyph rise as model-height fraction / extra radial growth.'},
         {'awakening on|off|opacity <0-1>','Filled white opening glyph; MB breathing/burst controls are independent.'},
+        {'awakening opener|level1|level2|level3 opacity <0-1|same>','Awakening disc opacity for the opening weaponskill or a link of that level (same = awakening opacity).'},
+        {'awakening opener|level1|level2|level3 fade until same|default|open|close|<1-9>','When that stage\'s awakening disc finishes fading (same = awakening fade until).'},
         {'awakening fade <inner 0-1> [outer 0-1]','Center/edge opacity of the white opening disc, as multipliers; outer defaults to 0 (default 1 0).'},
         {'awakening size <0.1-3>','White opening disc size; 1 = previous size (default 1).'},
         {'awakening links on|off','Play the white disc again on every link that opens a new window (default on).'},
@@ -317,6 +319,7 @@ local function help()
         {'discs lightdark classic|elements','Light/Darkness discs: classic tones, or white/black center to four element colors (default classic).'},
         {'discs blend gradient|firm|split','Two-element discs: even fade, firm (each color holds, fade where they meet), or halves (default gradient).'},
         {'rings converge on|off | from <0.05-1>','L2/L3 strands and opener arcs close into one ring as the sky ring lands; from = descent left when they start (default on, .35).'},
+        {'rings converge opener <0.05-1|same>','When opener arcs start closing: 1 (default) = from the top of the descent; same = converge from.'},
         {'rings blend gradient|firm|split','SC rings: even fade, firm (colors hold, fade where they meet), or sectors; openers always split (default gradient).'},
         {'rings light white|elements|classic','Level 3 Light: white strands, inner glows in the four element colors; white MB ring (default white).'},
         {'rings light cycle <0.5-30>','Seconds for the inner glow colors to move down one ring (default 4).'},

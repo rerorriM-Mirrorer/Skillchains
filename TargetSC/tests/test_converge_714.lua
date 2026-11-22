@@ -49,6 +49,7 @@ end
 
 -- Opener arcs: gaps and lifts close into one ring (Requiescat-style opener).
 local o=copy(R.defaults)
+o.ring_converge_opener=-1 -- Test7.15: this block checks the shared .35 start
 local p,st=run({'opener','Gravitation,Scission'},o,73)
 local function arcs(f)local r={}for _,v in ipairs(f)do if v.kind=='arc'and v.role=='core'and v.part=='ground'then r[#r+1]=v end end return r end
 local function coverage(f)local a=arcs(f);local total,lifts=0,{}

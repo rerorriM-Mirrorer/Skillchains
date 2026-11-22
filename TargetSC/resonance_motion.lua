@@ -60,6 +60,11 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     awakening_until='default',
     -- Test6.7: each link that opens a new window plays the awakening disc too.
     awakening_links=true,
+    -- Test7.15: per stage (opener = the opening weaponskill, level1-3 = a link
+    -- of that level): own opacity (-1 = awakening opacity) and own fade end
+    -- ('same' = awakening fade until; else default|open|close|'1'..'9').
+    awakening_opacity_opener=-1,awakening_opacity_level1=-1,awakening_opacity_level2=-1,awakening_opacity_level3=-1,
+    awakening_until_opener='same',awakening_until_level1='same',awakening_until_level2='same',awakening_until_level3='same',
     -- Test3.8: opener arcs fade along their length from the bright end
     -- (lead = facing the spin); the glow band follows by opener_fade_glow.
     opener_fade=.6,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
@@ -141,6 +146,9 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- from = how much sky descent is left (x the full span) when they start
     -- to merge (.35); they meet exactly as the sky lands. off = Test7.13.
     ring_converge=true,ring_converge_from=.35,
+    -- Test7.15: opener arcs start closing at this much descent left (1 = from
+    -- the top of the descent; -1 = same as converge from).
+    ring_converge_opener=1,
     -- Test7.12: the black disc flashes white with the last ring flash (as the
     -- MB glyph vanishes), then returns to black over `flash fade` s (.3).
     umbra_disc_flash=false,umbra_flash_fade=.3,
@@ -598,7 +606,9 @@ end
 -- results and `rings converge off` keep 1.
 function M.converge(s,now,opts)
     if not option(opts,'ring_converge')or s.closed or s.sc_close<=s.sc_open then return 1 end
-    local from=clamp(option(opts,'ring_converge_from'),.05,1)
+    local from=option(opts,'ring_converge_from')
+    if s.step==1 and option(opts,'ring_converge_opener')>=0 then from=option(opts,'ring_converge_opener')end
+    from=clamp(from,.05,1)
     return smooth(clamp(M.descent_remaining(s,min(now,s.sc_close),opts)/from,0,1))
 end
 -- Height, not elapsed time, traces the requested bell profile. The radius
@@ -1118,10 +1128,13 @@ end
 -- White awakening disc level (0-1) for a wait from created to open and a
 -- window ending at close: full through the grow (first third of the wait),
 -- then fading until `awakening fade until` (default two-thirds of the wait).
-function M.awakening_level(created,open,close,now,opts)
+function M.awakening_level(created,open,close,now,opts,stage)
     local span=max(.1,open-created)
     local start=created+span/3 -- the grow ends here, as before
     local mode=tostring(option(opts,'awakening_until'))
+    -- Test7.15: a stage's own fade end ('same' = the overall setting).
+    local own=stage and option(opts,'awakening_until_'..stage)
+    if own~=nil and tostring(own)~='same'then mode=tostring(own)end
     local finish=created+span*2/3
     if mode=='open'then finish=open
     elseif mode=='close'then finish=max(open,close or open)
@@ -1131,6 +1144,12 @@ function M.awakening_level(created,open,close,now,opts)
         finish=min(open+tonumber(mode),max(open,close or open))
     end
     return 1-smooth((now-start)/max(.05,finish-start))
+end
+-- Test7.15: awakening disc opacity for a stage (-1 = awakening opacity).
+function M.awakening_opacity(opts,stage)
+    local own=stage and option(opts,'awakening_opacity_'..stage)
+    if type(own)=='number'and own>=0 then return own end
+    return option(opts,'awakening_opacity')
 end
 function M.frame(model,s,now,radius,height,opts,context)
     -- Test5.4: a level-4 link may see its own visual opening length, and
@@ -1584,10 +1603,10 @@ function M.frame(model,s,now,radius,height,opts,context)
         local grow=1-(1-clamp(progress*3,0,1))^3
         local initial=0
         if show_sc and opening.opener_seen and option(opts,'awakening')then
-            local level=M.awakening_level(opening.created,opening.open,opening.close,now,opts)
+            local level=M.awakening_level(opening.created,opening.open,opening.close,now,opts,'opener')
             -- A link takes over: finish quickly and continuously, no pop.
             if s.step>1 then level=level*(1-smooth((now-s.created)/.3))end
-            initial=option(opts,'awakening_opacity')*opacity*level
+            initial=M.awakening_opacity(opts,'opener')*opacity*level
         end
         if initial>0 and s.step>1 then
             -- The link's large MB glyph now owns the pooled shape, so the
@@ -1607,12 +1626,13 @@ function M.frame(model,s,now,radius,height,opts,context)
         if show_sc and s.step>1 and option(opts,'awakening')and option(opts,'awakening_links')then
             local cur=opening.link
             if not cur or cur.created~=s.created then
-                if cur then opening.link_prev={created=cur.created,open=cur.open,close=cur.close,handoff=s.created}end
-                cur=not s.closed and {created=s.created,open=s.sc_open,close=s.sc_close}or nil
+                if cur then opening.link_prev={created=cur.created,open=cur.open,close=cur.close,stage=cur.stage,handoff=s.created}end
+                cur=not s.closed and {created=s.created,open=s.sc_open,close=s.sc_close,
+                    stage='level'..math.max(1,math.min(3,s.level or 1))}or nil
                 opening.link=cur
             end
             local function link_disc(a,level)
-                local fill=option(opts,'awakening_opacity')*opacity*level
+                local fill=M.awakening_opacity(opts,a.stage)*opacity*level
                 if fill<=0 then return end
                 local p=clamp((now-a.created)/max(.1,a.open-a.created),0,1)
                 local g=1-(1-clamp(p*3,0,1))^3
@@ -1627,9 +1647,9 @@ function M.frame(model,s,now,radius,height,opts,context)
             if prev then
                 local k=1-smooth((now-prev.handoff)/.3)
                 if k<=0 or now<prev.handoff then opening.link_prev=nil
-                else link_disc(prev,M.awakening_level(prev.created,prev.open,prev.close,now,opts)*k)end
+                else link_disc(prev,M.awakening_level(prev.created,prev.open,prev.close,now,opts,prev.stage)*k)end
             end
-            if cur and now>=cur.created then link_disc(cur,M.awakening_level(cur.created,cur.open,cur.close,now,opts))end
+            if cur and now>=cur.created then link_disc(cur,M.awakening_level(cur.created,cur.open,cur.close,now,opts,cur.stage))end
         end
         local role='mb-glyph'
         local fill=0

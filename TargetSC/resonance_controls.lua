@@ -457,8 +457,13 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 -- Test7.14: strands and opener arcs close into one as the sky ring lands.
                 local name=(args[2]or ''):lower()
                 if name=='from'then numeric('ring_converge_from',args[3],{.05,1},'rings converge from')
+                elseif name=='opener'then
+                    -- Test7.15: opener arcs' own start (same = converge from).
+                    if (args[3]or ''):lower()=='same'then settings.ring_converge_opener=-1;save(settings)
+                        say('rings converge opener: same as converge from.')
+                    else numeric('ring_converge_opener',args[3],{.05,1},'rings converge opener')end
                 elseif not toggle('ring_converge',name,'Rings converge')then
-                    say('Use //tsc rings converge on|off | from <0.05-1>.')
+                    say('Use //tsc rings converge on|off | from <0.05-1> | opener <0.05-1|same>.')
                 end
             elseif value=='shade'then numeric('ring_shade',args[2],{0,1},'rings shade')
             elseif value=='glow'and choice=='spin'then numeric('ring_glow_spin',args[3],{0,4},'rings glow spin')
@@ -468,7 +473,30 @@ function M.new(settings,defaults,save,say,killala,cioara)
         elseif command=='opener'then opener(args,value)
         elseif command=='discs'then discs(args,value)
         elseif command=='awakening'then
-            if value=='opacity'then numeric('awakening_opacity',args[2],{0,1},'awakening opacity')
+            local stages={opener=true,level1=true,level2=true,level3=true}
+            if stages[value]then
+                -- Test7.15: per-stage awakening opacity and fade end.
+                local what=(args[2]or ''):lower()
+                local raw=(args[3]or ''):lower()
+                if what=='opacity'then
+                    if raw=='same'then settings['awakening_opacity_'..value]=-1;save(settings)
+                        say('awakening '..value..' opacity: same as awakening opacity.')
+                    else numeric('awakening_opacity_'..value,args[3],{0,1},'awakening '..value..' opacity')end
+                elseif what=='fade'and raw=='until'then
+                    local mode=(args[4]or ''):lower()
+                    if mode=='window'then mode='open'end
+                    local n=tonumber(mode)
+                    if not (mode=='same'or mode=='default'or mode=='open'or mode=='close'or
+                        (n and n==math.floor(n)and n>=1 and n<=9))then
+                        say('Use //tsc awakening '..value..' fade until same|default|open|close|<1-9>. Now '..
+                            tostring(settings['awakening_until_'..value]or 'same')..'.');return true
+                    end
+                    settings['awakening_until_'..value]=n and tostring(n)or mode;save(settings)
+                    say('awakening '..value..' fades until '..settings['awakening_until_'..value]..'.')
+                else
+                    say('Use //tsc awakening '..value..' opacity <0-1|same> | fade until same|default|open|close|<1-9>.')
+                end
+            elseif value=='opacity'then numeric('awakening_opacity',args[2],{0,1},'awakening opacity')
             elseif value=='fade'and (args[2]or ''):lower()=='until'then
                 local mode=(args[3]or ''):lower()
                 if mode=='window'then mode='open'end
