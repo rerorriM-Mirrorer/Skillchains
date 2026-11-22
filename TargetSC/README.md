@@ -1,5 +1,23 @@
 # TargetSC — elemental resonance
 
+## 0.19.18 unified Test7.18 — MB ring hold, soft shimmer, Compression back glow, white opener glow (Lua only)
+
+- **`//tsc mb ring hold <0-4>`** (default 0 = off): after a magic burst's quick
+  white flicker, the MB ring stays the pure burst color for this many seconds,
+  with its own color cycle paused, then eases back over **`mb ring ease
+  <0.05-3>`** seconds (`-1`, the default, = the usual strike fade).
+- **`//tsc mb shimmer style ripple|soft`** (default ripple): `soft` replaces
+  the 9 Hz ripple on the glyph's burst glow with a bright side that turns
+  around it. `mb shimmer turn <-3-3>` (.5 turns a second), `mb shimmer soft
+  <0-1>` (.8, how bright that side is), `mb shimmer decay <0.5-8>` (3, higher =
+  fades faster; applies to both styles).
+- **`//tsc dark back compression`**: the violet back side only on Compression
+  rings. **`//tsc dark back spin <1-6>`** (default 1): those glows turn this
+  many times faster than their ring.
+- **`//tsc opener glow white`**: every opening-weaponskill property glows white.
+- **`//tsc preset cioara`** is now your 04:10 look plus opener glow white and
+  Compression back glow (gain .5, spin 3).
+
 ## 0.19.17 unified Test7.17 — Dark glow per surface, black MB ring core, `preview dark mb` (Lua only)
 
 - **`//tsc dark glow opener|rings|mb|burst <choice>`**: in the void look, each

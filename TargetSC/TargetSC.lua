@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.17-unified-test7.17'
+_addon.version='0.19.18-unified-test7.18'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -146,7 +146,10 @@ local function help()
         {'dark glow elemental|indigo|tint|<r g b>','Void glow color: elemental 130,70,255 (default), indigo 90,60,255, tint 132,74,224 (the L3 Darkness halo), or your own.'},
         {'dark glow opener|rings|mb|burst <choice>|same','Void: per-surface glow color (opener arcs; SC ring glows and the Darkness halo; MB ring glow; Dark bursts, which follow mb by default).'},
         {'dark mb core black|glow','Void: MB ring dark phase keeps a black core with the MB glow around it, or shows the glow color in the core (default glow).'},
-        {'dark back on|off|<0-3>','Void: SC ring glows show the MB glow color on their Dark transparent side (default off); a number scales that side (default 1).'},
+        {'dark back on|compression|off|<0-3>','Void: SC ring glows show the MB glow color on their Dark transparent side (on = all, compression = Compression rings only; default off); a number scales that side (default 1).'},
+        {'dark back spin <1-6>','Void: glows with a back side turn this many times faster than their ring (default 1).'},
+        {'mb ring hold <0-4> | ease <0.05-3|-1>','Burst color stays pure on the MB ring for hold s (color cycle paused), then eases back (default 0 = off; ease -1 = mb duration x .375).'},
+        {'mb shimmer style ripple|soft','Burst glow on the glyph: 9 Hz ripple (default) or a soft lit side turning around it. Also: mb shimmer decay <0.5-8> (3), turn <-3-3> (.5 turns/s), soft <0-1> (.8).'},
         {'dark disc black|violet|classic','Void look: the Dark parts of property discs (Compression, Gravitation, Darkness): black (default), violet glow color, or classic.'},
         {'earth classic|gold|scission|crystal|<r g b>','Earth element color: classic 176,114,48 (default), gold 230,190,70, scission 255,165,0, crystal 216,146,64, or your own.'},
         {'preview switch [preview]','The preview rides on the first two targets you pick (enemies or yourself) to try target handoffs.'},
@@ -269,7 +272,7 @@ local function help()
         {'glow <0-3>','Surrounding light without thickening the core.'},
         {'opener preset original|gap|black|muted|combined|quiet','Compare opener treatments without resetting other visuals.'},
         {'opener gap <0-60>|on|off','Two opposite opener gaps, each this many degrees; on=12.'},
-        {'opener glow color|black|off','Opener surround color; uses the global glow strength.'},
+        {'opener glow color|black|white|off','Opener surround color (white = every opener property glows white); uses the global glow strength.'},
         {'opener muted [on|off]','Quieter elemental hues on opener rings.'},
         {'opener layout sections|rings','sections: properties share the circle (gaps 90/60/30), one stacked arc per element; rings: previous nested rings.'},
         {'opener spin slowdown <0-4>','How sharply the opener slows across its window; 0 = never (default 1, was 3).'},

@@ -232,8 +232,8 @@ function M.new(settings,defaults,save,say,killala,cioara)
             numeric('opener_gap',v=='on'and '12'or v=='off'and '0'or v,{0,60},'opener gap')
         elseif value=='glow'then
             local mode=(args[2]or ''):lower()
-            if mode~='color'and mode~='black'and mode~='off'then
-                say('Use //tsc opener glow color|black|off.');return
+            if mode~='color'and mode~='black'and mode~='white'and mode~='off'then
+                say('Use //tsc opener glow color|black|white|off.');return
             end
             settings.opener_glow=mode;save(settings);say('Opener glow '..mode..'.')
         elseif value=='muted'then
@@ -307,6 +307,23 @@ function M.new(settings,defaults,save,say,killala,cioara)
             -- Test5.0: quick handoff when the new target has resonance.
             if value~='out'and value~='in'then say('Use //tsc switch out <0-1> | switch in <0-1>.');return true end
             numeric('switch_'..value,args[2],{0,1},'switch '..value)
+        elseif command=='mb'and value=='ring'and ((args[2]or ''):lower()=='hold'or (args[2]or ''):lower()=='ease')then
+            -- Test7.18: //tsc mb ring hold <0-4> | ease <0.05-3|-1>
+            local name=(args[2]or ''):lower()
+            if name=='hold'then numeric('mb_ring_hold',args[3],{0,4},'mb ring hold')
+            elseif tonumber(args[3])==-1 then settings.mb_ring_ease=-1;save(settings);say('mb ring ease = default (mb duration x .375)')
+            else numeric('mb_ring_ease',args[3],{.05,3},'mb ring ease')end
+        elseif command=='mb'and value=='shimmer'and args[2]and not tonumber(args[2])then
+            -- Test7.18: //tsc mb shimmer style ripple|soft | decay <0.5-8> | turn <-3-3> | soft <0-1>
+            local name=(args[2]or ''):lower()
+            if name=='style'then
+                local style=(args[3]or ''):lower()
+                if style~='ripple'and style~='soft'then say('Use //tsc mb shimmer style ripple|soft. Now '..tostring(settings.mb_shimmer_style or 'ripple')..'.');return true end
+                settings.mb_shimmer_style=style;save(settings);say('MB shimmer '..style..'.')
+            elseif name=='decay'then numeric('mb_shimmer_decay',args[3],{.5,8},'mb shimmer decay')
+            elseif name=='turn'then numeric('mb_shimmer_turn',args[3],{-3,3},'mb shimmer turn')
+            elseif name=='soft'then numeric('mb_shimmer_soft',args[3],{0,1},'mb shimmer soft')
+            else say('Use //tsc mb shimmer <0-2> | style ripple|soft | decay <0.5-8> | turn <-3-3> | soft <0-1>.')end
         elseif command=='mb'and value=='style'then
             local style=(args[2]or ''):lower()
             if style~='classic'and style~='clapper'then say('Use //tsc mb style classic|clapper.');return true end
@@ -559,10 +576,11 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 settings.dark_mb_core=mode;save(settings);say('Dark MB ring core '..mode..' (void look).')
             elseif value=='back'then
                 local v=(args[2]or ''):lower()
-                if v=='on'or v=='off'then
+                if v=='on'or v=='off'or v=='compression'then
                     settings.dark_ring_back=v;save(settings);say('Dark ring back side '..v..' (void look).')
+                elseif v=='spin'then numeric('dark_back_spin',args[3],{1,6},'dark back spin')
                 elseif tonumber(v)then numeric('dark_ring_back_gain',args[2],{0,3},'dark back')
-                else say('Use //tsc dark back on|off|<gain 0-3>. Now '..tostring(settings.dark_ring_back or 'off')..'.')end
+                else say('Use //tsc dark back on|compression|off | <gain 0-3> | spin <1-6>. Now '..tostring(settings.dark_ring_back or 'off')..'.')end
             elseif value=='disc'then
                 local mode=(args[2]or ''):lower()
                 if mode~='black'and mode~='violet'and mode~='classic'then

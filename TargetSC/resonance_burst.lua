@@ -10,6 +10,12 @@ local function bloom_life(opts,option)
     return (option('mb_bloom_time')or 1)+math.max(0,math.floor(option('mb_bloom_lines')or 0)-1)*(option('mb_bloom_lines_delay')or 0)
 end
 M.bloom_life=bloom_life
+-- Test7.18: MB ring hold ease time (-1 = the usual strike fade, duration x .375).
+function M.ring_ease(option)
+    local e=option('mb_ring_ease')or -1
+    if e<0 then return math.max(.05,(option('mb_duration')or 1.2)*.375)end
+    return math.max(.05,e)
+end
 function M.duration(opts)
     local duration=opts.mb_duration or 1.2
     if (opts.mb_style or 'clapper')=='classic'then return math.max(duration,bloom_life(opts))end
@@ -97,7 +103,8 @@ function M.sample(model,state,now,option)
         local lifetime=clapper and math.max(duration,math.max(option('mb_hold'),duration*.375)+option('mb_return'))or duration
         -- Keep the entry while its bloom is still drawing (Test4.9); the
         -- glyph/ring response below still ends on its own timing.
-        if age>math.max(lifetime,bloom_life(nil,option)) then table.remove(bursts,i)
+        local held=(option('mb_ring_hold')or 0)>0 and option('mb_ring_hold')+M.ring_ease(option)or 0
+        if age>math.max(lifetime,bloom_life(nil,option),held) then table.remove(bursts,i)
         elseif age>lifetime then -- bloom only: no glyph/ring response
         elseif age>=0 then
             local glyph=model.awakening_glyphs and model.awakening_glyphs[state.id]
@@ -130,9 +137,11 @@ function M.sample(model,state,now,option)
                 out.property=M.return_energy(age,return_at,option('mb_return'))*effects
                 out.lift=option('mb_lift')*out.property
                 -- mb glow flicker scales the 9 Hz ripple (1 = original, 0 = steady).
-                local ripple=.45*option('mb_glow_flicker')
-                out.shimmer=option('mb_shimmer')*math.exp(-age*3)*
+                -- Test7.18: `mb shimmer style soft` drops the ripple for a turning lit side.
+                local ripple=option('mb_shimmer_style')=='soft'and 0 or .45*option('mb_glow_flicker')
+                out.shimmer=option('mb_shimmer')*math.exp(-age*option('mb_shimmer_decay'))*
                     ((1-ripple)+ripple*math.cos(age*2*math.pi*9))*out.property
+                out.shimmer_age=age
                 out.white=0 -- the new strike is immediately its burst element
                 local t=smooth((age-option('mb_hold'))/math.max(.001,duration-option('mb_hold')))
                 out.release=option('mb_burst')>0 and (1-t)*(1+(option('mb_burst')-1)*t)*effects or 0
@@ -140,6 +149,44 @@ function M.sample(model,state,now,option)
             out.responding=true
             break
         end
+    end
+    -- Test7.18 MB ring hold: the latest burst's color stays on the MB ring
+    -- for `mb ring hold` s (12 Hz white strike only over the usual strike
+    -- time, then pure), easing back over `mb ring ease`; the ring's base
+    -- color cycle pauses by the same amount (cycle_pause, s of cycle time).
+    local hold=option('mb_ring_hold')or 0
+    if hold>0 then
+        local ease=M.ring_ease(option)
+        local strike=duration*.375
+        model.mb_ledger=model.mb_ledger or {}
+        local ledger=model.mb_ledger[state.id]or {}
+        model.mb_ledger[state.id]=ledger
+        for _,b in ipairs(bursts)do
+            local seen=false
+            for _,at in ipairs(ledger)do if at==b.at then seen=true break end end
+            if not seen then ledger[#ledger+1]=b.at;table.sort(ledger)end
+        end
+        for k=#ledger,1,-1 do if ledger[k]<state.created-1 then table.remove(ledger,k)end end
+        local latest
+        for k=#bursts,1,-1 do if now>=bursts[k].at then latest=bursts[k]break end end
+        if latest then
+            local a=now-latest.at
+            if a<=hold+ease then
+                out.ring=(a<hold and 1 or 1-smooth((a-hold)/ease))*effects
+                out.ring_element=latest.color
+                out.flicker=(.5+.5*math.cos(a*2*math.pi*12))*(1-smooth(a/strike))
+            end
+        end
+        -- Pause = integral of the ring strength: each burst holds until the next lands.
+        local pause=0
+        for k,at in ipairs(ledger)do
+            if at>=state.created and at<=now then
+                local x=math.min(now,ledger[k+1]or now)-at
+                local u=clamp((x-hold)/ease)
+                pause=pause+math.min(x,hold)+ease*(u-u*u*u+u*u*u*u/2) -- int of 1-smooth
+            end
+        end
+        out.cycle_pause=pause
     end
     local glyph=model.awakening_glyphs and model.awakening_glyphs[state.id]
     if not clapper and not out.responding and not out.ending and glyph and glyph.release_end then

@@ -34,7 +34,8 @@ assert(cmd('earth',{'230','190','70'})and settings.earth_color=='230,190,70','ea
 assert(cmd('earth',{'300','0','0'})and settings.earth_color=='230,190,70'and said:find('Now 230,190,70'),'bad rgb rejected')
 assert(cmd('earth',{})and said:find('^Use //tsc earth'),'bare shows usage')
 assert(not said:find('[\128-\255]'),'ASCII chat')
-assert(cmd('preset',{'cioara'})and settings.earth_color=='classic','presets reset Earth to classic')
+assert(cmd('preset',{'killala'})and settings.earth_color=='classic','presets reset Earth to classic')
+assert(cmd('preset',{'cioara'})and settings.earth_color=='scission','Test7.18: cioara preset carries scission')
 
 -- Requiescat chain: resolve each link with Skillchains' own chain table and
 -- check_props/aeonic_prop (sliced from sc_runtime.lua, not a second resolver).

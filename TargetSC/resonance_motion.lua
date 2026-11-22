@@ -366,7 +366,16 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- dark_ring_back off|on: SC ring glows whose transparent (dim) side is
     -- Dark show the MB glow color there; dark_ring_back_gain x that side's
     -- alpha (1 = the ring shade's own alpha; 0-3).
-    dark_ring_back='off',dark_ring_back_gain=1}
+    -- Test7.18: dark_ring_back also 'compression' = Compression rings only;
+    -- dark_back_spin x the ring glow spin for glows with a back side (1-6).
+    dark_ring_back='off',dark_ring_back_gain=1,dark_back_spin=1,
+    -- Test7.18 MB ring hold (s, 0 = off): the burst color stays pure on the
+    -- MB ring, its base color cycle paused, then eases back over
+    -- mb_ring_ease s (-1 = mb duration x .375).
+    mb_ring_hold=0,mb_ring_ease=-1,
+    -- Test7.18 shimmer: ripple (9 Hz, default) | soft (a lit side turning at
+    -- mb_shimmer_turn turns/s with gain mb_shimmer_soft 0-1); decay = 1/s.
+    mb_shimmer_style='ripple',mb_shimmer_decay=3,mb_shimmer_turn=.5,mb_shimmer_soft=.8}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',
@@ -391,42 +400,47 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
--- Test7.12 preset cioara: A's whole look on 2026-11-22 00:48 (settings.xml
--- global + cioara merged; enabled/debug left alone). //tsc preset cioara.
+-- Test7.18 preset cioara: A's look on 2026-11-22 04:10 (settings.xml global +
+-- cioara merged; enabled/debug left alone) plus A's 04:10 picks: opener glow
+-- white, dark back compression (gain .5, glow spin 3). //tsc preset cioara.
 M.cioara={
-    amplitude=0.3,awakening=true,awakening_inner=1,awakening_links=true,awakening_opacity=1,awakening_outer=0,
-    awakening_size=1.2,awakening_until='open',brightness=4,damping=3,detarget_time=0.15,disc_blend='firm',
-    disc_height=0.06,disc_inner=0,disc_level4_height=0.11,disc_level4_inner=1,disc_level4_middle=0.9,
-    disc_level4_outer=0,disc_level4_position=0.9,disc_level4_size=1.2,disc_lightdark='elements',
-    disc_minimum=0.5,disc_opacity=1,disc_outer=1,disc_outline=0.6,disc_size=1.03,disc_size_lines=1,
-    disc_slowdown=3,disc_speed=0.12,disc_speed_level1=2,disc_speed_level2=3,disc_speed_level3=4,
-    disc_speed_level4=3,disc_speed_opener=4,disc_style='glyph',discs=true,display='both',fade_duration=0.8,
-    frames='full',glow=1,ground_height=0.3,ground_lift=0.04,height=0.66,hum_amplitude=0.018,hum_gain=0.35,
-    hum_period=0.12,hum_slowdown=1,intensity=0.1,kill=true,kill_bloom_delay=0,kill_bloom_opacity=1,
+    amplitude=0.3,awakening=true,awakening_inner=1,awakening_links=true,awakening_opacity=1,
+    awakening_opacity_level1=4,awakening_opacity_level2=4,awakening_opacity_level3=4,awakening_opacity_opener=-1,
+    awakening_outer=0,awakening_size=1.2,awakening_until='open',awakening_until_level1='same',
+    awakening_until_level2='same',awakening_until_level3='close',awakening_until_opener='same',brightness=4,
+    damping=3,dark_back_spin=3,dark_disc='black',dark_glow='0,0,0',dark_glow_burst='0,0,0',
+    dark_glow_mb='elemental',dark_glow_opener='255,255,255',dark_glow_ring='same',dark_look='void',
+    dark_mb_core='black',dark_ring_back='compression',dark_ring_back_gain=0.5,detarget_time=0.15,
+    disc_blend='firm',disc_height=0.06,disc_inner=0,disc_level4_height=0.11,disc_level4_inner=1,
+    disc_level4_middle=0.9,disc_level4_outer=0,disc_level4_position=0.9,disc_level4_size=1.2,
+    disc_lightdark='elements',disc_minimum=0.5,disc_opacity=1,disc_outer=1,disc_outline=0.6,disc_size=1.03,
+    disc_size_lines=1,disc_slowdown=3,disc_speed=0.12,disc_speed_level1=2,disc_speed_level2=3,disc_speed_level3=4,
+    disc_speed_level4=3,disc_speed_opener=4,disc_style='glyph',discs=true,display='both',earth_color='scission',
+    fade_duration=0.8,frames='full',glow=1,ground_height=0.3,ground_lift=0.04,height=0.66,hum_amplitude=0.018,
+    hum_gain=0.35,hum_period=0.12,hum_slowdown=1,intensity=0.1,kill=true,kill_bloom_delay=0,kill_bloom_opacity=1,
     kill_bloom_size=0.9,kill_bloom_time=0.6,kill_mb_bloom='fade',kill_mb_curve=1,kill_mb_discs='element',
     kill_mb_fade=2,kill_mb_flicker=0.15,kill_mb_freeze=0.1,kill_mb_gather=0.06,kill_mb_glyphs='bloom',
-    kill_mb_rings='freeze',kill_sc_flash=0,kill_sc_flicker=0.1,kill_sc_freeze=0,kill_sc_ghost=0.6,
-    kill_sc_sag=0,kill_sc_seam=0.1,kill_sc_split=0.03,kill_sc_turn=0.05,kill_seam_angle=0,kill_seam_flicker=1,
-    kill_time=3.1,layout='grounded',mb_bloom=true,mb_bloom_center=0,mb_bloom_core=1,mb_bloom_ease=1.5,
-    mb_bloom_edge=0,mb_bloom_end=1.21,mb_bloom_fade=0.9,mb_bloom_flash=1,mb_bloom_from='ring',
-    mb_bloom_lines=0,mb_bloom_lines_delay=0.15,mb_bloom_lines_opacity=0.6,mb_bloom_lines_size=1.06,
-    mb_bloom_middle=1,mb_bloom_position=0.9,mb_bloom_start=1.1,mb_bloom_time=4,mb_bloom_to='same',
-    mb_breath_gain=1,mb_breath_min=0.7,mb_burst=0.6,mb_duration=0.9,mb_effects=1,mb_ending=2,
-    mb_ending_blooms='fade',mb_ending_drop=1,mb_ending_fade=0.8,mb_ending_shrink=0.3,
-    mb_ending_style='converge',mb_expand=0.015,mb_floor=1,mb_glow_flicker=1,mb_glow_shade=0.9,
-    mb_glow_spin=-0.6,mb_glow_width=0.66,mb_glyph_after='fade',mb_glyph_height=1,mb_glyph_opacity=0.09,
-    mb_glyph_rest='hidden',mb_glyph_rise=0,mb_glyph_tint=0.6,mb_hold=0.6,mb_idle=0.1,mb_intro=0.6,
-    mb_intro_disc=1,mb_intro_flashes=1,mb_intro_glyph=0.5,mb_level4='flicker',mb_level4_depth=0.3,mb_lift=0,
-    mb_lightdark_cycle=3,mb_opacity=0.39,mb_overall=0.66,mb_period=2,mb_position=0.5,mb_radiance='light',
-    mb_radiance_cycle=0.15,mb_radiance_glow=3,mb_return=2,mb_ring=1,mb_rise=0.01,mb_shimmer=1,mb_size=0.5,
-    mb_spin=0.025,mb_style='clapper',motion='sine',opacity=0.27,opener_disc_inner=1,opener_disc_outer=0,
-    opener_disc_outline=0,opener_disc_size=1.2,opener_fade=1,opener_fade_curve=1,opener_fade_end='lead',
-    opener_fade_glow=1,opener_fade_length=1,opener_gap=60,opener_glow='black',opener_layout='sections',
-    opener_muted=true,opener_spacing=0.035,opener_spin_minimum=0.5,opener_spin_slowdown=1,period=0.09,
-    radiance_bottom_opacity=0.3,radiance_bottom_size=0.9,radiance_close='sequence',radiance_close_time=0.3,
-    radiance_direction='outer',radiance_disc_lines=false,radiance_disc_opacity=-1,
-    radiance_ending_glyph='exponential',radiance_ending_peak=1,radiance_ending_ride=true,radiance_fade=0.3,
-    radiance_flash=1.5,radiance_glow=true,radiance_glow_dance=0.03,radiance_glow_fall=1.24,
+    kill_mb_rings='freeze',kill_sc_flash=0,kill_sc_flicker=0.1,kill_sc_freeze=0,kill_sc_ghost=0.6,kill_sc_sag=0,
+    kill_sc_seam=0.1,kill_sc_split=0.03,kill_sc_turn=0.05,kill_seam_angle=0,kill_seam_flicker=1,kill_time=3.1,
+    layout='grounded',mb_bloom=true,mb_bloom_center=0,mb_bloom_core=1,mb_bloom_ease=1.5,mb_bloom_edge=0,
+    mb_bloom_end=1.21,mb_bloom_fade=0.9,mb_bloom_flash=1,mb_bloom_from='ring',mb_bloom_lines=0,
+    mb_bloom_lines_delay=0.15,mb_bloom_lines_opacity=0.6,mb_bloom_lines_size=1.06,mb_bloom_middle=1,
+    mb_bloom_position=0.9,mb_bloom_start=1.1,mb_bloom_time=4,mb_bloom_to='same',mb_breath_gain=1,
+    mb_breath_min=0.7,mb_burst=0.6,mb_duration=0.9,mb_effects=1,mb_ending=2,mb_ending_blooms='fade',
+    mb_ending_drop=1,mb_ending_fade=0.8,mb_ending_shrink=0.3,mb_ending_style='converge',mb_expand=0.015,
+    mb_floor=1,mb_glow_flicker=1,mb_glow_shade=0.9,mb_glow_spin=-0.6,mb_glow_width=0.66,mb_glyph_after='fade',
+    mb_glyph_height=1,mb_glyph_opacity=0.09,mb_glyph_rest='hidden',mb_glyph_rise=0,mb_glyph_tint=0.6,mb_hold=0.6,
+    mb_idle=0.1,mb_intro=0.6,mb_intro_disc=1,mb_intro_flashes=1,mb_intro_glyph=0.5,mb_level4='flicker',
+    mb_level4_depth=0.3,mb_lift=0,mb_lightdark_cycle=3,mb_opacity=0.39,mb_overall=0.66,mb_period=2,
+    mb_position=0.5,mb_radiance='light',mb_radiance_cycle=0.15,mb_radiance_glow=3,mb_return=2,mb_ring=1,
+    mb_rise=0.01,mb_shimmer=1,mb_size=0.5,mb_spin=0.025,mb_style='clapper',motion='sine',opacity=0.27,
+    opener_disc_inner=1,opener_disc_outer=0,opener_disc_outline=0,opener_disc_size=1.2,opener_fade=1,
+    opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,opener_fade_length=1,opener_gap=60,
+    opener_glow='white',opener_layout='sections',opener_muted=true,opener_spacing=0.035,opener_spin_minimum=0.5,
+    opener_spin_slowdown=1,period=0.09,radiance_bottom_opacity=0.3,radiance_bottom_size=0.9,
+    radiance_close='sequence',radiance_close_time=0.3,radiance_direction='outer',radiance_disc_lines=false,
+    radiance_disc_opacity=-1,radiance_ending_glyph='exponential',radiance_ending_peak=1,radiance_ending_ride=true,
+    radiance_fade=0.3,radiance_flash=1.5,radiance_glow=true,radiance_glow_dance=0.03,radiance_glow_fall=6,
     radiance_glow_hold=0,radiance_glow_opacity=0.5,radiance_glow_rise=-1,radiance_glow_size=1.33,
     radiance_glow_speed=0.3,radiance_glyph='breath',radiance_glyph_buzz=true,radiance_glyph_circle=true,
     radiance_glyph_opacity=0.09,radiance_glyph_size=1,radiance_glyph_wobble='rings',radiance_lead=0.3,
@@ -434,38 +448,37 @@ M.cioara={
     radiance_middle_size=0.96,radiance_middle_spin=-0.6,radiance_opacity=-1,radiance_open_time=3,
     radiance_order='together',radiance_shimmer=1,radiance_shimmer_angle=0,radiance_shimmer_mb=true,
     radiance_shimmer_stagger=0.12,radiance_shimmer_time=0.3,radiance_shimmer_when='all',radiance_sky='off',
-    radiance_stack=true,radiance_stack_height=0,radiance_stack_spacing=0.01,ring_blend='firm',
-    ring_glow_spin=1,ring_level2_open='spread',ring_level2_start=0,ring_level3_open='spread',
-    ring_level3_start=0,ring_level4_collapse='ground',ring_level4_collapse_time=0.15,ring_level4_ease=6.6,
-    ring_level4_expand='mb',ring_level4_expand_time=5,ring_level4_gap=0.09,ring_level4_open='collapse',
-    ring_level4_spacing=0.075,ring_light='white',ring_light_cycle=0.6,ring_light_glow=0.9,
-    ring_light_mb='match',ring_light_opening='off',ring_lightdark='elements',ring_lightdark_spin=-2,
-    ring_lightdark_tint='white',ring_shade=0.6,ring_spin='disc',scale=2,sky_curve=3,sky_cutoff=0.5,
-    sky_descent=0,sky_expand=0.39,sky_hold=0.3,switch_in=0.1,switch_out=0.1,umbra_after='bloom',
+    radiance_stack=true,radiance_stack_height=0,radiance_stack_spacing=0.01,ring_blend='firm',ring_converge=true,
+    ring_converge_from=0.09,ring_converge_opener=1,ring_glow_spin=1,ring_level2_open='spread',ring_level2_start=0,
+    ring_level3_open='spread',ring_level3_start=0,ring_level4_collapse='ground',ring_level4_collapse_time=0.15,
+    ring_level4_ease=6.6,ring_level4_expand='mb',ring_level4_expand_time=5,ring_level4_gap=0.09,
+    ring_level4_open='collapse',ring_level4_spacing=0.075,ring_light='white',ring_light_cycle=0.6,
+    ring_light_glow=0.9,ring_light_mb='match',ring_light_opening='off',ring_lightdark='elements',
+    ring_lightdark_spin=-2,ring_lightdark_tint='white',ring_shade=0.6,ring_spin='disc',scale=2,sky_curve=3,
+    sky_cutoff=0.5,sky_descent=0,sky_expand=0.39,sky_hold=0.3,switch_in=0.1,switch_out=0.1,umbra_after='bloom',
     umbra_bloom_growth=0,umbra_bloom_height='rings',umbra_bloom_opacity=0.6,umbra_bloom_size=1.27,
-    umbra_bloom_time=4.5,umbra_burst_center='black',umbra_close='sequence',umbra_close_time=2,
-    umbra_collapse=true,umbra_collapse_curve=10,umbra_collapse_time=6,umbra_copies=true,umbra_copies_depth=0,
-    umbra_copies_every=0.3,umbra_copies_life=0.6,umbra_copies_opacity=0.5,umbra_copies_size=1.1,
-    umbra_copies_spin=-1,umbra_copies_steady=false,umbra_copies_until='end',umbra_core=1,
-    umbra_direction='outer',umbra_disc_inner=1,umbra_disc_jitter=0.015,umbra_disc_middle=0.99,
-    umbra_disc_opacity=1,umbra_disc_outer=-1,umbra_disc_position=0.93,umbra_disc_size=1,
-    umbra_disc_steady=false,umbra_ending='vanish',umbra_ending_time=10,umbra_ending_when='flash',
-    umbra_flash=1,umbra_flash_time=0.066,umbra_flicker=0.3,umbra_gap=0,umbra_glow='white',
-    umbra_glyph='breath',umbra_glyph_lift=0,umbra_glyph_opacity=1,umbra_glyph_over=false,umbra_glyph_size=1,
-    umbra_glyph_spin=-0.3,umbra_gyro_below='half',umbra_gyro_rise=0.05,umbra_gyro_shrink=0,
-    umbra_gyro_speed=0.6,umbra_haze=false,umbra_haze_black=1,umbra_haze_center=0,umbra_haze_edge=1,
-    umbra_haze_flicker=1,umbra_haze_lift=-0.03,umbra_haze_opacity=0.2,umbra_haze_order='over',
-    umbra_haze_size=1,umbra_haze_speed=1,umbra_haze_style='soft',umbra_jitter_speed=9,
-    umbra_lines_color='white',umbra_lines_opacity=1,umbra_lines_size=1,umbra_look='black',umbra_mb='pulse',
-    umbra_mb_flicker=1,umbra_mb_height='disc',umbra_mb_size=0.9,umbra_mb_strength=1,umbra_opacity=-1,
-    umbra_open_time=2,umbra_order='together',umbra_sink_time=3,umbra_sky='off',umbra_smoke=1.5,
-    umbra_smoke_opacity=0.18,umbra_smoke_spread=0,umbra_spin=6,umbra_stand_time=0.6,umbra_swallow_lift=0,
-    umbra_swallow_order='together',umbra_swallow_pull=0.6,umbra_swallow_stagger=0.33,umbra_under=true,
-    umbra_under_center=1,umbra_under_cycle=3,umbra_under_depth=0.003,umbra_under_direction='same',
-    umbra_under_edge=0,umbra_under_ending='fade',umbra_under_opacity=1,umbra_under_size=1.3,
-    umbra_under_spin=2,umbra_under_steady=true,umbra_vanish_shimmer=30,umbra_vanish_time=0.15,
-    umbra_wobble_after=true,umbra_wobble_curve=1.5,umbra_wobble_peak=9,umbra_wobble_speed=6,width=2,
-}
+    umbra_bloom_time=4.5,umbra_burst_center='black',umbra_close='sequence',umbra_close_time=2,umbra_collapse=true,
+    umbra_collapse_curve=10,umbra_collapse_time=6,umbra_copies=true,umbra_copies_depth=0,umbra_copies_every=0.3,
+    umbra_copies_life=0.6,umbra_copies_opacity=0.5,umbra_copies_size=1.1,umbra_copies_spin=-1,
+    umbra_copies_steady=false,umbra_copies_until='end',umbra_core=1,umbra_direction='outer',umbra_disc_flash=true,
+    umbra_disc_inner=0.96,umbra_disc_jitter=0.015,umbra_disc_middle=0.93,umbra_disc_opacity=1,umbra_disc_outer=-1,
+    umbra_disc_position=0.93,umbra_disc_size=1,umbra_disc_steady=false,umbra_ending='vanish',umbra_ending_time=10,
+    umbra_ending_when='flash',umbra_flash=1,umbra_flash_fade=0.3,umbra_flash_time=0.066,umbra_flicker=0.3,
+    umbra_gap=0,umbra_glow='white',umbra_glyph='breath',umbra_glyph_lift=0,umbra_glyph_opacity=1,
+    umbra_glyph_over=false,umbra_glyph_size=1,umbra_glyph_spin=-0.3,umbra_gyro_below='half',umbra_gyro_rise=0.05,
+    umbra_gyro_shrink=0,umbra_gyro_speed=0.6,umbra_haze=false,umbra_haze_black=1,umbra_haze_center=0,
+    umbra_haze_edge=1,umbra_haze_flicker=1,umbra_haze_lift=-0.03,umbra_haze_opacity=0.2,umbra_haze_order='over',
+    umbra_haze_size=1,umbra_haze_speed=1,umbra_haze_style='soft',umbra_jitter_speed=9,umbra_lines_color='white',
+    umbra_lines_opacity=1,umbra_lines_size=1,umbra_look='black',umbra_mb='pulse',umbra_mb_flicker=1,
+    umbra_mb_floor=1,umbra_mb_height='disc',umbra_mb_size=0.9,umbra_mb_strength=3,umbra_opacity=-1,
+    umbra_open_time=2,umbra_order='together',umbra_sink_time=3,umbra_sky='off',umbra_slow_curve='in',
+    umbra_slow_power=8,umbra_slow_time=8,umbra_slow_to=0,umbra_smoke=1.5,umbra_smoke_opacity=0.18,
+    umbra_smoke_spread=0,umbra_spin=6,umbra_stand_time=0.6,umbra_swallow_lift=0,umbra_swallow_order='together',
+    umbra_swallow_pull=0.6,umbra_swallow_stagger=0.33,umbra_under=true,umbra_under_center=1,umbra_under_cycle=3,
+    umbra_under_depth=0.003,umbra_under_direction='same',umbra_under_edge=0,umbra_under_ending='fade',
+    umbra_under_opacity=1,umbra_under_size=1.3,umbra_under_slow=true,umbra_under_spin=2,umbra_under_steady=true,
+    umbra_vanish_shimmer=30,umbra_vanish_time=0.15,umbra_wobble_after=true,umbra_wobble_curve=1.5,
+    umbra_wobble_peak=9,umbra_wobble_speed=6,width=2}
 local function muted(c)
     local value=max(c[1],c[2],c[3])
     return {(.75*c[1]+.25*value)*.82,(.75*c[2]+.25*value)*.82,(.75*c[3]+.25*value)*.82}
@@ -1257,6 +1270,11 @@ function M.frame(model,s,now,radius,height,opts,context)
     -- Added glow spin (turns/sec, negative reverses) on top of each glyph's
     -- own angle; continuous clock so a re-strike never jumps the lit side.
     local glow_turn=2*pi*option(opts,'mb_glow_spin')*max(0,now-s.created)
+    -- Test7.18 soft shimmer: a bright side turning around the glyph glow.
+    local function soft_lit(base)
+        if option(opts,'mb_shimmer_style')~='soft'then return nil end
+        return {angle=base+2*pi*option(opts,'mb_shimmer_turn')*(response.shimmer_age or 0),gain=option(opts,'mb_shimmer_soft')}
+    end
     local bottom,top,remaining,details=M.positions(s,now,height,opts)
     -- Test7.11: Umbra's wobble after the flash-out rides the ground wave, so
     -- everything that follows it (black disc, its plane, glyphs) wobbles.
@@ -1291,8 +1309,11 @@ function M.frame(model,s,now,radius,height,opts,context)
     end
     local mb_colors=context.palette(s)
     local mb_color=mb_colors[#mb_colors]
+    -- Test7.18: the MB ring's color cycles run on a clock that pauses while a
+    -- burst color is held (`mb ring hold`; 0 = plain age).
+    local cycle_age=max(0,age-(response.cycle_pause or 0))
     if clapper and s.level==2 and #mb_colors==2 then
-        local cycle=.5-.5*math.cos(age*pi/option(opts,'mb_period'))
+        local cycle=.5-.5*math.cos(cycle_age*pi/option(opts,'mb_period'))
         mb_color=mix(mb_colors[1],mb_colors[2],smooth(cycle))
     end
     -- Test4.7: Light's colored inner glows: 0 before the window, rising to
@@ -1314,7 +1335,7 @@ function M.frame(model,s,now,radius,height,opts,context)
         -- hands to the next twice as fast as level 2's two-color cycle.
         local four=element_colors(s.properties[1],context)
         local per=option(opts,'mb_period')/max(.05,option(opts,'mb_lightdark_cycle'))
-        local position=(age/per)%#four
+        local position=(cycle_age/per)%#four
         local k=math.floor(position)
         mb_color=mix(four[k+1],four[(k+1)%#four+1],smooth(position-k))
     end
@@ -1452,24 +1473,27 @@ function M.frame(model,s,now,radius,height,opts,context)
         local opening=opener and (part=='ground'or part=='sky')
         local mode=opening and option(opts,'opener_glow')or 'color'
         if glow>0 and light~=false and mode~='off'then
-            local surround=mode=='black'and {{0,0,0}}or glow_colors or colors
-            local back
+            local surround=mode=='black'and {{0,0,0}}or mode=='white'and {white}or glow_colors or colors -- Test7.18 white
+            local back,glow_spin
             if void and not l4 then
                 -- Test7.17: SC rings lift toward the ring glow, the MB ring toward the MB glow.
                 local target=part=='mb'and glow_mb or glow_ring
                 local lifted={}for i,c in ipairs(surround)do lifted[i]=M.dark_lift(c,opts,target)end
                 -- Test7.17 dark_ring_back: a Dark dim side glows in the MB glow color.
-                if (part=='ground'or part=='sky')and not opening and #surround<=2 and option(opts,'dark_ring_back')=='on'then
+                local back_mode=option(opts,'dark_ring_back')
+                local wants=back_mode=='on'or (back_mode=='compression'and not opener and s.properties[1]=='Compression')
+                if (part=='ground'or part=='sky')and not opening and #surround<=2 and wants then
                     local last=surround[#surround]
                     if max(last[1],last[2],last[3])<60 then
                         lifted={lifted[1],M.dark_lift(last,opts,glow_mb)}
                         back=option(opts,'dark_ring_back_gain')
+                        glow_spin=option(opts,'dark_back_spin') -- Test7.18
                     end
                 end
                 surround=lifted
             end
             band(r*(1+(extra.spread or 0)),h,surround,a*.24*glow*(glow_gain or 1)*(extra.glow or 1),px+4*min(glow,3),'glow',part,strand,
-                opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin'),extra.lit,back)
+                opening and rotation or (rotation or 0)*option(opts,'ring_glow_spin')*(glow_spin or 1),extra.lit,back)
         end
         band(r,h,colors,a*(extra.core or 1),px,'core',part,strand,rotation)
     end
@@ -1522,7 +1546,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                             local gl,gt=lead,tail
                             if mode=='black'then gl,gt={0,0,0},{0,0,0}end
                             -- Test7.16 void: Dark-element arcs and the Darkness section glow violet.
-                            if void and (pair[1]==dark_ref or pair[2]==dark_ref or p=='Darkness')then
+                            if mode=='white'then gl,gt=white,white -- Test7.18: every opener arc glows white
+                            elseif void and (pair[1]==dark_ref or pair[2]==dark_ref or p=='Darkness')then
                                 gl,gt=glow_opener,glow_opener -- Test7.17 dark_glow_opener
                             elseif void and mode~='black'then gl,gt=M.dark_lift(gl,opts,glow_opener),M.dark_lift(gt,opts,glow_opener)end
                             arc(draw_radius,h,gl,gt,alpha*.24*glow,px+4*min(glow,3),'glow',place[2],strand,rotation,start,section)
@@ -1888,7 +1913,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- The shimmer follows the glyph: white unless mb glyph tint > 0.
             local shimmer_color=mix(white,response.element,option(opts,'mb_glyph_tint'))
             band(opening.radius,opening.offset,{shimmer_color},mb_overall*min(1,response.shimmer)*.65,
-                px+10*option(opts,'mb_glow_width'),'burst-glow','mb-glyph',0,opening.rotation+glow_turn)
+                px+10*option(opts,'mb_glow_width'),'burst-glow','mb-glyph',0,opening.rotation+glow_turn,soft_lit(opening.rotation+glow_turn))
         end
     end
     if option(opts,'discs')then
@@ -2096,7 +2121,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     ((glyph==0 and not respond)or hide)and 0 or trace_alpha,'property-trace',trace_stroke)
                 if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
                     band(r*line_size,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
-                        px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn)
+                        px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn,soft_lit(angle+glow_turn))
                 end
             else
                 local r=radius*(.78-(j-1)*.11)
@@ -2141,8 +2166,9 @@ function M.frame(model,s,now,radius,height,opts,context)
         end
         if l4flick and l4name=='umbra'then alpha=alpha*(1-flick_d+flick_d*electric)end
         local strength=response.ring*option(opts,'mb_ring')
-        if response.element and strength>0 then
-            color=mix(color,mix(response.element,white,response.flicker),strength)
+        local ring_element=response.ring_element or response.element -- Test7.18 hold
+        if ring_element and strength>0 then
+            color=mix(color,mix(ring_element,white,response.flicker or 0),strength)
             alpha=alpha+(1-alpha)*strength
         end
         if intro>0 then
