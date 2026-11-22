@@ -106,8 +106,14 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- With the MB ring hidden both fall back to ground.
     -- collapse_time s (.12, capped at .3); expand_time s (-1 = until the
     -- window opens); ease = ease-out power (6; higher = faster start).
+    -- Test7.8: the innermost ring grows out from the MB ring you see (for
+    -- Umbra x umbra mb size) and the other three spread out from it on the
+    -- same ease. gap = innermost ring's final distance outside the MB ring,
+    -- spacing = distance between rings (both x the SC radius; .03, .075).
+    -- expand ground keeps the earlier final sizes (1 - 1.5 spacing upward).
     ring_level4_open='collapse',ring_level4_collapse='into',ring_level4_expand='mb',
     ring_level4_collapse_time=.12,ring_level4_expand_time=-1,ring_level4_ease=6,
+    ring_level4_gap=.03,ring_level4_spacing=.075,
     -- Test4.8: large breathing glyph: after a burst it stays risen and fades
     -- (instead of falling); at the floor it shows only the window-opening
     -- flash (no breathing).
@@ -1087,7 +1093,9 @@ function M.frame(model,s,now,radius,height,opts,context)
     if l4 and option(opts,'ring_level4_open')=='collapse'then
         local target,plane=option(opts,'ring_level4_collapse'),option(opts,'ring_level4_expand')
         if not show_mb then target,plane='ground','ground'end -- no MB ring to meet
-        local from=s.previous and s.previous.level==3 and s.previous or nil
+        -- Level 4 only ever follows a level 3; previous is nil in a bare
+        -- `preview chain` (nothing to collapse: expand from frame 1).
+        local from=s.previous
         local ct=from and clamp(option(opts,'ring_level4_collapse_time'),0,.3)or 0
         local et=option(opts,'ring_level4_expand_time')
         if et<0 then et=s.sc_open-s.created-ct end
@@ -1096,9 +1104,15 @@ function M.frame(model,s,now,radius,height,opts,context)
         local wave=details.ground_wave or 0
         local c_h=target=='ground'and bottom or mb_height+wave
         local final=plane=='mb'and mb_height+wave or bottom
-        local c_r=target=='into'and mb_radius/radius or 1
+        -- The MB ring as drawn (Umbra scales it by umbra mb size).
+        local mb_drawn=mb_radius*(l4name=='umbra'and option(opts,'umbra_mb_size')or 1)
+        local c_r=target=='into'and mb_drawn/radius or 1
         local e=1-(1-clamp((age-ct)/et,0,1))^max(1,option(opts,'ring_level4_ease'))
-        l4c={from=from,ct=ct,c_h=c_h,c_r=c_r,h=c_h+(final-c_h)*e,e=e,target=target,plane=plane}
+        -- Test7.8 final layout (fractions of radius): innermost ring, step out.
+        local spacing=max(0,option(opts,'ring_level4_spacing'))
+        local inner=plane=='mb'and mb_drawn/radius+option(opts,'ring_level4_gap')or 1-1.5*spacing
+        l4c={from=from,ct=ct,c_h=c_h,c_r=c_r,h=c_h+(final-c_h)*e,e=e,target=target,plane=plane,
+            inner=inner,spacing=spacing}
         -- Ground rings only: the level 3's sky rings are drawn by the collapse.
         if top then top=nil;out.sky=nil end
         out.level4_open=l4c
@@ -1316,7 +1330,9 @@ function M.frame(model,s,now,radius,height,opts,context)
             end
             local r=radius*spec.radial
             -- Test7.7: level-4 rings expand from the collapsed ring's radius.
-            if l4c then r=radius*(l4c.c_r+(spec.radial-l4c.c_r)*l4c.e)end
+            -- Test7.8: the innermost grows from the collapsed ring to its place;
+            -- each outer ring spreads from the innermost on the same ease.
+            if l4c then r=radius*(l4c.c_r+(l4c.inner-l4c.c_r)*l4c.e+(j-1)*l4c.spacing*l4c.e)end
             -- classic: only openers and L2 turn, slowing to a stop. disc
             -- (default): every link turns with the property disc, at its stage
             -- speed easing to the disc minimum, so rings and glyph stay in step.

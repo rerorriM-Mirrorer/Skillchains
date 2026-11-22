@@ -1,5 +1,17 @@
 # TargetSC — elemental resonance
 
+## 0.19.8 unified Test7.8 — Level 4 rings grow out of the MB ring (Lua only)
+
+- With `rings level4 expand mb`, the innermost level 4 ring now grows outward
+  from the MB ring as you see it (for Umbra including `umbra mb size`) and the
+  other three spread outward from the innermost ring, on the same time and ease.
+  No ring shrinks. Radiance's rings now surround its MB ring instead of overlapping it.
+- **`//tsc rings level4 gap <-0.2-0.3>`** (default .03): how far outside the MB
+  ring the innermost ring ends, as a fraction of the SC ring size.
+- **`//tsc rings level4 spacing <0-0.2>`** (default .075): distance between the rings.
+- `rings level4 collapse into` now aims at the drawn MB ring (Umbra's size too).
+- `expand ground` keeps the Test7.7 final sizes.
+
 ## 0.19.7 unified Test7.7 — Level 4 collapse (Lua only)
 
 - **`//tsc rings level4 open collapse|pop`** (default collapse): a Radiance or
@@ -483,7 +495,7 @@ bottom strands with the four element colors around the middle strand, and
 the MB ring cycles through those four colors.
 - `//tsc rings level2 open split|half|stacked` (default split), `rings level2 start <0-1>` (default 0).
 - `//tsc rings level3 open spread|pop` (default spread), `rings level3 start <0-1>` (default .5).
-- `//tsc rings level4 open collapse|pop` (default collapse), `rings level4 collapse ground|mb|into` (into), `rings level4 expand ground|mb` (mb), `rings level4 collapse time` (.12), `expand time` (-1), `ease` (6).
+- `//tsc rings level4 open collapse|pop` (default collapse), `rings level4 collapse ground|mb|into` (into), `rings level4 expand ground|mb` (mb), `rings level4 collapse time` (.12), `expand time` (-1), `ease` (6), `gap` (.03), `spacing` (.075).
 - `//tsc rings lightdark classic|elements` (default elements).
 - `//tsc rings lightdark spin <-2-2>` — middle strand turn rate (default 1).
 - `//tsc rings lightdark tint gold|white` — Light's glow color (default white).

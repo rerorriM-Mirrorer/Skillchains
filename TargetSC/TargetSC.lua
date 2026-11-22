@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.7-unified-test7.7'
+_addon.version='0.19.8-unified-test7.8'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -326,6 +326,8 @@ local function help()
         {'rings level4 collapse time <0-0.3>','Collapse length in seconds (default .12).'},
         {'rings level4 expand time <-1-5>','Expansion length in seconds; -1 = until the window opens (default -1).'},
         {'rings level4 ease <1-8>','Expansion ease-out: higher = faster start, gentler finish (default 6).'},
+        {'rings level4 gap <-0.2-0.3>','With expand mb: innermost ring\'s distance outside the MB ring, x SC radius (default .03).'},
+        {'rings level4 spacing <0-0.2>','Distance between the four level 4 rings, x SC radius (default .075).'},
         {'rings lightdark classic|elements','Level 3 Darkness (and Light in its elements mode): outer strands, four element colors around the middle (default elements).'},
         {'rings lightdark spin <-2-2>','Middle (element) strand turn rate relative to the others; negative counter-turns (default 1).'},
         {'rings lightdark tint gold|white','Light level 3 glow color in the elements look (default white).'},

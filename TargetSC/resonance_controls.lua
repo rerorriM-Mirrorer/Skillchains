@@ -431,7 +431,9 @@ function M.new(settings,defaults,save,say,killala)
                     settings.ring_level4_expand=mode;save(settings)
                     say('Level 4 rings expand: '..mode..'.')
                 elseif name=='ease'then numeric('ring_level4_ease',args[3],{1,8},'rings level4 ease')
-                else say('Use //tsc rings level4 open collapse|pop | collapse ground|mb|into | expand ground|mb | collapse time <0-0.3> | expand time <-1-5> | ease <1-8>.')end
+                elseif name=='gap'then numeric('ring_level4_gap',args[3],{-.2,.3},'rings level4 gap')
+                elseif name=='spacing'then numeric('ring_level4_spacing',args[3],{0,.2},'rings level4 spacing')
+                else say('Use //tsc rings level4 open collapse|pop | collapse ground|mb|into | expand ground|mb | collapse time <0-0.3> | expand time <-1-5> | ease <1-8> | gap <-0.2-0.3> | spacing <0-0.2>.')end
             elseif value=='shade'then numeric('ring_shade',args[2],{0,1},'rings shade')
             elseif value=='glow'and choice=='spin'then numeric('ring_glow_spin',args[3],{0,4},'rings glow spin')
             else
