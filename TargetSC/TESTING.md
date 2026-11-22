@@ -1,5 +1,14 @@
 ## Current Development Status — 2026-11-22 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. NOT PUSHED: remote head `ff4a134`; local Test7.17 `9a4e0e4`, Test7.18 `f944e51`, Test7.18.1 on top. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (local).
+- installed_base: Test7.18 (`f944e51`; A loaded 0.19.18 at 04:22, Live). Package `TargetSC-0.19.18.1-Test7.18.1.zip` cumulative since `ff4a134`.
+- Live (A, 04:22): Windower config warnings on load and on every save: `awakening_until_level1/2/3` string expected (default same), got number (1, 4, 9); "Mismatched setting types".
+- Cause (Verified in code): the fade-until command saved timed values as text '4', which settings.xml reads back as a number. Changes: Test7.18.1 saves '4s'; `M.until_seconds` reads 4, '4' and '4s'; TargetSC.lua rewrites numeric awakening_until* values as text on load and on every config reload (`config.register`, Windower Config Library docs), saving once only when something changed. Version `0.19.18.1-unified-test7.18.1`.
+- Checks: 77/77 CI lua5.1 invocations PASS incl. new `test_until_7181.lua` (A's 1/'4'/9 values through the real addon loader). `test_awakening_715.lua`/`test_awakening_until.lua` expect '4s'. Host only.
+- Pending: confirm the warnings are gone in game; A may need to re-enter level1/2/3 fade-until values if Windower dropped them at the 04:22 load (Unknown which value it kept). Test7.18 checklist still open.
+
+## Current Development Status — 2026-11-22 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. NOT PUSHED: remote head `ff4a134`; local Test7.17 `9a4e0e4`, Test7.18 on top. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (local).
 - installed_base: Test7.17 (`9a4e0e4`, local; A's 04:10 settings.xml carries its dark_* keys, Live). Package `TargetSC-0.19.18-Test7.18.zip` cumulative since `ff4a134` (the last pushed commit).
 - Live (A, 04:10): `dark back` liked on Compression rings at gain .18-.9 with the glow turning 2-3x+ faster than the ring; back off on Gravitation and Darkness. Wants white glow on all opener properties to try. A's look = attached settings.xml (black Dark bursts `dark_glow_burst 0,0,0`; awakening level1-3 opacity 4, level3 until close). Next focus: MB burst animations, Light and Dark first.

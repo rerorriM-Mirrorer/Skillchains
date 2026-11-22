@@ -1,5 +1,12 @@
 # TargetSC — elemental resonance
 
+## 0.19.18.1 unified Test7.18.1 — settings warning fix (Lua only)
+
+- Timed awakening fade ends (`//tsc awakening [stage] fade until <1-9>`) are now
+  saved as `4s` instead of `4`. A bare number read back from settings.xml as a
+  number and set off Windower's "Mismatched setting types" warnings on every
+  load and save. Old values convert themselves the first time the addon loads.
+
 ## 0.19.18 unified Test7.18 — MB ring hold, soft shimmer, Compression back glow, white opener glow (Lua only)
 
 - **`//tsc mb ring hold <0-4>`** (default 0 = off): after a magic burst's quick

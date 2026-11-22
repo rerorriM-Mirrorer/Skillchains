@@ -508,7 +508,7 @@ function M.new(settings,defaults,save,say,killala,cioara)
                         say('Use //tsc awakening '..value..' fade until same|default|open|close|<1-9>. Now '..
                             tostring(settings['awakening_until_'..value]or 'same')..'.');return true
                     end
-                    settings['awakening_until_'..value]=n and tostring(n)or mode;save(settings)
+                    settings['awakening_until_'..value]=n and (n..'s')or mode;save(settings) -- Test7.18.1: text, not a number
                     say('awakening '..value..' fades until '..settings['awakening_until_'..value]..'.')
                 else
                     say('Use //tsc awakening '..value..' opacity <0-1|same> | fade until same|default|open|close|<1-9>.')
@@ -522,7 +522,7 @@ function M.new(settings,defaults,save,say,killala,cioara)
                     (n and n==math.floor(n)and n>=1 and n<=9))then
                     say('Use //tsc awakening fade until default|open|close|<1-9 seconds after the window opens>.');return true
                 end
-                settings.awakening_until=n and tostring(n)or mode;save(settings)
+                settings.awakening_until=n and (n..'s')or mode;save(settings) -- Test7.18.1
                 local meaning={default='two-thirds of the wait (previous)',open='the window opens',close='the window ends'}
                 say('Awakening fades until '..(meaning[mode]or (mode..' s after the window opens'))..'.')
             elseif value=='fade'then

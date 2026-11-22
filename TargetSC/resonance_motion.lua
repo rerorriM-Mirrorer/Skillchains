@@ -1163,6 +1163,14 @@ end
 -- White awakening disc level (0-1) for a wait from created to open and a
 -- window ending at close: full through the grow (first third of the wait),
 -- then fading until `awakening fade until` (default two-thirds of the wait).
+-- Test7.18.1: timed fade ends are saved as '4s' (a bare '4' reads back from
+-- settings.xml as a number and trips Windower's type check); old numeric
+-- forms (4, '4') still read.
+function M.until_seconds(v)
+    if type(v)=='number'then return v end
+    v=tostring(v or '')
+    return tonumber(v)or tonumber(v:match('^%s*(%d+%.?%d*)%s*s%s*$'))
+end
 function M.awakening_level(created,open,close,now,opts,stage)
     local span=max(.1,open-created)
     local start=created+span/3 -- the grow ends here, as before
@@ -1173,10 +1181,10 @@ function M.awakening_level(created,open,close,now,opts,stage)
     local finish=created+span*2/3
     if mode=='open'then finish=open
     elseif mode=='close'then finish=max(open,close or open)
-    elseif tonumber(mode)then
+    elseif M.until_seconds(mode)then
         -- Never outlast the window: past its end the whole display clears,
         -- so cap the timed fade to finish cleanly.
-        finish=min(open+tonumber(mode),max(open,close or open))
+        finish=min(open+M.until_seconds(mode),max(open,close or open))
     end
     return 1-smooth((now-start)/max(.05,finish-start))
 end

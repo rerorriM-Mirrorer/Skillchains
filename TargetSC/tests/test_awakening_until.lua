@@ -57,7 +57,7 @@ near(level(m,105.3,x),0,1e-9,'gone .3 s after the link')
 -- Commands.
 local settings=copy(R.defaults)
 local cmd=C.new(settings,R.defaults,function()end,function()end,R.killala)
-for arg,want in pairs({open='open',window='open',close='close',default='default',['4']='4',['9']='9',['1']='1'})do
+for arg,want in pairs({open='open',window='open',close='close',default='default',['4']='4s',['9']='9s',['1']='1s'})do -- Test7.18.1: timed values saved as text
  assert(cmd('awakening',{'fade','until',arg})and settings.awakening_until==want,arg)
 end
 for _,bad in ipairs({'0','10','2.5','soon',''})do

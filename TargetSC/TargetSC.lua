@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.18-unified-test7.18'
+_addon.version='0.19.18.1-unified-test7.18.1'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -15,6 +15,20 @@ local sc_runtime
 local defaults={enabled=true,debug=false,frames='classic'}
 for key,value in pairs(resonance.defaults)do defaults[key]=value end
 local settings=config.load(defaults)
+-- Test7.18.1: fade-until values saved as bare numbers (1-9) read back from
+-- settings.xml as numbers, which Windower flags against the text defaults
+-- on every load and save. Rewrite them as '4s' text once, on every load.
+local function normalize_until(s)
+    local changed=false
+    for _,k in ipairs({'awakening_until','awakening_until_opener','awakening_until_level1','awakening_until_level2','awakening_until_level3'})do
+        local v=s[k]
+        local n=type(v)=='number'and v or (type(v)=='string'and tonumber(v))
+        if n then s[k]=('%ds'):format(n);changed=true end
+    end
+    if changed then config.save(s)end
+end
+normalize_until(settings)
+if config.register then config.register(settings,normalize_until)end
 local model=resonance.new()
 local native,renderer_error,renderer_started,native_version
 local native_level=0
