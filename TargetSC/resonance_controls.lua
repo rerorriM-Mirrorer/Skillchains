@@ -159,6 +159,7 @@ function M.new(settings,defaults,save,say,killala,cioara)
             ['mb flicker']={'n',0,1,same=true},['wobble after']={'b'},['wobble peak']={'n',0,40},
             ['wobble curve']={'n',.2,6},['wobble speed']={'n',.2,6},
             ['under slow']={'b'},['slow time']={'n',.05,20},['slow to']={'n',0,1},
+            ['slow curve']={'c','in','out'},['slow power']={'n',1,8},
             ['disc flash']={'b'},['flash fade']={'n',.02,3}}}
     -- 0.18 kill animations: //tsc kill ... (same table-driven parser).
     level4_spec.kill={time={'n',.3,5},['mb rings']={'c','freeze','gather'},['mb fade']={'n',.05,3},
@@ -452,6 +453,13 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 elseif name=='gap'then numeric('ring_level4_gap',args[3],{-.2,.3},'rings level4 gap')
                 elseif name=='spacing'then numeric('ring_level4_spacing',args[3],{0,.2},'rings level4 spacing')
                 else say('Use //tsc rings level4 open collapse|pop | collapse ground|mb|into | expand ground|mb | collapse time <0-0.3> | expand time <-1-5> | ease <1-8> | gap <-0.2-0.3> | spacing <0-0.2>.')end
+            elseif value=='converge'then
+                -- Test7.14: strands and opener arcs close into one as the sky ring lands.
+                local name=(args[2]or ''):lower()
+                if name=='from'then numeric('ring_converge_from',args[3],{.05,1},'rings converge from')
+                elseif not toggle('ring_converge',name,'Rings converge')then
+                    say('Use //tsc rings converge on|off | from <0.05-1>.')
+                end
             elseif value=='shade'then numeric('ring_shade',args[2],{0,1},'rings shade')
             elseif value=='glow'and choice=='spin'then numeric('ring_glow_spin',args[3],{0,4},'rings glow spin')
             else

@@ -1,5 +1,19 @@
 # TargetSC — elemental resonance
 
+## 0.19.14 unified Test7.14 — strands and opener arcs converge, Umbra slow curve, Requiescat with Sequence (Lua only)
+
+- **`//tsc rings converge on|off`** (default on): as the sky ring lands at the
+  end of a window, the stacked strands of level 2 and level 3 rings, and the
+  separate property/element arcs of an opener, close into one ring, meeting
+  exactly as the sky lands. **`rings converge from <0.05-1>`** (.35) is how much
+  of the sky's descent is left when they start to merge.
+- **`//tsc umbra slow curve in|out`** (default in): with `umbra under slow` on,
+  the multicolored under disc now stays near full speed after the flash and
+  slows harder toward the end of `slow time`. **`umbra slow power <1-8>`** (3)
+  makes it hold speed longer. `out` is the Test7.12 slowdown.
+- `preview demo requiescat` / `preview earth mb`: the Requiescat opener now has
+  its third property with Sequence (Gravitation, Scission, Darkness).
+
 ## 0.19.13 unified Test7.13 — Earth color choices, Requiescat and Earth MB previews (Lua only)
 
 - **`//tsc earth classic|gold|scission|crystal|<r g b>`** (default classic): the

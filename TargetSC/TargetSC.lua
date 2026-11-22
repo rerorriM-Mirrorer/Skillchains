@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.13-unified-test7.13'
+_addon.version='0.19.14-unified-test7.14'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -139,7 +139,7 @@ local function help()
         {'preview mb','Same four links with Wind/Earth/Water/Dark bursts; includes late-link overlaps.'},
         {'preview demo radiance','Five weaponskills: Fast Blade, Burning Blade, Flat Blade, Savage Blade, Resolution (L1/L2/Light/Radiance), no bursts.'},
         {'preview mb radiance','Same Radiance links with Fire/Light/Lightning/Light bursts at the MB demo overlap times.'},
-        {'preview demo requiescat','Requiescat (Gravitation+Scission opener), Gust Slash, Nightmare Scythe, Rudra\'s Storm, Requiescat (Umbra); no bursts.'},
+        {'preview demo requiescat','Requiescat with Sequence (Gravitation+Scission+Darkness opener), Gust Slash, Nightmare Scythe, Rudra\'s Storm, Requiescat (Umbra); no bursts.'},
         {'preview earth mb','Same Requiescat links with ten Earth bursts (Gravitation, Darkness and Umbra windows), incl. overlaps and the final ending.'},
         {'earth classic|gold|scission|crystal|<r g b>','Earth element color: classic 176,114,48 (default), gold 230,190,70, scission 255,165,0, crystal 216,146,64, or your own.'},
         {'preview switch [preview]','The preview rides on the first two targets you pick (enemies or yourself) to try target handoffs.'},
@@ -177,6 +177,7 @@ local function help()
         {'umbra bloom opacity|time|size|growth <number>','Bloom opacity (.6), seconds (2.5), start size in SC ring radii (1), growth -1..2 (<0 shrinks, 0 stays, >0 grows; -.5).'},
         {'umbra bloom height rings|ground|disc|mb','rings: one bloom at each SC ring height (default); or one at the ground ring / disc / MB ring. Shape: mb bloom opacity/middle/ease/fade.'},
         {'umbra mb pulse|classic | mb strength <0-3> | mb floor <0-1> | mb size <0.2-4>','Umbra MB ring: white ending-style pulses all window (default pulse); strength = brightest pulse (1), floor = brightness between pulses (0), size (1).'},
+        {'umbra slow curve in|out | slow power <1-8>','in (default): the under disc stays fast after the flash and slows harder toward the end (power 3); out = Test7.12 (slows at once).'},
         {'umbra under slow on|off | slow time <s> | slow to <0-1>','After the flash-out the multicolored under disc slows, easing out over slow time (2 s) to slow to x its speed (0 = stops). Default off.'},
         {'umbra disc flash on|off | flash fade <s>','The black disc flashes white with the last ring flash (as the MB glyph vanishes), back to black over flash fade (.3 s). Default off.'},
         {'umbra spin <0-6|same>','Umbra\'s own level-4 spin, beyond discs speed level4 (same = that).'},
@@ -315,6 +316,7 @@ local function help()
         {'discs size lines <0.2-2>','Link property-disc glyph lines (upper sigil) size (default 1).'},
         {'discs lightdark classic|elements','Light/Darkness discs: classic tones, or white/black center to four element colors (default classic).'},
         {'discs blend gradient|firm|split','Two-element discs: even fade, firm (each color holds, fade where they meet), or halves (default gradient).'},
+        {'rings converge on|off | from <0.05-1>','L2/L3 strands and opener arcs close into one ring as the sky ring lands; from = descent left when they start (default on, .35).'},
         {'rings blend gradient|firm|split','SC rings: even fade, firm (colors hold, fade where they meet), or sectors; openers always split (default gradient).'},
         {'rings light white|elements|classic','Level 3 Light: white strands, inner glows in the four element colors; white MB ring (default white).'},
         {'rings light cycle <0.5-30>','Seconds for the inner glow colors to move down one ring (default 4).'},

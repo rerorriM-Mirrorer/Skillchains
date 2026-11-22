@@ -49,6 +49,9 @@ function M.level(name) return levels[name] or 1 end
 function M.elements(name) return P[name] or ((name=='Light' or name=='Radiance') and {'Fire','Wind','Lightning','Light'} or {'Earth','Ice','Water','Dark'}) end
 local function palette(s)
     local dark=s.properties[1]=='Darkness' or s.properties[1]=='Umbra'
+    -- Test7.14: an aeonic opener (e.g. Requiescat with Sequence: Gravitation,
+    -- Scission, Darkness) is level 3 by its Darkness, not its first property.
+    for _,p in ipairs(s.properties)do if p=='Darkness'or p=='Umbra'then dark=true end end
     if s.level==4 then
         return dark and {{5,3,14},{25,9,46},{49,18,78},{88,48,118}} or
             {{255,255,255},{255,252,228},{255,231,155},{237,193,91}}

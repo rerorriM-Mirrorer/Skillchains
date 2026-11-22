@@ -132,6 +132,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test7.12: the multicolored under disc slows after the flash-out, easing
     -- out over `slow time` s (2) to `slow to` x its speed (0 = stops).
     umbra_under_slow=false,umbra_slow_time=2,umbra_slow_to=0,
+    -- Test7.14: slow curve. in (default) = stays near full speed after the
+    -- flash, slowing harder toward the end: speed to+(1-to)(1-u^power)
+    -- (power 3; higher = holds speed longer). out = Test7.12 (slows at once).
+    umbra_slow_curve='in',umbra_slow_power=3,
+    -- Test7.14: as the sky ring lands at window close, L2/L3 strands (stack
+    -- heights) and opener arcs (gaps and element lifts) close into one ring.
+    -- from = how much sky descent is left (x the full span) when they start
+    -- to merge (.35); they meet exactly as the sky lands. off = Test7.13.
+    ring_converge=true,ring_converge_from=.35,
     -- Test7.12: the black disc flashes white with the last ring flash (as the
     -- MB glyph vanishes), then returns to black over `flash fade` s (.3).
     umbra_disc_flash=false,umbra_flash_fade=.3,
@@ -584,6 +593,14 @@ function M.positions(s,now,height,opts)
     top=max(floor,top-sky_wave)
     return bottom,top,remaining,details
 end
+-- Test7.14: 1 while the strands/arcs keep their spacing, easing to 0 as the
+-- sky ring lands at sc_close (stays 0 through the expiry fade). Closed
+-- results and `rings converge off` keep 1.
+function M.converge(s,now,opts)
+    if not option(opts,'ring_converge')or s.closed or s.sc_close<=s.sc_open then return 1 end
+    local from=clamp(option(opts,'ring_converge_from'),.05,1)
+    return smooth(clamp(M.descent_remaining(s,min(now,s.sc_close),opts)/from,0,1))
+end
 -- Height, not elapsed time, traces the requested bell profile. The radius
 -- reaches normal after cutoff of the descent, then stays there.
 function M.bell_factor(separation,height,opts)
@@ -996,7 +1013,14 @@ function M.umbra_under_turn(s,now,opts,has_top)
     local to=clamp(option(opts,'umbra_slow_to'),0,1)
     local dt=age-before
     local u=min(1,dt/T)
-    local after=T*(to*u+(1-to)*(1-(1-u)^3)/3)+to*max(0,dt-T)
+    local after
+    if option(opts,'umbra_slow_curve')=='out'then
+        after=T*(to*u+(1-to)*(1-(1-u)^3)/3)+to*max(0,dt-T)
+    else
+        -- Test7.14 in: speed to+(1-to)(1-u^p); integral u - u^(p+1)/(p+1).
+        local pw=clamp(option(opts,'umbra_slow_power'),1,8)
+        after=T*(to*u+(1-to)*(u-u^(pw+1)/(pw+1)))+to*max(0,dt-T)
+    end
     return w*(before+after)
 end
 -- Test7.12: the black disc's white flash: 1 through the last ring flash
@@ -1382,7 +1406,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         -- elements are stacked arcs at the same radius, lifted by spacing.
         local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*fade
         local n=#s.properties
-        local gap=({90,60,30})[n]or 30
+        local conv=M.converge(s,now,opts) -- Test7.14: arcs close into one ring
+        local gap=(({90,60,30})[n]or 30)*conv
         local section=(360-n*gap)/n
         local rotation=M.rotation(s,now,opts)
         local function shade(c,head)
@@ -1397,7 +1422,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             for idx,pair in ipairs(arcs)do
                 out.strands=out.strands+1
                 local lead,tail=shade(pair[1],pair.head),shade(pair[2],false)
-                local lift=(#arcs-idx)*option(opts,'opener_spacing')
+                local lift=(#arcs-idx)*option(opts,'opener_spacing')*conv
                 local strand=(k-1)*4+idx
                 for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
                     if place[1]then
@@ -1457,6 +1482,8 @@ function M.frame(model,s,now,radius,height,opts,context)
             out.strands=n
             specs={}
         end
+        -- Test7.14: L2/L3 strands converge as the sky ring lands.
+        local conv=(not opener and not l4 and (s.level==2 or s.level==3))and M.converge(s,now,opts)or 1
         local l4seq=l4 and l4opt('close')=='sequence'
         local ring_fade=l4seq and 1 or fade -- the sequence does its own fading
         local alpha=opacity*option(opts,'brightness')*(phase=='pre'and .78 or .95)*ring_fade
@@ -1489,7 +1516,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             rotation=rotation*(spec.spin or 1) -- Light/Darkness middle strand may turn at its own rate
             for _,place in ipairs({{bottom,'ground'},{top,'sky'}})do
                 if place[1]then
-                    local h=place[1]+spec.stack
+                    local h=place[1]+spec.stack*conv
                     if l4c and place[2]=='ground'then h=l4c.h end -- Test7.7 plane
                     local draw_radius=r
                     if place[2]=='sky'then

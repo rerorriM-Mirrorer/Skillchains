@@ -1,5 +1,15 @@
 ## Current Development Status — 2026-11-22 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.13 `358dfc3`, Test7.14 on top).
+- installed_base: Test7.13 (`358dfc3`; A tried it 02:02, Live: Earth candidates seen). Package `TargetSC-0.19.14-Test7.14.zip` cumulative since `76cf0e6`.
+- Live (A, 02:02): Earth gold > classic; `scission` (255,165,0) "feels GOOD", the pick for now (may revisit with the Darkness color). Crystal "cool".
+- Changes: Test7.14 `rings converge on|off | from` (L2/L3 strand stacks and opener section gaps/element lifts scale by smooth(descent left / from), meeting as the sky lands; closed/L4 untouched); `umbra slow curve in|out | slow power` (in: speed to+(1-to)(1-u^p)); Requiescat preview opener = Gravitation, Scission, Darkness (Sequence; level 3; Earth, Dark, Ice, Water); `palette()` treats any Darkness/Umbra property as dark (aeonic openers; default sections layout already colors per property, so no default-look change).
+- Tunables (defaults): `ring_converge` true, `ring_converge_from` .35; `umbra_slow_curve` in, `umbra_slow_power` 3. Earlier: `earth_color` classic.
+- Checks: 72/72 CI lua5.1 invocations PASS incl. new `test_converge_714.lua` (defaults + A's 11-22 profile); `test_motion.lua` L2 stack assertion allows the merge at 109.2 s. `tests/test_transport.lua` fails before and after (superseded, not in CI). Host only.
+- Pending: Test7.14 in game; Darkness color direction; xivcrossbar Earth to match (scission 255,165,0 pending A's final word).
+
+## Current Development Status — 2026-11-22 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.12 `6375d8f`, docs `8d5e932`, Test7.13 on top).
 - installed_base: Test7.11 (`e756eb2`, Live 00:48); Test7.12 install Unknown, so the package stays cumulative since `76cf0e6`.
 - Changes: Test7.13 color pass, Earth only. `earth_color` setting + `//tsc earth classic|gold|scission|crystal|<r g b>` changes the shared Earth color table in place (rings, discs, bursts, running previews). New previews `preview demo requiescat` (Requiescat Gravitation+Scission opener > Gust Slash Detonation > Nightmare Scythe Gravitation > Rudra's Storm Darkness > Requiescat/Sequence Umbra; no bursts) and `preview earth mb` (same links, Earth MBs at 20.6, 22.2, 23.8, 27.5, 29.6, 33.6, 34.4, 36.5, 38.0, 38.8 s). Version `0.19.13-unified-test7.13`.

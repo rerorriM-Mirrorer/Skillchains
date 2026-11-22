@@ -24,11 +24,13 @@ M.radiance_sequence={
     {weapon=60,name='Resolution (Lionheart + qualifying Aeonic Aftermath)',property='Radiance',level=4,used='Light'},
 }
 -- Test7.13 color pass: an Earth-heavy Umbra chain bookended by Requiescat.
--- The opener carries both of Requiescat's properties (Gravitation +
--- Scission; level 2, Earth then Dark, as the bridge publishes it). Scission
+-- Test7.14: with Sequence equipped the opener carries Requiescat's aeonic
+-- Darkness too (sc_runtime opener path uses aeonic_prop): Gravitation,
+-- Scission, Darkness; level 3; Earth, Dark, Ice, Water as the bridge
+-- publishes it. Scission
 -- cannot feed Gravitation in FFXI, so the chain passes through Detonation.
 -- Validated against Skillchains' check_props in test_transport.lua.
-M.requiescat_opener={'Gravitation','Scission'}
+M.requiescat_opener={'Gravitation','Scission','Darkness'}
 M.requiescat_sequence={
     {weapon=226,name='Requiescat',property='Gravitation',level=2,used='Gravitation'},
     {weapon=19,name='Gust Slash',property='Detonation',level=1,used='Scission'},
@@ -59,10 +61,10 @@ function M.parse(args,resonance)
     -- Test7.13: `preview demo requiescat` (no bursts) and `preview earth mb`
     -- / `preview mb earth` / `preview mb requiescat` (Earth bursts throughout).
     if (first=='demo'or first=='full'or first=='requiescat')and (second=='requiescat'or first=='requiescat')then
-        return {kind='requiescatdemo',properties=M.requiescat_opener,level=2}
+        return {kind='requiescatdemo',properties=M.requiescat_opener,level=3}
     end
     if (first=='earth'and second=='mb')or (first=='mb'and (second=='earth'or second=='requiescat'))then
-        return {kind='earthmb',properties=M.requiescat_opener,level=2}
+        return {kind='earthmb',properties=M.requiescat_opener,level=3}
     end
     if first=='mb'and second=='radiance'then return {kind='radiancemb',properties={'Scission'},level=1}end
     if first=='mb'and second=='light'then return {kind='mblight',properties={'Fusion'},level=2}end
@@ -210,9 +212,9 @@ function M.new(spec,id,now,resonance,opts)
             requiescat and M.requiescat_sequence or M.umbra_sequence
         self.stage='Fast Blade: Scission opener'
         if requiescat then
-            -- Live order from the bridge: Gravitation's Earth, Dark (Scission adds no new element).
-            s.elements={'Earth','Dark'}
-            self.stage='Requiescat: Gravitation + Scission opener'
+            -- Live order from the bridge: Gravitation's Earth, Dark, then Darkness adds Ice, Water.
+            s.elements={'Earth','Dark','Ice','Water'}
+            self.stage='Requiescat (Sequence): Gravitation + Scission + Darkness opener'
         end
         for step=2,#sequence do
             local row=sequence[step]
@@ -286,7 +288,7 @@ function M.new(spec,id,now,resonance,opts)
         kind=='mbdark'and ('MB Dark overlap: Darkness link 0s; '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
         kind=='radiancedemo'and 'Radiance demo: Fast Blade 0s; Burning Blade 9s; Flat Blade 17s; Savage Blade 24s; Resolution 30s. Four links; no burst events; final MB reminder ends 40s.'or
         kind=='radiancemb'and 'Radiance MB demo: same four links; Fire 12.6s, Light 23.8s, Lightning 29.8s, Light 38.8s. Ends 40s; local visuals only.'or
-        kind=='requiescatdemo'and 'Requiescat demo: Requiescat 0s (Gravitation+Scission opener); Gust Slash 9s (Detonation); Nightmare Scythe 17s (Gravitation); Rudra\'s Storm 24s (Darkness); Requiescat 30s (Umbra). No bursts; final MB reminder ends 40s.'or
+        kind=='requiescatdemo'and 'Requiescat demo: Requiescat 0s (Gravitation+Scission+Darkness opener); Gust Slash 9s (Detonation); Nightmare Scythe 17s (Gravitation); Rudra\'s Storm 24s (Darkness); Requiescat 30s (Umbra). No bursts; final MB reminder ends 40s.'or
         kind=='earthmb'and ('Earth MB demo: Requiescat links as in demo requiescat; Earth MBs at '..table.concat(M.earth_hits,', ')..'s. Ends 40s; local visuals only.')or
         kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or
         kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or

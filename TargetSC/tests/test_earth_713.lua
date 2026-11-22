@@ -70,8 +70,11 @@ local rd=P.new(P.parse({'demo','requiescat'},R),81,0,R,o)
 local em=P.new(P.parse({'earth','mb'},R),82,0,R,o)
 assert(math.abs(um.ends-rd.ends)<1e-9 and math.abs(rd.ends-em.ends)<1e-9,'same clocks as the Umbra demo')
 local opener=rd.model.states[81]
-assert(opener.properties[1]=='Gravitation'and opener.properties[2]=='Scission'and opener.level==2,'two-property level-2 opener')
-assert(opener.elements[1]=='Earth'and opener.elements[2]=='Dark'and #opener.elements==2,'live element order Earth, Dark')
+assert(opener.properties[1]=='Gravitation'and opener.properties[2]=='Scission'and opener.properties[3]=='Darkness'and opener.level==3,'Sequence opener: three properties, level 3')
+assert(table.concat(opener.elements,',')=='Earth,Dark,Ice,Water','live element order')
+-- The live bridge builds the same level/elements from these properties (sc_runtime opener path).
+local sc_src=io.open('./TargetSC/sc_runtime.lua'):read('*a')
+assert(sc_src:find("aeonic_prop(chosen.ability,actor),chosen.ability.delay or 3,1)",1,true),'opener uses aeonic_prop')
 local props,levels,windows={}, {}, {}
 for t=0,em.ends,.05 do
     em:advance(t)
