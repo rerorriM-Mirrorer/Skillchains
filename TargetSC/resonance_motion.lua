@@ -321,7 +321,13 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     kill_mb_gather=.35,kill_mb_curve=4,kill_bloom_delay=.12,kill_bloom_time=.55,
     kill_bloom_size=1.25,kill_bloom_opacity=.8,kill_sc_freeze=.2,kill_sc_split=.12,kill_sc_turn=.05,
     kill_sc_sag=.12,kill_sc_flicker=.35,kill_sc_flash=.08,kill_sc_seam=.5,kill_seam_flicker=1,
-    kill_sc_ghost=.85,kill_seam_angle=0}
+    kill_sc_ghost=.85,kill_seam_angle=0,
+    -- Test7.13 color pass: the Earth element's color everywhere it is drawn
+    -- (rings, discs, bursts). classic 176,114,48 (default, the earlier look);
+    -- gold 230,190,70 (xivcrossbar spec); scission 255,165,0 (the Scission
+    -- icon's orange); crystal 216,146,64 (the earth elemental's crystal body);
+    -- or 'r,g,b' (0-255 each). `//tsc earth <choice>`.
+    earth_color='classic'}
 -- Exact 2026-10-22 Killala profile (identical to Cioara's 2026-11-16 saved
 -- TargetSC settings): `//tsc preset killala` restores the pre-Test3 look.
 M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb_intro_disc=1,disc_blend='split',ring_blend='split',

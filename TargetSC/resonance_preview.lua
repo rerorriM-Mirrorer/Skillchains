@@ -23,6 +23,24 @@ M.radiance_sequence={
     {weapon=42,name='Savage Blade',property='Light',level=3,used='Fragmentation'},
     {weapon=60,name='Resolution (Lionheart + qualifying Aeonic Aftermath)',property='Radiance',level=4,used='Light'},
 }
+-- Test7.13 color pass: an Earth-heavy Umbra chain bookended by Requiescat.
+-- The opener carries both of Requiescat's properties (Gravitation +
+-- Scission; level 2, Earth then Dark, as the bridge publishes it). Scission
+-- cannot feed Gravitation in FFXI, so the chain passes through Detonation.
+-- Validated against Skillchains' check_props in test_transport.lua.
+M.requiescat_opener={'Gravitation','Scission'}
+M.requiescat_sequence={
+    {weapon=226,name='Requiescat',property='Gravitation',level=2,used='Gravitation'},
+    {weapon=19,name='Gust Slash',property='Detonation',level=1,used='Scission'},
+    {weapon=99,name='Nightmare Scythe',property='Gravitation',level=2,used='Compression'},
+    {weapon=31,name="Rudra's Storm",property='Darkness',level=3,used='Distortion'},
+    {weapon=226,name='Requiescat (Sequence + qualifying Aeonic Aftermath)',property='Umbra',level=4,used='Darkness'},
+}
+-- Earth MBs (seconds from the start), only in windows where Earth really
+-- bursts (Gravitation, Darkness, Umbra; never Detonation). Early, stacked
+-- doubles, overlaps with the next link's white intro (23.8, 29.6), and the
+-- final MB ending (38.0 = as a 2 s ending begins, 38.8 inside it).
+M.earth_hits={20.6,22.2,23.8,27.5,29.6,33.6,34.4,36.5,38.0,38.8}
 function M.parse(args,resonance)
     local first=(args[1] or 'opener'):lower()
     local kind=first
@@ -37,6 +55,14 @@ function M.parse(args,resonance)
     if (first=='demo'or first=='full')and (second=='radiance'or second=='light')then
         local mb=(args[3]or ''):lower()=='mb'
         return {kind=mb and 'radiancemb'or 'radiancedemo',properties={'Scission'},level=1}
+    end
+    -- Test7.13: `preview demo requiescat` (no bursts) and `preview earth mb`
+    -- / `preview mb earth` / `preview mb requiescat` (Earth bursts throughout).
+    if (first=='demo'or first=='full'or first=='requiescat')and (second=='requiescat'or first=='requiescat')then
+        return {kind='requiescatdemo',properties=M.requiescat_opener,level=2}
+    end
+    if (first=='earth'and second=='mb')or (first=='mb'and (second=='earth'or second=='requiescat'))then
+        return {kind='earthmb',properties=M.requiescat_opener,level=2}
     end
     if first=='mb'and second=='radiance'then return {kind='radiancemb',properties={'Scission'},level=1}end
     if first=='mb'and second=='light'then return {kind='mblight',properties={'Fusion'},level=2}end
@@ -99,7 +125,8 @@ function M.new(spec,id,now,resonance,opts)
     end
     local kind=spec.kind
     local s
-    local demo=kind=='umbra'or kind=='mbdemo'or kind=='radiancedemo'or kind=='radiancemb'
+    local requiescat=kind=='requiescatdemo'or kind=='earthmb'
+    local demo=kind=='umbra'or kind=='mbdemo'or kind=='radiancedemo'or kind=='radiancemb'or requiescat
     if kind=='opener' or kind=='pre' or demo then s=state(now,1,spec.properties,spec.level,false)
     else s=state(now,2,spec.properties,spec.level,kind=='closed' or spec.level==4) end
     -- Test4.9 overlap previews (user-specified). Times are relative to the
@@ -179,8 +206,14 @@ function M.new(spec,id,now,resonance,opts)
     end
     if demo then
         local prior=s
-        local sequence=(kind=='radiancedemo'or kind=='radiancemb')and M.radiance_sequence or M.umbra_sequence
+        local sequence=(kind=='radiancedemo'or kind=='radiancemb')and M.radiance_sequence or
+            requiescat and M.requiescat_sequence or M.umbra_sequence
         self.stage='Fast Blade: Scission opener'
+        if requiescat then
+            -- Live order from the bridge: Gravitation's Earth, Dark (Scission adds no new element).
+            s.elements={'Earth','Dark'}
+            self.stage='Requiescat: Gravitation + Scission opener'
+        end
         for step=2,#sequence do
             local row=sequence[step]
             local at=prior.sc_close-1
@@ -199,6 +232,12 @@ function M.new(spec,id,now,resonance,opts)
             for _,hit in ipairs(hits)do
                 self.events[#self.events+1]={at=now+hit[1],kind='burst',element=hit[2],
                     color=resonance.element_color(hit[2])}
+            end
+            table.sort(self.events,function(a,b)return a.at<b.at end)
+        end
+        if kind=='earthmb'then
+            for _,t in ipairs(M.earth_hits)do
+                self.events[#self.events+1]={at=now+t,kind='burst',element='Earth',color=resonance.element_color('Earth')}
             end
             table.sort(self.events,function(a,b)return a.at<b.at end)
         end
@@ -247,6 +286,8 @@ function M.new(spec,id,now,resonance,opts)
         kind=='mbdark'and ('MB Dark overlap: Darkness link 0s; '..list()..'. Ends '..at(self.ends)..'; local visuals only.')or
         kind=='radiancedemo'and 'Radiance demo: Fast Blade 0s; Burning Blade 9s; Flat Blade 17s; Savage Blade 24s; Resolution 30s. Four links; no burst events; final MB reminder ends 40s.'or
         kind=='radiancemb'and 'Radiance MB demo: same four links; Fire 12.6s, Light 23.8s, Lightning 29.8s, Light 38.8s. Ends 40s; local visuals only.'or
+        kind=='requiescatdemo'and 'Requiescat demo: Requiescat 0s (Gravitation+Scission opener); Gust Slash 9s (Detonation); Nightmare Scythe 17s (Gravitation); Rudra\'s Storm 24s (Darkness); Requiescat 30s (Umbra). No bursts; final MB reminder ends 40s.'or
+        kind=='earthmb'and ('Earth MB demo: Requiescat links as in demo requiescat; Earth MBs at '..table.concat(M.earth_hits,', ')..'s. Ends 40s; local visuals only.')or
         kind=='mbdemo'and 'MB demo: original four links; Wind 12.6s, Earth 23.8s, Water 29.8s, Dark 38.8s. Ends 40s; local visuals only.'or
         kind=='burst'and ('local '..spec.element..' MB response at 0.6s; original SC/MB clocks unchanged')or kind=='umbra' and 'Umbra demo: Fast Blade 0s; Gust Slash 9s; Nightmare Scythe 17s; Rudra\'s Storm 24s; Entropy 30s. Four links; no burst events; final MB reminder ends 40s.' or
         kind=='pre' and 'pre only: ground charge 0–3s; stops before countdown' or

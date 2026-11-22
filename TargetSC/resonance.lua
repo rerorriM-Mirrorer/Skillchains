@@ -25,6 +25,26 @@ function M.element(name)
     for element in pairs(E)do if element:lower()==(name or ''):lower()then return element end end
 end
 function M.element_color(name)return E[name]end
+-- Test7.13 color pass: named Earth choices (see `earth_color` in the motion
+-- defaults). The color table is changed in place, so rings, discs, bursts and
+-- running previews that already hold it pick the new color up at once.
+M.earth_colors={classic={176,114,48},gold={230,190,70},scission={255,165,0},crystal={216,146,64}}
+function M.parse_color(value)
+    value=tostring(value or ''):lower()
+    local named=M.earth_colors[value]
+    if named then return {named[1],named[2],named[3]},value end
+    local r,g,b=value:match('^%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*$')
+    r,g,b=tonumber(r),tonumber(g),tonumber(b)
+    if r and r<=255 and g<=255 and b<=255 then return {r,g,b},('%d,%d,%d'):format(r,g,b)end
+end
+local applied_earth
+function M.apply_colors(opts)
+    local want=opts and opts.earth_color or 'classic'
+    if want==applied_earth then return end
+    local rgb=M.parse_color(want)or M.earth_colors.classic
+    E.Earth[1],E.Earth[2],E.Earth[3]=rgb[1],rgb[2],rgb[3]
+    applied_earth=want
+end
 function M.level(name) return levels[name] or 1 end
 function M.elements(name) return P[name] or ((name=='Light' or name=='Radiance') and {'Fire','Wind','Lightning','Light'} or {'Earth','Ice','Water','Dark'}) end
 local function palette(s)

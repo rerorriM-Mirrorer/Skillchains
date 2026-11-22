@@ -1,5 +1,15 @@
 ## Current Development Status — 2026-11-22 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.12 `6375d8f`, docs `8d5e932`, Test7.13 on top).
+- installed_base: Test7.11 (`e756eb2`, Live 00:48); Test7.12 install Unknown, so the package stays cumulative since `76cf0e6`.
+- Changes: Test7.13 color pass, Earth only. `earth_color` setting + `//tsc earth classic|gold|scission|crystal|<r g b>` changes the shared Earth color table in place (rings, discs, bursts, running previews). New previews `preview demo requiescat` (Requiescat Gravitation+Scission opener > Gust Slash Detonation > Nightmare Scythe Gravitation > Rudra's Storm Darkness > Requiescat/Sequence Umbra; no bursts) and `preview earth mb` (same links, Earth MBs at 20.6, 22.2, 23.8, 27.5, 29.6, 33.6, 34.4, 36.5, 38.0, 38.8 s). Version `0.19.13-unified-test7.13`.
+- Reference colors (Verified from `TargetSC/images/skillchain/*.png`): Scission/Earth 255,165,0; Detonation/Wind 0,128,0; Impaction/Lightning 128,0,128; Induration/Ice 0,206,206; Reverberation/Water 0,0,255; Liquefaction/Fire 255,0,0; Compression/Dark 0,0,0; Transfixion/Light 128,128,128. Earth elemental crystal (A's screenshot): body ~215,145,64, core ~250,214,149.
+- Tunables (defaults): `earth_color` classic (176,114,48). Presets reset it to classic.
+- Checks: 71/71 CI lua5.1 invocations PASS incl. new `test_earth_713.lua` (Requiescat chain checked against `check_props`/`aeonic_prop` sliced from `sc_runtime.lua`; bursts only in Earth-bursting windows). Host only.
+- Pending: Test7.12 and Test7.13 in game; A's Earth pick; then xivcrossbar Earth to match; then Wind green, Lightning purple, Darkness in Compression/Gravitation.
+
+## Current Development Status — 2026-11-22 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (Test7.12 `6375d8f`).
 - installed_base: Test7.11 (`e756eb2`; A tested it 00:48, Live). Package `TargetSC-0.19.12-Test7.12.zip` cumulative since `76cf0e6`.
 - Live (A, 00:48): flicker on the Umbra pulse liked; wobble after "looks so cool"; A tuning bloom sizes (radiance glow size 1.33, umbra bloom size 1.27, ring_level4_gap .09). Umbra classic MB glow is purple, which A doesn't want, so A stays on pulse.

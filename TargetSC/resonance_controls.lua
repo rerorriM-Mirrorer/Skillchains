@@ -490,6 +490,18 @@ function M.new(settings,defaults,save,say,killala,cioara)
             elseif not toggle('awakening',value,'Awakening')then
                 say('Use //tsc awakening on|off | opacity <0-1> | fade <inner> [outer] | size <0.1-3> | links on|off.')
             end
+        elseif command=='earth'then
+            -- Test7.13 color pass: `//tsc earth classic|gold|scission|crystal|<r g b>`.
+            local named={classic='176,114,48',gold='230,190,70',scission='255,165,0',crystal='216,146,64'}
+            local text=table.concat(args,' '):lower()
+            local r,g,b=text:match('^%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*$')
+            r,g,b=tonumber(r),tonumber(g),tonumber(b)
+            local choice=named[value]and value or (r and r<=255 and g<=255 and b<=255 and ('%d,%d,%d'):format(r,g,b))
+            if not choice then
+                say('Use //tsc earth classic|gold|scission|crystal|<r g b>. Now '..tostring(settings.earth_color or 'classic')..'.');return true
+            end
+            settings.earth_color=choice;save(settings)
+            say('Earth color '..choice..(named[choice]and (' ('..named[choice]..')')or '')..'.')
         elseif command=='preset'then preset(value)
         elseif command=='display'then
             if not ({sc=true,mb=true,both=true,off=true})[value]then say('Use //tsc display sc|mb|both|off.');return true end

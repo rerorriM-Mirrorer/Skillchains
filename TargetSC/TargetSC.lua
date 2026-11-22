@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.12-unified-test7.12'
+_addon.version='0.19.13-unified-test7.13'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -139,6 +139,9 @@ local function help()
         {'preview mb','Same four links with Wind/Earth/Water/Dark bursts; includes late-link overlaps.'},
         {'preview demo radiance','Five weaponskills: Fast Blade, Burning Blade, Flat Blade, Savage Blade, Resolution (L1/L2/Light/Radiance), no bursts.'},
         {'preview mb radiance','Same Radiance links with Fire/Light/Lightning/Light bursts at the MB demo overlap times.'},
+        {'preview demo requiescat','Requiescat (Gravitation+Scission opener), Gust Slash, Nightmare Scythe, Rudra\'s Storm, Requiescat (Umbra); no bursts.'},
+        {'preview earth mb','Same Requiescat links with ten Earth bursts (Gravitation, Darkness and Umbra windows), incl. overlaps and the final ending.'},
+        {'earth classic|gold|scission|crystal|<r g b>','Earth element color: classic 176,114,48 (default), gold 230,190,70, scission 255,165,0, crystal 216,146,64, or your own.'},
         {'preview switch [preview]','The preview rides on the first two targets you pick (enemies or yourself) to try target handoffs.'},
         {'preview off','Stops a preview; it dims away like an untarget.'},
         {'mb radiance light|classic','Radiance MB ring like a level-3 Light middle ring (white, colored inner glow) or classic (default light).'},
@@ -748,6 +751,7 @@ local function draw(frame,mob,level)
 end
 windower.register_event('prerender',function()
     if not settings.enabled or not native or not renderer_started then return end
+    resonance.apply_colors(settings) -- Test7.13: `earth` color choice (no-op unless it changed)
     local now=os.clock()
     -- even: 2 ms tolerance so frame-time jitter landing a hair early does
     -- not skip a beat (which would make a 3-frame step).

@@ -1,5 +1,20 @@
 # TargetSC — elemental resonance
 
+## 0.19.13 unified Test7.13 — Earth color choices, Requiescat and Earth MB previews (Lua only)
+
+- **`//tsc earth classic|gold|scission|crystal|<r g b>`** (default classic): the
+  Earth element's color in rings, discs and bursts. classic 176,114,48 is the
+  earlier look; gold 230,190,70 is xivcrossbar's spec; scission 255,165,0 is the
+  Scission icon's orange; crystal 216,146,64 is the earth elemental's crystal.
+  `//tsc earth 200 150 60` tries any color. Changes show at once, even mid-preview.
+- **`//tsc preview demo requiescat`**: Requiescat opens (Gravitation + Scission),
+  then Gust Slash (Detonation), Nightmare Scythe (Gravitation), Rudra's Storm
+  (Darkness), and Requiescat with Sequence closes Umbra. No bursts.
+- **`//tsc preview earth mb`** (also `preview mb earth`): the same chain with ten
+  Earth magic bursts in the Gravitation, Darkness and Umbra windows, including
+  quick doubles, bursts that overlap the next link's white intro, and two in the
+  final MB ending.
+
 ## 0.19.12 unified Test7.12 — Umbra pulse range, under disc slowdown, disc flash, cioara preset (Lua only)
 
 - **`//tsc umbra mb floor <0-1>`** (default 0): how bright the Umbra MB ring stays
