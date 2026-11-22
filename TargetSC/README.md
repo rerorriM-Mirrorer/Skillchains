@@ -1,5 +1,19 @@
 # TargetSC — elemental resonance
 
+## 0.19.12 unified Test7.12 — Umbra pulse range, under disc slowdown, disc flash, cioara preset (Lua only)
+
+- **`//tsc umbra mb floor <0-1>`** (default 0): how bright the Umbra MB ring stays
+  between pulses (0 = clear). **`umbra mb strength`** now goes up to 3, so the
+  brightest pulse can be brighter.
+- **`//tsc umbra under slow on|off`** (default off): after the ring flash-out the
+  multicolored under disc slows, easing out over `umbra slow time <s>` (2) to
+  `umbra slow to <0-1>` x its speed (0 = it stops).
+- **`//tsc umbra disc flash on|off`** (default off): the black disc flashes white
+  with the last ring flash (as the MB glyph vanishes), then returns to black
+  over `umbra flash fade <s>` (.3).
+- **`//tsc preset cioara`**: Cioara's whole current look (2026-11-22). The old
+  `killala` preset is still there.
+
 ## 0.19.11 unified Test7.11 — own MB flicker per level 4, Umbra wobble after the flash (Lua only)
 
 - **`//tsc radiance mb flicker <0-1|same>`** and **`//tsc umbra mb flicker <0-1|same>`**

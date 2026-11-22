@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.11-unified-test7.11'
+_addon.version='0.19.12-unified-test7.12'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -173,7 +173,9 @@ local function help()
         {'umbra after bloom|smoke|off','After the flash-out: one ring-shaped black bloom (default), per-ring smoke, or nothing.'},
         {'umbra bloom opacity|time|size|growth <number>','Bloom opacity (.6), seconds (2.5), start size in SC ring radii (1), growth -1..2 (<0 shrinks, 0 stays, >0 grows; -.5).'},
         {'umbra bloom height rings|ground|disc|mb','rings: one bloom at each SC ring height (default); or one at the ground ring / disc / MB ring. Shape: mb bloom opacity/middle/ease/fade.'},
-        {'umbra mb pulse|classic | mb strength <0-1> | mb size <0.2-4>','Umbra MB ring: white ending-style pulses all window (default pulse, 1), its size (1).'},
+        {'umbra mb pulse|classic | mb strength <0-3> | mb floor <0-1> | mb size <0.2-4>','Umbra MB ring: white ending-style pulses all window (default pulse); strength = brightest pulse (1), floor = brightness between pulses (0), size (1).'},
+        {'umbra under slow on|off | slow time <s> | slow to <0-1>','After the flash-out the multicolored under disc slows, easing out over slow time (2 s) to slow to x its speed (0 = stops). Default off.'},
+        {'umbra disc flash on|off | flash fade <s>','The black disc flashes white with the last ring flash (as the MB glyph vanishes), back to black over flash fade (.3 s). Default off.'},
         {'umbra spin <0-6|same>','Umbra\'s own level-4 spin, beyond discs speed level4 (same = that).'},
         {'umbra sky same|bell|off','Sky rings the same size as the ground rings (default same), flared like a bell, or off (one set of rings).'},
         {'umbra glyph breath|same','Umbra large MB glyph breathes at rest at the disc\'s exact height, sized like the Umbra MB ring (default breath).'},
@@ -286,7 +288,7 @@ local function help()
         {'awakening size <0.1-3>','White opening disc size; 1 = previous size (default 1).'},
         {'awakening links on|off','Play the white disc again on every link that opens a new window (default on).'},
         {'awakening fade until default|open|close|<1-9>','When the white disc finishes fading: as before, as the window opens, at window end, or N s after it opens.'},
-        {'preset default|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; killala = exact pre-Test3 (Killala/Cioara) look.'},
+        {'preset default|cioara|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; cioara = Cioara\'s current look (2026-11-22); killala = the old pre-Test3 look.'},
         {'mb glyph height <0-2>','Burst rise of the large glyph as a fraction of the MB ring height; 1 = ring, 0 = old mb rise (default 1.1).'},
         {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},
         {'mb glyph after fade|fall','After a burst the large glyph stays risen and fades, or falls back as before (default fade).'},
@@ -438,7 +440,7 @@ local function advance_preview(now)
         if prior~=preview.phase then debug('preview phase '..tostring(preview.phase))end
     end
 end
-local visual_command=controls.new(settings,resonance.defaults,config.save,say,resonance.killala)
+local visual_command=controls.new(settings,resonance.defaults,config.save,say,resonance.killala,resonance.cioara)
 local function receive_frame(args)
     local accepted,why=model:receive(args,os.clock())
     if accepted then

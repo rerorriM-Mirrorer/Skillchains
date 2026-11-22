@@ -11,9 +11,9 @@ local groups={flutter=strike,strike=strike,
     sky={prefix='sky_',values={expand={0,2},cutoff={.05,1},curve={1,8},hold={0,2},descent={-4,4}}},
     ground={prefix='ground_',values={height={0,1},lift={0,.3}}},fade={prefix='fade_',values={duration={.1,1}}}}
 local disc_limits={opacity={0,1},outline={0,1},height={0,.5},speed={0,4},minimum={0,4},slowdown={.1,4}}
-local presets={default=true,killala=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}
-local preset_names='default|killala|discson|discsoff|vivid|gentle|legacy'
-function M.new(settings,defaults,save,say,killala)
+local presets={default=true,killala=true,cioara=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}
+local preset_names='default|cioara|killala|discson|discsoff|vivid|gentle|legacy'
+function M.new(settings,defaults,save,say,killala,cioara)
     local function numeric(key,value,range,syntax)
         local n=tonumber(value)
         if not n or n~=n or n<range[1]or n>range[2]then
@@ -35,6 +35,8 @@ function M.new(settings,defaults,save,say,killala)
         for key,v in pairs(defaults)do settings[key]=v end
         -- killala: the exact pre-Test3 2026-10-22 profile (also Cioara's).
         if value=='killala'then for key,v in pairs(killala or {})do settings[key]=v end end
+        -- Test7.12 cioara: A's current look (2026-11-22).
+        if value=='cioara'then for key,v in pairs(cioara or {})do settings[key]=v end end
         if value=='discsoff'then settings.discs=false
         elseif value=='vivid'then
             settings.opacity=1;settings.brightness=1;settings.intensity=2;settings.motion='flutter'
@@ -131,7 +133,7 @@ function M.new(settings,defaults,save,say,killala)
             ['smoke spread']={'n',0,.3},
             ['open time']={'n',0,8,same=true},after={'c','bloom','smoke','off'},['bloom opacity']={'n',0,1},
             ['bloom time']={'n',.2,8},['bloom size']={'n',.2,4},['bloom growth']={'n',-1,2},
-            ['bloom height']={'c','rings','ground','disc','mb'},mb={'c','pulse','classic'},['mb strength']={'n',0,1},
+            ['bloom height']={'c','rings','ground','disc','mb'},mb={'c','pulse','classic'},['mb strength']={'n',0,3},['mb floor']={'n',0,1},
             ['mb size']={'n',.2,4},['disc size']={'n',.2,10,same=true},
             spin={'n',0,6,same=true},sky={'c','same','bell','off'},glyph={'c','breath','same'},
             ['glyph size']={'n',.2,4},['glyph opacity']={'n',0,1,same=true},['glyph spin']={'n',-4,4},
@@ -155,7 +157,9 @@ function M.new(settings,defaults,save,say,killala)
             ['stand time']={'n',.05,8},['sink time']={'n',.05,10},['swallow stagger']={'n',0,.95},
             ['swallow order']={'c','outer','inner','together'},['swallow pull']={'n',0,1},['swallow lift']={'n',0,4},
             ['mb flicker']={'n',0,1,same=true},['wobble after']={'b'},['wobble peak']={'n',0,40},
-            ['wobble curve']={'n',.2,6},['wobble speed']={'n',.2,6}}}
+            ['wobble curve']={'n',.2,6},['wobble speed']={'n',.2,6},
+            ['under slow']={'b'},['slow time']={'n',.05,20},['slow to']={'n',0,1},
+            ['disc flash']={'b'},['flash fade']={'n',.02,3}}}
     -- 0.18 kill animations: //tsc kill ... (same table-driven parser).
     level4_spec.kill={time={'n',.3,5},['mb rings']={'c','freeze','gather'},['mb fade']={'n',.05,3},
         ['mb flicker']={'n',0,1},['mb freeze']={'n',0,1},['mb discs']={'c','element','own'},['mb bloom']={'c','in','fade'},['mb glyphs']={'c','bloom','fade'},['sc flicker']={'n',0,1},['seam flicker']={'n',0,1},

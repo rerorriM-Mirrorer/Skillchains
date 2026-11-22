@@ -126,6 +126,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- deadline. peak = x the level-4 hum amplitude at the deadline (4);
     -- curve = growth power (2); speed = wobble rate at the deadline x the hum (2).
     umbra_wobble_after=false,umbra_wobble_peak=4,umbra_wobble_curve=2,umbra_wobble_speed=2,
+    -- Test7.12 Umbra MB pulse range: floor = brightness between pulses (0 =
+    -- clear), strength = peak (now up to 3; x mb overall when drawn).
+    umbra_mb_floor=0,
+    -- Test7.12: the multicolored under disc slows after the flash-out, easing
+    -- out over `slow time` s (2) to `slow to` x its speed (0 = stops).
+    umbra_under_slow=false,umbra_slow_time=2,umbra_slow_to=0,
+    -- Test7.12: the black disc flashes white with the last ring flash (as the
+    -- MB glyph vanishes), then returns to black over `flash fade` s (.3).
+    umbra_disc_flash=false,umbra_flash_fade=.3,
     -- Test4.8: large breathing glyph: after a burst it stays risen and fades
     -- (instead of falling); at the floor it shows only the window-opening
     -- flash (no breathing).
@@ -337,6 +346,81 @@ M.killala={mb_glyph_height=0,mb_glyph_tint=1,mb_glyph_rise=0,mb_intro_glyph=1,mb
 local white,gold={255,255,255},{255,217,115}
 -- Mix toward the brightest channel before dimming: hue is preserved while
 -- saturation becomes 75% and value 82% of the ordinary elemental color.
+-- Test7.12 preset cioara: A's whole look on 2026-11-22 00:48 (settings.xml
+-- global + cioara merged; enabled/debug left alone). //tsc preset cioara.
+M.cioara={
+    amplitude=0.3,awakening=true,awakening_inner=1,awakening_links=true,awakening_opacity=1,awakening_outer=0,
+    awakening_size=1.2,awakening_until='open',brightness=4,damping=3,detarget_time=0.15,disc_blend='firm',
+    disc_height=0.06,disc_inner=0,disc_level4_height=0.11,disc_level4_inner=1,disc_level4_middle=0.9,
+    disc_level4_outer=0,disc_level4_position=0.9,disc_level4_size=1.2,disc_lightdark='elements',
+    disc_minimum=0.5,disc_opacity=1,disc_outer=1,disc_outline=0.6,disc_size=1.03,disc_size_lines=1,
+    disc_slowdown=3,disc_speed=0.12,disc_speed_level1=2,disc_speed_level2=3,disc_speed_level3=4,
+    disc_speed_level4=3,disc_speed_opener=4,disc_style='glyph',discs=true,display='both',fade_duration=0.8,
+    frames='full',glow=1,ground_height=0.3,ground_lift=0.04,height=0.66,hum_amplitude=0.018,hum_gain=0.35,
+    hum_period=0.12,hum_slowdown=1,intensity=0.1,kill=true,kill_bloom_delay=0,kill_bloom_opacity=1,
+    kill_bloom_size=0.9,kill_bloom_time=0.6,kill_mb_bloom='fade',kill_mb_curve=1,kill_mb_discs='element',
+    kill_mb_fade=2,kill_mb_flicker=0.15,kill_mb_freeze=0.1,kill_mb_gather=0.06,kill_mb_glyphs='bloom',
+    kill_mb_rings='freeze',kill_sc_flash=0,kill_sc_flicker=0.1,kill_sc_freeze=0,kill_sc_ghost=0.6,
+    kill_sc_sag=0,kill_sc_seam=0.1,kill_sc_split=0.03,kill_sc_turn=0.05,kill_seam_angle=0,kill_seam_flicker=1,
+    kill_time=3.1,layout='grounded',mb_bloom=true,mb_bloom_center=0,mb_bloom_core=1,mb_bloom_ease=1.5,
+    mb_bloom_edge=0,mb_bloom_end=1.21,mb_bloom_fade=0.9,mb_bloom_flash=1,mb_bloom_from='ring',
+    mb_bloom_lines=0,mb_bloom_lines_delay=0.15,mb_bloom_lines_opacity=0.6,mb_bloom_lines_size=1.06,
+    mb_bloom_middle=1,mb_bloom_position=0.9,mb_bloom_start=1.1,mb_bloom_time=4,mb_bloom_to='same',
+    mb_breath_gain=1,mb_breath_min=0.7,mb_burst=0.6,mb_duration=0.9,mb_effects=1,mb_ending=2,
+    mb_ending_blooms='fade',mb_ending_drop=1,mb_ending_fade=0.8,mb_ending_shrink=0.3,
+    mb_ending_style='converge',mb_expand=0.015,mb_floor=1,mb_glow_flicker=1,mb_glow_shade=0.9,
+    mb_glow_spin=-0.6,mb_glow_width=0.66,mb_glyph_after='fade',mb_glyph_height=1,mb_glyph_opacity=0.09,
+    mb_glyph_rest='hidden',mb_glyph_rise=0,mb_glyph_tint=0.6,mb_hold=0.6,mb_idle=0.1,mb_intro=0.6,
+    mb_intro_disc=1,mb_intro_flashes=1,mb_intro_glyph=0.5,mb_level4='flicker',mb_level4_depth=0.3,mb_lift=0,
+    mb_lightdark_cycle=3,mb_opacity=0.39,mb_overall=0.66,mb_period=2,mb_position=0.5,mb_radiance='light',
+    mb_radiance_cycle=0.15,mb_radiance_glow=3,mb_return=2,mb_ring=1,mb_rise=0.01,mb_shimmer=1,mb_size=0.5,
+    mb_spin=0.025,mb_style='clapper',motion='sine',opacity=0.27,opener_disc_inner=1,opener_disc_outer=0,
+    opener_disc_outline=0,opener_disc_size=1.2,opener_fade=1,opener_fade_curve=1,opener_fade_end='lead',
+    opener_fade_glow=1,opener_fade_length=1,opener_gap=60,opener_glow='black',opener_layout='sections',
+    opener_muted=true,opener_spacing=0.035,opener_spin_minimum=0.5,opener_spin_slowdown=1,period=0.09,
+    radiance_bottom_opacity=0.3,radiance_bottom_size=0.9,radiance_close='sequence',radiance_close_time=0.3,
+    radiance_direction='outer',radiance_disc_lines=false,radiance_disc_opacity=-1,
+    radiance_ending_glyph='exponential',radiance_ending_peak=1,radiance_ending_ride=true,radiance_fade=0.3,
+    radiance_flash=1.5,radiance_glow=true,radiance_glow_dance=0.03,radiance_glow_fall=1.24,
+    radiance_glow_hold=0,radiance_glow_opacity=0.5,radiance_glow_rise=-1,radiance_glow_size=1.33,
+    radiance_glow_speed=0.3,radiance_glyph='breath',radiance_glyph_buzz=true,radiance_glyph_circle=true,
+    radiance_glyph_opacity=0.09,radiance_glyph_size=1,radiance_glyph_wobble='rings',radiance_lead=0.3,
+    radiance_look='open',radiance_mb_flicker=0.3,radiance_middle_cycle=3.6,radiance_middle_opacity=0.6,
+    radiance_middle_size=0.96,radiance_middle_spin=-0.6,radiance_opacity=-1,radiance_open_time=3,
+    radiance_order='together',radiance_shimmer=1,radiance_shimmer_angle=0,radiance_shimmer_mb=true,
+    radiance_shimmer_stagger=0.12,radiance_shimmer_time=0.3,radiance_shimmer_when='all',radiance_sky='off',
+    radiance_stack=true,radiance_stack_height=0,radiance_stack_spacing=0.01,ring_blend='firm',
+    ring_glow_spin=1,ring_level2_open='spread',ring_level2_start=0,ring_level3_open='spread',
+    ring_level3_start=0,ring_level4_collapse='ground',ring_level4_collapse_time=0.15,ring_level4_ease=6.6,
+    ring_level4_expand='mb',ring_level4_expand_time=5,ring_level4_gap=0.09,ring_level4_open='collapse',
+    ring_level4_spacing=0.075,ring_light='white',ring_light_cycle=0.6,ring_light_glow=0.9,
+    ring_light_mb='match',ring_light_opening='off',ring_lightdark='elements',ring_lightdark_spin=-2,
+    ring_lightdark_tint='white',ring_shade=0.6,ring_spin='disc',scale=2,sky_curve=3,sky_cutoff=0.5,
+    sky_descent=0,sky_expand=0.39,sky_hold=0.3,switch_in=0.1,switch_out=0.1,umbra_after='bloom',
+    umbra_bloom_growth=0,umbra_bloom_height='rings',umbra_bloom_opacity=0.6,umbra_bloom_size=1.27,
+    umbra_bloom_time=4.5,umbra_burst_center='black',umbra_close='sequence',umbra_close_time=2,
+    umbra_collapse=true,umbra_collapse_curve=10,umbra_collapse_time=6,umbra_copies=true,umbra_copies_depth=0,
+    umbra_copies_every=0.3,umbra_copies_life=0.6,umbra_copies_opacity=0.5,umbra_copies_size=1.1,
+    umbra_copies_spin=-1,umbra_copies_steady=false,umbra_copies_until='end',umbra_core=1,
+    umbra_direction='outer',umbra_disc_inner=1,umbra_disc_jitter=0.015,umbra_disc_middle=0.99,
+    umbra_disc_opacity=1,umbra_disc_outer=-1,umbra_disc_position=0.93,umbra_disc_size=1,
+    umbra_disc_steady=false,umbra_ending='vanish',umbra_ending_time=10,umbra_ending_when='flash',
+    umbra_flash=1,umbra_flash_time=0.066,umbra_flicker=0.3,umbra_gap=0,umbra_glow='white',
+    umbra_glyph='breath',umbra_glyph_lift=0,umbra_glyph_opacity=1,umbra_glyph_over=false,umbra_glyph_size=1,
+    umbra_glyph_spin=-0.3,umbra_gyro_below='half',umbra_gyro_rise=0.05,umbra_gyro_shrink=0,
+    umbra_gyro_speed=0.6,umbra_haze=false,umbra_haze_black=1,umbra_haze_center=0,umbra_haze_edge=1,
+    umbra_haze_flicker=1,umbra_haze_lift=-0.03,umbra_haze_opacity=0.2,umbra_haze_order='over',
+    umbra_haze_size=1,umbra_haze_speed=1,umbra_haze_style='soft',umbra_jitter_speed=9,
+    umbra_lines_color='white',umbra_lines_opacity=1,umbra_lines_size=1,umbra_look='black',umbra_mb='pulse',
+    umbra_mb_flicker=1,umbra_mb_height='disc',umbra_mb_size=0.9,umbra_mb_strength=1,umbra_opacity=-1,
+    umbra_open_time=2,umbra_order='together',umbra_sink_time=3,umbra_sky='off',umbra_smoke=1.5,
+    umbra_smoke_opacity=0.18,umbra_smoke_spread=0,umbra_spin=6,umbra_stand_time=0.6,umbra_swallow_lift=0,
+    umbra_swallow_order='together',umbra_swallow_pull=0.6,umbra_swallow_stagger=0.33,umbra_under=true,
+    umbra_under_center=1,umbra_under_cycle=3,umbra_under_depth=0.003,umbra_under_direction='same',
+    umbra_under_edge=0,umbra_under_ending='fade',umbra_under_opacity=1,umbra_under_size=1.3,
+    umbra_under_spin=2,umbra_under_steady=true,umbra_vanish_shimmer=30,umbra_vanish_time=0.15,
+    umbra_wobble_after=true,umbra_wobble_curve=1.5,umbra_wobble_peak=9,umbra_wobble_speed=6,width=2,
+}
 local function muted(c)
     local value=max(c[1],c[2],c[3])
     return {(.75*c[1]+.25*value)*.82,(.75*c[2]+.25*value)*.82,(.75*c[3]+.25*value)*.82}
@@ -892,6 +976,31 @@ end
 function M.umbra_flashed(s,opts,has_top)
     local _,count=level4_index(opts,'umbra','ground',1,4,has_top)
     return s.sc_open+option(opts,'umbra_close_time')+(count-1)*option(opts,'umbra_gap')+option(opts,'umbra_flash_time')
+end
+-- Test7.12: the under disc's angle with `under slow`: the steady rate until
+-- the flash-out, then speed k(u) = to + (1-to)(1-u)^2 over the slow time
+-- (ease-out), angle = integral of the speed (continuous, no jumps).
+function M.umbra_under_turn(s,now,opts,has_top)
+    local w=2*pi*option(opts,'disc_speed')*option(opts,'disc_speed_level4')
+    local f=M.umbra_flashed(s,opts,has_top)
+    local age=max(0,now-s.created)
+    local before=max(0,f-s.created)
+    if age<=before then return w*age end
+    local T=max(.05,option(opts,'umbra_slow_time'))
+    local to=clamp(option(opts,'umbra_slow_to'),0,1)
+    local dt=age-before
+    local u=min(1,dt/T)
+    local after=T*(to*u+(1-to)*(1-(1-u)^3)/3)+to*max(0,dt-T)
+    return w*(before+after)
+end
+-- Test7.12: the black disc's white flash: 1 through the last ring flash
+-- (flash-out - flash time .. flash-out), then 1-smooth over the fade.
+function M.umbra_disc_flash(s,now,opts,has_top)
+    local f=M.umbra_flashed(s,opts,has_top)
+    local ft=option(opts,'umbra_flash_time')
+    if now<f-ft then return 0 end
+    if now<=f then return 1 end
+    return 1-smooth((now-f)/max(.02,option(opts,'umbra_flash_fade')))
 end
 -- Test7.11: extra height for the Umbra ground wobble after the flash-out,
 -- growing (g^curve) to `peak` x the level-4 hum amplitude at the MB deadline,
@@ -1790,6 +1899,9 @@ function M.frame(model,s,now,radius,height,opts,context)
                     local mixed={}
                     for i=1,max(#grav,#dist)do mixed[i]=mix(grav[i]or grav[#grav],dist[i]or dist[#dist],w)end
                     local turn=(option(opts,'umbra_under_steady')and M.steady_rotation(s,now,opts)or angle)*option(opts,'umbra_under_spin')*(option(opts,'umbra_under_direction')=='reverse'and -1 or 1)
+                    if option(opts,'umbra_under_slow')then
+                        turn=M.umbra_under_turn(s,now,opts,has_top)*option(opts,'umbra_under_spin')*(option(opts,'umbra_under_direction')=='reverse'and -1 or 1)
+                    end
                     local mark=#out.discs
                     disc(r*fill_size*option(opts,'umbra_under_size'),h-option(opts,'umbra_under_depth'),turn,mixed,
                         option(opts,'umbra_under_opacity')*life,0,0,'umbra-under')
@@ -1800,6 +1912,15 @@ function M.frame(model,s,now,radius,height,opts,context)
                 end
                 local before=#out.discs
                 local fill_alpha=(glyph==2 and not respond)and 0 or disc_fill
+                if l4name=='umbra'and j==1 and option(opts,'umbra_disc_flash')then
+                    -- Test7.12: white with the last ring flash, then back to black.
+                    local w=M.umbra_disc_flash(s,now,opts,has_top)
+                    if w>0 then
+                        local lit={}for i,c in ipairs(colors)do lit[i]=mix(c,white,w)end
+                        colors=lit
+                        fill_alpha=fill_alpha+(1-fill_alpha)*w
+                    end
+                end
                 disc(r*fill_size,h,angle,colors,fill_alpha,0,0,'property')
                 if #out.discs>before then finish_fill(out.discs[#out.discs],fill_alpha)end
                 if l4name=='umbra'and j==1 then
@@ -1878,7 +1999,9 @@ function M.frame(model,s,now,radius,height,opts,context)
         if umbra_mb and not response.ending then
             local fx=option(opts,'mb_effects')
             color=mix(color,white,fx)
-            alpha=alpha*(1-fx)+M.umbra_pulse(s,now,opts)*option(opts,'umbra_mb_strength')*fx
+            local floor=option(opts,'umbra_mb_floor')
+            local pulse=floor+(option(opts,'umbra_mb_strength')-floor)*M.umbra_pulse(s,now,opts)
+            alpha=alpha*(1-fx)+pulse*fx
         end
         if l4flick and l4name=='umbra'then alpha=alpha*(1-flick_d+flick_d*electric)end
         local strength=response.ring*option(opts,'mb_ring')
