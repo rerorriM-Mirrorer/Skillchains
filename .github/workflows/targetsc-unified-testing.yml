@@ -109,9 +109,11 @@ jobs:
           lua5.1 TargetSC/tests/test_mb_718.lua
           lua5.1 TargetSC/tests/test_until_7181.lua
           lua5.1 TargetSC/tests/test_mb_719.lua
+          lua5.1 TargetSC/tests/test_kill_720.lua
           lua5.1 TargetSC/tests/test_radiance_glow.lua
           lua5.1 TargetSC/tests/test_kill.lua
           lua5.1 TargetSC/tests/test_native_kill.lua
+          lua5.1 TargetSC/tests/test_native_kill.lua 0.13.0
           lua5.1 TargetSC/tests/test_native_kill.lua 0.11.0
           lua5.1 TargetSC/tests/test_native_glyph.lua
           lua5.1 TargetSC/tests/test_native_glyph.lua 0.10.0

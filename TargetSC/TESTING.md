@@ -1,5 +1,15 @@
 ## Current Development Status — 2026-11-22 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. NOT PUSHED: remote head `ff4a134`; local 7.17 `9a4e0e4`, 7.18 `f944e51`, 7.18.1 `17ceaf4`, 7.19 `9bceb01`, Test7.20 on top. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (local).
+- installed_base: Test7.19 (`9bceb01`, Inferred: A's 05:46 message follows the 7.19 delivery). Package `TargetSC-0.19.20-Test7.20.zip` cumulative since `ff4a134`, now including `libs/_TargetSC.dll` (native 0.13.0; close every client before replacing it).
+- Live (A, 05:46): asked for the cross-end fix, the SC kill as a frozen ghost-white Light skillchain, the property glyph split with the halves, and seam glyph options with a size.
+- Changes: Test7.20. DLL 0.13.0: glyph cap lines removed (20 lines); `native.disc` arg 17 clip angle (glyph + rim halves; `targetsc::half_clip`). Lua: levels add 0.13.0; sender passes disc.clip on 0.13.0. `kill_sc_look` light (default; `M.kill_light_state` = level-3 Light link with its window opened (sky_hold+.15)x.9 s before the kill start, bell unfolded, frozen; substituted at the top of `M.frame`) | current. `kill_sc_glyph` split (default, native 13) | flash: two clipped property-trace copies, rotation + turn, clip phi±pi/2, shifted with the halves. `kill_seam_style` line (default) | glyphs (two upright glyph3s, tilt pi/2, rotation phi, on the cut faces, riding apart, ghost-faded) | glyph (one upright glyph with the seam's flash envelope); `kill_seam_size` 1 x half the ring span. Version `0.19.20-unified-test7.20`.
+- Tunables (defaults): `kill_sc_look` light, `kill_sc_glyph` split, `kill_seam_style` line, `kill_seam_size` 1.
+- Checks: DLL built with `i686-w64-mingw32-g++` 13-win32 (BUILD.md command, -Werror clean), objdump PE32 / sole export / KERNEL32+msvcrt, sha256 `b3ceb95b6a905dbd…`; `test_property.cpp` (20-line glyph, no rim-to-rim segment, half_clip) and `test_stroke.cpp` PASS; 80/80 CI lua5.1 invocations PASS incl. new `test_kill_720.lua` and `test_native_kill.lua 0.13.0`. Host only; DLL drawing not seen in game.
+- Pending: Test7.20 in game (DLL load, cross ends, split glyph, seam styles, ghost Light look).
+
+## Current Development Status — 2026-11-22 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-level4-collapse`. NOT PUSHED: remote head `ff4a134`; local 7.17 `9a4e0e4`, 7.18 `f944e51`, 7.18.1 `17ceaf4`, Test7.19 on top. Stack: `master@9476226` → `development/targetsc-mb-rise-gradient@8624248` → `development/targetsc-level4-collapse` (local).
 - installed_base: Test7.18.1 (`17ceaf4`; A's 05:21 settings.xml saved by it, Live). Package `TargetSC-0.19.19-Test7.19.zip` cumulative since `ff4a134`.
 - Live (A, 05:21): soft shimmer loved ("so much nicer"); picks in settings.xml: dark back compression gain .18, spin 3; mb ring hold 1.8, ease 3; shimmer soft .39, turn 3, decay 1.5; opener glow white; awakening opacity level1/2/3 = 1/2/3 (per-stage fade-until back to same). Wants Light MBs white-hot and Dark MBs total void.

@@ -339,6 +339,15 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     kill_bloom_size=1.25,kill_bloom_opacity=.8,kill_sc_freeze=.2,kill_sc_split=.12,kill_sc_turn=.05,
     kill_sc_sag=.12,kill_sc_flicker=.35,kill_sc_flash=.08,kill_sc_seam=.5,kill_seam_flicker=1,
     kill_sc_ghost=.85,kill_seam_angle=0,
+    -- Test7.20 SC kill: kill_sc_look light (default) = whatever the chain was,
+    -- the kill shows a fully unfolded Light skillchain at its window opening,
+    -- frozen, in the ghost white | current = the chain's own frame (Test6.3).
+    -- kill_sc_glyph split (default; native 0.13.0) = the property disc's glyph
+    -- splits with the halves | flash = it flashes out with the other glyphs.
+    -- kill_seam_style line (default) | glyphs (two upright MB glyphs on the
+    -- cut faces, riding apart with the halves) | glyph (one upright glyph in
+    -- place of the flashing line); kill_seam_size x half the ring span.
+    kill_sc_look='light',kill_sc_glyph='split',kill_seam_style='line',kill_seam_size=1,
     -- Test7.13 color pass: the Earth element's color everywhere it is drawn
     -- (rings, discs, bursts). classic 176,114,48 (default, the earlier look);
     -- gold 230,190,70 (xivcrossbar spec); scission 255,165,0 (the Scission
@@ -911,8 +920,23 @@ local function sc_kill(out,s,now,kill,start,opts,context,f)
     local glyph_role={['mb-glyph']=true,['property-trace']=true,['umbra-copy']=true,
         bloom=true,['umbra-bloom']=true,['kill-bloom']=true,awakening=true}
     local discs={}
+    -- Test7.20: the property disc's glyph splits with the halves (native 0.13.0 clip).
+    local split_glyph=option(opts,'kill_sc_glyph')=='split'and (context.native_level or 0)>=13
     for _,d in ipairs(out.discs)do
-        if glyph_role[d.role]or d.glyph==2 then
+        if split_glyph and d.role=='property-trace'then
+            if vis>0 and d.outline and d.outline>=16777216 then
+                for side=1,2 do
+                    local h={}for key,v in pairs(d)do h[key]=v end
+                    h.color,h.colors,h.hub,h.mid=0x00FFFFFF,{0x00FFFFFF},nil,nil
+                    h.outline=whiten(d.outline,max(vis,k<flash and 1 or 0))
+                    h.rotation=(d.rotation or 0)+turn
+                    local sign=side==1 and 1 or -1
+                    h.clip=phi+pi/2*sign -- keep the half on this side of the cut
+                    h.dx,h.dy=nx*sep*sign,ny*sep*sign
+                    discs[#discs+1]=h
+                end
+            end
+        elseif glyph_role[d.role]or d.glyph==2 then
             if k<flash then
                 d.color,d.outline=whiten(d.color,1),whiten(d.outline,1)
                 if d.colors then for i,x in ipairs(d.colors)do d.colors[i]=whiten(x,1)end end
@@ -964,7 +988,30 @@ local function sc_kill(out,s,now,kill,start,opts,context,f)
     for i,v in ipairs(rings)do out[i]=v end
     -- The seam: a bright line along the killing blow at each ring height.
     local seam=option(opts,'kill_sc_seam')
-    if k<seam then
+    local style=option(opts,'kill_seam_style')
+    if (style=='glyphs'or style=='glyph')and (context.native_level or 0)>=11 then
+        -- Test7.20: upright MB glyph(s) standing in the cut (the vertical plane
+        -- along the killing blow), sized from the ring span.
+        local low=f.bottom or f.mb_height
+        local high=f.top or (low+span)
+        local r=max(.05,(high-low)*.5*option(opts,'kill_seam_size'))
+        local mid=(low+high)*.5
+        local function standing(a,dx,dy)
+            if a<=.002 then return end
+            out.glyphs3=out.glyphs3 or {}
+            out.glyphs3[#out.glyphs3+1]={radius=min(r,100),offset=mid,rotation=phi,color=context.argb({255,255,255},a),
+                tilt=pi/2,circle=true,dx=dx,dy=dy,role='kill-seam'}
+        end
+        if style=='glyphs'then
+            -- One on each cut face, riding apart with the halves, ghost-faded with them.
+            for side=1,2 do
+                local sign=side==1 and 1 or -1
+                standing(max(vis,k<flash and 1 or 0),nx*sep*sign,ny*sep*sign)
+            end
+        elseif k<seam then
+            standing((1-smooth(k/max(.02,seam)))*flicker(now,option(opts,'kill_seam_flicker'),31,17),0,0)
+        end
+    elseif k<seam then
         local alpha=(1-smooth(k/max(.02,seam)))*flicker(now,option(opts,'kill_seam_flicker'),31,17)
         local L=f.radius*1.3
         local ex,ey=math.cos(phi)*L,math.sin(phi)*L
@@ -973,6 +1020,17 @@ local function sc_kill(out,s,now,kill,start,opts,context,f)
             out.lines[#out.lines+1]={-ex,-ey,h,ex,ey,h,context.argb({255,255,255},alpha),3}
         end
     end
+end
+-- Test7.20 kill_sc_look light: the chain shown at an SC kill, frozen at `at`:
+-- a level-3 Light link whose window opened just before, with its sky bell
+-- fully unfolded (inside the sky hold), no intro flashes or bursts.
+function M.kill_light_state(s,at,opts)
+    local hold=option(opts,'sky_hold')
+    local into=hold>0 and (hold+.15)*.9 or .05
+    local open=at-into
+    return {id=s.id,revision=s.revision,created=open-3,sc_open=open,sc_close=open+6,mb_close=open+8,
+        step=max(2,s.step or 2),level=3,properties={'Light'},elements={'Fire','Wind','Lightning','Light'},
+        closed=false,suppress_impact=true,kill_light=true}
 end
 function M.apply_kill(out,s,now,kill,start,opts,context,f)
     if kill.kind=='mb'then mb_kill(out,s,now,kill,start,opts,context,f)
@@ -1227,6 +1285,14 @@ function M.awakening_opacity(opts,stage)
     return option(opts,'awakening_opacity')
 end
 function M.frame(model,s,now,radius,height,opts,context)
+    -- Test7.20: an SC kill shows a ghost Light skillchain instead of the chain's own look.
+    do
+        local k=option(opts,'kill')and model.kills and model.kills[s.id]
+        if k and k.kind=='sc'and option(opts,'kill_sc_look')=='light'then
+            local ks=k.at+option(opts,'kill_sc_freeze')
+            if now>=ks and now<=ks+option(opts,'kill_time')+2 then s=M.kill_light_state(s,ks,opts)end
+        end
+    end
     -- Test7.16 Dark recipe (void look): black Dark element, violet glows.
     local void=option(opts,'dark_look')=='void'
     local violet=M.dark_glow_color(opts)

@@ -1,3 +1,16 @@
+# Building and verifying TargetSC 0.13.0 / unified Test7.20
+
+Native API 0.13.0: the property glyph is 20 lines (the 4 short cap lines that
+ran along the circle at the cross-arm ends are removed; 3D glyph stagger keys
+unchanged via `kGlyph3KeyDistance`). `native.disc` takes an optional 17th
+argument, a clip angle in radians (east 0, north pi/2): only the glyph lines and
+the rim on that side of the disc center are drawn (SC kill halves). Bounded
+storage 43,920 vertices (`static_assert`). Build command unchanged (below);
+built 2026-11-22 with Ubuntu's `g++-mingw-w64-i686` 13.2.0 (13-win32), sha256
+`b3ceb95b6a905dbda1a33f3148a29decf4a6267ad176a059ad41076c1235d2f9`. Not byte-identical to builds from the earlier host (different
+GCC packaging); PE32, sole `luaopen__TargetSC` export, KERNEL32.dll + msvcrt.dll
+imports (Verified with objdump). Close every client before replacing the DLL.
+
 # Building and verifying TargetSC 0.12.0 / unified Test6.1
 
 Native API 0.12.0 adds `native.shift(east,north)` (a sideways offset stamped

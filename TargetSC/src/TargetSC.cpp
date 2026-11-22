@@ -81,7 +81,10 @@ struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     int has_hub=0;DWORD hub=0;
     // 0.10.0: optional middle radial stop (alpha multiplier, radius fraction).
     int has_mid=0;float mid=1.f,mid_pos=.5f;
-    float dx=0,dy=0;}; // 0.12.0 sideways shift
+    float dx=0,dy=0; // 0.12.0 sideways shift
+    // 0.13.0: optional half-plane clip of the glyph lines and rim (SC kill
+    // halves): keep points p with p.x*clip_x+p.y*clip_y >= 0 (east/north).
+    int has_clip=0;float clip_x=0,clip_y=0;};
 // 0.11.0: a 3D glyph (24 property-glyph segments, optional circle) for the
 // Umbra endings; geometry in PropertyGeometry.h (glyph3_*).
 constexpr int kMaxGlyphs3=4;
@@ -723,7 +726,9 @@ constexpr int kMaxVertices=(kMaxRings+kMaxDiscs)*ring_slices_*6+
     kMaxDiscs*(ring_slices_*9+targetsc::kGlyphLines*6)+
     kMaxGlyphs3*(targetsc::kGlyphLines+ring_slices_)*6+ // 0.11.0 3D glyph lines + circle
     kMaxLines*6; // 0.12.0 seam lines
-static_assert(kMaxVertices==44400,"Review bounded storage when glyph complexity changes");
+// 0.13.0: 20 glyph lines (cap lines removed); a clipped disc rim draws at most
+// ring_slices_ strokes, inside its ring_slices_*6 allowance above.
+static_assert(kMaxVertices==43920,"Review bounded storage when glyph complexity changes");
 DrawVertex g_vertices[kMaxVertices]{};
 unsigned g_vertex_count=0;
 void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
@@ -892,9 +897,32 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
         slice(i,n,targetsc::scale_alpha(raw_center,disc.inner),rim_color,rim_color,mid_color,mid_color);
     }
     if(!disc.glyph || !(disc.outline>>24))return;
+    // 1-pixel stroke between two points in the disc's rotated frame (glyph
+    // units), clipped to the 0.13.0 half-plane when the disc has one.
+    auto stroke=[&](targetsc::GlyphPoint pa,targetsc::GlyphPoint pb) {
+        if(disc.has_clip&&!targetsc::half_clip(pa,pb,disc.clip_x,disc.clip_y))return;
+        DrawVertex a{},b{};
+        if(!project(Position{center.east+disc.radius*pa.x,center.north+disc.radius*pa.y,center.height},viewport,a,disc.outline)||
+           !project(Position{center.east+disc.radius*pb.x,center.north+disc.radius*pb.y,center.height},viewport,b,disc.outline))return;
+        const float dx=b.x-a.x,dy=b.y-a.y,length=std::hypot(dx,dy);
+        if(length<.0001f)return;
+        const float nx=-dy*.5f/length,ny=dx*.5f/length;
+        auto c=a,d=b;a.x-=nx;a.y-=ny;b.x-=nx;b.y-=ny;
+        c.x+=nx;c.y+=ny;d.x+=nx;d.y+=ny;triangle(a,c,b);triangle(b,c,d);
+    };
+    auto rotated=[&](targetsc::GlyphPoint p){return targetsc::GlyphPoint{p.x*cr-p.y*sr,p.x*sr+p.y*cr};};
+    static const auto lines=targetsc::property_glyph();
+    if(disc.has_clip) {
+        // Half rim + half glyph, both clipped to the same half-plane.
+        for(int i=0;i<ring_slices_;++i) {
+            const int n=(i+1)%ring_slices_;
+            stroke({ring_cos_[i],ring_sin_[i]},{ring_cos_[n],ring_sin_[n]});
+        }
+        for(auto const& line:lines)stroke(rotated(line.a),rotated(line.b));
+        return;
+    }
     Ring rim{disc.radius,disc.offset,0,disc.outline,1.f};emit_ring(base,rim,viewport);
     // Transparent strokes: traced diagonal star/wide cross and central square.
-    static const auto lines=targetsc::property_glyph();
     for(auto const& line:lines) {
         auto point=[&](targetsc::GlyphPoint p) {
             return Position{center.east+disc.radius*(p.x*cr-p.y*sr),
@@ -937,6 +965,7 @@ void emit_glyph3(Position const& base,Glyph3 const& g,D3DVIEWPORT8 const& viewpo
         max_length=std::max(max_length,std::sqrt(dx*dx+dy*dy));
         max_distance=std::max(max_distance,std::sqrt(mx*mx+my*my));
     }
+    max_distance=std::max(max_distance,targetsc::kGlyph3KeyDistance); // 0.13.0: same stagger keys as 0.12
     for(auto const& l:lines) {
         targetsc::Point3 a{},b{};
         targetsc::glyph3_segment(l,g.params,max_length,max_distance,a,b);
@@ -1140,6 +1169,15 @@ int __cdecl lua_disc(lua_State* L) {
         static_cast<float>(inner),static_cast<float>(outer),hub>=0?1:0,static_cast<DWORD>(hub>=0?hub:0),
         mid>=0?1:0,static_cast<float>(mid>=0?mid:1),static_cast<float>(mid_pos)};
     g_pending.discs[g_pending.disc_count-1].dx=g_pending.shift_e;g_pending.discs[g_pending.disc_count-1].dy=g_pending.shift_n;
+    // 0.13.0: optional arg 17 = clip angle (radians, east=0, north=pi/2):
+    // only the glyph and rim on that side of the disc center are drawn.
+    if(argc>=17) {
+        const double clip=g_lua.tonumber(L,17);
+        if(std::isfinite(clip)&&std::fabs(clip)<=1000000) {
+            Disc& d=g_pending.discs[g_pending.disc_count-1];
+            d.has_clip=1;d.clip_x=static_cast<float>(std::cos(clip));d.clip_y=static_cast<float>(std::sin(clip));
+        }
+    }
     return 0;
 }
 // 0.11.0 native.glyph(radius,height,rotation,color,tilt,stand,lift,sink,pull,
@@ -1184,11 +1222,11 @@ int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.12.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.13.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.12.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.13.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;

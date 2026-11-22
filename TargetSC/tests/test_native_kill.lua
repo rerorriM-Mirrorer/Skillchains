@@ -23,6 +23,7 @@ function native.disc(...)
     local a={...}
     if n>=16 then native.mids[#native.mids+1]={mid=a[15],pos=a[16],hub=a[14]}end
     native.discs[#native.discs+1]=a
+    native.sent=native.sent or {};native.sent[#native.sent+1]=a
 end
 function native.glyph(...)native.glyphs[#native.glyphs+1]={n=select('#',...),...}end
 function native.commit()end
@@ -44,10 +45,13 @@ events.load()
 local command=events['addon command']
 command('preview','kill','sc')
 for t=0,2.5,.05 do now=t events.prerender()end
-if version=='0.12.0'then
+if version=='0.12.0'or version=='0.13.0'then
     assert(#native.lines>0 and native.lines[1].n==8,'seam lines (8 args)')
     local moved=false for _,v in ipairs(native.shifts)do if v[1]~=0 or v[2]~=0 then moved=true end end
     assert(moved,'halves shifted sideways')
+    -- Test7.20: 0.13.0 gets the split property glyph (disc arg 17 = clip angle); 0.12.0 never does.
+    local clipped=0 for _,a in ipairs(native.sent or {})do if a[17]then clipped=clipped+1 end end
+    if version=='0.13.0'then assert(clipped>0,'clipped glyph halves sent')else assert(clipped==0,'0.12.0: no arg 17')end
 else
     assert(#native.lines==0 and #native.shifts==0,'older DLL never gets shift/line')
 end

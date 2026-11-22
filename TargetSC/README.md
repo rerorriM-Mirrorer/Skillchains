@@ -1,5 +1,22 @@
 # TargetSC — elemental resonance
 
+## 0.19.20 unified Test7.20 — new DLL 0.13.0: clean glyph ends, SC kill rework (close every client to install)
+
+- **New `libs/_TargetSC.dll` (native 0.13.0).** Close every FFXI client before
+  copying it over. The property glyph no longer draws the small cap lines
+  where the cross arms meet the circle.
+- **SC kill look:** a skillchain kill now always shows a frozen, fully unfolded
+  Light skillchain at its window opening, all in the ghost white, whatever the
+  chain was. `//tsc kill sc look current` brings back the chain's own look.
+- **`//tsc kill sc glyph split|flash`** (default split): the glyph on the
+  property disc now splits down the middle and rides apart with the halves.
+  `flash` = the old flash-out. Needs the 0.13.0 DLL.
+- **`//tsc kill seam style line|glyphs|glyph`** (default line): `glyphs` = two
+  upright MB glyphs standing on the faces of the cut, riding apart with the
+  halves; `glyph` = one upright glyph flashing where the line was.
+  **`//tsc kill seam size <0.2-4>`** (default 1) scales them.
+- Try it with `//tsc preview kill sc`.
+
 ## 0.19.19 unified Test7.19 — pure Light and Dark magic bursts (Lua only)
 
 - **`//tsc mb pure both`** (also `light`, `dark`; default `off`): a Light magic

@@ -8,7 +8,12 @@
 namespace targetsc {
 struct GlyphPoint {float x,y;};
 struct GlyphLine {GlyphPoint a,b;};
-constexpr int kGlyphLines=24;
+// 0.13.0: 16 outline segments + 4 square edges. The 4 short closing edges
+// that ran along the circle at the cross-arm ends (the "cap lines") are gone.
+constexpr int kGlyphLines=20;
+// Largest segment-midpoint distance of the 0.12 glyph (its cap lines' midpoints
+// on the circle). Kept so the 3D glyph's stagger keys (Umbra endings) do not move.
+constexpr float kGlyph3KeyDistance=.99277f;
 inline int sector_index(int slice,int slices,int sectors) {
     return std::min(sectors-1,std::max(0,slice)*sectors/std::max(1,slices));
 }
@@ -105,6 +110,18 @@ inline bool glyph3_clip(Point3& a,Point3& b) {
     if(a.z<0.f)a=cut;else b=cut;
     return true;
 }
+// 0.13.0 half-plane clip (SC kill halves): keep the part of a-b where
+// p.x*nx+p.y*ny >= 0 (points already rotated into the disc's frame); false if
+// none remains.
+inline bool half_clip(GlyphPoint& a,GlyphPoint& b,float nx,float ny) {
+    const float da=a.x*nx+a.y*ny,db=b.x*nx+b.y*ny;
+    if(da<0.f&&db<0.f)return false;
+    if(da>=0.f&&db>=0.f)return true;
+    const float t=da/(da-db);
+    const GlyphPoint cut{a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t};
+    if(da<0.f)a=cut;else b=cut;
+    return true;
+}
 // Native 0.10.0 three-stop radial fill: the optional middle ring sits at
 // `position` (0..1 of the radius). Its RGBA is the straight blend of the
 // unscaled center and rim colors there, with alpha then multiplied by `mid`
@@ -157,6 +174,10 @@ inline std::array<GlyphLine,kGlyphLines> property_glyph() {
     auto polygon=[&](GlyphPoint const* p,int n) {
         for(int i=0;i<n;++i)lines[count++]={p[i],p[(i+1)%n]};
     };
+    // Each arm's outline as an open path: no closing edge along the circle.
+    auto arm=[&](GlyphPoint const* p,int n) {
+        for(int i=0;i+1<n;++i)lines[count++]={p[i],p[i+1]};
+    };
     // Trace the union of the diagonal star and wider cross, retaining only
     // its exterior boundary. These are the exact approved Lua preview points.
     const float tip=.78f/std::sqrt(2.f);
@@ -165,13 +186,19 @@ inline std::array<GlyphLine,kGlyphLines> property_glyph() {
     const float join=valley+(tip-valley)*half_width/tip;
     const GlyphPoint quarter[5]={{half_width,edge},{half_width,join},
         {tip,tip},{join,half_width},{edge,half_width}};
-    GlyphPoint silhouette[20]{};
-    for(int turn=0;turn<4;++turn)for(int i=0;i<5;++i) {
-        auto p=quarter[i];
-        for(int j=0;j<turn;++j){const float x=p.x;p.x=p.y;p.y=-x;}
-        silhouette[turn*5+i]=p;
+    // Quarter k runs from one arm's side edge (on the circle) to the next
+    // arm's side edge. The 0.12 glyph also joined quarter k's last point to
+    // quarter k+1's first: a short chord along the circle at each arm end.
+    // 0.13.0 draws each quarter as an open path, so those chords are gone.
+    for(int turn=0;turn<4;++turn) {
+        GlyphPoint q[5]{};
+        for(int i=0;i<5;++i) {
+            auto p=quarter[i];
+            for(int j=0;j<turn;++j){const float x=p.x;p.x=p.y;p.y=-x;}
+            q[i]=p;
+        }
+        arm(q,5);
     }
-    polygon(silhouette,20);
     const GlyphPoint square[4]={{-.15f,-.15f},{.15f,-.15f},{.15f,.15f},{-.15f,.15f}};
     polygon(square,4);
     return lines;

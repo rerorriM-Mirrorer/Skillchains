@@ -14,32 +14,47 @@ int main() {
     for(int i=1;i<66;++i)assert(targetsc::ring_angle(i,64,12)>targetsc::ring_angle(i-1,64,12));
     for(int i=0;i<=32;++i)assert(std::fabs(targetsc::ring_angle(i+33,64,12)-targetsc::ring_angle(i,64,12)-tau/2)<.00001f);
     const auto lines=targetsc::property_glyph();
-    assert(lines.size()==24);
+    // 0.13.0: four open arm paths (4 segments each, chained, starting and
+    // ending on the circle) + the central square; no cap line along the rim.
+    assert(lines.size()==20);
     int rim_endpoints=0,square_edges=0,star_tips=0;
     for(std::size_t i=0;i<lines.size();++i) {
         const auto line=lines[i];
+        int on_rim=0;
         for(auto p:{line.a,line.b}) {
             assert(std::isfinite(p.x)&&std::isfinite(p.y));
             assert(std::hypot(p.x,p.y)<=1.00001f);
-            if(std::hypot(p.x,p.y)>.999f)++rim_endpoints;
+            if(std::hypot(p.x,p.y)>.999f){++rim_endpoints;++on_rim;}
         }
-        if(i<20) {
-            const auto next=lines[(i+1)%20];
-            assert(line.b.x==next.a.x && line.b.y==next.a.y);
+        assert(on_rim<2); // the removed cap lines were the only rim-to-rim segments
+        if(i<16) {
+            if(i%4!=3){const auto next=lines[i+1];assert(line.b.x==next.a.x && line.b.y==next.a.y);}
+            if(i%4==0)assert(std::hypot(line.a.x,line.a.y)>.999f);
+            if(i%4==3)assert(std::hypot(line.b.x,line.b.y)>.999f);
             assert(std::max(std::fabs(line.a.x),std::fabs(line.a.y))>.15f);
             if(std::hypot(line.a.x,line.a.y)>.77f &&
                std::hypot(line.a.x,line.a.y)<.79f) {
                 assert(std::fabs(std::fabs(line.a.x)-std::fabs(line.a.y))<.00001f);
                 ++star_tips;
             }
-        }
-        if(i>=20) {
+        } else {
             assert(std::fabs(std::fabs(line.a.x)-.15f)<.00001f);
             assert(std::fabs(std::fabs(line.a.y)-.15f)<.00001f);
             ++square_edges;
         }
     }
-    assert(rim_endpoints==16 && square_edges==4 && star_tips==4);
+    assert(rim_endpoints==8 && square_edges==4 && star_tips==4);
+    // 0.13.0 half-plane clip.
+    {
+        targetsc::GlyphPoint a{-1,0},b{1,0};
+        assert(targetsc::half_clip(a,b,1,0)&&a.x==0.f&&b.x==1.f);      // cut at the line
+        targetsc::GlyphPoint c{-1,.5f},d{-.2f,.5f};
+        assert(!targetsc::half_clip(c,d,1,0));                         // wholly on the far side
+        targetsc::GlyphPoint e{.1f,-1},f{.3f,1};
+        assert(targetsc::half_clip(e,f,1,0)&&e.x==.1f&&f.x==.3f);      // wholly kept
+        targetsc::GlyphPoint g{0,-1},h{0,1};
+        assert(targetsc::half_clip(g,h,0,1)&&std::fabs(g.y)<1e-6f&&h.y==1.f); // north half
+    }
     for(int sectors=1;sectors<=4;++sectors) {
         int counts[4]{};
         for(int slice=0;slice<64;++slice) {

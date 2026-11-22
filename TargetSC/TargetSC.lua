@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.19-unified-test7.19'
+_addon.version='0.19.20-unified-test7.20'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -55,7 +55,7 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     -- 0.10.0 adds a middle radial stop on discs (args 15-16) and 16 discs.
     -- 0.11.0 adds native.glyph (3D property glyph for the Umbra endings).
     -- 0.12.0 adds native.shift (sideways offsets) and native.line (kill seams).
-    local levels={['0.12.0']=12,['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
+    local levels={['0.13.0']=13,['0.12.0']=12,['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
     if version_ok and levels[version] and api_ok then native=result;native_version=version;native_level=levels[version]
     else renderer_error='Native API/version mismatch; expected TargetSC 0.12.0 (or 0.11.0-0.5.0), received '..tostring(version) end
     -- Older DLLs cannot draw section arcs; the layout falls back to rings.
@@ -154,6 +154,10 @@ local function help()
         {'preview demo radiance','Five weaponskills: Fast Blade, Burning Blade, Flat Blade, Savage Blade, Resolution (L1/L2/Light/Radiance), no bursts.'},
         {'preview mb radiance','Same Radiance links with Fire/Light/Lightning/Light bursts at the MB demo overlap times.'},
         {'preview demo requiescat','Requiescat with Sequence (Gravitation+Scission+Darkness opener), Gust Slash, Nightmare Scythe, Rudra\'s Storm, Requiescat (Umbra); no bursts.'},
+        {'kill sc look light|current','SC kill shows a frozen ghost-white Light skillchain at its window opening (default light), or the chain as it was.'},
+        {'kill sc glyph split|flash','SC kill: the property disc glyph splits with the halves (default split; needs DLL 0.13.0), or flashes out.'},
+        {'kill seam style line|glyphs|glyph','SC kill seam: flashing line (default), two upright MB glyphs riding apart on the cut faces, or one upright glyph in place of the line.'},
+        {'kill seam size <0.2-4>','Upright seam glyph size, x half the ring span (default 1).'},
         {'preview dark mb','Same Requiescat links with fifteen Dark bursts (Gravitation, Darkness and Umbra windows: before windows open, overlaps, the final ending).'},
         {'preview earth mb','Same Requiescat links with ten Earth bursts (Gravitation, Darkness and Umbra windows), incl. overlaps and the final ending.'},
         {'dark classic|void','Dark element: classic flat 25,14,52 (default), or void = pure black cores with violet glows (Dark Elemental look).'},
@@ -718,7 +722,12 @@ local function draw(frame,mob,level)
             local k=(inner+outer)/2
             for i,c in ipairs(colors)do colors[i]=resonance.scale_alpha(c,k)end
         end
-        if native_level>=10 and disc.mid then
+        if native_level>=13 and disc.clip then
+            -- 0.13.0: arg 17 clips the glyph and rim to one half (SC kill halves).
+            native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
+                #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer,
+                disc.hub or -1,disc.mid and math.max(0,math.min(1,disc.mid))or -1,math.max(.05,math.min(.95,disc.mid_pos or .5)),disc.clip)
+        elseif native_level>=10 and disc.mid then
             -- 0.10.0 middle radial stop (burst bloom): hub -1 = averaged center.
             native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
                 #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer,
