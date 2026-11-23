@@ -1,5 +1,29 @@
 # TargetSC — elemental resonance
 
+## 0.19.22 unified Test7.22 — awakening disc as the MB ending; lit disc matches the property disc (Lua only)
+
+- **`//tsc awakening ending on|off`** (default on): when an MB window's ending
+  starts and the MB ring begins to descend, the white awakening disc comes
+  back at the full size it grew to in the opening, just under the MB ring,
+  riding down with it. Its opacity rises fast and eases out, reaching full
+  as the ring reaches the glyph on the ground, then it fades out with the
+  ring (with `mb ending style converge`, over `mb ending fade`). It keeps the
+  awakening disc's center-to-edge fade (`awakening fade`). Clapper MB style.
+- **`//tsc awakening ending level1|level2|level3|radiance|umbra on|off`**: all
+  on by default except umbra.
+- **`//tsc awakening ending opacity <0-1>`** (1, the real opacity, NOT
+  multiplied by the addon opacity), **`curve <0.2-8>`** (3; higher = faster at
+  first), **`gap <n>`** (.005 under the ring).
+- Only the last window of a chain reaches its ending (a new link replaces the
+  open window). `//tsc preview mb light` ends on a Light window; `preview mb`
+  ends on Umbra, which is off by default.
+- **Lit disc** now takes the property fill's own final colors, every flash
+  included (Light's elements look: its white center). The property fill
+  itself never whitens at the window's end; it only fades, and the lit disc
+  fades with it. `lit bursts off` = the plain property color.
+- **`//tsc lit level3 light|on|off`** (light): `light` = only Light skillchains
+  at level 3, `on` = every level-3 skillchain.
+
 ## 0.19.21 unified Test7.21 — lit disc under the property disc (Lua only)
 
 - **`//tsc lit on|off`** (default on, level-1 links only): a new disc just

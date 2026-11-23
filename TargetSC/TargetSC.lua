@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.21-unified-test7.21'
+_addon.version='0.19.22-unified-test7.22'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -325,9 +325,11 @@ local function help()
         {'awakening size <0.1-3>','White opening disc size; 1 = previous size (default 1).'},
         {'awakening links on|off','Play the white disc again on every link that opens a new window (default on).'},
         {'awakening fade until default|open|close|<1-9>','When the white disc finishes fading: as before, as the window opens, at window end, or N s after it opens.'},
-        {'lit on|off | lit level1|level2|level3 on|off','Lit disc under a link\'s property disc: one side lit like the disc lighting the ground (default on, level 1 only).'},
+        {'lit on|off | lit level1|level2 on|off | lit level3 light|on|off','Lit disc under a link\'s property disc: one side lit like the disc lighting the ground (default on, level 1; level3 light = Light skillchains only).'},
         {'lit shape half|firm|quarter | lit start both|one','Lit part: soft half (default), firm half, or a quarter; flash in with both sides white (default) or only the lit side.'},
-        {'lit bursts on|off','The lit disc takes the property disc\'s burst flash and MB intro whitening (default on); it never follows the closing.'},
+        {'lit bursts on|off','The lit disc takes the property fill\'s own final colors, every flash included (default on); off = the plain property color.'},
+        {'awakening ending on|off | <level1|level2|level3|radiance|umbra> on|off','White awakening disc at full opening size just under the descending MB ring, fading with it (default on; umbra off).'},
+        {'awakening ending opacity|curve|gap <n>','Absolute opacity it reaches as the ring meets the ground glyph (1, NOT x addon opacity); ease-out power (3); below the ring (.005).'},
         {'lit flash|spin|cycle <number>','White-to-color seconds (.4); turn x the property disc (2); seconds per swap of the lit side (0 = no swap).'},
         {'lit size|opacity|depth <number> | lit fade <inner> <outer>','Size x property fill (1); opacity 0-1, NOT x addon opacity (.6); depth under the property disc (.003); center/edge (1 1).'},
         {'preset default|cioara|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; cioara = Cioara\'s current look (2026-11-22); killala = the old pre-Test3 look.'},
@@ -425,8 +427,12 @@ local function status()
         settings.amplitude,settings.ground_height,settings.hum_amplitude,settings.hum_period,settings.hum_slowdown,settings.hum_gain,settings.fade_duration))
     say(('discs style=%s outline=%.2f height=%.3f speed=%.2f slowdown=%.2f; awakening=%s opacity=%.2f'):format(
         settings.disc_style,settings.disc_outline,settings.disc_height,settings.disc_speed,settings.disc_slowdown,tostring(settings.awakening),settings.awakening_opacity))
-    say(('lit=%s bursts=%s L1=%s L2=%s L3=%s shape=%s start=%s flash=%.2fs spin=%.2f cycle=%.2fs size=%.2f opacity=%.2f fade=%.2f/%.2f depth=%.3f'):format(
-        tostring(settings.lit),tostring(settings.lit_bursts),tostring(settings.lit_level1),tostring(settings.lit_level2),tostring(settings.lit_level3),
+    say(('awakening ending=%s L1=%s L2=%s L3=%s radiance=%s umbra=%s opacity=%.2f curve=%.2f gap=%.3f'):format(
+        tostring(settings.awakening_ending),tostring(settings.awakening_ending_level1),tostring(settings.awakening_ending_level2),
+        tostring(settings.awakening_ending_level3),tostring(settings.awakening_ending_radiance),tostring(settings.awakening_ending_umbra),
+        settings.awakening_ending_opacity,settings.awakening_ending_curve,settings.awakening_ending_gap)) -- Test7.22
+    say(('lit=%s bursts=%s L1=%s L2=%s L3=%s(light only=%s) shape=%s start=%s flash=%.2fs spin=%.2f cycle=%.2fs size=%.2f opacity=%.2f fade=%.2f/%.2f depth=%.3f'):format(
+        tostring(settings.lit),tostring(settings.lit_bursts),tostring(settings.lit_level1),tostring(settings.lit_level2),tostring(settings.lit_level3),tostring(settings.lit_level3_light),
         tostring(settings.lit_shape),tostring(settings.lit_start),settings.lit_flash,settings.lit_spin,settings.lit_cycle,
         settings.lit_size,settings.lit_opacity,settings.lit_inner,settings.lit_outer,settings.lit_depth)) -- Test7.21
     say(('opener gap=%.1f degrees glow=%s muted=%s; L2=opposed two-color halves'):format(

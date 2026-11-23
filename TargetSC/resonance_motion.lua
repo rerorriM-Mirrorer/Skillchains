@@ -78,8 +78,21 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- x addon opacity or discs opacity). lit_inner/lit_outer: center/edge
     -- multipliers. lit_depth: world units below the property disc.
     -- lit_bursts: follow the property disc's burst flash and MB intro whitening.
-    lit=true,lit_level1=true,lit_level2=false,lit_level3=false,lit_shape='half',lit_start='both',
+    -- Test7.22: lit_level3_light = at level 3 only Light skillchains get it.
+    -- The lit disc takes the property fill's final colors (lit_bursts on) or
+    -- the plain property color (off).
+    lit=true,lit_level1=true,lit_level2=false,lit_level3=false,lit_level3_light=true,lit_shape='half',lit_start='both',
     lit_bursts=true,lit_flash=.4,lit_spin=2,lit_cycle=0,lit_size=1,lit_opacity=.6,lit_inner=1,lit_outer=1,lit_depth=.003,
+    -- Test7.22 awakening ending: in each MB window's ending the white awakening
+    -- disc returns at its full opening size (radius x .96 x awakening_size),
+    -- awakening_ending_gap below the descending MB ring. Its opacity rises
+    -- fast and eases out, 1-(1-p)^awakening_ending_curve over the ending
+    -- progress p, reaching awakening_ending_opacity (absolute 0-1, NOT x addon
+    -- opacity) as the ring reaches the ground glyph; then fades with the ring
+    -- (converge: over mb ending fade). Center/edge = awakening fade. Clapper only.
+    awakening_ending=true,awakening_ending_level1=true,awakening_ending_level2=true,awakening_ending_level3=true,
+    awakening_ending_radiance=true,awakening_ending_umbra=false,
+    awakening_ending_opacity=1,awakening_ending_curve=3,awakening_ending_gap=.005,
     -- Test3.8: opener arcs fade along their length from the bright end
     -- (lead = facing the spin); the glow band follows by opener_fade_glow.
     opener_fade=.6,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
@@ -788,7 +801,7 @@ local function tint(c,rgb,k)
     if type(c)~='number'then return c end
     return math.floor(math.floor(c/16777216)*clamp(k,0,1)+.5)*16777216+rgb[1]*65536+rgb[2]*256+rgb[3]
 end
-local kill_glyph_role={['mb-glyph']=true,['property-trace']=true,['umbra-copy']=true,awakening=true}
+local kill_glyph_role={['mb-glyph']=true,['property-trace']=true,['umbra-copy']=true,awakening=true,['awakening-end']=true}
 local function kill_bloom_disc(out,now,kill,start,opts,context,f)
     local life=max(.1,option(opts,'kill_bloom_time'))
     local age=now-(start+option(opts,'kill_bloom_delay'))
@@ -903,7 +916,7 @@ local function mb_kill(out,s,now,kill,start,opts,context,f)
         v.radius=v.radius*c
     end
     for _,d in ipairs(out.discs)do
-        if d.role=='mb-glyph'or d.role=='umbra-haze'then d.offset=f.mb_height;d.radius=d.radius*c -- the MB glyph (and haze) meet the MB ring exactly
+        if d.role=='mb-glyph'or d.role=='umbra-haze'or d.role=='awakening-end'then d.offset=f.mb_height;d.radius=d.radius*c -- the MB glyph (and haze) meet the MB ring exactly
         elseif not bloom[d.role]then d.offset=d.offset+delta;d.radius=d.radius*c end
     end
     for _,x in ipairs(out.glyphs3 or {})do
@@ -933,7 +946,7 @@ local function sc_kill(out,s,now,kill,start,opts,context,f)
     if k>=K then vis=0 end
     -- Glyphs (MB glyphs, the disc's own lines, copies) and blooms flash out.
     local glyph_role={['mb-glyph']=true,['property-trace']=true,['umbra-copy']=true,
-        bloom=true,['umbra-bloom']=true,['kill-bloom']=true,awakening=true,lit=true} -- Test7.21 lit
+        bloom=true,['umbra-bloom']=true,['kill-bloom']=true,awakening=true,lit=true,['awakening-end']=true} -- Test7.21 lit, 7.22 awakening ending
     local discs={}
     -- Test7.20: the property disc's glyph splits with the halves (native 0.13.0 clip).
     local split_glyph=option(opts,'kill_sc_glyph')=='split'and (context.native_level or 0)>=13
@@ -2091,6 +2104,7 @@ function M.frame(model,s,now,radius,height,opts,context)
             end
             -- Test7.21: the lit disc keeps the property color before any flash/intro whitening.
             local lit_colors={}for i,c in ipairs(colors)do lit_colors[i]=c end
+            local lit_hub=hub
             local terminal_stroke=white
             if terminal then
                 local dark=p=='Umbra'or p=='Darkness'
@@ -2158,40 +2172,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                 if hub then d.hub=context.argb(hub,a)end
             end
             local h=base+.006+(j-1)*.008+lift
-            -- Test7.21 lit disc: one side of the property disc lighting the ground
-            -- as it turns (see lit_* defaults). Drawn before the property fill, so under it.
-            if not opener and not terminal and j==1 and option(opts,'lit')and option(opts,'lit_level'..s.level)
-                and life>0 and #out.discs<disc_cap then
-                local t=max(0,now-s.created)
-                local white_k=1-smooth(t/max(.05,option(opts,'lit_flash')))
-                local avg={0,0,0}
-                for _,c in ipairs(lit_colors)do for i=1,3 do avg[i]=avg[i]+c[i]/#lit_colors end end
-                local c=avg
-                if option(opts,'lit_bursts')then
-                    -- Same burst flash and MB intro whitening as the property disc
-                    -- (never its closing): it reads as the same disc's light.
-                    if flash>0 then c=mix(c,clapper and response.element or white,flash)end
-                    if disc_intro>0 then c=mix(c,white,disc_intro)end
-                end
-                c=mix(c,white,white_k)
-                local a=clamp(option(opts,'lit_opacity'),0,1)*life
-                local both=option(opts,'lit_start')=='both'and white_k or 0
-                local cycle=option(opts,'lit_cycle')
-                local w=cycle>0 and .5-.5*math.cos(2*pi*t/cycle)or 0
-                local lit1,lit2,rest=a*max(1-w,both),a*max(w,both),a*both
-                local function argb(x)return context.argb(c,x)end
-                local shape=option(opts,'lit_shape')
-                local p
-                if shape=='quarter'then p={argb(lit1),argb(rest),argb(lit2),argb(rest)}
-                elseif shape=='firm'then p={argb(lit1),argb(lit1),argb(lit2),argb(lit2)}
-                else p={argb(lit1),argb(lit2)}end
-                local r=min(100,radius*.78*fill_size*option(opts,'lit_size'))
-                if r>=.01 and lit1+lit2+rest>.002 then
-                    out.discs[#out.discs+1]={radius=r,offset=h-option(opts,'lit_depth'),
-                        rotation=angle*option(opts,'lit_spin'),color=p[1],colors=p,glyph=0,outline=0,
-                        role='lit',blend=1,inner=option(opts,'lit_inner'),outer=option(opts,'lit_outer')}
-                end
-            end
+            local lit_mark=#out.discs -- Test7.21/7.22: the lit disc goes in under this property's discs
             if terminal or clapper then
                 -- Separate planes let a struck trace lift while its fill
                 -- remains anchored. Terminal traces keep their .006 clearance.
@@ -2317,6 +2298,66 @@ function M.frame(model,s,now,radius,height,opts,context)
                 else
                     disc(r,h,angle,colors,disc_fill,line_style,disc_outline,'property',stroke)
                 end
+            end
+            -- Test7.21 lit disc: one side of the property disc lighting the ground
+            -- as it turns (see lit_* defaults). Inserted before this property's
+            -- discs, so drawn under them. Test7.22: its color is the property
+            -- fill's own final color (every flash/whitening the fill shows).
+            local lit_ok=not opener and not terminal and j==1 and option(opts,'lit')and option(opts,'lit_level'..s.level)
+                and not (s.level==3 and option(opts,'lit_level3_light')and p~='Light')
+            if lit_ok and life>0 and #out.discs<disc_cap then
+                local t=max(0,now-s.created)
+                local white_k=1-smooth(t/max(.05,option(opts,'lit_flash')))
+                local function rgb_of(x)return {math.floor(x/65536)%256,math.floor(x/256)%256,x%256}end
+                local source=lit_colors
+                local fill_disc
+                if option(opts,'lit_bursts')then
+                    for i=lit_mark+1,#out.discs do
+                        local x=out.discs[i]
+                        if x.role=='property'and x.glyph~=2 then fill_disc=x break end
+                    end
+                end
+                if fill_disc then
+                    -- Light/Darkness 'elements' look: the center (hub) color; else the sectors.
+                    source={}
+                    if fill_disc.hub and fill_disc.hub>=0 then source[1]=rgb_of(fill_disc.hub)
+                    else for i,x in ipairs(fill_disc.colors or {fill_disc.color})do source[i]=rgb_of(x)end end
+                elseif lit_hub then source={lit_hub}end
+                local avg={0,0,0}
+                for _,c in ipairs(source)do for i=1,3 do avg[i]=avg[i]+c[i]/#source end end
+                local c=mix(avg,white,white_k)
+                local a=clamp(option(opts,'lit_opacity'),0,1)*life
+                local both=option(opts,'lit_start')=='both'and white_k or 0
+                local cycle=option(opts,'lit_cycle')
+                local w=cycle>0 and .5-.5*math.cos(2*pi*t/cycle)or 0
+                local lit1,lit2,rest=a*max(1-w,both),a*max(w,both),a*both
+                local function argb(x)return context.argb(c,x)end
+                local shape=option(opts,'lit_shape')
+                local q
+                if shape=='quarter'then q={argb(lit1),argb(rest),argb(lit2),argb(rest)}
+                elseif shape=='firm'then q={argb(lit1),argb(lit1),argb(lit2),argb(lit2)}
+                else q={argb(lit1),argb(lit2)}end
+                local r=min(100,radius*.78*fill_size*option(opts,'lit_size'))
+                if r>=.01 and lit1+lit2+rest>.002 then
+                    table.insert(out.discs,lit_mark+1,{radius=r,offset=h-option(opts,'lit_depth'),
+                        rotation=angle*option(opts,'lit_spin'),color=q[1],colors=q,glyph=0,outline=0,
+                        role='lit',blend=1,inner=option(opts,'lit_inner'),outer=option(opts,'lit_outer')})
+                end
+            end
+        end
+    end
+    -- Test7.22 awakening ending (see awakening_ending_* defaults).
+    if show_mb and clapper and s.step>1 and response.ending and option(opts,'awakening_ending')and #out.discs<disc_cap then
+        local stage=l4name or ('level'..math.max(1,math.min(3,s.level or 1)))
+        if option(opts,'awakening_ending_'..stage)then
+            local p=clamp(response.ending_progress or 0,0,1)
+            local a=clamp(option(opts,'awakening_ending_opacity'),0,1)*(1-(1-p)^max(.2,option(opts,'awakening_ending_curve')))
+            a=a*(response.extinguish or 1)
+            local r=min(100,radius*.96*option(opts,'awakening_size'))
+            if a>.002 and r>=.01 then
+                out.discs[#out.discs+1]={radius=r,offset=ring_at(p)-option(opts,'awakening_ending_gap'),rotation=0,
+                    color=context.argb(white,a),colors={context.argb(white,a)},glyph=0,outline=0,role='awakening-end',blend=0,
+                    inner=option(opts,'awakening_inner'),outer=option(opts,'awakening_outer')}
             end
         end
     end

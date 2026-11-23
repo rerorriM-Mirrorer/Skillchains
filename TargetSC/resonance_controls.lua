@@ -502,11 +502,16 @@ function M.new(settings,defaults,save,say,killala,cioara)
         elseif command=='discs'then discs(args,value)
         elseif command=='lit'then
             -- Test7.21 lit disc (resonance_motion lit_* defaults).
-            local usage='Use //tsc lit on|off | level1|level2|level3 on|off | bursts on|off | shape half|firm|quarter | start both|one | '..
+            local usage='Use //tsc lit on|off | level1|level2 on|off | level3 light|on|off | bursts on|off | shape half|firm|quarter | start both|one | '..
                 'flash <0.05-3> | spin <-6-6> | cycle <0-10> | size <0.2-3> | opacity <0-1> | fade <inner 0-1> <outer 0-1> | depth <0-0.05>.'
             local arg=(args[2]or ''):lower()
             if value=='bursts'then
-                if not toggle('lit_bursts',arg,'Lit disc follows bursts')then say(usage)end
+                if not toggle('lit_bursts',arg,'Lit disc follows the property fill')then say(usage)end
+            elseif value=='level3'and arg=='light'then
+                -- Test7.22: level 3, Light skillchains only.
+                settings.lit_level3,settings.lit_level3_light=true,true;save(settings);say('Lit disc level3: Light only.')
+            elseif value=='level3'and (arg=='on'or arg=='all')then
+                settings.lit_level3,settings.lit_level3_light=true,false;save(settings);say('Lit disc level3: every level-3 skillchain.')
             elseif value=='level1'or value=='level2'or value=='level3'then
                 if not toggle('lit_'..value,arg,'Lit disc '..value)then say(usage)end
             elseif value=='shape'then
@@ -528,6 +533,18 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 end
                 settings.lit_inner,settings.lit_outer=inner,outer;save(settings);say(('Lit disc fade %.2f %.2f.'):format(inner,outer))
             elseif not toggle('lit',value,'Lit disc')then say(usage)end
+        elseif command=='awakening'and value=='ending'then
+            -- Test7.22 awakening ending (resonance_motion awakening_ending_* defaults).
+            local what=(args[2]or ''):lower()
+            local usage='Use //tsc awakening ending on|off | level1|level2|level3|radiance|umbra on|off | '..
+                'opacity <0-1> | curve <0.2-8> | gap <0-0.1>.'
+            local each={level1=true,level2=true,level3=true,radiance=true,umbra=true}
+            if each[what]then
+                if not toggle('awakening_ending_'..what,(args[3]or ''):lower(),'Awakening ending '..what)then say(usage)end
+            elseif what=='opacity'then numeric('awakening_ending_opacity',args[3],{0,1},'awakening ending opacity')
+            elseif what=='curve'then numeric('awakening_ending_curve',args[3],{.2,8},'awakening ending curve')
+            elseif what=='gap'then numeric('awakening_ending_gap',args[3],{0,.1},'awakening ending gap')
+            elseif not toggle('awakening_ending',what,'Awakening ending')then say(usage)end
         elseif command=='awakening'then
             local stages={opener=true,level1=true,level2=true,level3=true}
             if stages[value]then
