@@ -80,7 +80,9 @@ local multi=model();multi.bursts[71]={{at=104,color=R.element_color('Wind')}}
 local old=layer(multi:frame(71,104.5,2,4,opts),'disc','mb-glyph')
 multi.bursts[71][2]={at=104.6,color=R.element_color('Fire')}
 local again=multi:frame(71,104.6,2,4,opts)
-assert(layer(again,'disc','mb-glyph').offset>=old.offset and #again.discs<=2)
+-- Test7.25: the level-2 under disc (its own layer under the fill) is not counted.
+local counted=0 for _,x in ipairs(again.discs)do if x.role~='level2-under'then counted=counted+1 end end
+assert(layer(again,'disc','mb-glyph').offset>=old.offset and counted<=2)
 -- Local previews inject only into their own model and preserve all demo clocks.
 for _,element in ipairs({'Wind','Fire','Ice','Water','Earth','Lightning','Light','Dark'})do
     local spec=assert(P.parse({'burst',element},R))

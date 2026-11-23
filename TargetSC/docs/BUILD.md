@@ -1,3 +1,20 @@
+# Building and verifying TargetSC 0.15.0 / unified Test7.25
+
+Native API 0.15.0: `native.disc` takes optional args 19-23, a glyph shimmer:
+world angle (radians; outside +-1e6 = none), half-width (radians, 0..pi), far
+alpha multiplier (0..1), gain (0..1), count (1..4). A shimmered disc draws its
+rim as 64 strokes and each glyph line as `kShimmerPieces` (8) strokes; every
+stroke end takes `targetsc::shimmer_color(outline, shimmer_weight(angle))`
+(cosine bell; far side alpha x far; the patch toward white and opaque by
+gain). At most `kMaxShimmerDiscs` (4) discs per frame shimmer, later ones draw
+plain. Args 17/18 must be sent (Lua: clip or 1e9, sliced 0/1). Bounded storage
+47,760 vertices (`static_assert`). Note: `far` is a Windows macro, so the C++
+parameter is `rest`. Build command unchanged (below); built 2026-11-23 with
+Ubuntu's `g++-mingw-w64-i686` 13.2.0 (13-win32), sha256
+`8296e3ce24bbb972d181b69b7026901f56f04febf9af3aa55b083349f6d3ce23`; PE32, sole
+`luaopen__TargetSC` export, KERNEL32.dll + msvcrt.dll imports (Verified with
+objdump). Close every client before replacing the DLL.
+
 # Building and verifying TargetSC 0.14.0 / unified Test7.24
 
 Native API 0.14.0: `native.disc` takes an optional 18th argument, sliced

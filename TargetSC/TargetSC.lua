@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.24-unified-test7.24'
+_addon.version='0.19.25-unified-test7.25'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -55,7 +55,7 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     -- 0.10.0 adds a middle radial stop on discs (args 15-16) and 16 discs.
     -- 0.11.0 adds native.glyph (3D property glyph for the Umbra endings).
     -- 0.12.0 adds native.shift (sideways offsets) and native.line (kill seams).
-    local levels={['0.14.0']=14,['0.13.0']=13,['0.12.0']=12,['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
+    local levels={['0.15.0']=15,['0.14.0']=14,['0.13.0']=13,['0.12.0']=12,['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
     if version_ok and levels[version] and api_ok then native=result;native_version=version;native_level=levels[version]
     else renderer_error='Native API/version mismatch; expected TargetSC 0.12.0 (or 0.11.0-0.5.0), received '..tostring(version) end
     -- Older DLLs cannot draw section arcs; the layout falls back to rings.
@@ -331,6 +331,10 @@ local function help()
         {'lit2 opacity|size|spin|depth <n> | lit2 fade <center> <edge>','Level-2 lit disc: opacity .6 (absolute), size 1, spin 2, depth .003, fade 1 0. lit sliced on|off: the level-1/3 lit disc fades the same way.'},
         {'light under on|off | opacity|size|spin|cycle|depth <n|same>','Level-3 Light: Fusion/Fragmentation disc under the Light disc; each value same = the darkness under value (default same).'},
         {'light under direction same|reverse|darkness | fade <center|same> <edge|same>','Its direction (darkness = follow darkness under) and center/edge.'},
+        {'glyph shimmer on|off | spin|width|far|gain|count|offset <n>','Bright patch on link property glyph lines riding the lit disc (DLL 0.15.0): spin x lit disc (1), half-width deg (-1 auto), far side alpha (.35), gain to white/opaque (.8), patches (1), offset deg (0).'},
+        {'lit sliced <property> on|off','Sliced center for one property\'s lit disc (default Darkness, Compression); lit sliced on|off = every lit disc.'},
+        {'level2 under on|off | opacity|size|spin|depth <n|same>','Level-2 under disc in the property\'s own two colors (no swing); each value same = darkness under (default same).'},
+        {'level2 under direction same|reverse|darkness | fade <center|same> <edge|same>','Its direction (darkness = follow darkness under) and center/edge.'},
         {'lit light white|mix | lit darkness black|mix','Level-3 lit disc color: Light = its white center or the average of its colors; Darkness = pure black or the average.'},
         {'darkness awakening void|white | darkness flash void|white','Level-3 Darkness: black awakening disc; property fill flashes toward black instead of white (default white, white).'},
         {'darkness under on|off | opacity|size|spin|cycle|depth <n>','Umbra\'s Gravitation/Distortion disc under the Darkness disc (on; .6 absolute, 1.3, 2, 3 s, .006).'},
@@ -439,6 +443,12 @@ local function status()
         tostring(settings.awakening_ending),tostring(settings.awakening_ending_level1),tostring(settings.awakening_ending_level2),
         tostring(settings.awakening_ending_level3),tostring(settings.awakening_ending_radiance),tostring(settings.awakening_ending_umbra),
         settings.awakening_ending_opacity,settings.awakening_ending_curve,settings.awakening_ending_gap)) -- Test7.22
+    say(('glyph shimmer=%s spin=%.2f width=%.1f far=%.2f gain=%.2f count=%d offset=%.1f; lit sliced props=%s; level2 under=%s opacity=%s size=%s spin=%s direction=%s depth=%s fade=%s/%s'):format(
+        tostring(settings.glyph_shimmer),settings.glyph_shimmer_spin,settings.glyph_shimmer_width,settings.glyph_shimmer_far,settings.glyph_shimmer_gain,
+        settings.glyph_shimmer_count,settings.glyph_shimmer_offset,tostring(settings.lit_sliced_props),tostring(settings.level2_under),
+        tostring(settings.level2_under_opacity),tostring(settings.level2_under_size),tostring(settings.level2_under_spin),
+        tostring(settings.level2_under_direction),tostring(settings.level2_under_depth),tostring(settings.level2_under_center),
+        tostring(settings.level2_under_edge))) -- Test7.25
     say(('lit2 shape=%s opacity=%.2f size=%.2f spin=%.2f depth=%.3f fade=%.2f/%.2f; lit sliced=%s; light under=%s (-1 = darkness value) opacity=%s size=%s spin=%s direction=%s cycle=%s depth=%s fade=%s/%s'):format(
         tostring(settings.lit2_shape),settings.lit2_opacity,settings.lit2_size,settings.lit2_spin,settings.lit2_depth,settings.lit2_inner,settings.lit2_outer,
         tostring(settings.lit_sliced),tostring(settings.light_under),tostring(settings.light_under_opacity),tostring(settings.light_under_size),
@@ -755,7 +765,14 @@ local function draw(frame,mob,level)
             local k=(inner+outer)/2
             for i,c in ipairs(colors)do colors[i]=resonance.scale_alpha(c,k)end
         end
-        if native_level>=14 and disc.sliced then
+        if native_level>=15 and disc.shimmer then
+            -- 0.15.0: args 19-23 = glyph shimmer (angle, half-width, far alpha, gain, count).
+            local sh=disc.shimmer
+            native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
+                #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer,
+                disc.hub or -1,disc.mid and math.max(0,math.min(1,disc.mid))or -1,math.max(.05,math.min(.95,disc.mid_pos or .5)),
+                disc.clip or 1e9,disc.sliced and 1 or 0,sh.angle%(2*math.pi),sh.width,sh.far,sh.gain,sh.count)
+        elseif native_level>=14 and disc.sliced then
             -- 0.14.0: arg 18 = sliced center (arg 17 = clip angle, 1e9 = none).
             native.disc(disc.radius,disc.offset,disc.rotation,colors[1]or disc.color,disc.glyph,disc.outline or 0,
                 #colors,colors[2]or disc.color,colors[3]or disc.color,colors[4]or disc.color,blend,inner,outer,

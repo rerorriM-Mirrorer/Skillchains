@@ -77,7 +77,7 @@ Promote to trusted branch only after A's live confirmation.
 ## REPO (repo-specific; preserved on sync)
 NAME: Skillchains (rerorriM-Mirrorer/Skillchains) — Skillchains addon plus the unified TargetSC addon (embeds the Skillchains engine). Windower 4, Lua 5.1, native TargetSC/libs/_TargetSC.dll.
 TRUSTED: master (94762264, TargetSC unified Test2 0.12.1, Live known-good 2026-11-16; marker branch known-good/targetsc-0.12.1-test2).
-ACTIVE: development/targetsc-lit-disc (0.19.24 unified Test7.24, native DLL 0.14.0, stacked on development/targetsc-level4-collapse@446362f; host checks only, live Pending).
+ACTIVE: development/targetsc-lit-disc (0.19.25 unified Test7.25, native DLL 0.15.0, stacked on development/targetsc-level4-collapse@446362f; host checks only, live Pending).
 LIVE_FILES: TargetSC/ folder is what runs (TargetSC.lua, sc_runtime.lua, targetsc_bridge.lua, targetsc_local.lua). Edit the TargetSC copies, not repo-root Skillchains.lua; standalone Skillchains is unloaded in A's setup (Verified in handoff doc).
 INTERFACES: GripRumble drives its SC-window vibration from its own chain_skills.lua (independent action-packet parsing; no file or message interface found, Inferred). Native _TargetSC.dll: replacing it needs all clients closed.
 NOTES: Root AGENTS.md/WORKFLOW.md are the only copies (TargetSC/ copies removed 2026-11-20). TargetSC/TESTING.md is kept: it holds TargetSC's per-batch history (newest at top), mirrored into root TESTING.md; add new TargetSC batch entries to both.

@@ -45,11 +45,18 @@ events.load()
 local command=events['addon command']
 command('lit','level2','on')
 command('preview','mb')
-local sliced,plain_lit=0,0
+local sliced,plain_lit,shimmer=0,0,0
 for t=0,22,.05 do now=t
     native.sent={}
     events.prerender()
     for _,a in ipairs(native.sent)do
+        if #a>=23 and a[19]then
+            -- Test7.25: 0.15.0 glyph shimmer (args 19-23) on the glyph lines only.
+            shimmer=shimmer+1
+            assert(a[5]~=0 and a[6]>0,'shimmer only on discs with glyph lines')
+            assert(a[19]>=0 and a[19]<2*math.pi and a[20]>0 and a[21]==.35 and a[22]==.8 and a[23]==1,'shimmer args')
+            assert(a[17]==1e9,'no clip')
+        end
         if a[18]==1 then
             sliced=sliced+1
             assert(a[17]==1e9,'no clip: arg 17 = 1e9')
@@ -58,6 +65,7 @@ for t=0,22,.05 do now=t
         end
     end
 end
-if version=='0.14.0'then assert(sliced>0,'level-2 lit disc sent sliced')
+if version=='0.14.0'or version=='0.15.0'then assert(sliced>0,'level-2 lit disc sent sliced')
 else assert(sliced==0,'older DLL: never arg 18')end
-print('PASS Test7.24 native sliced center sender ('..version..', '..sliced..' sliced disc calls)')
+if version=='0.15.0'then assert(shimmer>0,'glyph shimmer sent')else assert(shimmer==0,'pre-0.15.0: no shimmer args')end
+print('PASS Test7.24/7.25 native sliced center + glyph shimmer sender ('..version..', '..sliced..' sliced, '..shimmer..' shimmer disc calls)')

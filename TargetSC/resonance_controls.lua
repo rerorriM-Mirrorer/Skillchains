@@ -543,7 +543,45 @@ function M.new(settings,defaults,save,say,killala,cioara)
                 settings.lit2_inner,settings.lit2_outer=c,e;save(settings);say(('Level-2 lit disc fade %.2f %.2f.'):format(c,e))
             else say(usage)end
         elseif command=='lit'and value=='sliced'then
-            if not toggle('lit_sliced',(args[2]or ''):lower(),'Lit disc sliced center')then say('Use //tsc lit sliced on|off.')end
+            local arg=(args[2]or ''):lower()
+            local onoff=(args[3]or ''):lower()
+            if arg~=''and arg~='on'and arg~='off'and (onoff=='on'or onoff=='off')then
+                -- Test7.25: per property list.
+                local list,seen={},false
+                for x in tostring(settings.lit_sliced_props or ''):gmatch('[^,%s]+')do
+                    if x:lower()==arg then seen=true;if onoff=='on'then list[#list+1]=x end else list[#list+1]=x end
+                end
+                if onoff=='on'and not seen then list[#list+1]=arg:sub(1,1):upper()..arg:sub(2)end
+                settings.lit_sliced_props=table.concat(list,',');save(settings)
+                say('Lit disc sliced for: '..(settings.lit_sliced_props~=''and settings.lit_sliced_props or 'none')..(settings.lit_sliced and ' (lit sliced on: every lit disc).'or '.'))
+            elseif not toggle('lit_sliced',arg,'Lit disc sliced center (every lit disc)')then
+                say('Use //tsc lit sliced on|off | lit sliced <property> on|off. Now '..tostring(settings.lit_sliced)..'; list '..tostring(settings.lit_sliced_props)..'.')
+            end
+        elseif command=='glyph'and value=='shimmer'then
+            -- Test7.25 glyph shimmer.
+            local arg=(args[2]or ''):lower()
+            local usage='Use //tsc glyph shimmer on|off | spin <-6-6> | width <-1|0-180> | far <0-1> | gain <0-1> | count <1-4> | offset <-180-180>.'
+            local ranges={spin={-6,6},width={-1,180},far={0,1},gain={0,1},count={1,4},offset={-180,180}}
+            if ranges[arg]then numeric('glyph_shimmer_'..arg,args[3],ranges[arg],'glyph shimmer '..arg)
+            elseif not toggle('glyph_shimmer',arg,'Glyph shimmer')then say(usage)end
+        elseif command=='level2'and value=='under'then
+            -- Test7.25 level-2 under disc: 'same' = follow the darkness under value.
+            local arg=(args[2]or ''):lower()
+            local usage='Use //tsc level2 under on|off | opacity|size|spin|depth <n|same> | direction same|reverse|darkness | fade <center|same> <edge|same>.'
+            local ranges={opacity={0,1},size={.2,3},spin={-6,6},depth={0,.05}}
+            if ranges[arg]then
+                if (args[3]or ''):lower()=='same'then settings['level2_under_'..arg]=-1;save(settings);say('level2 under '..arg..': same as darkness under.')
+                else numeric('level2_under_'..arg,args[3],ranges[arg],'level2 under '..arg)end
+            elseif arg=='direction'then
+                local v=(args[3]or ''):lower()
+                if v=='same'or v=='reverse'or v=='darkness'then settings.level2_under_direction=v;save(settings);say('Level2 under direction '..v..'.')
+                else say(usage)end
+            elseif arg=='fade'then
+                local function val(x)if (x or ''):lower()=='same'then return -1 end local n=tonumber(x)if n and n>=0 and n<=1 then return n end end
+                local c,e=val(args[3]),val(args[4])
+                if not c or not e then say(usage);return true end
+                settings.level2_under_center,settings.level2_under_edge=c,e;save(settings);say('Level2 under fade '..tostring(args[3])..' '..tostring(args[4])..'.')
+            elseif not toggle('level2_under',arg,'Level-2 under disc')then say(usage)end
         elseif command=='light'and value=='under'then
             -- Test7.24 light under: 'same' = follow the darkness under value.
             local arg=(args[2]or ''):lower()

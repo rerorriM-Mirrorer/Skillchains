@@ -40,6 +40,32 @@ inline std::uint32_t gradient_at(std::uint32_t const* palette,int sectors,float 
     t=t*t*(3.f-2.f*t);
     return lerp_argb(palette[k],palette[(k+1)%sectors],t);
 }
+// Native 0.15.0 glyph shimmer: weight (0..1) of a glyph point at world angle
+// `angle` for a bright patch centered on `center` with half-width `width`
+// (radians), repeated `count` times around the circle: a cosine bell.
+inline float shimmer_weight(float angle,float center,float width,int count) {
+    constexpr float tau=6.28318530718f;
+    count=count<1?1:(count>4?4:count);
+    const float period=tau/static_cast<float>(count);
+    float d=std::fmod(angle-center,period);
+    if(d<0.f)d+=period;
+    if(d>period*.5f)d=period-d;
+    if(width<=0.f||d>=width)return 0.f;
+    return .5f+.5f*std::cos(3.14159265359f*d/width);
+}
+// Shimmered stroke color: far side alpha x far; the patch whitens toward
+// white by gain x w and raises alpha toward opaque by gain x w.
+inline std::uint32_t shimmer_color(std::uint32_t base,float w,float rest,float gain) {
+    const float a=static_cast<float>(base>>24)/255.f;
+    const float k=gain*w;
+    float alpha=a*(rest+(1.f-rest)*w);
+    alpha=alpha+(1.f-alpha)*k;
+    alpha=alpha<0.f?0.f:(alpha>1.f?1.f:alpha);
+    const std::uint32_t rgb=lerp_argb(base|0xFF000000u,0xFFFFFFFFu,k)&0xFFFFFFu;
+    return (static_cast<std::uint32_t>(alpha*255.f+.5f)<<24)|rgb;
+}
+constexpr int kShimmerPieces=8; // each glyph line is cut into this many strokes
+
 // Native 0.14.0 sliced center: the center corner of fan slice i (between rim
 // vertices i and i+1) takes that slice's own gradient color, so a clear
 // sector stays clear all the way in and lit sectors fade center -> rim.

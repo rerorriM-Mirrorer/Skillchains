@@ -179,5 +179,26 @@ int main() {
         // Matches the rim gradient halfway between the slice's two vertices.
         for(int i=0;i<slices;++i)assert(targetsc::sliced_center(pal,4,i,slices)==targetsc::gradient_at(pal,4,i+.5f,slices));
     }
+    {
+        // 0.15.0 glyph shimmer: cosine bell around the patch angle, wrapping;
+        // count repeats it; the far side keeps alpha x rest; the patch goes
+        // toward white and opaque by gain.
+        const float pi=3.14159265f;
+        assert(std::fabs(targetsc::shimmer_weight(1.f,1.f,.8f,1)-1.f)<1e-5f);
+        assert(targetsc::shimmer_weight(1.f+.8f,1.f,.8f,1)<1e-5f);
+        assert(std::fabs(targetsc::shimmer_weight(1.f+.4f,1.f,.8f,1)-.5f)<1e-4f);
+        assert(std::fabs(targetsc::shimmer_weight(-pi+.05f,pi-.05f,.8f,1)-targetsc::shimmer_weight(.1f,0.f,.8f,1))<1e-4f); // wraps
+        assert(targetsc::shimmer_weight(1.f+pi,1.f,.8f,1)<1e-5f && targetsc::shimmer_weight(1.f+pi,1.f,.8f,2)>.999f); // count 2
+        assert(targetsc::shimmer_weight(0.f,0.f,0.f,1)==0.f);
+        const std::uint32_t base=0x99FF8000u; // alpha .6
+        const auto far_c=targetsc::shimmer_color(base,0.f,.25f,1.f);
+        assert((far_c>>24)==static_cast<std::uint32_t>(.6f*.25f*255.f+.5f) && (far_c&0xFFFFFFu)==0xFF8000u);
+        const auto hot=targetsc::shimmer_color(base,1.f,.25f,1.f);
+        assert(hot==0xFFFFFFFFu);
+        const auto plain=targetsc::shimmer_color(base,1.f,.25f,0.f);
+        assert(plain==base);
+        const auto half=targetsc::shimmer_color(base,.5f,1.f,.5f); // alpha .6 -> .6+.4*.25 = .7
+        assert(((half>>24)>=0xB1u)&&((half>>24)<=0xB4u));
+    }
     std::puts("PASS portable property geometry: traced wide cross, diagonal four-point star, central square, transparent line geometry, complete sector coverage");
 }

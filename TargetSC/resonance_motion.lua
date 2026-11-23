@@ -108,7 +108,25 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- it; inner/outer = center/edge. Flash-in follows lit_start/lit_flash.
     -- lit_sliced: the level-1/3 lit disc uses the sliced center too.
     lit2_shape='opposite',lit2_opacity=.6,lit2_size=1,lit2_spin=2,lit2_depth=.003,lit2_inner=1,lit2_outer=0,
-    lit_sliced=false,lit_shape='half',lit_start='both',
+    lit_sliced=false,
+    -- Test7.25: lit_sliced_props = comma list of properties whose level-1/3
+    -- lit disc uses the sliced center even with lit_sliced off.
+    lit_sliced_props='Darkness,Compression',
+    -- Test7.25 level-2 under disc: the property's own two colors (no color
+    -- swing), like the darkness under disc; numbers -1 and direction
+    -- 'darkness' follow the darkness under setting.
+    level2_under=true,level2_under_opacity=-1,level2_under_size=-1,level2_under_spin=-1,level2_under_direction='darkness',
+    level2_under_depth=-1,level2_under_center=-1,level2_under_edge=-1,
+    -- Test7.25 glyph shimmer (native 0.15.0), link property glyphs only: a
+    -- bright patch on the glyph lines and rim turning with the lit disc.
+    -- glyph_shimmer_spin: x the lit disc's turn (1 = rides its lit side).
+    -- glyph_shimmer_width: half-width in degrees (-1 = auto: 45 for a
+    -- quarter lit disc, 70 otherwise). glyph_shimmer_far: alpha multiplier
+    -- away from the patch (0 = clear). glyph_shimmer_gain: how far the patch
+    -- goes toward white and opaque (0-1). glyph_shimmer_count: patches (1-4).
+    -- glyph_shimmer_offset: degrees added to the patch angle.
+    glyph_shimmer=true,glyph_shimmer_spin=1,glyph_shimmer_width=-1,glyph_shimmer_far=.35,glyph_shimmer_gain=.8,
+    glyph_shimmer_count=1,glyph_shimmer_offset=0,lit_shape='half',lit_start='both',
     lit_bursts=true,lit_flash=.4,lit_spin=2,lit_cycle=0,lit_size=1,lit_opacity=.6,lit_inner=1,lit_outer=1,lit_depth=.003,
     -- Test7.22 awakening ending: in each MB window's ending the white awakening
     -- disc returns at its full opening size (radius x .96 x awakening_size),
@@ -2335,6 +2353,13 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- as it turns (see lit_* defaults). Inserted before this property's
             -- discs, so drawn under them. Test7.22: its color is the property
             -- fill's own final color (every flash/whitening the fill shows).
+            local function lit_sliced_for(name) -- Test7.25
+                if option(opts,'lit_sliced')then return true end
+                for x in tostring(option(opts,'lit_sliced_props')or ''):gmatch('[^,%s]+')do
+                    if x:lower()==tostring(name):lower()then return true end
+                end
+                return false
+            end
             local lit_ok=not opener and not terminal and j==1 and option(opts,'lit')and option(opts,'lit_level'..s.level)
                 and not (s.level==3 and option(opts,'lit_level3_light')and p~='Light')
             if lit_ok and life>0 and #out.discs<disc_cap then
@@ -2397,7 +2422,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                 if r>=.01 and lit1+lit2+rest>.002 then
                     table.insert(out.discs,lit_mark+1,{radius=r,offset=h-option(opts,'lit_depth'),
                         rotation=angle*option(opts,'lit_spin'),color=q[1],colors=q,glyph=0,outline=0,
-                        role='lit',blend=1,sliced=option(opts,'lit_sliced')or nil,inner=option(opts,'lit_inner'),outer=option(opts,'lit_outer')})
+                        role='lit',blend=1,sliced=lit_sliced_for(p)or nil,inner=option(opts,'lit_inner'),outer=option(opts,'lit_outer')})
                 end
             end
             -- Test7.23 darkness under: Umbra's under disc beneath the Darkness
@@ -2406,19 +2431,24 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- Fragmentation; each light_under_* number -1 (and direction
             -- 'darkness') = the darkness under value.
             local light_link=not opener and not terminal and s.level==3 and p=='Light'
-            local under_kind=dark_link and 'darkness'or light_link and 'light'or nil
+            local level2_link=not opener and not terminal and s.level==2 -- Test7.25
+            local under_kind=dark_link and 'darkness'or light_link and 'light'or level2_link and 'level2'or nil
             if under_kind and j==1 and option(opts,under_kind..'_under')and life>0 and #out.discs<disc_cap then
                 local function u(k)
                     local v=option(opts,under_kind..'_under_'..k)
-                    if under_kind=='light'and (v==-1 or v=='darkness')then v=option(opts,'darkness_under_'..k)end
+                    if under_kind~='darkness'and (v==-1 or v=='darkness'or v==nil)then v=option(opts,'darkness_under_'..k)end
                     return v
                 end
                 local pa,pb='Gravitation','Distortion'
                 if under_kind=='light'then pa,pb='Fusion','Fragmentation'end
-                local ca,cb=property_palette(pa,context),property_palette(pb,context)
-                local w=.5-.5*math.cos(2*pi*max(0,now-s.created)/max(.1,u('cycle')))
                 local mixed={}
-                for i=1,max(#ca,#cb)do mixed[i]=mix(ca[i]or ca[#ca],cb[i]or cb[#cb],w)end
+                if under_kind=='level2'then
+                    for i,c in ipairs(lit_colors)do mixed[i]=c end -- its own colors, steady
+                else
+                    local ca,cb=property_palette(pa,context),property_palette(pb,context)
+                    local w=.5-.5*math.cos(2*pi*max(0,now-s.created)/max(.1,u('cycle')))
+                    for i=1,max(#ca,#cb)do mixed[i]=mix(ca[i]or ca[#ca],cb[i]or cb[#cb],w)end
+                end
                 local q=packed(mixed,clamp(u('opacity'),0,1)*life)
                 local r=min(100,radius*.78*fill_size*u('size'))
                 if r>=.01 then
@@ -2426,6 +2456,21 @@ function M.frame(model,s,now,radius,height,opts,context)
                         rotation=angle*u('spin')*(u('direction')=='reverse'and -1 or 1),
                         color=q[1],colors=q,glyph=0,outline=0,role=under_kind..'-under',blend=#q>1 and 1 or 0,
                         inner=u('center'),outer=u('edge')})
+                end
+            end
+            -- Test7.25 glyph shimmer: this link property's glyph lines and rim
+            -- (native 0.15.0) get a bright patch riding the lit disc's lit side.
+            if not opener and not terminal and option(opts,'glyph_shimmer')then
+                local quarter=option(opts,'lit_shape')=='quarter'
+                local width=option(opts,'glyph_shimmer_width')
+                if width<0 then width=quarter and 45 or 70 end
+                local shim={angle=angle*option(opts,'lit_spin')*option(opts,'glyph_shimmer_spin')+(quarter and pi/4 or pi/2)
+                        +math.rad(option(opts,'glyph_shimmer_offset')),
+                    width=math.rad(clamp(width,0,180)),far=clamp(option(opts,'glyph_shimmer_far'),0,1),
+                    gain=clamp(option(opts,'glyph_shimmer_gain'),0,1),count=max(1,min(4,math.floor(option(opts,'glyph_shimmer_count')+.5)))}
+                for i=lit_mark+1,#out.discs do
+                    local x=out.discs[i]
+                    if (x.role=='property'or x.role=='property-trace')and (x.glyph or 0)~=0 and (x.outline or 0)>=16777216 then x.shimmer=shim end
                 end
             end
         end

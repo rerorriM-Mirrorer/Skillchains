@@ -1,5 +1,30 @@
 # TargetSC — elemental resonance
 
+## 0.19.25 unified Test7.25 — new DLL 0.15.0: glyph shimmer; level-2 under disc (close every client to install)
+
+- **New `libs/_TargetSC.dll` (native 0.15.0).** Close every FFXI client before
+  copying it over.
+- **`//tsc glyph shimmer on|off`** (on): on every link's property disc glyph
+  (levels 1-3), a bright patch turns with the lit disc, riding over its lit
+  side: the lines there go toward white and opaque, and the lines on the far
+  side go fainter. It keeps running through magic bursts.
+  - **`glyph shimmer spin <x>`** (1): turns this many times the lit disc's speed
+    (1 = stays over the lit side).
+  - **`glyph shimmer width <deg>`** (-1 = auto: 45 for a quarter lit disc, 70
+    otherwise): half-width of the patch.
+  - **`glyph shimmer far <0-1>`** (.35): how visible the far side stays (0 =
+    clear). **`gain <0-1>`** (.8): how white/opaque the patch gets.
+  - **`count <1-4>`** (1): patches around the glyph. **`offset <deg>`** (0).
+- **`//tsc lit sliced <property> on|off`**: the sliced center now goes by
+  property; Darkness and Compression by default. `//tsc lit sliced off` keeps
+  only that list; `on` = every lit disc.
+- **`//tsc level2 under on|off`** (on): level-2 links get an under disc in the
+  property's own two colors (no color swing), like the Darkness/Light under
+  discs. Every value follows `darkness under` until you set its own:
+  **`level2 under opacity|size|spin|depth <n|same>`**, **`direction
+  same|reverse|darkness`**, **`fade <center|same> <edge|same>`**. The Test7.24
+  level-2 lit disc (`lit level2`, `lit2 ...`) stays available, off.
+
 ## 0.19.24 unified Test7.24 — new DLL 0.14.0: level-2 lit disc, Light under disc (close every client to install)
 
 - **New `libs/_TargetSC.dll` (native 0.14.0).** Close every FFXI client before
