@@ -7,6 +7,9 @@
 -- fading over `mb ending fade` in any style.
 package.path='./TargetSC/?.lua;'..package.path
 local R=require('resonance')
+-- Test7.26: pin the earlier MB glyph ending (converge/ground glyph) and Umbra
+-- vanish; the new ring glyph, glyph meet and Umbra shimmer: test_mb_ending_726.lua.
+R.defaults.mb_ending_glyph='converge';R.defaults.glyph_meet=false;R.defaults.umbra_glyph_shimmer=false
 local C=require('resonance_controls')
 local Burst=require('resonance_burst')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

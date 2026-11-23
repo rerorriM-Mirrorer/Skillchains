@@ -126,7 +126,21 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- goes toward white and opaque (0-1). glyph_shimmer_count: patches (1-4).
     -- glyph_shimmer_offset: degrees added to the patch angle.
     glyph_shimmer=true,glyph_shimmer_spin=1,glyph_shimmer_width=-1,glyph_shimmer_far=.35,glyph_shimmer_gain=.8,
-    glyph_shimmer_count=1,glyph_shimmer_offset=0,lit_shape='half',lit_start='both',
+    glyph_shimmer_count=1,glyph_shimmer_offset=0,
+    -- Test7.26 MB ending (clapper, levels 1-3): mb_ending_glyph ring = the
+    -- large MB glyph stays at the MB ring's height (descending with it) and
+    -- only lights for bursts/the window intro; converge = the Test6.5
+    -- ground glyph that whitens toward the ending. glyph_meet: the property
+    -- glyph grows from its size to the MB ring's as the ring falls, its
+    -- outline opacity going to glyph_meet_opacity (absolute 0-1), its
+    -- shimmer gain to glyph_meet_gain and its shimmer half-width to
+    -- glyph_meet_width degrees at touchdown; then it fades with the ring.
+    mb_ending_glyph='ring',glyph_meet=true,glyph_meet_opacity=1,glyph_meet_gain=1,glyph_meet_width=15,
+    -- Test7.26 Umbra glyph shimmer: the glyph on the black disc keeps
+    -- shimmering instead of vanishing: half-width/spin (x the property disc
+    -- turn) before the flash, then after it until the end.
+    umbra_glyph_shimmer=true,umbra_glyph_shimmer_before=180,umbra_glyph_shimmer_after=15,
+    umbra_glyph_shimmer_spin_before=1,umbra_glyph_shimmer_spin_after=1,lit_shape='half',lit_start='both',
     lit_bursts=true,lit_flash=.4,lit_spin=2,lit_cycle=0,lit_size=1,lit_opacity=.6,lit_inner=1,lit_outer=1,lit_depth=.003,
     -- Test7.22 awakening ending: in each MB window's ending the white awakening
     -- disc returns at its full opening size (radius x .96 x awakening_size),
@@ -1958,7 +1972,8 @@ function M.frame(model,s,now,radius,height,opts,context)
         -- Test4.8 rest hidden: no floor breathing; the window-opening flash,
         -- bursts and the ending still light it.
         -- Test6.5 converge: stays hidden until the converge ramp brings it in.
-        if clapper and option(opts,'mb_glyph_rest')=='hidden'and (converge or not response.ending)then opening.opacity=0 end
+        if clapper and option(opts,'mb_glyph_rest')=='hidden'and (converge or not response.ending
+            or (not l4name and option(opts,'mb_ending_glyph')=='ring'))then opening.opacity=0 end -- Test7.26 ring: hidden in the ending too
         local fades=clapper and option(opts,'mb_glyph_after')=='fade'
         if initial>0 then
             role='awakening';fill=initial
@@ -1997,7 +2012,13 @@ function M.frame(model,s,now,radius,height,opts,context)
             -- flash, so neither of those signals is dimmed by it.
             opening.opacity=opening.opacity*option(opts,'mb_glyph_opacity')
         end
-        if converge and clapper then
+        -- Test7.26 mb ending glyph ring: home = the MB ring's height (with it
+        -- as it descends); no converge cap, whitening or closing flash.
+        local ring_glyph=clapper and not l4name and option(opts,'mb_ending_glyph')=='ring'
+        if ring_glyph and initial<=0 then
+            opening.offset=response.ending and ring_at(response.ending_progress)or mb_height
+        end
+        if converge and clapper and not ring_glyph then
             -- Test6.5: a rising glyph may not pass the descending MB ring. The
             -- cap starts at the glyph's normal highest point (no jump when the
             -- ending begins) and closes onto the ring over the first quarter
@@ -2027,7 +2048,10 @@ function M.frame(model,s,now,radius,height,opts,context)
             color=mix(color,white,glyph_intro)
             opening.opacity=opening.opacity+(1-opening.opacity)*glyph_intro
         end
-        if converge then
+        if ring_glyph then
+            -- Test7.26: no ending whitening; extinguish still applies.
+            opening.opacity=opening.opacity*(response.extinguish or 1)
+        elseif converge then
             -- Test6.5 converge: the ground glyph emerges and whitens as the
             -- ring descends, peaking as it arrives (not scaled by mb glyph
             -- opacity, which only applies to the confirmed response above).
@@ -2313,6 +2337,9 @@ function M.frame(model,s,now,radius,height,opts,context)
                     if (context.native_level or 0)>=11 then g3,gone=M.umbra_ending_glyph(s,now,opts,has_top,angle)end
                     if gone then hide=true end -- swallowed/shrunk away: it stays gone
                     local v,blk=M.umbra_vanish(s,now,opts,has_top)
+                    if option(opts,'umbra_glyph_shimmer')then
+                        v,blk=1,0 -- Test7.26: shimmers on instead of vanishing
+                    end
                     if v<=0 then hide=true elseif v<1 then
                         trace_alpha=trace_alpha*v;trace_stroke=mix(stroke or white,{0,0,0},blk) -- Test7.3 black shimmer
                     end
@@ -2328,8 +2355,34 @@ function M.frame(model,s,now,radius,height,opts,context)
                 if gk>0 and not terminal then
                     trace_stroke=mix(trace_stroke or white,gc,gk);trace_alpha=trace_alpha+(1-trace_alpha)*gk;respond=true
                 end
+                -- Test7.26 glyph meet: grow to the descending MB ring and brighten.
+                local meet
+                if not terminal and not opener and show_mb and response.ending and option(opts,'glyph_meet')
+                    and option(opts,'mb_ending_glyph')=='ring'then
+                    meet=clamp(response.ending_progress or 0,0,1)
+                    local ring_r=shrink_toward(mb_radius,property_radius*option(opts,'disc_size_lines'))
+                    trace_radius=trace_radius+(ring_r-trace_radius)*meet
+                    trace_alpha=(trace_alpha+(clamp(option(opts,'glyph_meet_opacity'),0,1)-trace_alpha)*meet)*(response.extinguish or 1)
+                end
+                local trace_before=#out.discs
                 disc(trace_radius,trace_height,angle,{white},0,2,
                     ((glyph==0 and not respond)or hide)and 0 or trace_alpha,'property-trace',trace_stroke)
+                if meet and #out.discs>trace_before then out.discs[#out.discs].meet=meet end
+                if l4name=='umbra'and option(opts,'umbra_glyph_shimmer')and #out.discs>trace_before then
+                    -- Test7.26 Umbra glyph shimmer: before / after the flash.
+                    local flash_at=M.umbra_flashed(s,opts,has_top)
+                    local sb,sa=option(opts,'umbra_glyph_shimmer_spin_before'),option(opts,'umbra_glyph_shimmer_spin_after')
+                    local after=now>=flash_at
+                    local turn
+                    if after then
+                        local at_flash=M.disc_rotation(s,flash_at,opts)
+                        turn=at_flash*sb+(angle-at_flash)*sa
+                    else turn=angle*sb end
+                    local width=after and option(opts,'umbra_glyph_shimmer_after')or option(opts,'umbra_glyph_shimmer_before')
+                    out.discs[#out.discs].shimmer={angle=turn+math.rad(option(opts,'glyph_shimmer_offset')),
+                        width=math.rad(clamp(width,0,180)),far=clamp(option(opts,'glyph_shimmer_far'),0,1),
+                        gain=clamp(option(opts,'glyph_shimmer_gain'),0,1),count=1}
+                end
                 if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
                     band(r*line_size,trace_height,{response.element},mb_overall*min(1,response.shimmer)*option(opts,'mb_floor'),
                         px+12*option(opts,'mb_glow_width'),'burst-glow','property-trace',0,angle+glow_turn,soft_lit(angle+glow_turn))
@@ -2470,7 +2523,15 @@ function M.frame(model,s,now,radius,height,opts,context)
                     gain=clamp(option(opts,'glyph_shimmer_gain'),0,1),count=max(1,min(4,math.floor(option(opts,'glyph_shimmer_count')+.5)))}
                 for i=lit_mark+1,#out.discs do
                     local x=out.discs[i]
-                    if (x.role=='property'or x.role=='property-trace')and (x.glyph or 0)~=0 and (x.outline or 0)>=16777216 then x.shimmer=shim end
+                    if (x.role=='property'or x.role=='property-trace')and (x.glyph or 0)~=0 and (x.outline or 0)>=16777216 then
+                        x.shimmer=shim
+                        if x.meet then -- Test7.26: toward the meet gain/width at touchdown
+                            local m=x.meet
+                            x.shimmer={angle=shim.angle,far=shim.far,count=shim.count,
+                                gain=shim.gain+(clamp(option(opts,'glyph_meet_gain'),0,1)-shim.gain)*m,
+                                width=shim.width+(math.rad(clamp(option(opts,'glyph_meet_width'),0,180))-shim.width)*m}
+                        end
+                    end
                 end
             end
         end

@@ -1,5 +1,25 @@
 # TargetSC — elemental resonance
 
+## 0.19.26 unified Test7.26 — MB ending: glyph meets the ring; Umbra glyph shimmer (Lua only)
+
+- **`//tsc mb ending glyph ring|converge`** (ring): with `ring`, the large MB
+  glyph stays at the MB ring's height (and comes down with it in the
+  ending), and only lights for magic bursts and the window's opening flash;
+  it no longer whitens on the ground at the end. `converge` = the earlier
+  look. Levels 1-3, clapper MB style; Radiance/Umbra keep their own glyphs.
+- **`//tsc glyph meet on|off`** (on): as the MB ring falls, the property
+  disc's glyph grows from its own size to the ring's, reaching it as the ring
+  touches down, then fades out with it. Over that time its shimmer patch
+  narrows and brightens:
+  **`glyph meet opacity <0-1>`** (1: its final opacity, the real value),
+  **`glyph meet gain <0-1>`** (1: final shimmer gain),
+  **`glyph meet width <deg>`** (15: final shimmer half-width).
+- **`//tsc umbra glyph shimmer on|off`** (on): the glyph on Umbra's black
+  disc no longer vanishes at the flash; it shimmers wide before the flash and
+  narrow after, until the end: **`umbra glyph shimmer before|after <deg>`**
+  (180 / 15), **`umbra glyph shimmer spin before|after <x>`** (1 / 1, x the
+  disc's turn; the patch carries on from where it was).
+
 ## 0.19.25 unified Test7.25 — new DLL 0.15.0: glyph shimmer; level-2 under disc (close every client to install)
 
 - **New `libs/_TargetSC.dll` (native 0.15.0).** Close every FFXI client before

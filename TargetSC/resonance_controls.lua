@@ -300,6 +300,25 @@ function M.new(settings,defaults,save,say,killala,cioara)
         if command=='kill'and (value=='on'or value=='off'or value==nil)then
             if value==nil then value=settings.kill and 'off'or 'on'end
             settings.kill=value=='on';save(settings);say('Kill animations '..value..'.')
+        elseif command=='umbra'and value=='glyph'and (args[2]or ''):lower()=='shimmer'then
+            -- Test7.26 Umbra glyph shimmer.
+            local a3,a4,a5=(args[3]or ''):lower(),(args[4]or ''):lower(),args[5]
+            local usage='Use //tsc umbra glyph shimmer on|off | before|after <0-180 deg> | spin before|after <-6-6>.'
+            if a3=='before'or a3=='after'then numeric('umbra_glyph_shimmer_'..a3,args[4],{0,180},'umbra glyph shimmer '..a3)
+            elseif a3=='spin'and (a4=='before'or a4=='after')then numeric('umbra_glyph_shimmer_spin_'..a4,a5,{-6,6},'umbra glyph shimmer spin '..a4)
+            elseif not toggle('umbra_glyph_shimmer',a3,'Umbra glyph shimmer')then say(usage)end
+        elseif command=='glyph'and value=='meet'then
+            -- Test7.26 property glyph meets the descending MB ring.
+            local arg=(args[2]or ''):lower()
+            local usage='Use //tsc glyph meet on|off | opacity <0-1> | gain <0-1> | width <0-180 deg>.'
+            if arg=='opacity'then numeric('glyph_meet_opacity',args[3],{0,1},'glyph meet opacity')
+            elseif arg=='gain'then numeric('glyph_meet_gain',args[3],{0,1},'glyph meet gain')
+            elseif arg=='width'then numeric('glyph_meet_width',args[3],{0,180},'glyph meet width')
+            elseif not toggle('glyph_meet',arg,'Glyph meets the MB ring')then say(usage)end
+        elseif command=='mb'and value=='ending'and (args[2]or ''):lower()=='glyph'then
+            local mode=(args[3]or ''):lower()
+            if mode=='ring'or mode=='converge'then settings.mb_ending_glyph=mode;save(settings);say('MB ending glyph '..mode..'.')
+            else say('Use //tsc mb ending glyph ring|converge. Now '..tostring(settings.mb_ending_glyph)..'.')end
         elseif command=='radiance'or command=='umbra'or command=='kill'then level4_look(command,args)
         elseif command=='detarget'then
             -- Test5.0: untarget/ordinary-death dim, from the first moment.
