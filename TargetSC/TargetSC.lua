@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.20-unified-test7.20'
+_addon.version='0.19.21-unified-test7.21'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -325,6 +325,11 @@ local function help()
         {'awakening size <0.1-3>','White opening disc size; 1 = previous size (default 1).'},
         {'awakening links on|off','Play the white disc again on every link that opens a new window (default on).'},
         {'awakening fade until default|open|close|<1-9>','When the white disc finishes fading: as before, as the window opens, at window end, or N s after it opens.'},
+        {'lit on|off | lit level1|level2|level3 on|off','Lit disc under a link\'s property disc: one side lit like the disc lighting the ground (default on, level 1 only).'},
+        {'lit shape half|firm|quarter | lit start both|one','Lit part: soft half (default), firm half, or a quarter; flash in with both sides white (default) or only the lit side.'},
+        {'lit bursts on|off','The lit disc takes the property disc\'s burst flash and MB intro whitening (default on); it never follows the closing.'},
+        {'lit flash|spin|cycle <number>','White-to-color seconds (.4); turn x the property disc (2); seconds per swap of the lit side (0 = no swap).'},
+        {'lit size|opacity|depth <number> | lit fade <inner> <outer>','Size x property fill (1); opacity 0-1, NOT x addon opacity (.6); depth under the property disc (.003); center/edge (1 1).'},
         {'preset default|cioara|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; cioara = Cioara\'s current look (2026-11-22); killala = the old pre-Test3 look.'},
         {'mb glyph height <0-2>','Burst rise of the large glyph as a fraction of the MB ring height; 1 = ring, 0 = old mb rise (default 1.1).'},
         {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},
@@ -420,6 +425,10 @@ local function status()
         settings.amplitude,settings.ground_height,settings.hum_amplitude,settings.hum_period,settings.hum_slowdown,settings.hum_gain,settings.fade_duration))
     say(('discs style=%s outline=%.2f height=%.3f speed=%.2f slowdown=%.2f; awakening=%s opacity=%.2f'):format(
         settings.disc_style,settings.disc_outline,settings.disc_height,settings.disc_speed,settings.disc_slowdown,tostring(settings.awakening),settings.awakening_opacity))
+    say(('lit=%s bursts=%s L1=%s L2=%s L3=%s shape=%s start=%s flash=%.2fs spin=%.2f cycle=%.2fs size=%.2f opacity=%.2f fade=%.2f/%.2f depth=%.3f'):format(
+        tostring(settings.lit),tostring(settings.lit_bursts),tostring(settings.lit_level1),tostring(settings.lit_level2),tostring(settings.lit_level3),
+        tostring(settings.lit_shape),tostring(settings.lit_start),settings.lit_flash,settings.lit_spin,settings.lit_cycle,
+        settings.lit_size,settings.lit_opacity,settings.lit_inner,settings.lit_outer,settings.lit_depth)) -- Test7.21
     say(('opener gap=%.1f degrees glow=%s muted=%s; L2=opposed two-color halves'):format(
         settings.opener_gap,settings.opener_glow,tostring(settings.opener_muted)))
     say(('initial turns/sec: opener=%.2f L1=%.2f L2=%.2f L3=%.2f L4=%.2f; MB opacity=%.2f'):format(

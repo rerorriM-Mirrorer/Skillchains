@@ -65,6 +65,21 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- ('same' = awakening fade until; else default|open|close|'1'..'9').
     awakening_opacity_opener=-1,awakening_opacity_level1=-1,awakening_opacity_level2=-1,awakening_opacity_level3=-1,
     awakening_until_opener='same',awakening_until_level1='same',awakening_until_level2='same',awakening_until_level3='same',
+    -- Test7.21 lit disc: a second fill disc just under a link's property disc
+    -- (between it and the white awakening disc), one side lit like the property
+    -- disc lighting the ground as it turns. Gradient blend always.
+    -- lit_level1..3: which link levels get it (default level 1 only).
+    -- lit_shape: half (two sectors, soft) | firm (half, held then meeting) | quarter.
+    -- lit_start: both (both sides flash in white) | one (only the lit side).
+    -- lit_flash: seconds from white to the property color (and for the
+    -- unlit side to clear when lit_start=both). lit_spin: x the property
+    -- disc's turn. lit_cycle: seconds per swap of which side is lit (0 = off).
+    -- lit_size: x the property fill radius. lit_opacity: absolute 0-1 (NOT
+    -- x addon opacity or discs opacity). lit_inner/lit_outer: center/edge
+    -- multipliers. lit_depth: world units below the property disc.
+    -- lit_bursts: follow the property disc's burst flash and MB intro whitening.
+    lit=true,lit_level1=true,lit_level2=false,lit_level3=false,lit_shape='half',lit_start='both',
+    lit_bursts=true,lit_flash=.4,lit_spin=2,lit_cycle=0,lit_size=1,lit_opacity=.6,lit_inner=1,lit_outer=1,lit_depth=.003,
     -- Test3.8: opener arcs fade along their length from the bright end
     -- (lead = facing the spin); the glow band follows by opener_fade_glow.
     opener_fade=.6,opener_fade_length=1,opener_fade_curve=1,opener_fade_end='lead',opener_fade_glow=1,
@@ -918,7 +933,7 @@ local function sc_kill(out,s,now,kill,start,opts,context,f)
     if k>=K then vis=0 end
     -- Glyphs (MB glyphs, the disc's own lines, copies) and blooms flash out.
     local glyph_role={['mb-glyph']=true,['property-trace']=true,['umbra-copy']=true,
-        bloom=true,['umbra-bloom']=true,['kill-bloom']=true,awakening=true}
+        bloom=true,['umbra-bloom']=true,['kill-bloom']=true,awakening=true,lit=true} -- Test7.21 lit
     local discs={}
     -- Test7.20: the property disc's glyph splits with the halves (native 0.13.0 clip).
     local split_glyph=option(opts,'kill_sc_glyph')=='split'and (context.native_level or 0)>=13
@@ -2074,6 +2089,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                 colors=mapped
                 if hub and p=='Darkness'then hub=swap end
             end
+            -- Test7.21: the lit disc keeps the property color before any flash/intro whitening.
+            local lit_colors={}for i,c in ipairs(colors)do lit_colors[i]=c end
             local terminal_stroke=white
             if terminal then
                 local dark=p=='Umbra'or p=='Darkness'
@@ -2141,6 +2158,40 @@ function M.frame(model,s,now,radius,height,opts,context)
                 if hub then d.hub=context.argb(hub,a)end
             end
             local h=base+.006+(j-1)*.008+lift
+            -- Test7.21 lit disc: one side of the property disc lighting the ground
+            -- as it turns (see lit_* defaults). Drawn before the property fill, so under it.
+            if not opener and not terminal and j==1 and option(opts,'lit')and option(opts,'lit_level'..s.level)
+                and life>0 and #out.discs<disc_cap then
+                local t=max(0,now-s.created)
+                local white_k=1-smooth(t/max(.05,option(opts,'lit_flash')))
+                local avg={0,0,0}
+                for _,c in ipairs(lit_colors)do for i=1,3 do avg[i]=avg[i]+c[i]/#lit_colors end end
+                local c=avg
+                if option(opts,'lit_bursts')then
+                    -- Same burst flash and MB intro whitening as the property disc
+                    -- (never its closing): it reads as the same disc's light.
+                    if flash>0 then c=mix(c,clapper and response.element or white,flash)end
+                    if disc_intro>0 then c=mix(c,white,disc_intro)end
+                end
+                c=mix(c,white,white_k)
+                local a=clamp(option(opts,'lit_opacity'),0,1)*life
+                local both=option(opts,'lit_start')=='both'and white_k or 0
+                local cycle=option(opts,'lit_cycle')
+                local w=cycle>0 and .5-.5*math.cos(2*pi*t/cycle)or 0
+                local lit1,lit2,rest=a*max(1-w,both),a*max(w,both),a*both
+                local function argb(x)return context.argb(c,x)end
+                local shape=option(opts,'lit_shape')
+                local p
+                if shape=='quarter'then p={argb(lit1),argb(rest),argb(lit2),argb(rest)}
+                elseif shape=='firm'then p={argb(lit1),argb(lit1),argb(lit2),argb(lit2)}
+                else p={argb(lit1),argb(lit2)}end
+                local r=min(100,radius*.78*fill_size*option(opts,'lit_size'))
+                if r>=.01 and lit1+lit2+rest>.002 then
+                    out.discs[#out.discs+1]={radius=r,offset=h-option(opts,'lit_depth'),
+                        rotation=angle*option(opts,'lit_spin'),color=p[1],colors=p,glyph=0,outline=0,
+                        role='lit',blend=1,inner=option(opts,'lit_inner'),outer=option(opts,'lit_outer')}
+                end
+            end
             if terminal or clapper then
                 -- Separate planes let a struck trace lift while its fill
                 -- remains anchored. Terminal traces keep their .006 clearance.

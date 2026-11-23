@@ -1,5 +1,29 @@
 # TargetSC — elemental resonance
 
+## 0.19.21 unified Test7.21 — lit disc under the property disc (Lua only)
+
+- **`//tsc lit on|off`** (default on, level-1 links only): a new disc just
+  under a link's property disc, between it and the white awakening disc. One
+  side is lit in the property disc's color, as if that side of the property
+  disc were lighting the ground while it turns; the other side is clear. It
+  flashes in white with the property disc and fades to the color. Separate
+  from the awakening disc, which is unchanged.
+- **`//tsc lit level1|level2|level3 on|off`**: which link levels get it.
+- **`//tsc lit shape half|firm|quarter`** (half): soft half, a firmer half
+  (holds its color, then meets the clear side), or one quarter lit.
+- **`//tsc lit start both|one`** (both): flash in with the whole disc white, or
+  with only the lit side. **`lit flash <s>`** (.4) = seconds from white to color.
+- **`//tsc lit spin <x>`** (2): turns this many times the property disc's speed.
+- **`//tsc lit cycle <s>`** (0 = off): seconds for the lit side to swap to the
+  other side and back (half: the two halves; quarter: opposite quarters).
+- **`//tsc lit size <x>`** (1, x the property fill), **`lit opacity <0-1>`**
+  (.6, the real opacity: NOT multiplied by the addon opacity or discs
+  opacity), **`lit fade <inner> <outer>`** (1 1), **`lit depth <n>`** (.003
+  under the property disc).
+- **`//tsc lit bursts on|off`** (on): takes the property disc's burst flash and
+  MB intro whitening; it never follows the closing whitening.
+- Try it with `//tsc preview mb` (level-1 Scission link).
+
 ## 0.19.20 unified Test7.20 — new DLL 0.13.0: clean glyph ends, SC kill rework (close every client to install)
 
 - **New `libs/_TargetSC.dll` (native 0.13.0).** Close every FFXI client before

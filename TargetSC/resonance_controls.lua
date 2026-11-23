@@ -500,6 +500,34 @@ function M.new(settings,defaults,save,say,killala,cioara)
             end
         elseif command=='opener'then opener(args,value)
         elseif command=='discs'then discs(args,value)
+        elseif command=='lit'then
+            -- Test7.21 lit disc (resonance_motion lit_* defaults).
+            local usage='Use //tsc lit on|off | level1|level2|level3 on|off | bursts on|off | shape half|firm|quarter | start both|one | '..
+                'flash <0.05-3> | spin <-6-6> | cycle <0-10> | size <0.2-3> | opacity <0-1> | fade <inner 0-1> <outer 0-1> | depth <0-0.05>.'
+            local arg=(args[2]or ''):lower()
+            if value=='bursts'then
+                if not toggle('lit_bursts',arg,'Lit disc follows bursts')then say(usage)end
+            elseif value=='level1'or value=='level2'or value=='level3'then
+                if not toggle('lit_'..value,arg,'Lit disc '..value)then say(usage)end
+            elseif value=='shape'then
+                if arg=='half'or arg=='firm'or arg=='quarter'then settings.lit_shape=arg;save(settings);say('Lit disc shape '..arg..'.')
+                else say('Use //tsc lit shape half|firm|quarter. Now '..tostring(settings.lit_shape)..'.')end
+            elseif value=='start'then
+                if arg=='both'or arg=='one'then settings.lit_start=arg;save(settings);say('Lit disc starts with '..arg..' side(s) lit.')
+                else say('Use //tsc lit start both|one. Now '..tostring(settings.lit_start)..'.')end
+            elseif value=='flash'then numeric('lit_flash',args[2],{.05,3},'lit flash')
+            elseif value=='spin'then numeric('lit_spin',args[2],{-6,6},'lit spin')
+            elseif value=='cycle'then numeric('lit_cycle',args[2],{0,10},'lit cycle')
+            elseif value=='size'then numeric('lit_size',args[2],{.2,3},'lit size')
+            elseif value=='opacity'then numeric('lit_opacity',args[2],{0,1},'lit opacity')
+            elseif value=='depth'then numeric('lit_depth',args[2],{0,.05},'lit depth')
+            elseif value=='fade'then
+                local inner,outer=tonumber(args[2]),tonumber(args[3])
+                if not inner or not outer or inner<0 or inner>1 or outer<0 or outer>1 then
+                    say(('Use //tsc lit fade <inner 0-1> <outer 0-1>. Now %s %s.'):format(tostring(settings.lit_inner),tostring(settings.lit_outer)));return true
+                end
+                settings.lit_inner,settings.lit_outer=inner,outer;save(settings);say(('Lit disc fade %.2f %.2f.'):format(inner,outer))
+            elseif not toggle('lit',value,'Lit disc')then say(usage)end
         elseif command=='awakening'then
             local stages={opener=true,level1=true,level2=true,level3=true}
             if stages[value]then
