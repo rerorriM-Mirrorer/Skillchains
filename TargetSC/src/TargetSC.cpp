@@ -75,7 +75,8 @@ struct Ring {float radius=0, offset=0, width=0; DWORD color=0; float pixels=0;
     int sectors=1;DWORD color2=0,color3=0,color4=0;float rotation=0,gap=0;int blend=0;
     float fade=0,fade_length=1,fade_curve=1;int fade_direction=1;
     int arc=0;float arc_start=0,arc_span=0;DWORD tail=0;
-    float dx=0,dy=0;}; // 0.12.0 sideways shift (east, north) from native.shift
+    float dx=0,dy=0; // 0.12.0 sideways shift (east, north) from native.shift
+    float ghost=0;}; // 0.16.0: hidden-part opacity from native.ghost (0 = none)
 struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     DWORD outline=0;int sectors=1;DWORD color2=0,color3=0,color4=0;int blend=0;float inner=1.f,outer=1.f;
     int has_hub=0;DWORD hub=0;
@@ -90,17 +91,19 @@ struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     int sliced=0;
     // 0.15.0: glyph shimmer (args 19-23): a bright patch at world angle
     // shimmer_angle on the glyph lines and rim; the far side alpha x far.
-    int has_shimmer=0;float shimmer_angle=0,shimmer_width=0,shimmer_far=1,shimmer_gain=0;int shimmer_count=1;};
+    int has_shimmer=0;float shimmer_angle=0,shimmer_width=0,shimmer_far=1,shimmer_gain=0;int shimmer_count=1;
+    float ghost=0;}; // 0.16.0
 // 0.11.0: a 3D glyph (24 property-glyph segments, optional circle) for the
 // Umbra endings; geometry in PropertyGeometry.h (glyph3_*).
 constexpr int kMaxGlyphs3=4;
 struct Glyph3 {float radius=0,offset=0,rotation=0;DWORD color=0;targetsc::Glyph3Params params{};int clip=0,circle=0;
-    float dx=0,dy=0;};
+    float dx=0,dy=0;float ghost=0;}; // 0.16.0
 // 0.12.0: straight lines (kill seams), target-relative world units, z up.
 constexpr int kMaxLines=8;
 struct Line {float x1=0,y1=0,z1=0,x2=0,y2=0,z2=0;DWORD color=0;float pixels=1;};
 struct Frame {DWORD index=0, id=0, tick=0;int count=0,disc_count=0,glyph_count=0,line_count=0,shimmer_count=0;
     float shift_e=0,shift_n=0; // current native.shift, stamped on each piece added after it
+    float ghost_now=0; // 0.16.0 current native.ghost, stamped on each ring/arc/disc/glyph added after it
     Ring rings[kMaxRings]{};Disc discs[kMaxDiscs]{};Glyph3 glyphs[kMaxGlyphs3]{};Line lines[kMaxLines]{};};
 SRWLOCK g_frame_lock=SRWLOCK_INIT;
 Frame g_pending{}, g_frame{};
@@ -739,6 +742,11 @@ constexpr int kMaxVertices=(kMaxRings+kMaxDiscs)*ring_slices_*6+
 static_assert(kMaxVertices==47760,"Review bounded storage when glyph complexity changes");
 DrawVertex g_vertices[kMaxVertices]{};
 unsigned g_vertex_count=0;
+// 0.16.0 ghost pass: vertex ranges of ghosted pieces, and their copies.
+struct GhostRange {unsigned start=0,end=0;float k=0;};
+constexpr int kMaxGhostRanges=kMaxRings+kMaxDiscs+kMaxGlyphs3;
+GhostRange g_ghost_ranges[kMaxGhostRanges]{};int g_ghost_range_count=0;
+DrawVertex g_ghost_vertices[kMaxVertices]{};
 void triangle(DrawVertex a,DrawVertex b,DrawVertex c) {
     if(g_vertex_count+3>kMaxVertices)return;
     g_vertices[g_vertex_count++]=a;g_vertices[g_vertex_count++]=b;g_vertices[g_vertex_count++]=c;
@@ -1055,16 +1063,37 @@ void draw_all_rings() {
     ts(0,D3DTSS_ALPHAOP,D3DTOP_SELECTARG1);ts(0,D3DTSS_ALPHAARG1,D3DTA_DIFFUSE);
     ts(1,D3DTSS_COLOROP,D3DTOP_DISABLE);ts(1,D3DTSS_ALPHAOP,D3DTOP_DISABLE);
     if(ok) {
-        g_vertex_count=0;
+        g_vertex_count=0;g_ghost_range_count=0;
+        // 0.16.0: remember each ghosted piece's vertex range.
+        auto mark=[&](unsigned start,float k){
+            if(k>0.f&&g_vertex_count>start&&g_ghost_range_count<kMaxGhostRanges)
+                g_ghost_ranges[g_ghost_range_count++]={start,g_vertex_count,k};
+        };
         // Draw larger/lower glyphs first (Lua orders them), then ring glows and
         // cores. One bounded native submission per visible frame.
         auto shifted=[&](float dx,float dy){return Position{base.east+dx,base.north+dy,base.height};};
-        for(int i=0;i<f.disc_count;++i)emit_disc(shifted(f.discs[i].dx,f.discs[i].dy),f.discs[i],viewport);
-        for(int i=0;i<f.glyph_count;++i)emit_glyph3(shifted(f.glyphs[i].dx,f.glyphs[i].dy),f.glyphs[i],viewport);
-        for(int i=0;i<f.count;++i)emit_ring(shifted(f.rings[i].dx,f.rings[i].dy),f.rings[i],viewport);
+        for(int i=0;i<f.disc_count;++i){const unsigned st=g_vertex_count;emit_disc(shifted(f.discs[i].dx,f.discs[i].dy),f.discs[i],viewport);mark(st,f.discs[i].ghost);}
+        for(int i=0;i<f.glyph_count;++i){const unsigned st=g_vertex_count;emit_glyph3(shifted(f.glyphs[i].dx,f.glyphs[i].dy),f.glyphs[i],viewport);mark(st,f.glyphs[i].ghost);}
+        for(int i=0;i<f.count;++i){const unsigned st=g_vertex_count;emit_ring(shifted(f.rings[i].dx,f.rings[i].dy),f.rings[i],viewport);mark(st,f.rings[i].ghost);}
         for(int i=0;i<f.line_count;++i)emit_line(base,f.lines[i],viewport);
         if(g_vertex_count && SUCCEEDED(dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST,g_vertex_count/3,g_vertices,sizeof(DrawVertex))))
             InterlockedIncrement(&g_draws);
+        // 0.16.0 ghost pass: the ghosted pieces again, only where something is
+        // in front of them (depth GREATER), at alpha x k. Same blend states.
+        if(g_ghost_range_count) {
+            unsigned count=0;
+            for(int r=0;r<g_ghost_range_count;++r) {
+                auto const& gr=g_ghost_ranges[r];
+                for(unsigned v=gr.start;v<gr.end&&count<kMaxVertices;++v) {
+                    DrawVertex x=g_vertices[v];
+                    x.color=static_cast<DWORD>(targetsc::ghost_color(static_cast<std::uint32_t>(x.color),gr.k));
+                    g_ghost_vertices[count++]=x;
+                }
+            }
+            count-=count%3;
+            if(count&&SUCCEEDED(dev->SetRenderState(D3DRS_ZFUNC,D3DCMP_GREATER)))
+                dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST,count/3,g_ghost_vertices,sizeof(DrawVertex));
+        }
     } else InterlockedIncrement(&g_state_failures);
     if(FAILED(dev->ApplyStateBlock(token)))InterlockedIncrement(&g_state_failures);
     dev->DeleteStateBlock(token);
@@ -1149,6 +1178,7 @@ int __cdecl lua_ring(lua_State* L) {
         static_cast<int>(sectors),static_cast<DWORD>(c2),static_cast<DWORD>(c3),static_cast<DWORD>(c4),static_cast<float>(angle),static_cast<float>(gap),static_cast<int>(blend),
         static_cast<float>(fade),static_cast<float>(length),static_cast<float>(curve),static_cast<int>(direction)};
     g_pending.rings[g_pending.count-1].dx=g_pending.shift_e;g_pending.rings[g_pending.count-1].dy=g_pending.shift_n;
+    g_pending.rings[g_pending.count-1].ghost=g_pending.ghost_now;
     return 0;
 }
 // 0.9.0: native.arc(radius,offset,width,lead,tail,pixels,rotation,start_deg,span_deg,
@@ -1167,7 +1197,7 @@ int __cdecl lua_arc(lua_State* L) {
     ring.fade=static_cast<float>(fade);ring.fade_length=static_cast<float>(length);ring.fade_curve=static_cast<float>(curve);
     ring.fade_direction=static_cast<int>(direction);ring.arc=1;ring.arc_start=static_cast<float>(start*rad);
     ring.arc_span=static_cast<float>(span*rad);ring.tail=static_cast<DWORD>(tail);
-    ring.dx=g_pending.shift_e;ring.dy=g_pending.shift_n;
+    ring.dx=g_pending.shift_e;ring.dy=g_pending.shift_n;ring.ghost=g_pending.ghost_now;
     g_pending.rings[g_pending.count++]=ring;
     return 0;
 }
@@ -1198,6 +1228,7 @@ int __cdecl lua_disc(lua_State* L) {
         static_cast<float>(inner),static_cast<float>(outer),hub>=0?1:0,static_cast<DWORD>(hub>=0?hub:0),
         mid>=0?1:0,static_cast<float>(mid>=0?mid:1),static_cast<float>(mid_pos)};
     g_pending.discs[g_pending.disc_count-1].dx=g_pending.shift_e;g_pending.discs[g_pending.disc_count-1].dy=g_pending.shift_n;
+    g_pending.discs[g_pending.disc_count-1].ghost=g_pending.ghost_now;
     // 0.13.0: optional arg 17 = clip angle (radians, east=0, north=pi/2):
     // only the glyph and rim on that side of the disc center are drawn.
     if(argc>=17) {
@@ -1244,7 +1275,7 @@ int __cdecl lua_glyph(lua_State* L) {
     g.params.tilt=static_cast<float>(v[4]);g.params.stand=static_cast<float>(v[5]);g.params.lift=static_cast<float>(v[6]);
     g.params.sink=static_cast<float>(v[7]);g.params.pull=static_cast<float>(v[8]);g.params.stagger=static_cast<float>(v[9]);
     g.params.order=static_cast<int>(v[10]);g.clip=static_cast<int>(v[11]);g.circle=static_cast<int>(v[12]);
-    g.dx=g_pending.shift_e;g.dy=g_pending.shift_n;
+    g.dx=g_pending.shift_e;g.dy=g_pending.shift_n;g.ghost=g_pending.ghost_now;
     g_pending.glyphs[g_pending.glyph_count++]=g;
     return 0;
 }
@@ -1255,6 +1286,15 @@ int __cdecl lua_shift(lua_State* L) {
     const double e=g_lua.tonumber(L,1),n=g_lua.tonumber(L,2);
     if(!std::isfinite(e)||!std::isfinite(n)||std::fabs(e)>100||std::fabs(n)>100)return 0;
     g_pending.shift_e=static_cast<float>(e);g_pending.shift_n=static_cast<float>(n);
+    return 0;
+}
+// 0.16.0 native.ghost(k): rings, arcs, discs and glyphs added after it are
+// also drawn where hidden (depth GREATER) at alpha x k; 0 = off.
+int __cdecl lua_ghost(lua_State* L) {
+    if(g_lua.gettop(L)<1)return 0;
+    const double k=g_lua.tonumber(L,1);
+    if(!std::isfinite(k)||k<0||k>1)return 0;
+    g_pending.ghost_now=static_cast<float>(k);
     return 0;
 }
 // 0.12.0 native.line(x1,y1,z1,x2,y2,z2,color,pixels): target-relative, z up.
@@ -1273,11 +1313,11 @@ int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.15.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.16.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.15.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.16.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;
@@ -1323,7 +1363,7 @@ extern "C" __declspec(dllexport) int __cdecl luaopen__TargetSC(lua_State* L) {
     build_tables();clear_frame();g_lua.createtable(L,0,13);
     struct Entry {char const* name;lua_CFunction fn;};
     const Entry entries[]={{"start",lua_start},{"stop",lua_stop},{"clear",lua_clear},{"begin",lua_begin},
-        {"ring",lua_ring},{"arc",lua_arc},{"disc",lua_disc},{"glyph",lua_glyph},{"shift",lua_shift},{"line",lua_line},{"commit",lua_commit},{"status",lua_status},{"version",lua_version}};
+        {"ring",lua_ring},{"arc",lua_arc},{"disc",lua_disc},{"glyph",lua_glyph},{"shift",lua_shift},{"line",lua_line},{"commit",lua_commit},{"ghost",lua_ghost},{"status",lua_status},{"version",lua_version}};
     for(auto const& e:entries){g_lua.pushcclosure(L,e.fn,0);g_lua.setfield(L,-2,e.name);}
     return 1;
 }

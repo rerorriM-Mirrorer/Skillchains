@@ -1,5 +1,19 @@
 # TargetSC — elemental resonance
 
+## 0.19.28 unified Test7.28 — new DLL 0.16.0: ghost pass (close every client to install)
+
+- **New `libs/_TargetSC.dll` (native 0.16.0).** Close every FFXI client before
+  copying it over.
+- **`//tsc ghost <0-1>`** (.3; `ghost off` = 0): everything below the MB ring
+  (ground discs, the lit/under/awakening discs, the property glyph, ground
+  rings) also shows where the floor, a wall or a character hides it, at
+  this fraction of its opacity. Everything at or above the MB ring (and the
+  MB ring itself) is hidden as before. A depth test can't tell the floor from
+  feet, so a ground disc behind someone's feet shows faintly over them.
+- **`//tsc ghost lift <n>`** (.003): for Radiance and Umbra the MB ring counts
+  this much higher, so the pieces at its height ghost too.
+- Only while an MB ring is up (not during an opener).
+
 ## 0.19.27 unified Test7.27 — Umbra glyph shimmer far; faster spins (Lua only)
 
 - **`//tsc umbra glyph shimmer far <0-1>`** (0): Umbra's own far-side

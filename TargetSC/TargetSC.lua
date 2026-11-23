@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.27-unified-test7.27'
+_addon.version='0.19.28-unified-test7.28'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -55,7 +55,7 @@ if ok and type(result)=='table' and type(result.version)=='function' then
     -- 0.10.0 adds a middle radial stop on discs (args 15-16) and 16 discs.
     -- 0.11.0 adds native.glyph (3D property glyph for the Umbra endings).
     -- 0.12.0 adds native.shift (sideways offsets) and native.line (kill seams).
-    local levels={['0.15.0']=15,['0.14.0']=14,['0.13.0']=13,['0.12.0']=12,['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
+    local levels={['0.16.0']=16,['0.15.0']=15,['0.14.0']=14,['0.13.0']=13,['0.12.0']=12,['0.11.0']=11,['0.10.0']=10,['0.9.0']=9,['0.8.0']=8,['0.7.0']=7,['0.6.0']=6,['0.5.0']=5}
     if version_ok and levels[version] and api_ok then native=result;native_version=version;native_level=levels[version]
     else renderer_error='Native API/version mismatch; expected TargetSC 0.12.0 (or 0.11.0-0.5.0), received '..tostring(version) end
     -- Older DLLs cannot draw section arcs; the layout falls back to rings.
@@ -332,6 +332,7 @@ local function help()
         {'light under on|off | opacity|size|spin|cycle|depth <n|same>','Level-3 Light: Fusion/Fragmentation disc under the Light disc; each value same = the darkness under value (default same).'},
         {'light under direction same|reverse|darkness | fade <center|same> <edge|same>','Its direction (darkness = follow darkness under) and center/edge.'},
         {'glyph shimmer on|off | spin|width|far|gain|count|offset <n>','Bright patch on link property glyph lines riding the lit disc (DLL 0.15.0): spin x lit disc (1), half-width deg (-1 auto), far side alpha (.35), gain to white/opaque (.8), patches (1), offset deg (0).'},
+        {'ghost <0-1> | ghost lift <n>','Ghost pass (DLL 0.16.0): everything below the MB ring also shows faintly where the floor, walls or characters hide it, at this x its opacity (.3; 0 = off). Lift: Radiance/Umbra count the MB ring this much higher (.003).'},
         {'mb ending glyph ring|converge','ring (default): the large MB glyph stays at the MB ring\'s height, lit only by bursts; converge: the ground glyph whitens toward the ending.'},
         {'glyph meet on|off | opacity|gain|width <n>','Property glyph grows to meet the falling MB ring: final opacity (1, absolute), final shimmer gain (1), final shimmer half-width deg (15).'},
         {'umbra glyph shimmer on|off | before|after <deg> | spin before|after <x> | far <0-1>','Umbra\'s black-disc glyph shimmers instead of vanishing: half-width 180 before the flash, 15 after; spin x the disc turn (1, 1; -60 to 60); far side alpha (0 = clear).'},
@@ -446,6 +447,7 @@ local function status()
         tostring(settings.awakening_ending),tostring(settings.awakening_ending_level1),tostring(settings.awakening_ending_level2),
         tostring(settings.awakening_ending_level3),tostring(settings.awakening_ending_radiance),tostring(settings.awakening_ending_umbra),
         settings.awakening_ending_opacity,settings.awakening_ending_curve,settings.awakening_ending_gap)) -- Test7.22
+    say(('ghost=%.2f lift=%.3f (native %s)'):format(settings.ghost or 0,settings.ghost_level4_lift or 0,tostring(native_level))) -- Test7.28
     say(('mb ending glyph=%s; glyph meet=%s opacity=%.2f gain=%.2f width=%.1f; umbra glyph shimmer=%s before=%.1f after=%.1f spin %.2f/%.2f far=%.2f'):format(
         tostring(settings.mb_ending_glyph),tostring(settings.glyph_meet),settings.glyph_meet_opacity,settings.glyph_meet_gain,settings.glyph_meet_width,
         tostring(settings.umbra_glyph_shimmer),settings.umbra_glyph_shimmer_before,settings.umbra_glyph_shimmer_after,
@@ -745,16 +747,26 @@ end
 local function draw(frame,mob,level)
     frame=dim_frame(frame,level)
     native.begin(mob.index,mob.id)
+    -- Test7.28 ghost pass (0.16.0): stamp pieces below the MB ring.
+    local ghost_k=native_level>=16 and native.ghost and frame.ghost_ceiling and math.max(0,math.min(1,settings.ghost or 0))or 0
+    local ghost_sent=0
+    local function ghost_for(item)
+        if ghost_k<=0 then return end
+        local k=(item.part~='mb'and (item.offset or 0)<frame.ghost_ceiling)and ghost_k or 0
+        if k~=ghost_sent then native.ghost(k);ghost_sent=k end
+    end
     -- Test5.7: 3D glyphs (Umbra endings) need native 0.11.0; older DLLs skip them.
     if native_level>=11 and native.glyph then
         for _,g in ipairs(frame.glyphs3 or {})do
             if native_level>=12 and native.shift then native.shift(g.dx or 0,g.dy or 0)end
+            ghost_for(g)
             native.glyph(g.radius,g.offset,g.rotation,dim(g.color,level),g.tilt or 0,g.stand or 0,g.lift or 1,
                 g.sink or 0,g.pull or 0,g.stagger or 0,g.order or 0,g.clip and 1 or 0,g.circle and 1 or 0)
         end
     end
     for _,disc in ipairs(frame.discs or {})do
         if native_level>=12 and native.shift then native.shift(disc.dx or 0,disc.dy or 0)end
+        ghost_for(disc)
         local colors=disc.colors or {disc.color}
         local blend=disc.blend or 0
         if native_version=='0.5.0'then
@@ -815,6 +827,7 @@ local function draw(frame,mob,level)
         if e~=shift_e or n~=shift_n then native.shift(e,n);shift_e,shift_n=e,n end
     end
     for _,ring in ipairs(frame) do
+        ghost_for(ring)
       shift(ring)
       if ring.kind=='arc'then
         if native_level>=9 then

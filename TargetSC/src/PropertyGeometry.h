@@ -64,6 +64,12 @@ inline std::uint32_t shimmer_color(std::uint32_t base,float w,float rest,float g
     const std::uint32_t rgb=lerp_argb(base|0xFF000000u,0xFFFFFFFFu,k)&0xFFFFFFu;
     return (static_cast<std::uint32_t>(alpha*255.f+.5f)<<24)|rgb;
 }
+// Native 0.16.0 ghost pass: a hidden part's color = alpha x k, same RGB.
+inline std::uint32_t ghost_color(std::uint32_t c,float k) {
+    k=k<0.f?0.f:(k>1.f?1.f:k);
+    const std::uint32_t a=static_cast<std::uint32_t>(static_cast<float>(c>>24)*k+.5f);
+    return (a<<24)|(c&0xFFFFFFu);
+}
 constexpr int kShimmerPieces=8; // each glyph line is cut into this many strokes
 
 // Native 0.14.0 sliced center: the center corner of fan slice i (between rim

@@ -116,6 +116,9 @@ jobs:
           lua5.1 TargetSC/tests/test_lit2_724.lua
           lua5.1 TargetSC/tests/test_shimmer_725.lua
           lua5.1 TargetSC/tests/test_mb_ending_726.lua
+          lua5.1 TargetSC/tests/test_ghost_728.lua
+          lua5.1 TargetSC/tests/test_native_ghost.lua 0.16.0
+          lua5.1 TargetSC/tests/test_native_ghost.lua 0.15.0
           lua5.1 TargetSC/tests/test_native_sliced.lua 0.15.0
           lua5.1 TargetSC/tests/test_native_sliced.lua 0.14.0
           lua5.1 TargetSC/tests/test_native_sliced.lua 0.13.0

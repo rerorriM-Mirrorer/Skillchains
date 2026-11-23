@@ -300,6 +300,12 @@ function M.new(settings,defaults,save,say,killala,cioara)
         if command=='kill'and (value=='on'or value=='off'or value==nil)then
             if value==nil then value=settings.kill and 'off'or 'on'end
             settings.kill=value=='on';save(settings);say('Kill animations '..value..'.')
+        elseif command=='ghost'then
+            -- Test7.28 ghost pass.
+            if value=='lift'then numeric('ghost_level4_lift',args[2],{0,.1},'ghost lift')
+            elseif value=='off'then settings.ghost=0;save(settings);say('Ghost pass off.')
+            elseif tonumber(value)then numeric('ghost',value,{0,1},'ghost')
+            else say('Use //tsc ghost <0-1> | ghost off | ghost lift <0-0.1>. Now '..tostring(settings.ghost)..'.')end
         elseif command=='umbra'and value=='glyph'and (args[2]or ''):lower()=='shimmer'then
             -- Test7.26 Umbra glyph shimmer.
             local a3,a4,a5=(args[3]or ''):lower(),(args[4]or ''):lower(),args[5]

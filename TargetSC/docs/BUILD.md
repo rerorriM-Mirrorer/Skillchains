@@ -1,3 +1,24 @@
+# Building and verifying TargetSC 0.16.0 / unified Test7.28
+
+Native API 0.16.0: `native.ghost(k)` (0..1) stamps every ring, arc, disc and
+3D glyph added after it (like `native.shift`). After the normal draw, the
+stamped pieces' vertices are drawn a second time with `D3DRS_ZFUNC
+D3DCMP_GREATER` (only where something is in front of them) at alpha x k
+(`targetsc::ghost_color`); the state block restores ZFUNC. Ghost copy buffer =
+`kMaxVertices`. Lua stamps pieces below the frame's `ghost_ceiling` (MB ring
+height; Radiance/Umbra + `ghost_level4_lift`), never the MB ring itself.
+Built 2026-11-23 with Ubuntu's `g++-mingw-w64-i686` 13.2.0 (13-win32), BUILD
+command below, `strip --strip-unneeded`; sha256
+`138b42d602fa5c9b3c4d0626724069735b449fcdfe93701bdf42e61a6637cf27`; PE32, sole
+`luaopen__TargetSC` export, KERNEL32.dll + msvcrt.dll imports (Verified with
+objdump). Close every client before replacing the DLL.
+
+Merge note: the unpushed Wards branch (`development/wards-protect-shell`,
+patches on `26438f2`) carries native 0.15.1 (arc arg 14 camera) in the same
+`TargetSC/src`. Its changes touch `lua_arc`/camera helpers, not the draw pass;
+when both land, rebuild once and give the combined DLL one version that both
+TargetSC.lua and Wards.lua accept.
+
 # Building and verifying TargetSC 0.15.0 / unified Test7.25
 
 Native API 0.15.0: `native.disc` takes optional args 19-23, a glyph shimmer:

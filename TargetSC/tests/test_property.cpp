@@ -200,5 +200,11 @@ int main() {
         const auto half=targetsc::shimmer_color(base,.5f,1.f,.5f); // alpha .6 -> .6+.4*.25 = .7
         assert(((half>>24)>=0xB1u)&&((half>>24)<=0xB4u));
     }
+    {
+        // 0.16.0 ghost pass color: alpha x k, RGB kept, k clamped.
+        assert(targetsc::ghost_color(0xFF102030u,.3f)==((static_cast<std::uint32_t>(255*.3f+.5f)<<24)|0x102030u));
+        assert(targetsc::ghost_color(0x80FFFFFFu,0.f)==0x00FFFFFFu);
+        assert(targetsc::ghost_color(0x80FFFFFFu,2.f)==0x80FFFFFFu);
+    }
     std::puts("PASS portable property geometry: traced wide cross, diagonal four-point star, central square, transparent line geometry, complete sector coverage");
 }

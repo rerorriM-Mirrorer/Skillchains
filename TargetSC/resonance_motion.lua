@@ -142,7 +142,12 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     umbra_glyph_shimmer=true,umbra_glyph_shimmer_before=180,umbra_glyph_shimmer_after=15,
     umbra_glyph_shimmer_spin_before=1,umbra_glyph_shimmer_spin_after=1,
     -- Test7.27: umbra_glyph_shimmer_far = its own far-side alpha (0 = clear).
-    umbra_glyph_shimmer_far=0,lit_shape='half',lit_start='both',
+    umbra_glyph_shimmer_far=0,
+    -- Test7.28 ghost pass (native 0.16.0): every piece below the MB ring
+    -- (not the MB ring itself) is also drawn where the floor, walls or
+    -- characters hide it, at ghost x its opacity (0 = off). Radiance/Umbra
+    -- count the MB ring ghost_level4_lift higher, so pieces at its height count.
+    ghost=.3,ghost_level4_lift=.003,lit_shape='half',lit_start='both',
     lit_bursts=true,lit_flash=.4,lit_spin=2,lit_cycle=0,lit_size=1,lit_opacity=.6,lit_inner=1,lit_outer=1,lit_depth=.003,
     -- Test7.22 awakening ending: in each MB window's ending the white awakening
     -- disc returns at its full opening size (radius x .96 x awakening_size),
@@ -2632,6 +2637,9 @@ function M.frame(model,s,now,radius,height,opts,context)
             r=shrink_toward(r,property_radius*option(opts,'disc_size_lines'))
             ring(r,ring_height,{color},alpha*mb_overall,'mb',0,mb_rotation)
         end
+        -- Test7.28 ghost pass: pieces below this height (the MB ring's, lifted
+        -- by ghost_level4_lift for Radiance/Umbra) may also show where hidden.
+        out.ghost_ceiling=ring_height+(l4name and option(opts,'ghost_level4_lift')or 0)
     end
     -- Test7.0 Umbra haze: a flickering white smoke bloom at the MB ring's height.
     if l4name=='umbra'and show_mb and option(opts,'umbra_haze')and mb_active then

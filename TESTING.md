@@ -1,5 +1,15 @@
 ## Current Development Status — 2026-11-23 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-lit-disc`. Pushed through Test7.27 (`dbf82ce`); Test7.28 on top. The Wards branch (`development/wards-protect-shell`, native 0.15.1) is NOT on GitHub (another session's patches on `26438f2`); this DLL does not include its arc camera argument.
+- installed_base: Test7.27 (`dbf82ce`, Inferred: A asked for the ghost pass next at 08:21). Package `TargetSC-0.19.28-Test7.28.zip` = files changed since `dbf82ce`, including `libs/_TargetSC.dll` (native 0.16.0; close every client).
+- Live (A, 08:21): wants the ghost pass for pieces below the MB ring only; Radiance/Umbra count the MB ring .003 higher.
+- Changes: Test7.28. DLL 0.16.0: `native.ghost(k)` stamps ring/arc/disc/glyph pieces; draw pass records ghost vertex ranges, then redraws their copies with ZFUNC GREATER at alpha x k (`targetsc::ghost_color`). Lua: levels add 0.16.0; motion sets `out.ghost_ceiling` = MB ring height (+ `ghost_level4_lift` for l4name) where the MB ring is emitted; the sender calls `native.ghost(settings.ghost)` before pieces with offset < ceiling and part ~= 'mb', else `native.ghost(0)`. Commands `ghost <0-1>|off`, `ghost lift <n>`. Version `0.19.28-unified-test7.28`.
+- Tunables (defaults): `ghost` .3, `ghost_level4_lift` .003.
+- Checks: DLL built (-Werror clean), objdump PE32 / sole export / KERNEL32+msvcrt, sha256 `138b42d6…`; `test_property.cpp` (ghost color block) + `test_stroke.cpp` PASS; 92/92 CI lua5.1 invocations PASS incl. new `test_ghost_728.lua` and `test_native_ghost.lua 0.16.0|0.15.0`. Host only; the depth-GREATER redraw not seen in game.
+- Pending: Test7.28 in game (stand so the floor/walls hide part of the rings; check feet; `//tsc ghost .15|.5`).
+
+## Current Development Status — 2026-11-23 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-lit-disc`. Pushed through Test7.26 (`26438f2`); Test7.27 on top.
 - installed_base: Test7.26 (`26438f2`, Inferred: A at 05:58 asks about the Umbra glyph shimmer it added). Package `TargetSC-0.19.27-Test7.27.zip` = files changed since `26438f2` (Lua only; DLL 0.15.0).
 - Live (A, 05:59): wants an Umbra-only shimmer far, default 0, and faster Umbra shimmer spins.
