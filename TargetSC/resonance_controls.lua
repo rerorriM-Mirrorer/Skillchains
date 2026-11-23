@@ -303,9 +303,10 @@ function M.new(settings,defaults,save,say,killala,cioara)
         elseif command=='umbra'and value=='glyph'and (args[2]or ''):lower()=='shimmer'then
             -- Test7.26 Umbra glyph shimmer.
             local a3,a4,a5=(args[3]or ''):lower(),(args[4]or ''):lower(),args[5]
-            local usage='Use //tsc umbra glyph shimmer on|off | before|after <0-180 deg> | spin before|after <-6-6>.'
+            local usage='Use //tsc umbra glyph shimmer on|off | before|after <0-180 deg> | spin before|after <-60-60> | far <0-1>.'
             if a3=='before'or a3=='after'then numeric('umbra_glyph_shimmer_'..a3,args[4],{0,180},'umbra glyph shimmer '..a3)
-            elseif a3=='spin'and (a4=='before'or a4=='after')then numeric('umbra_glyph_shimmer_spin_'..a4,a5,{-6,6},'umbra glyph shimmer spin '..a4)
+            elseif a3=='spin'and (a4=='before'or a4=='after')then numeric('umbra_glyph_shimmer_spin_'..a4,a5,{-60,60},'umbra glyph shimmer spin '..a4) -- Test7.27 wider
+            elseif a3=='far'then numeric('umbra_glyph_shimmer_far',args[4],{0,1},'umbra glyph shimmer far') -- Test7.27
             elseif not toggle('umbra_glyph_shimmer',a3,'Umbra glyph shimmer')then say(usage)end
         elseif command=='glyph'and value=='meet'then
             -- Test7.26 property glyph meets the descending MB ring.

@@ -82,6 +82,9 @@ do
     local after=trace(fl+o.umbra_vanish_time+.3)
     assert(after and alpha(after.outline)>0,'still visible after the vanish time')
     near(after.shimmer.width,math.rad(15),1e-6,'15 after')
+    assert(R.defaults.umbra_glyph_shimmer_far==0 and after.shimmer.far==0 and before.shimmer.far==0,'Test7.27: own far, default 0')
+    local fo=copy(o);fo.umbra_glyph_shimmer_far=.4
+    p:advance(fl+.5);near(role(p.model:frame(90,fl+.5,2,4,fo),'property-trace').shimmer.far,.4,1e-9,'umbra far setting')
     -- After the flash it turns at the "after" spin from where it was.
     local a1,a2=trace(fl+.5).shimmer.angle,trace(fl+.7).shimmer.angle
     local r1,r2=M.disc_rotation(s,fl+.5,o),M.disc_rotation(s,fl+.7,o)
@@ -108,6 +111,9 @@ do
     assert(cmd('umbra',{'glyph','shimmer','after','10'})and s.umbra_glyph_shimmer_after==10)
     assert(cmd('umbra',{'glyph','shimmer','spin','before','-1'})and s.umbra_glyph_shimmer_spin_before==-1)
     assert(cmd('umbra',{'glyph','shimmer','spin','after','2'})and s.umbra_glyph_shimmer_spin_after==2)
+    assert(cmd('umbra',{'glyph','shimmer','spin','after','40'})and s.umbra_glyph_shimmer_spin_after==40,'Test7.27 faster spins')
+    assert(cmd('umbra',{'glyph','shimmer','spin','before','-60'})and s.umbra_glyph_shimmer_spin_before==-60)
+    assert(cmd('umbra',{'glyph','shimmer','far','.3'})and s.umbra_glyph_shimmer_far==.3)
     assert(cmd('umbra',{'glyph','breath'}),'other umbra glyph commands still route')
     for _,m in ipairs(said)do assert(not m:find('[\128-\255]'),'ASCII chat')end
 end

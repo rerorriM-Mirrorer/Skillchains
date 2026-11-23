@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.26-unified-test7.26'
+_addon.version='0.19.27-unified-test7.27'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -334,7 +334,7 @@ local function help()
         {'glyph shimmer on|off | spin|width|far|gain|count|offset <n>','Bright patch on link property glyph lines riding the lit disc (DLL 0.15.0): spin x lit disc (1), half-width deg (-1 auto), far side alpha (.35), gain to white/opaque (.8), patches (1), offset deg (0).'},
         {'mb ending glyph ring|converge','ring (default): the large MB glyph stays at the MB ring\'s height, lit only by bursts; converge: the ground glyph whitens toward the ending.'},
         {'glyph meet on|off | opacity|gain|width <n>','Property glyph grows to meet the falling MB ring: final opacity (1, absolute), final shimmer gain (1), final shimmer half-width deg (15).'},
-        {'umbra glyph shimmer on|off | before|after <deg> | spin before|after <x>','Umbra\'s black-disc glyph shimmers instead of vanishing: half-width 180 before the flash, 15 after; spin x the disc turn (1, 1).'},
+        {'umbra glyph shimmer on|off | before|after <deg> | spin before|after <x> | far <0-1>','Umbra\'s black-disc glyph shimmers instead of vanishing: half-width 180 before the flash, 15 after; spin x the disc turn (1, 1; -60 to 60); far side alpha (0 = clear).'},
         {'lit sliced <property> on|off','Sliced center for one property\'s lit disc (default Darkness, Compression); lit sliced on|off = every lit disc.'},
         {'level2 under on|off | opacity|size|spin|depth <n|same>','Level-2 under disc in the property\'s own two colors (no swing); each value same = darkness under (default same).'},
         {'level2 under direction same|reverse|darkness | fade <center|same> <edge|same>','Its direction (darkness = follow darkness under) and center/edge.'},
@@ -446,10 +446,10 @@ local function status()
         tostring(settings.awakening_ending),tostring(settings.awakening_ending_level1),tostring(settings.awakening_ending_level2),
         tostring(settings.awakening_ending_level3),tostring(settings.awakening_ending_radiance),tostring(settings.awakening_ending_umbra),
         settings.awakening_ending_opacity,settings.awakening_ending_curve,settings.awakening_ending_gap)) -- Test7.22
-    say(('mb ending glyph=%s; glyph meet=%s opacity=%.2f gain=%.2f width=%.1f; umbra glyph shimmer=%s before=%.1f after=%.1f spin %.2f/%.2f'):format(
+    say(('mb ending glyph=%s; glyph meet=%s opacity=%.2f gain=%.2f width=%.1f; umbra glyph shimmer=%s before=%.1f after=%.1f spin %.2f/%.2f far=%.2f'):format(
         tostring(settings.mb_ending_glyph),tostring(settings.glyph_meet),settings.glyph_meet_opacity,settings.glyph_meet_gain,settings.glyph_meet_width,
         tostring(settings.umbra_glyph_shimmer),settings.umbra_glyph_shimmer_before,settings.umbra_glyph_shimmer_after,
-        settings.umbra_glyph_shimmer_spin_before,settings.umbra_glyph_shimmer_spin_after)) -- Test7.26
+        settings.umbra_glyph_shimmer_spin_before,settings.umbra_glyph_shimmer_spin_after,settings.umbra_glyph_shimmer_far)) -- Test7.26/7.27
     say(('glyph shimmer=%s spin=%.2f width=%.1f far=%.2f gain=%.2f count=%d offset=%.1f; lit sliced props=%s; level2 under=%s opacity=%s size=%s spin=%s direction=%s depth=%s fade=%s/%s'):format(
         tostring(settings.glyph_shimmer),settings.glyph_shimmer_spin,settings.glyph_shimmer_width,settings.glyph_shimmer_far,settings.glyph_shimmer_gain,
         settings.glyph_shimmer_count,settings.glyph_shimmer_offset,tostring(settings.lit_sliced_props),tostring(settings.level2_under),

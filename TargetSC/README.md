@@ -1,5 +1,12 @@
 # TargetSC — elemental resonance
 
+## 0.19.27 unified Test7.27 — Umbra glyph shimmer far; faster spins (Lua only)
+
+- **`//tsc umbra glyph shimmer far <0-1>`** (0): Umbra's own far-side
+  opacity for its glyph shimmer (0 = only the patch shows). It no longer
+  uses `glyph shimmer far`.
+- **`//tsc umbra glyph shimmer spin before|after <x>`** now takes -60 to 60.
+
 ## 0.19.26 unified Test7.26 — MB ending: glyph meets the ring; Umbra glyph shimmer (Lua only)
 
 - **`//tsc mb ending glyph ring|converge`** (ring): with `ring`, the large MB

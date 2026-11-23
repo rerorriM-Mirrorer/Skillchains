@@ -1,5 +1,14 @@
 ## Current Development Status — 2026-11-23 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-lit-disc`. Pushed through Test7.26 (`26438f2`); Test7.27 on top.
+- installed_base: Test7.26 (`26438f2`, Inferred: A at 05:58 asks about the Umbra glyph shimmer it added). Package `TargetSC-0.19.27-Test7.27.zip` = files changed since `26438f2` (Lua only; DLL 0.15.0).
+- Live (A, 05:59): wants an Umbra-only shimmer far, default 0, and faster Umbra shimmer spins.
+- Changes: Test7.27. `umbra_glyph_shimmer_far` (0) replaces the shared `glyph_shimmer_far` for the Umbra trace shimmer; `umbra glyph shimmer spin before|after` range -60..60 (was -6..6); command `umbra glyph shimmer far`. Version `0.19.27-unified-test7.27`.
+- Checks: 89/89 CI lua5.1 invocations PASS (`test_mb_ending_726.lua` extended: own far default 0, far .4, spins 40/-60, far command). Host only.
+- Pending: Test7.27 in game (`//tsc preview umbra`). Next: DLL 0.16.0 ghost pass.
+
+## Current Development Status — 2026-11-23 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-lit-disc`. Pushed through Test7.25 (`d0d58c8`); Test7.26 on top. Stack: `master@9476226` -> `development/targetsc-mb-rise-gradient@8624248` -> `development/targetsc-level4-collapse@446362f` -> `development/targetsc-lit-disc`.
 - installed_base: Test7.25 (`d0d58c8`; A at 05:07: "this shimmer thing is so dope", small widths, Live). Package `TargetSC-0.19.26-Test7.26.zip` = files changed since `d0d58c8` (Lua only; DLL 0.15.0 unchanged).
 - Live (A, 05:07-05:34): level-2 under halves align with the property disc at spin 1 (confirmed in code). Chose version B for the MB ending: MB glyph stays at MB ring level, clear unless a burst; the property glyph brightens and grows to meet the falling ring, shimmer patch narrowing; controls for final gain, final patch, final opacity. Umbra glyph: shimmer wide before the flash, narrow after, with spins before/after. Kill animations: left alone for now (one unified SC/MB kill discussed). Next: DLL 0.16.0 ghost pass for everything at/below the MB ring.

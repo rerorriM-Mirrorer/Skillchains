@@ -140,7 +140,9 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- shimmering instead of vanishing: half-width/spin (x the property disc
     -- turn) before the flash, then after it until the end.
     umbra_glyph_shimmer=true,umbra_glyph_shimmer_before=180,umbra_glyph_shimmer_after=15,
-    umbra_glyph_shimmer_spin_before=1,umbra_glyph_shimmer_spin_after=1,lit_shape='half',lit_start='both',
+    umbra_glyph_shimmer_spin_before=1,umbra_glyph_shimmer_spin_after=1,
+    -- Test7.27: umbra_glyph_shimmer_far = its own far-side alpha (0 = clear).
+    umbra_glyph_shimmer_far=0,lit_shape='half',lit_start='both',
     lit_bursts=true,lit_flash=.4,lit_spin=2,lit_cycle=0,lit_size=1,lit_opacity=.6,lit_inner=1,lit_outer=1,lit_depth=.003,
     -- Test7.22 awakening ending: in each MB window's ending the white awakening
     -- disc returns at its full opening size (radius x .96 x awakening_size),
@@ -2380,7 +2382,7 @@ function M.frame(model,s,now,radius,height,opts,context)
                     else turn=angle*sb end
                     local width=after and option(opts,'umbra_glyph_shimmer_after')or option(opts,'umbra_glyph_shimmer_before')
                     out.discs[#out.discs].shimmer={angle=turn+math.rad(option(opts,'glyph_shimmer_offset')),
-                        width=math.rad(clamp(width,0,180)),far=clamp(option(opts,'glyph_shimmer_far'),0,1),
+                        width=math.rad(clamp(width,0,180)),far=clamp(option(opts,'umbra_glyph_shimmer_far'),0,1),
                         gain=clamp(option(opts,'glyph_shimmer_gain'),0,1),count=1}
                 end
                 if clapper and response.element and (response.shimmer or 0)>0 and option(opts,'mb_floor')>0 then
