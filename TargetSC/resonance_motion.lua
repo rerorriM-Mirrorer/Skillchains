@@ -81,7 +81,22 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- Test7.22: lit_level3_light = at level 3 only Light skillchains get it.
     -- The lit disc takes the property fill's final colors (lit_bursts on) or
     -- the plain property color (off).
-    lit=true,lit_level1=true,lit_level2=false,lit_level3=false,lit_level3_light=true,lit_shape='half',lit_start='both',
+    lit=true,lit_level1=true,lit_level2=false,lit_level3=false,lit_level3_light=true,
+    -- Test7.23 level 3: lit_light white (the fill's white center) | mix (the
+    -- average of the fill's colors); lit_darkness black (pure black) | mix.
+    lit_light='white',lit_darkness='black',
+    -- Test7.23 Darkness (level-3 links): darkness_awakening_void = the link's
+    -- awakening disc pure black; darkness_flash_void = the property fill
+    -- flashes toward pure black instead of white (glyph lines unchanged; the
+    -- Darkness lit disc then flashes in black too). darkness_under = Umbra's
+    -- under disc (Gravitation<->Distortion) under the Darkness property disc,
+    -- below the lit disc: opacity (absolute 0-1), size (x property fill),
+    -- spin (x the property disc), direction same|reverse, cycle (s per color
+    -- swing), depth (under the property disc), center/edge multipliers.
+    darkness_awakening_void=false,darkness_flash_void=false,
+    darkness_under=true,darkness_under_opacity=.6,darkness_under_size=1.3,darkness_under_spin=2,
+    darkness_under_direction='same',darkness_under_cycle=3,darkness_under_depth=.006,
+    darkness_under_center=1,darkness_under_edge=0,lit_shape='half',lit_start='both',
     lit_bursts=true,lit_flash=.4,lit_spin=2,lit_cycle=0,lit_size=1,lit_opacity=.6,lit_inner=1,lit_outer=1,lit_depth=.003,
     -- Test7.22 awakening ending: in each MB window's ending the white awakening
     -- disc returns at its full opening size (radius x .96 x awakening_size),
@@ -91,7 +106,7 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     -- opacity) as the ring reaches the ground glyph; then fades with the ring
     -- (converge: over mb ending fade). Center/edge = awakening fade. Clapper only.
     awakening_ending=true,awakening_ending_level1=true,awakening_ending_level2=true,awakening_ending_level3=true,
-    awakening_ending_radiance=true,awakening_ending_umbra=false,
+    awakening_ending_radiance=true,awakening_ending_umbra=true, -- Test7.23: umbra on
     awakening_ending_opacity=1,awakening_ending_curve=3,awakening_ending_gap=.005,
     -- Test3.8: opener arcs fade along their length from the bright end
     -- (lead = facing the spin); the glow band follows by opener_fade_glow.
@@ -1861,9 +1876,10 @@ function M.frame(model,s,now,radius,height,opts,context)
         if show_sc and s.step>1 and option(opts,'awakening')and option(opts,'awakening_links')then
             local cur=opening.link
             if not cur or cur.created~=s.created then
-                if cur then opening.link_prev={created=cur.created,open=cur.open,close=cur.close,stage=cur.stage,handoff=s.created}end
+                if cur then opening.link_prev={created=cur.created,open=cur.open,close=cur.close,stage=cur.stage,void=cur.void,handoff=s.created}end
                 cur=not s.closed and {created=s.created,open=s.sc_open,close=s.sc_close,
-                    stage='level'..math.max(1,math.min(3,s.level or 1))}or nil
+                    stage='level'..math.max(1,math.min(3,s.level or 1)),
+                    void=s.level==3 and s.properties[1]=='Darkness'}or nil -- Test7.23
                 opening.link=cur
             end
             local function link_disc(a,level)
@@ -1872,7 +1888,8 @@ function M.frame(model,s,now,radius,height,opts,context)
                 local p=clamp((now-a.created)/max(.1,a.open-a.created),0,1)
                 local g=1-(1-clamp(p*3,0,1))^3
                 local before=#out.discs
-                disc(radius*.96*g*option(opts,'awakening_size'),option(opts,'disc_height'),0,{white},fill,0,0,'awakening')
+                local tone=(a.void and option(opts,'darkness_awakening_void'))and {0,0,0}or white -- Test7.23
+                disc(radius*.96*g*option(opts,'awakening_size'),option(opts,'disc_height'),0,{tone},fill,0,0,'awakening')
                 if #out.discs>before then
                     local d=out.discs[#out.discs]
                     d.inner,d.outer=option(opts,'awakening_inner'),option(opts,'awakening_outer')
@@ -2123,17 +2140,20 @@ function M.frame(model,s,now,radius,height,opts,context)
                 disc_outline=outline+(mb_overall*life-outline)*flash
             else flash=flash*mb_overall end
             local stroke=response.element and mix(terminal_stroke,response.element,flash)or terminal_stroke
+            -- Test7.23 darkness flash void: Darkness fills flash toward black.
+            local dark_link=not opener and not terminal and s.level==3 and p=='Darkness'
+            local flash_tone=(dark_link and option(opts,'darkness_flash_void'))and {0,0,0}or white
             if flash>0 then
-                for i,c in ipairs(colors)do colors[i]=mix(c,clapper and response.element or white,flash)end
-                if hub then hub=mix(hub,clapper and response.element or white,flash)end
+                for i,c in ipairs(colors)do colors[i]=mix(c,clapper and response.element or flash_tone,flash)end
+                if hub then hub=mix(hub,clapper and response.element or flash_tone,flash)end
             end
             local disc_intro=intro*option(opts,'mb_intro_disc')
             if disc_intro>0 then
                 disc_fill=disc_fill+(mb_overall-disc_fill)*disc_intro
                 disc_outline=disc_outline+(mb_overall-disc_outline)*disc_intro
                 stroke=mix(stroke,white,disc_intro)
-                for i,c in ipairs(colors)do colors[i]=mix(c,white,disc_intro)end
-                if hub then hub=mix(hub,white,disc_intro)end
+                for i,c in ipairs(colors)do colors[i]=mix(c,flash_tone,disc_intro)end
+                if hub then hub=mix(hub,flash_tone,disc_intro)end
             end
             -- Test5.7: Umbra's disc may hold its opacity through the flashes.
             if l4name=='umbra'and option(opts,'umbra_disc_steady')then disc_fill=fill end
@@ -2317,15 +2337,18 @@ function M.frame(model,s,now,radius,height,opts,context)
                         if x.role=='property'and x.glyph~=2 then fill_disc=x break end
                     end
                 end
+                -- Test7.23: Light white (center) | mix (sector average); Darkness black | mix.
+                local use_hub=not (p=='Light'and option(opts,'lit_light')=='mix')and not (p=='Darkness'and option(opts,'lit_darkness')=='mix')
                 if fill_disc then
                     -- Light/Darkness 'elements' look: the center (hub) color; else the sectors.
                     source={}
-                    if fill_disc.hub and fill_disc.hub>=0 then source[1]=rgb_of(fill_disc.hub)
+                    if use_hub and fill_disc.hub and fill_disc.hub>=0 then source[1]=rgb_of(fill_disc.hub)
                     else for i,x in ipairs(fill_disc.colors or {fill_disc.color})do source[i]=rgb_of(x)end end
-                elseif lit_hub then source={lit_hub}end
+                elseif lit_hub and use_hub then source={lit_hub}end
+                if s.level==3 and p=='Darkness'and option(opts,'lit_darkness')=='black'then source={{0,0,0}}end
                 local avg={0,0,0}
                 for _,c in ipairs(source)do for i=1,3 do avg[i]=avg[i]+c[i]/#source end end
-                local c=mix(avg,white,white_k)
+                local c=mix(avg,flash_tone,white_k)
                 local a=clamp(option(opts,'lit_opacity'),0,1)*life
                 local both=option(opts,'lit_start')=='both'and white_k or 0
                 local cycle=option(opts,'lit_cycle')
@@ -2342,6 +2365,22 @@ function M.frame(model,s,now,radius,height,opts,context)
                     table.insert(out.discs,lit_mark+1,{radius=r,offset=h-option(opts,'lit_depth'),
                         rotation=angle*option(opts,'lit_spin'),color=q[1],colors=q,glyph=0,outline=0,
                         role='lit',blend=1,inner=option(opts,'lit_inner'),outer=option(opts,'lit_outer')})
+                end
+            end
+            -- Test7.23 darkness under: Umbra's under disc beneath the Darkness
+            -- property disc (inserted first, so below the lit disc too).
+            if dark_link and j==1 and option(opts,'darkness_under')and life>0 and #out.discs<disc_cap then
+                local grav,dist=property_palette('Gravitation',context),property_palette('Distortion',context)
+                local w=.5-.5*math.cos(2*pi*max(0,now-s.created)/max(.1,option(opts,'darkness_under_cycle')))
+                local mixed={}
+                for i=1,max(#grav,#dist)do mixed[i]=mix(grav[i]or grav[#grav],dist[i]or dist[#dist],w)end
+                local q=packed(mixed,clamp(option(opts,'darkness_under_opacity'),0,1)*life)
+                local r=min(100,radius*.78*fill_size*option(opts,'darkness_under_size'))
+                if r>=.01 then
+                    table.insert(out.discs,lit_mark+1,{radius=r,offset=h-option(opts,'darkness_under_depth'),
+                        rotation=angle*option(opts,'darkness_under_spin')*(option(opts,'darkness_under_direction')=='reverse'and -1 or 1),
+                        color=q[1],colors=q,glyph=0,outline=0,role='darkness-under',blend=#q>1 and 1 or 0,
+                        inner=option(opts,'darkness_under_center'),outer=option(opts,'darkness_under_edge')})
                 end
             end
         end

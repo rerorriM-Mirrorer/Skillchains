@@ -1,5 +1,29 @@
 # TargetSC — elemental resonance
 
+## 0.19.23 unified Test7.23 — level-3 lit discs, Darkness looks (Lua only)
+
+- **Awakening ending** now on for Umbra too by default
+  (`//tsc awakening ending umbra off` to turn it off).
+- **`//tsc lit level3 on`** now gives Light its lit disc and Darkness its own
+  pure black lit disc turning under the property disc (`lit level3 light` =
+  Light only, as before).
+- **`//tsc lit light white|mix`** (white): Light's lit disc in its white center
+  color, or `mix` = the average of the Light disc's colors (the earlier look).
+  **`//tsc lit darkness black|mix`** (black): the same choice for Darkness.
+- **`//tsc darkness under on|off`** (on): Umbra's Gravitation/Distortion disc
+  under the level-3 Darkness property disc (below the black lit disc), with
+  its own settings: **`darkness under opacity <0-1>`** (.6, the real opacity,
+  NOT x addon opacity), **`size`** (1.3 x the property fill), **`spin`** (2 x
+  the property disc), **`direction same|reverse`**, **`cycle <s>`** (3, one
+  color swing), **`depth`** (.006 under the property disc), **`fade <center>
+  <edge>`** (1 0).
+- **`//tsc darkness awakening void|white`** (white): the Darkness link's
+  awakening disc in pure black. **`//tsc darkness flash void|white`** (white):
+  the Darkness property fill flashes toward pure black instead of white (its
+  glyph lines keep their usual flash); the black lit disc then flashes in
+  black too.
+- Try it with `//tsc preview mb dark`.
+
 ## 0.19.22 unified Test7.22 — awakening disc as the MB ending; lit disc matches the property disc (Lua only)
 
 - **`//tsc awakening ending on|off`** (default on): when an MB window's ending

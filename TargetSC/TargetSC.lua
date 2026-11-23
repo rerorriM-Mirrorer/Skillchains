@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.22-unified-test7.22'
+_addon.version='0.19.23-unified-test7.23'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -327,8 +327,12 @@ local function help()
         {'awakening fade until default|open|close|<1-9>','When the white disc finishes fading: as before, as the window opens, at window end, or N s after it opens.'},
         {'lit on|off | lit level1|level2 on|off | lit level3 light|on|off','Lit disc under a link\'s property disc: one side lit like the disc lighting the ground (default on, level 1; level3 light = Light skillchains only).'},
         {'lit shape half|firm|quarter | lit start both|one','Lit part: soft half (default), firm half, or a quarter; flash in with both sides white (default) or only the lit side.'},
+        {'lit light white|mix | lit darkness black|mix','Level-3 lit disc color: Light = its white center or the average of its colors; Darkness = pure black or the average.'},
+        {'darkness awakening void|white | darkness flash void|white','Level-3 Darkness: black awakening disc; property fill flashes toward black instead of white (default white, white).'},
+        {'darkness under on|off | opacity|size|spin|cycle|depth <n>','Umbra\'s Gravitation/Distortion disc under the Darkness disc (on; .6 absolute, 1.3, 2, 3 s, .006).'},
+        {'darkness under direction same|reverse | fade <center> <edge>','Its turn direction (same) and center/edge opacity (1 0).'},
         {'lit bursts on|off','The lit disc takes the property fill\'s own final colors, every flash included (default on); off = the plain property color.'},
-        {'awakening ending on|off | <level1|level2|level3|radiance|umbra> on|off','White awakening disc at full opening size just under the descending MB ring, fading with it (default on; umbra off).'},
+        {'awakening ending on|off | <level1|level2|level3|radiance|umbra> on|off','White awakening disc at full opening size just under the descending MB ring, fading with it (default on, umbra included).'},
         {'awakening ending opacity|curve|gap <n>','Absolute opacity it reaches as the ring meets the ground glyph (1, NOT x addon opacity); ease-out power (3); below the ring (.005).'},
         {'lit flash|spin|cycle <number>','White-to-color seconds (.4); turn x the property disc (2); seconds per swap of the lit side (0 = no swap).'},
         {'lit size|opacity|depth <number> | lit fade <inner> <outer>','Size x property fill (1); opacity 0-1, NOT x addon opacity (.6); depth under the property disc (.003); center/edge (1 1).'},
@@ -431,6 +435,11 @@ local function status()
         tostring(settings.awakening_ending),tostring(settings.awakening_ending_level1),tostring(settings.awakening_ending_level2),
         tostring(settings.awakening_ending_level3),tostring(settings.awakening_ending_radiance),tostring(settings.awakening_ending_umbra),
         settings.awakening_ending_opacity,settings.awakening_ending_curve,settings.awakening_ending_gap)) -- Test7.22
+    say(('lit light=%s darkness=%s; darkness awakening void=%s flash void=%s under=%s opacity=%.2f size=%.2f spin=%.2f %s cycle=%.2fs depth=%.3f fade=%.2f/%.2f'):format(
+        tostring(settings.lit_light),tostring(settings.lit_darkness),tostring(settings.darkness_awakening_void),tostring(settings.darkness_flash_void),
+        tostring(settings.darkness_under),settings.darkness_under_opacity,settings.darkness_under_size,settings.darkness_under_spin,
+        tostring(settings.darkness_under_direction),settings.darkness_under_cycle,settings.darkness_under_depth,
+        settings.darkness_under_center,settings.darkness_under_edge)) -- Test7.23
     say(('lit=%s bursts=%s L1=%s L2=%s L3=%s(light only=%s) shape=%s start=%s flash=%.2fs spin=%.2f cycle=%.2fs size=%.2f opacity=%.2f fade=%.2f/%.2f depth=%.3f'):format(
         tostring(settings.lit),tostring(settings.lit_bursts),tostring(settings.lit_level1),tostring(settings.lit_level2),tostring(settings.lit_level3),tostring(settings.lit_level3_light),
         tostring(settings.lit_shape),tostring(settings.lit_start),settings.lit_flash,settings.lit_spin,settings.lit_cycle,

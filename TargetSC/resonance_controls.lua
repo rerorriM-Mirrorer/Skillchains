@@ -500,6 +500,39 @@ function M.new(settings,defaults,save,say,killala,cioara)
             end
         elseif command=='opener'then opener(args,value)
         elseif command=='discs'then discs(args,value)
+        elseif command=='darkness'then
+            -- Test7.23 level-3 Darkness looks (resonance_motion darkness_* defaults).
+            local arg=(args[2]or ''):lower()
+            local usage='Use //tsc darkness awakening void|white | flash void|white | under on|off | under opacity|size|spin|cycle|depth <n> | '..
+                'under direction same|reverse | under fade <center 0-1> <edge 0-1>.'
+            if value=='awakening'or value=='flash'then
+                if arg=='void'or arg=='white'then
+                    settings['darkness_'..value..'_void']=arg=='void';save(settings);say('Darkness '..value..' '..arg..'.')
+                else say(usage)end
+            elseif value=='under'then
+                local n=args[3]
+                if arg=='opacity'then numeric('darkness_under_opacity',n,{0,1},'darkness under opacity')
+                elseif arg=='size'then numeric('darkness_under_size',n,{.2,3},'darkness under size')
+                elseif arg=='spin'then numeric('darkness_under_spin',n,{-6,6},'darkness under spin')
+                elseif arg=='cycle'then numeric('darkness_under_cycle',n,{.1,30},'darkness under cycle')
+                elseif arg=='depth'then numeric('darkness_under_depth',n,{0,.05},'darkness under depth')
+                elseif arg=='direction'then
+                    local v=(n or ''):lower()
+                    if v=='same'or v=='reverse'then settings.darkness_under_direction=v;save(settings);say('Darkness under direction '..v..'.')
+                    else say(usage)end
+                elseif arg=='fade'then
+                    local c,e=tonumber(args[3]),tonumber(args[4])
+                    if not c or not e or c<0 or c>1 or e<0 or e>1 then say(usage);return true end
+                    settings.darkness_under_center,settings.darkness_under_edge=c,e;save(settings)
+                    say(('Darkness under fade %.2f %.2f.'):format(c,e))
+                elseif not toggle('darkness_under',arg,'Darkness under disc')then say(usage)end
+            else say(usage)end
+        elseif command=='lit'and (value=='light'or value=='darkness')then
+            -- Test7.23: level-3 lit disc colors.
+            local arg=(args[2]or ''):lower()
+            local ok=value=='light'and (arg=='white'or arg=='mix')or value=='darkness'and (arg=='black'or arg=='mix')
+            if ok then settings['lit_'..value]=arg;save(settings);say('Lit disc '..value..' '..arg..'.')
+            else say(value=='light'and 'Use //tsc lit light white|mix.'or 'Use //tsc lit darkness black|mix.')end
         elseif command=='lit'then
             -- Test7.21 lit disc (resonance_motion lit_* defaults).
             local usage='Use //tsc lit on|off | level1|level2 on|off | level3 light|on|off | bursts on|off | shape half|firm|quarter | start both|one | '..

@@ -10,7 +10,7 @@ local function alpha(c)return math.floor(c/16777216)end
 local function rgb(c)return c%16777216 end
 local d=R.defaults
 assert(d.awakening_ending==true and d.awakening_ending_level1 and d.awakening_ending_level2 and d.awakening_ending_level3
-    and d.awakening_ending_radiance==true and d.awakening_ending_umbra==false,'stage defaults')
+    and d.awakening_ending_radiance==true and d.awakening_ending_umbra==true,'stage defaults')
 assert(d.awakening_ending_opacity==1 and d.awakening_ending_curve==3 and d.awakening_ending_gap==.005,'tunable defaults')
 assert(d.lit_level3_light==true,'lit level3 light default')
 local function link(prop,level)return {id=71,revision=2,created=100,sc_open=103,sc_close=108,mb_close=110,step=2,level=level,
@@ -62,7 +62,8 @@ for _,ending in ipairs({'soft','converge'})do
     local l2=copy(o);l2.awakening_ending_level2=false
     assert(#role(frame(link('Fusion',2),109,l2),'awakening-end')==0 and #role(frame(link('Fusion',2),109,o),'awakening-end')==1,ending..' level2 toggle')
     assert(#role(frame(link('Radiance',4),109,o),'awakening-end')==1,ending..' radiance on')
-    assert(#role(frame(link('Umbra',4),109,o),'awakening-end')==0,ending..' umbra off')
+    local uo=copy(o);uo.awakening_ending_umbra=false;uo.umbra_collapse=false
+    assert(#role(frame(link('Umbra',4),109,uo),'awakening-end')==0,ending..' umbra off')
     local um=copy(o);um.awakening_ending_umbra=true;um.umbra_collapse=false
     assert(#role(frame(link('Umbra',4),109,um),'awakening-end')==1,ending..' umbra on')
     -- Classic MB style: not drawn.
