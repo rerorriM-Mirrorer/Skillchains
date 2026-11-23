@@ -1,5 +1,29 @@
 # TargetSC — elemental resonance
 
+## 0.19.24 unified Test7.24 — new DLL 0.14.0: level-2 lit disc, Light under disc (close every client to install)
+
+- **New `libs/_TargetSC.dll` (native 0.14.0).** Close every FFXI client before
+  copying it over. It adds a "sliced center" for gradient discs: a clear part
+  stays clear all the way to the middle, and the lit parts fade from the
+  center out to the edge.
+- **`//tsc lit level2 on`**: level-2 links get their own lit disc: the property
+  disc's two colors as two lit quarters, each fading toward its clear
+  neighbors and toward the edge (more opaque at the center). No color
+  cycling. **`//tsc lit2 shape opposite|half`** (opposite): the two colored
+  quarters facing each other, or side by side as one half.
+  **`lit2 opacity <0-1>`** (.6, the real opacity), **`size`** (1),
+  **`spin`** (2), **`depth`** (.003), **`fade <center> <edge>`** (1 0). Its
+  white flash-in follows `lit start` and `lit flash`.
+- **`//tsc lit sliced on|off`** (off): the level-1 and level-3 lit discs fade
+  the same way (clear side clear to the middle, edges fading with `lit fade`).
+- **`//tsc light under on|off`** (on): level-3 Light gets an under disc like
+  Darkness, in Fusion/Fragmentation. Every value follows the matching
+  `darkness under` value until you set its own:
+  **`light under opacity|size|spin|cycle|depth <n|same>`**,
+  **`light under direction same|reverse|darkness`**,
+  **`light under fade <center|same> <edge|same>`**.
+- Try it with `//tsc preview mb` (level 2 at 17 s) and `//tsc preview mb light`.
+
 ## 0.19.23 unified Test7.23 — level-3 lit discs, Darkness looks (Lua only)
 
 - **Awakening ending** now on for Umbra too by default

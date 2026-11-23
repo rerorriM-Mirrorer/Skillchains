@@ -527,6 +527,41 @@ function M.new(settings,defaults,save,say,killala,cioara)
                     say(('Darkness under fade %.2f %.2f.'):format(c,e))
                 elseif not toggle('darkness_under',arg,'Darkness under disc')then say(usage)end
             else say(usage)end
+        elseif command=='lit2'then
+            -- Test7.24 level-2 lit disc.
+            local arg=(args[2]or ''):lower()
+            local usage='Use //tsc lit2 shape opposite|half | opacity <0-1> | size <0.2-3> | spin <-6-6> | depth <0-0.05> | fade <center 0-1> <edge 0-1>.'
+            if value=='shape'then
+                if arg=='opposite'or arg=='half'then settings.lit2_shape=arg;save(settings);say('Level-2 lit disc '..arg..'.')else say(usage)end
+            elseif value=='opacity'then numeric('lit2_opacity',args[2],{0,1},'lit2 opacity')
+            elseif value=='size'then numeric('lit2_size',args[2],{.2,3},'lit2 size')
+            elseif value=='spin'then numeric('lit2_spin',args[2],{-6,6},'lit2 spin')
+            elseif value=='depth'then numeric('lit2_depth',args[2],{0,.05},'lit2 depth')
+            elseif value=='fade'then
+                local c,e=tonumber(args[2]),tonumber(args[3])
+                if not c or not e or c<0 or c>1 or e<0 or e>1 then say(usage);return true end
+                settings.lit2_inner,settings.lit2_outer=c,e;save(settings);say(('Level-2 lit disc fade %.2f %.2f.'):format(c,e))
+            else say(usage)end
+        elseif command=='lit'and value=='sliced'then
+            if not toggle('lit_sliced',(args[2]or ''):lower(),'Lit disc sliced center')then say('Use //tsc lit sliced on|off.')end
+        elseif command=='light'and value=='under'then
+            -- Test7.24 light under: 'same' = follow the darkness under value.
+            local arg=(args[2]or ''):lower()
+            local usage='Use //tsc light under on|off | opacity|size|spin|cycle|depth <n|same> | direction same|reverse|darkness | fade <center|same> <edge|same>.'
+            local ranges={opacity={0,1},size={.2,3},spin={-6,6},cycle={.1,30},depth={0,.05}}
+            if ranges[arg]then
+                if (args[3]or ''):lower()=='same'then settings['light_under_'..arg]=-1;save(settings);say('light under '..arg..': same as darkness under.')
+                else numeric('light_under_'..arg,args[3],ranges[arg],'light under '..arg)end
+            elseif arg=='direction'then
+                local v=(args[3]or ''):lower()
+                if v=='same'or v=='reverse'or v=='darkness'then settings.light_under_direction=v;save(settings);say('Light under direction '..v..'.')
+                else say(usage)end
+            elseif arg=='fade'then
+                local function val(x)if (x or ''):lower()=='same'then return -1 end local n=tonumber(x)if n and n>=0 and n<=1 then return n end end
+                local c,e=val(args[3]),val(args[4])
+                if not c or not e then say(usage);return true end
+                settings.light_under_center,settings.light_under_edge=c,e;save(settings);say('Light under fade '..tostring(args[3])..' '..tostring(args[4])..'.')
+            elseif not toggle('light_under',arg,'Light under disc')then say(usage)end
         elseif command=='lit'and (value=='light'or value=='darkness')then
             -- Test7.23: level-3 lit disc colors.
             local arg=(args[2]or ''):lower()

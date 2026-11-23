@@ -84,7 +84,10 @@ struct Disc {float radius=0,offset=0,rotation=0;DWORD color=0;int glyph=0;
     float dx=0,dy=0; // 0.12.0 sideways shift
     // 0.13.0: optional half-plane clip of the glyph lines and rim (SC kill
     // halves): keep points p with p.x*clip_x+p.y*clip_y >= 0 (east/north).
-    int has_clip=0;float clip_x=0,clip_y=0;};
+    int has_clip=0;float clip_x=0,clip_y=0;
+    // 0.14.0: sliced center (arg 18): each gradient fan slice's center corner
+    // takes that slice's own color instead of one shared averaged center.
+    int sliced=0;};
 // 0.11.0: a 3D glyph (24 property-glyph segments, optional circle) for the
 // Umbra endings; geometry in PropertyGeometry.h (glyph3_*).
 constexpr int kMaxGlyphs3=4;
@@ -881,10 +884,17 @@ void emit_disc(Position const& base,Disc const& disc,D3DVIEWPORT8 const& viewpor
         const DWORD center=targetsc::scale_alpha(raw_center,disc.inner);
         DWORD mid[ring_slices_]{};
         for(int i=0;i<ring_slices_;++i)mid[i]=targetsc::radial_mid(raw_center,rim[i],disc.mid_pos,disc.mid);
+        DWORD raw_rim[ring_slices_]{};
+        for(int i=0;i<ring_slices_;++i)raw_rim[i]=rim[i];
         for(int i=0;i<ring_slices_;++i)rim[i]=targetsc::scale_alpha(rim[i],disc.outer);
         for(int i=0;i<ring_slices_;++i) {
             const int n=(i+1)%ring_slices_;
-            slice(i,n,center,rim[i],rim[n],mid[i],mid[n]);
+            if(disc.sliced) {
+                // 0.14.0: this slice's own center color (and middle stop from it).
+                const DWORD own=targetsc::sliced_center(packed,disc.sectors,i,ring_slices_);
+                slice(i,n,targetsc::scale_alpha(own,disc.inner),rim[i],rim[n],
+                    targetsc::radial_mid(own,raw_rim[i],disc.mid_pos,disc.mid),targetsc::radial_mid(own,raw_rim[n],disc.mid_pos,disc.mid));
+            } else slice(i,n,center,rim[i],rim[n],mid[i],mid[n]);
         }
     } else if(disc.glyph!=2 && (disc.color>>24))for(int i=0;i<ring_slices_;++i) {
         const int n=(i+1)%ring_slices_;
@@ -1178,6 +1188,12 @@ int __cdecl lua_disc(lua_State* L) {
             d.has_clip=1;d.clip_x=static_cast<float>(std::cos(clip));d.clip_y=static_cast<float>(std::sin(clip));
         }
     }
+    // 0.14.0: optional arg 18 = sliced center (0/1). Pass arg 17 outside
+    // +-1e6 (e.g. 1e9) for no clip.
+    if(argc>=18) {
+        const double sliced=g_lua.tonumber(L,18);
+        if(sliced==1)g_pending.discs[g_pending.disc_count-1].sliced=1;
+    }
     return 0;
 }
 // 0.11.0 native.glyph(radius,height,rotation,color,tilt,stand,lift,sink,pull,
@@ -1222,11 +1238,11 @@ int __cdecl lua_commit(lua_State*) {
     g_pending.tick=GetTickCount();
     AcquireSRWLockExclusive(&g_frame_lock);g_frame=g_pending;ReleaseSRWLockExclusive(&g_frame_lock);return 0;
 }
-int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.13.0");return 1;}
+int __cdecl lua_version(lua_State* L){g_lua.pushstring(L,"0.14.0");return 1;}
 int __cdecl lua_status(lua_State* L) {
     char bus[224]{},report[768]{};scenehook_describe(g_bus,g_bus_slot,bus,sizeof(bus));
     Frame f{};AcquireSRWLockShared(&g_frame_lock);f=g_frame;ReleaseSRWLockShared(&g_frame_lock);
-    std::snprintf(report,sizeof(report),"TargetSC 0.13.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
+    std::snprintf(report,sizeof(report),"TargetSC 0.14.0 %s; glyph=traced; frames=%ld draws=%ld device=%s entity_array=%s tracking_failures=%ld state_failures=%ld rings=%d discs=%d entity=%lu/index=%lu | %s",
         g_status,g_frames,g_draws,d3d_device_?"ready":"pending",g_entity_array?"ready":"pending",
         g_tracking_failures,g_state_failures,f.count,f.disc_count,static_cast<unsigned long>(f.id),static_cast<unsigned long>(f.index),bus);
     g_lua.pushstring(L,report);return 1;

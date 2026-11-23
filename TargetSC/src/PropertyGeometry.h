@@ -40,6 +40,12 @@ inline std::uint32_t gradient_at(std::uint32_t const* palette,int sectors,float 
     t=t*t*(3.f-2.f*t);
     return lerp_argb(palette[k],palette[(k+1)%sectors],t);
 }
+// Native 0.14.0 sliced center: the center corner of fan slice i (between rim
+// vertices i and i+1) takes that slice's own gradient color, so a clear
+// sector stays clear all the way in and lit sectors fade center -> rim.
+inline std::uint32_t sliced_center(std::uint32_t const* palette,int sectors,int slice,int slices) {
+    return gradient_at(palette,sectors,static_cast<float>(slice)+.5f,slices);
+}
 inline std::uint32_t gradient_color(std::uint32_t const* palette,int sectors,int slice,int slices) {
     return gradient_at(palette,sectors,static_cast<float>(slice)+.5f,slices);
 }

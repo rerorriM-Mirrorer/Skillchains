@@ -1,3 +1,17 @@
+# Building and verifying TargetSC 0.14.0 / unified Test7.24
+
+Native API 0.14.0: `native.disc` takes an optional 18th argument, sliced
+center (1 = on). With a gradient (blend 1) fill, each of the 64 fan slices'
+center corner takes that slice's own gradient color (`targetsc::sliced_center`
+= `gradient_at` at the slice middle) instead of one shared averaged center, so
+a clear sector stays clear to the center and lit sectors fade center -> rim
+with `inner`/`outer`. Pass arg 17 outside +-1e6 (Lua sends 1e9) for no clip.
+Everything else unchanged. Build command unchanged (below); built 2026-11-23
+with Ubuntu's `g++-mingw-w64-i686` 13.2.0 (13-win32), sha256
+`9f86cfb8fe4ecffc570060536b349a4a414d2e27f021cc9ee2fc25073fca0eb9`; PE32, sole
+`luaopen__TargetSC` export, KERNEL32.dll + msvcrt.dll imports (Verified with
+objdump). Close every client before replacing the DLL.
+
 # Building and verifying TargetSC 0.13.0 / unified Test7.20
 
 Native API 0.13.0: the property glyph is 20 lines (the 4 short cap lines that

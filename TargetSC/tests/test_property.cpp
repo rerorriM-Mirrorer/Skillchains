@@ -160,5 +160,24 @@ int main() {
         assert(channel(avg,0)==128 && channel(avg,16)==128 && channel(avg,24)==0xC0);
         assert(targetsc::gradient_color(pal,1,7,64)==pal[0]);
     }
+    {
+        // 0.14.0 sliced center: opposite lit quarters {A,clear,B,clear}. Each
+        // slice's center corner is its own gradient color: full A at the A
+        // sector's middle, clear at the clear sectors' middles (no shared
+        // averaged center), B opposite A.
+        const std::uint32_t A=0xFFFF8000u,B=0xFF000000u,clear=0x00808080u;
+        const std::uint32_t pal[4]={A,clear,B,clear};
+        const int slices=64;
+        auto alpha=[](std::uint32_t c){return c>>24;};
+        // Sector k's pure color sits at slice position k*16+8 (vertex units).
+        assert(targetsc::sliced_center(pal,4,8,slices)>>24>=0xF0u);
+        assert(alpha(targetsc::sliced_center(pal,4,24,slices))<=0x10u);
+        assert((targetsc::sliced_center(pal,4,40,slices)&0xFFFFFFu)<=0x0A0A0Au && alpha(targetsc::sliced_center(pal,4,40,slices))>=0xF0u);
+        assert(alpha(targetsc::sliced_center(pal,4,56,slices))<=0x10u);
+        // Unlike the averaged center (alpha ~ half everywhere).
+        assert(alpha(targetsc::average_color(pal,4))>0x70u && alpha(targetsc::average_color(pal,4))<0x90u);
+        // Matches the rim gradient halfway between the slice's two vertices.
+        for(int i=0;i<slices;++i)assert(targetsc::sliced_center(pal,4,i,slices)==targetsc::gradient_at(pal,4,i+.5f,slices));
+    }
     std::puts("PASS portable property geometry: traced wide cross, diagonal four-point star, central square, transparent line geometry, complete sector coverage");
 }

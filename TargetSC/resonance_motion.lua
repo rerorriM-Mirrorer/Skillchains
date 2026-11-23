@@ -96,7 +96,19 @@ M.defaults={opacity=0.27,scale=2,height=0.66,intensity=0.3,motion='sine',layout=
     darkness_awakening_void=false,darkness_flash_void=false,
     darkness_under=true,darkness_under_opacity=.6,darkness_under_size=1.3,darkness_under_spin=2,
     darkness_under_direction='same',darkness_under_cycle=3,darkness_under_depth=.006,
-    darkness_under_center=1,darkness_under_edge=0,lit_shape='half',lit_start='both',
+    darkness_under_center=1,darkness_under_edge=0,
+    -- Test7.24 light under (level-3 Light, Fusion<->Fragmentation): numbers
+    -- -1 and direction 'darkness' = follow the darkness under setting.
+    light_under=true,light_under_opacity=-1,light_under_size=-1,light_under_spin=-1,light_under_direction='darkness',
+    light_under_cycle=-1,light_under_depth=-1,light_under_center=-1,light_under_edge=-1,
+    -- Test7.24 level-2 lit disc (lit_level2; needs native 0.14.0 for the
+    -- sliced center): lit2_shape opposite (two lit quarters facing each
+    -- other, one per property color) | half (side by side); opacity
+    -- absolute 0-1; size x property fill; spin x property disc; depth under
+    -- it; inner/outer = center/edge. Flash-in follows lit_start/lit_flash.
+    -- lit_sliced: the level-1/3 lit disc uses the sliced center too.
+    lit2_shape='opposite',lit2_opacity=.6,lit2_size=1,lit2_spin=2,lit2_depth=.003,lit2_inner=1,lit2_outer=0,
+    lit_sliced=false,lit_shape='half',lit_start='both',
     lit_bursts=true,lit_flash=.4,lit_spin=2,lit_cycle=0,lit_size=1,lit_opacity=.6,lit_inner=1,lit_outer=1,lit_depth=.003,
     -- Test7.22 awakening ending: in each MB window's ending the white awakening
     -- disc returns at its full opening size (radius x .96 x awakening_size),
@@ -2351,6 +2363,27 @@ function M.frame(model,s,now,radius,height,opts,context)
                 local c=mix(avg,flash_tone,white_k)
                 local a=clamp(option(opts,'lit_opacity'),0,1)*life
                 local both=option(opts,'lit_start')=='both'and white_k or 0
+                if s.level==2 then
+                    -- Test7.24 level 2: the property's two colors as two lit
+                    -- quarters (opposite: facing each other; half: side by side),
+                    -- the other two clear; sliced center (native 0.14.0) so each lit
+                    -- quarter fades toward its clear neighbors and toward the edge.
+                    local c1=mix(source[1],flash_tone,white_k)
+                    local c2=mix(source[#source],flash_tone,white_k)
+                    local a2=clamp(option(opts,'lit2_opacity'),0,1)*life
+                    local rest=a2*both
+                    local function at(col,x)return context.argb(col,x)end
+                    local q
+                    if option(opts,'lit2_shape')=='half'then q={at(c1,a2),at(c2,a2),at(c2,rest),at(c1,rest)}
+                    else local m=mix(c1,c2,.5)q={at(c1,a2),at(m,rest),at(c2,a2),at(m,rest)}end
+                    local r=min(100,radius*.78*fill_size*option(opts,'lit2_size'))
+                    if r>=.01 and a2>.002 then
+                        table.insert(out.discs,lit_mark+1,{radius=r,offset=h-option(opts,'lit2_depth'),
+                            rotation=angle*option(opts,'lit2_spin'),color=q[1],colors=q,glyph=0,outline=0,
+                            role='lit',blend=1,sliced=true,inner=option(opts,'lit2_inner'),outer=option(opts,'lit2_outer')})
+                    end
+                    a=0 -- the level-1 shapes below are not drawn
+                end
                 local cycle=option(opts,'lit_cycle')
                 local w=cycle>0 and .5-.5*math.cos(2*pi*t/cycle)or 0
                 local lit1,lit2,rest=a*max(1-w,both),a*max(w,both),a*both
@@ -2364,23 +2397,35 @@ function M.frame(model,s,now,radius,height,opts,context)
                 if r>=.01 and lit1+lit2+rest>.002 then
                     table.insert(out.discs,lit_mark+1,{radius=r,offset=h-option(opts,'lit_depth'),
                         rotation=angle*option(opts,'lit_spin'),color=q[1],colors=q,glyph=0,outline=0,
-                        role='lit',blend=1,inner=option(opts,'lit_inner'),outer=option(opts,'lit_outer')})
+                        role='lit',blend=1,sliced=option(opts,'lit_sliced')or nil,inner=option(opts,'lit_inner'),outer=option(opts,'lit_outer')})
                 end
             end
             -- Test7.23 darkness under: Umbra's under disc beneath the Darkness
             -- property disc (inserted first, so below the lit disc too).
-            if dark_link and j==1 and option(opts,'darkness_under')and life>0 and #out.discs<disc_cap then
-                local grav,dist=property_palette('Gravitation',context),property_palette('Distortion',context)
-                local w=.5-.5*math.cos(2*pi*max(0,now-s.created)/max(.1,option(opts,'darkness_under_cycle')))
+            -- Test7.24 light under: the same for level-3 Light, Fusion<->
+            -- Fragmentation; each light_under_* number -1 (and direction
+            -- 'darkness') = the darkness under value.
+            local light_link=not opener and not terminal and s.level==3 and p=='Light'
+            local under_kind=dark_link and 'darkness'or light_link and 'light'or nil
+            if under_kind and j==1 and option(opts,under_kind..'_under')and life>0 and #out.discs<disc_cap then
+                local function u(k)
+                    local v=option(opts,under_kind..'_under_'..k)
+                    if under_kind=='light'and (v==-1 or v=='darkness')then v=option(opts,'darkness_under_'..k)end
+                    return v
+                end
+                local pa,pb='Gravitation','Distortion'
+                if under_kind=='light'then pa,pb='Fusion','Fragmentation'end
+                local ca,cb=property_palette(pa,context),property_palette(pb,context)
+                local w=.5-.5*math.cos(2*pi*max(0,now-s.created)/max(.1,u('cycle')))
                 local mixed={}
-                for i=1,max(#grav,#dist)do mixed[i]=mix(grav[i]or grav[#grav],dist[i]or dist[#dist],w)end
-                local q=packed(mixed,clamp(option(opts,'darkness_under_opacity'),0,1)*life)
-                local r=min(100,radius*.78*fill_size*option(opts,'darkness_under_size'))
+                for i=1,max(#ca,#cb)do mixed[i]=mix(ca[i]or ca[#ca],cb[i]or cb[#cb],w)end
+                local q=packed(mixed,clamp(u('opacity'),0,1)*life)
+                local r=min(100,radius*.78*fill_size*u('size'))
                 if r>=.01 then
-                    table.insert(out.discs,lit_mark+1,{radius=r,offset=h-option(opts,'darkness_under_depth'),
-                        rotation=angle*option(opts,'darkness_under_spin')*(option(opts,'darkness_under_direction')=='reverse'and -1 or 1),
-                        color=q[1],colors=q,glyph=0,outline=0,role='darkness-under',blend=#q>1 and 1 or 0,
-                        inner=option(opts,'darkness_under_center'),outer=option(opts,'darkness_under_edge')})
+                    table.insert(out.discs,lit_mark+1,{radius=r,offset=h-u('depth'),
+                        rotation=angle*u('spin')*(u('direction')=='reverse'and -1 or 1),
+                        color=q[1],colors=q,glyph=0,outline=0,role=under_kind..'-under',blend=#q>1 and 1 or 0,
+                        inner=u('center'),outer=u('edge')})
                 end
             end
         end

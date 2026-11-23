@@ -113,7 +113,7 @@ e.require=function(mod)
 end
 
 setfenv(assert(loadfile('TargetSC/TargetSC.lua')),e)()
-assert(e._addon.name=='TargetSC'and e._addon.version=='0.19.23-unified-test7.23')
+assert(e._addon.name=='TargetSC'and e._addon.version=='0.19.24-unified-test7.24')
 assert(type(e.action_handler)=='function','real action packet listener installed')
 assert(#(handlers.load or{})==2,'both systems register load inside one addon')
 assert(#(handlers['addon command']or{})==1,'only one command dispatcher')
