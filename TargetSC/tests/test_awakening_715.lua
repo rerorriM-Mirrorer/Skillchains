@@ -1,6 +1,7 @@
 -- Test7.15: per-stage awakening disc opacity and fade end; opener arcs'
 -- own converge start. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local M=require('resonance_motion')
 R.native_level=12

@@ -48,7 +48,8 @@ default.display = {text={size=12,font='Consolas'},pos={x=0,y=0},bg={visible=true
 -- The UI is independent of EnemyBar2. The initial position suits a small
 -- client; //tsc sc edit can relocate the bar and learning panel separately.
 default.Resonance = {
-    mode='learn', display='sc', names='full', scale=1, grid=10,
+    mode='learn', display='off', -- Test7.29: HUD ribbons off by default (//tsc sc display sc|mb|both)
+    names='full', scale=1, grid=10,
     animation={enabled=true,intensity=2.0,flare=2.0,glow=2.0,fade=false,fade_period=1/2.4},
     -- Rails + rounded ends share color/flicker. Tier mask defaults to L3/4.
     -- Strengths are multipliers, with no artificial upper bound. Actual
@@ -1174,7 +1175,7 @@ local function handle_sc_command(cmd, ...)
         config.save(settings)
         message('Bar width set to '..opts.bar.width..'.')
     elseif cmd=='default' then
-        opts.display,opts.mode,opts.names,opts.scale='sc','learn','full',1
+        opts.display,opts.mode,opts.names,opts.scale='off','learn','full',1
         opts.grid=10
         opts.animation={enabled=true,intensity=2,flare=2,glow=2,fade=false,fade_period=1/2.4}
         opts.glow={level_mask='L2,L3,L4',rail12=.30,cap12=.35,rail34=.75,cap34=.85,

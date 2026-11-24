@@ -2,6 +2,7 @@
 -- must be the last hit before the defeat message), the model event, the MB
 -- and SC kill animations. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;./?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local now=100
 local sent={}
 local res={spells={[144]={element=1},[150]={element=0}}}

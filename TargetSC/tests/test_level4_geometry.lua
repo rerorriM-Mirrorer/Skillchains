@@ -2,6 +2,7 @@
 -- size): the innermost ring from the collapse ring to gap outside the MB
 -- ring, the outer three spreading from the innermost on the same ease.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

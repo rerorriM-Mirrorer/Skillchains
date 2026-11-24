@@ -1,6 +1,7 @@
 -- Test4.5: level-3 Light/Darkness links: white/black outer strands, four
 -- element colors on the middle strand, MB ring cycling the four colors.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local M=require('resonance_motion')
 local C=require('resonance_controls')

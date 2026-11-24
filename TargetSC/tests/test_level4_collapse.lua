@@ -4,6 +4,7 @@
 -- window opens). Ground rings only. `rings level4 open pop` keeps the earlier
 -- single white ring for .16 s. Levels 1-3 are unchanged.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local M=require('resonance_motion')
 local C=require('resonance_controls')

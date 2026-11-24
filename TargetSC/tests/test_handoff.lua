@@ -4,6 +4,7 @@
 -- `preview off` dims like an untarget; `preview switch` lends a preview to the
 -- first two targets. Simulated native sink and Windower API; no DLL loaded.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local now=0
 os.clock=function()return now end
 local events,messages={}, {}

@@ -2,6 +2,7 @@
 -- and are gone at the ending start; nothing replaces them; no disc flash) and
 -- `umbra burst center black`. Uses A's cioara profile. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 -- Test7.26: pin the earlier MB glyph ending (converge/ground glyph) and Umbra
 -- vanish; the new ring glyph, glyph meet and Umbra shimmer: test_mb_ending_726.lua.

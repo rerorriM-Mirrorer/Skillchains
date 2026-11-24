@@ -4,6 +4,7 @@
 -- hidden and a still, breathing large MB glyph with its own size/opacity/buzz.
 -- Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local M=require('resonance_motion');local B=require('resonance_burst')
 R.native_level=10

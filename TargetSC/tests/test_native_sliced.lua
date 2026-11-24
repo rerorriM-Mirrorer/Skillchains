@@ -3,6 +3,7 @@
 -- plain gradient disc. Simulated native sink and Windower API; no DLL is
 -- loaded. Usage: lua5.1 this [0.13.0|0.14.0]
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local version=arg[1]or '0.14.0'
 local now=0
 os.clock=function()return now end

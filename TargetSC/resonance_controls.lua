@@ -11,9 +11,9 @@ local groups={flutter=strike,strike=strike,
     sky={prefix='sky_',values={expand={0,2},cutoff={.05,1},curve={1,8},hold={0,2},descent={-4,4}}},
     ground={prefix='ground_',values={height={0,1},lift={0,.3}}},fade={prefix='fade_',values={duration={.1,1}}}}
 local disc_limits={opacity={0,1},outline={0,1},height={0,.5},speed={0,4},minimum={0,4},slowdown={.1,4}}
-local presets={default=true,killala=true,cioara=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}
-local preset_names='default|cioara|killala|discson|discsoff|vivid|gentle|legacy'
-function M.new(settings,defaults,save,say,killala,cioara)
+local presets={default=true,classic=true,killala=true,cioara=true,discson=true,discsoff=true,vivid=true,gentle=true,legacy=true}
+local preset_names='default|classic|cioara|killala|discson|discsoff|vivid|gentle|legacy'
+function M.new(settings,defaults,save,say,killala,cioara,base)
     local function numeric(key,value,range,syntax)
         local n=tonumber(value)
         if not n or n~=n or n<range[1]or n>range[2]then
@@ -35,7 +35,9 @@ function M.new(settings,defaults,save,say,killala,cioara)
         for key,v in pairs(defaults)do settings[key]=v end
         -- killala: the exact pre-Test3 2026-10-22 profile (also Cioara's).
         if value=='killala'then for key,v in pairs(killala or {})do settings[key]=v end end
-        -- Test7.12 cioara: A's current look (2026-11-22).
+        -- Test7.29 classic: the Test7.28 defaults, before Cioara's look became default.
+        if value=='classic'then for key,v in pairs(base or {})do settings[key]=v end end
+        -- Test7.12 cioara: A's current look (2026-11-23).
         if value=='cioara'then for key,v in pairs(cioara or {})do settings[key]=v end end
         if value=='discsoff'then settings.discs=false
         elseif value=='vivid'then

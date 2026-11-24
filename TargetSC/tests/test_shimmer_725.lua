@@ -2,6 +2,7 @@
 -- side), lit sliced per property (Darkness, Compression), and the level-2
 -- under disc in the property's own colors. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end
 local function near(a,b,e,m)assert(math.abs(a-b)<=(e or 1e-6),(m or '')..' '..tostring(a)..' ~= '..tostring(b))end

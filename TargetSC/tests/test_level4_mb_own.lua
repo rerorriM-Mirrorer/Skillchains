@@ -1,6 +1,7 @@
 -- Test7.11: own MB flicker depths for Radiance/Umbra (Umbra on top of its
 -- pulse) and the Umbra wobble after the flash-out.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local M=require('resonance_motion')
 local C=require('resonance_controls')

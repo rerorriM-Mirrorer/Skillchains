@@ -2,6 +2,7 @@
 -- three opacity stops, optional glyph-line copies) and the two user-specified
 -- overlap previews (`preview mb light`, `preview mb dark`). Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local P=require('resonance_preview')
 local C=require('resonance_controls')

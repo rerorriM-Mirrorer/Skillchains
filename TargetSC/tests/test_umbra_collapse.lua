@@ -2,6 +2,7 @@
 -- last seconds, slow start then a whoosh; MB ring does not sink; disc stays
 -- opaque) and the floor glyph lift above the black disc. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local M=require('resonance_motion')
 R.native_level=11

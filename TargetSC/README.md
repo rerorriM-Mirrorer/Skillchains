@@ -1,5 +1,20 @@
 # TargetSC — elemental resonance
 
+## 0.19.29 unified Test7.29 — Cioara's look is the default; HUD ribbons off (Lua only)
+
+- **Defaults = Cioara's settings.xml of 2026-11-23** (global + cioara merged;
+  246 of 467 visual values changed, plus `frames full`). `//tsc preset
+  cioara` is the same snapshot.
+- **`//tsc preset classic`**: the Test7.28 defaults, if you want them back.
+- **The Skillchains HUD ribbons are off by default** (`data/skillchains-settings.xml`,
+  `Resonance.display`; `//tsc sc default` also resets to off). Turn them on with
+  `//tsc sc display sc|mb|both`. Learning still runs while they are off.
+- Saved settings win over defaults. A character whose settings.xml already
+  holds the old values keeps them until `//tsc preset default` on that
+  character (or the file is deleted); the same for `//tsc sc display off`.
+- Sharp halves/quarters on the level-2/3 discs: `//tsc discs blend split`
+  (`firm` is Cioara's; `gradient` the even fade).
+
 ## 0.19.28 unified Test7.28 — new DLL 0.16.0: ghost pass (close every client to install)
 
 - **New `libs/_TargetSC.dll` (native 0.16.0).** Close every FFXI client before

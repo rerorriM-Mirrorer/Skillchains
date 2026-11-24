@@ -1,6 +1,7 @@
 -- Test7.2: under disc fades (same size) in the Umbra collapse; glyph copies
 -- may keep spawning until the MB deadline. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local M=require('resonance_motion')
 R.native_level=12

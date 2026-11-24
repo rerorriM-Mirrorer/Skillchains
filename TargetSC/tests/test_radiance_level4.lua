@@ -2,6 +2,7 @@
 -- element-colored inner glow, strong and shifting fast); level-4
 -- (Radiance/Umbra) property disc overrides with a middle point. Simulated.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 R.native_level=10
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

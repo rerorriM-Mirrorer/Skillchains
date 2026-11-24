@@ -1,6 +1,7 @@
 -- Test9: native draw descriptors, source receiver and local previews.
 -- Host simulation only: no DLL or live FFXI rendering.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local Burst=require('resonance_burst')
 local Controls=require('resonance_controls')

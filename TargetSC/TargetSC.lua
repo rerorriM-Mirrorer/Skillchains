@@ -1,6 +1,6 @@
 _addon.name='TargetSC'
 _addon.author='A'
-_addon.version='0.19.28-unified-test7.28'
+_addon.version='0.19.29-unified-test7.29'
 _addon.commands={'tsc','targetsc'}
 
 require('chat')
@@ -12,7 +12,7 @@ local local_bus=require('targetsc_local')
 local sc_runtime
 -- frames: world animation update cadence (not a visual preset value).
 -- classic = previous now+1/30; even = fixed 30 Hz grid; full = every frame.
-local defaults={enabled=true,debug=false,frames='classic'}
+local defaults={enabled=true,debug=false,frames='full'} -- Test7.29: Cioara's frames full
 for key,value in pairs(resonance.defaults)do defaults[key]=value end
 local settings=config.load(defaults)
 -- Test7.18.1: fade-until values saved as bare numbers (1-9) read back from
@@ -348,7 +348,7 @@ local function help()
         {'awakening ending opacity|curve|gap <n>','Absolute opacity it reaches as the ring meets the ground glyph (1, NOT x addon opacity); ease-out power (3); below the ring (.005).'},
         {'lit flash|spin|cycle <number>','White-to-color seconds (.4); turn x the property disc (2); seconds per swap of the lit side (0 = no swap).'},
         {'lit size|opacity|depth <number> | lit fade <inner> <outer>','Size x property fill (1); opacity 0-1, NOT x addon opacity (.6); depth under the property disc (.003); center/edge (1 1).'},
-        {'preset default|cioara|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Test3 look; cioara = Cioara\'s current look (2026-11-22); killala = the old pre-Test3 look.'},
+        {'preset default|classic|cioara|killala|discson|discsoff|vivid|gentle|legacy','Reset visuals. default = Cioara\'s look (2026-11-23); classic = the Test7.28 defaults; cioara = same as default; killala = the old pre-Test3 look.'},
         {'mb glyph height <0-2>','Burst rise of the large glyph as a fraction of the MB ring height; 1 = ring, 0 = old mb rise (default 1.1).'},
         {'mb glyph tint <0-1>','How much the large glyph takes the burst element color; 0 stays white (default 0).'},
         {'mb glyph after fade|fall','After a burst the large glyph stays risen and fades, or falls back as before (default fade).'},
@@ -412,7 +412,7 @@ local function help()
         {'mb ending fade <0-1>','Converge only: seconds the converged ring and glyph take to fade out after the MB deadline (default .4).'},
         {'mb ending blooms fade|linger','fade: blooms go out with the MB ending; linger: blooms carry on past the deadline and fade over mb ending fade (any style).'},
         {'preview self [scenario]','Preview on your own character (also automatic when targeting yourself or nothing).'},
-        {'frames classic|even|full','World animation updates: previous 30 Hz, even 30 Hz steps, or every frame (default classic).'},
+        {'frames classic|even|full','World animation updates: previous 30 Hz, even 30 Hz steps, or every frame (default full).'},
         {'opacity <0-1>','Set translucent ring opacity (default 0.3).'},
         {'scale <0.25-3>','Scale the model-relative rings.'},
         {'intensity <0-4>','Set vibration and flash strength.'},
@@ -531,7 +531,7 @@ local function advance_preview(now)
         if prior~=preview.phase then debug('preview phase '..tostring(preview.phase))end
     end
 end
-local visual_command=controls.new(settings,resonance.defaults,config.save,say,resonance.killala,resonance.cioara)
+local visual_command=controls.new(settings,resonance.defaults,config.save,say,resonance.killala,resonance.cioara,resonance.base)
 local function receive_frame(args)
     local accepted,why=model:receive(args,os.clock())
     if accepted then

@@ -1,6 +1,7 @@
 -- Test7.13: Earth color choices (`earth_color`, `//tsc earth`) and the
 -- Requiescat / Earth MB previews. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end
 

@@ -2,6 +2,7 @@
 -- shimmer, dark back compression + glow spin, opener glow white, A's 04:10
 -- cioara preset. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local B=require('resonance_burst')
 R.native_level=12

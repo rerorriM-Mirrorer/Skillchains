@@ -1,5 +1,15 @@
 ## Current Development Status — 2026-11-23 (America/Chicago)
 
+- Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-lit-disc`. On GitHub through Test7.28 (`c63a4a7`); Test7.29 committed locally on top, delivered as a patch (this session could not attach the repo with push access).
+- installed_base: Test7.28 (`c63a4a7`, Inferred: A's settings.xml carries the 7.28 keys `ghost`/`ghost_level4_lift`). Package `TargetSC-0.19.29-Test7.29.zip` = files changed since `c63a4a7` (Lua only; DLL 0.16.0 unchanged).
+- Live (A, 18:24): wants Cioara's settings as the TargetSC defaults and the Skillchains HUD display off by default; asked how to preview hard-edged level-2/3 discs (existing `//tsc discs blend split`).
+- Changes: Test7.29. `resonance_motion`: `M.cioara` = A's 2026-11-23 XML (global + cioara, enabled/debug dropped); `M.base` = the Test7.28 defaults; `M.defaults` = base overlaid with cioara (246 values change). `//tsc preset classic` (= base). TargetSC.lua `frames` default full. sc_runtime `Resonance.display` default and `sc default` reset = off. Version `0.19.29-unified-test7.29`.
+- Tests: `tests/pin_classic.lua` pins the Test7.28 defaults in place for the 67 frame tests written against them; new `test_defaults_729.lua`.
+- Checks: 93/93 CI lua5.1 invocations PASS (incl. the Skillchains regression against `e095657`). Host only.
+- Pending: Test7.29 in game. Existing settings files keep their saved values: `//tsc preset default` per character to adopt the new look; `//tsc sc display off` where the HUD was saved on.
+
+## Current Development Status — 2026-11-23 (America/Chicago)
+
 - Repo/branch: `rerorriM-Mirrorer/Skillchains` `development/targetsc-lit-disc`. Pushed through Test7.27 (`dbf82ce`); Test7.28 on top. The Wards branch (`development/wards-protect-shell`, native 0.15.1) is NOT on GitHub (another session's patches on `26438f2`); this DLL does not include its arc camera argument.
 - installed_base: Test7.27 (`dbf82ce`, Inferred: A asked for the ghost pass next at 08:21). Package `TargetSC-0.19.28-Test7.28.zip` = files changed since `dbf82ce`, including `libs/_TargetSC.dll` (native 0.16.0; close every client).
 - Live (A, 08:21): wants the ghost pass for pieces below the MB ring only; Radiance/Umbra count the MB ring .003 higher.

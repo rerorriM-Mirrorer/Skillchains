@@ -3,6 +3,7 @@
 -- none; the next link hands the previous disc off over .3 s; the opener is
 -- unchanged; `awakening links off` and preset killala remove it.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

@@ -3,6 +3,7 @@
 -- ring (grows to its size, final opacity/shimmer gain/half-width), and the
 -- Umbra glyph shimmer (wide before the flash, narrow after, own spins).
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local M=require('resonance_motion')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

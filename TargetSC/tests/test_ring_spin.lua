@@ -2,6 +2,7 @@
 -- disc minimum), soft lit side, optional faster glow, MB ring settles onto
 -- the large glyph during the closing pulses; killala restores all.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local M=require('resonance_motion')
 local C=require('resonance_controls')

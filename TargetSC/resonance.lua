@@ -5,6 +5,7 @@ local burst_effect=require('resonance_burst')
 M.defaults=motion.defaults
 M.killala=motion.killala
 M.cioara=motion.cioara
+M.base=motion.base
 M.phase=motion.phase
 local min,max,exp,sin,pi=math.min,math.max,math.exp,math.sin,math.pi
 local function clamp(x,a,b) return max(a,min(b,x)) end

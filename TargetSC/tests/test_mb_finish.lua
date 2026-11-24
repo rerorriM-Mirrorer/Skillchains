@@ -1,6 +1,7 @@
 -- Final tuning pass: analytic motion/opacity and actual command saving.
 -- Host simulation only. No native DLL or live combat.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local Motion=require('resonance_motion')
 local Burst=require('resonance_burst')

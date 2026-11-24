@@ -1,6 +1,7 @@
 -- Test7.9: the level-4 MB ring flickers like the skillchain bar's level 3/4
 -- border instead of breathing (mb level4 flicker|breath, depth).
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

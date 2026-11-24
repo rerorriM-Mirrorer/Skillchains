@@ -6,6 +6,7 @@
 -- fade` (0 = out at the deadline); `mb ending blooms linger` (6.6.2) carries blooms past the deadline,
 -- fading over `mb ending fade` in any style.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 -- Test7.26: pin the earlier MB glyph ending (converge/ground glyph) and Umbra
 -- vanish; the new ring glyph, glyph meet and Umbra shimmer: test_mb_ending_726.lua.

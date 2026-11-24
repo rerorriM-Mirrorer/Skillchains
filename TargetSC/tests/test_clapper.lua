@@ -1,6 +1,7 @@
 -- Test10: analytic clapper motion and original chain with real-property MBs.
 -- Host simulation; no game actions, renderer or source clock changes.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 -- Test7.26: pin the earlier MB glyph ending (converge/ground glyph) and Umbra
 -- vanish; the new ring glyph, glyph meet and Umbra shimmer: test_mb_ending_726.lua.

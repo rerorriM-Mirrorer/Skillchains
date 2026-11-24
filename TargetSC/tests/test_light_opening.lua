@@ -2,6 +2,7 @@
 -- rising to `rings light glow` as it opens; MB ring matches the lowest SC
 -- ring (white, lit side, rotation) while keeping its MB timing.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local M=require('resonance_motion')
 local C=require('resonance_controls')

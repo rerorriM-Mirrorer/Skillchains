@@ -1,6 +1,7 @@
 -- Test7.12: Umbra MB pulse floor/strength, under disc slowing after the
 -- flash-out, black disc white flash, and the cioara preset.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local M=require('resonance_motion')
 local C=require('resonance_controls')

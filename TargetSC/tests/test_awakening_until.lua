@@ -1,6 +1,7 @@
 -- Test3.7: awakening fade until default|open|close|1-9; default identical
 -- to the previous curve; a link fades it out over .3 s without a jump.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

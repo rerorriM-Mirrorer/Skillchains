@@ -1,6 +1,7 @@
 -- Test5.7: Umbra endings (gyro / swallow, native 0.11.0), Umbra disc-glyph
 -- size/opacity, disc shape/steady, core/flicker. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local M=require('resonance_motion')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

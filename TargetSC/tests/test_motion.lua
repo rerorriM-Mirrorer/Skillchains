@@ -1,5 +1,6 @@
 -- Request-level motion/geometry regressions. Pure Lua; no DLL or game rendering.
 package.path='./TargetSC/?.lua;./?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local Motion=require('resonance_motion')
 local Preview=require('resonance_preview')

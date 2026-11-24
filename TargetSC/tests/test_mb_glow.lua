@@ -1,6 +1,7 @@
 -- Test3.4: MB burst glows on the large glyph and lifted trace: lit side,
 -- added spin over each glyph, flicker and width controls; killala restores.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

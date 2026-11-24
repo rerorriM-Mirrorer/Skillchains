@@ -1,6 +1,7 @@
 -- Exercise the actual addon command/lifecycle handlers with a simulated native
 -- sink and Windower API. This does not load a DLL or render a game frame.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local now=0
 local realclock=os.clock os.clock=function()return now end
 local events,messages,commands={}, {}, {}

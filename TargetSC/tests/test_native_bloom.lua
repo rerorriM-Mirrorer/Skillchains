@@ -2,6 +2,7 @@
 -- only to native 0.10.0, and 0.9.0 keeps its 14-argument calls. Simulated
 -- native sink and Windower API; no DLL is loaded. Usage: lua5.1 this [0.9.0]
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local version=arg[1]or '0.10.0'
 local now=0
 os.clock=function()return now end

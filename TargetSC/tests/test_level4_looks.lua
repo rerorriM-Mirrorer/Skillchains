@@ -5,6 +5,7 @@
 -- flash white and vanish (upper set first, outer to inner), leaving faint
 -- black smoke. Per-skillchain opacity overrides. Simulated, not FFXI.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance');local P=require('resonance_preview');local C=require('resonance_controls')
 local M=require('resonance_motion')
 R.native_level=10

@@ -1,6 +1,7 @@
 -- Test3.8: opener arc fade (lead/trail, length, curve, glow follow);
 -- only gapped opener ground/sky rings; killala and fade 0 send nothing new.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end

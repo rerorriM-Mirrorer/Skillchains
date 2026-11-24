@@ -1,6 +1,7 @@
 -- Test3 follow-up: gradient SC rings (ground, sky, glows); openers stay split;
 -- level-2 strands keep their opposite color order.
 package.path='./TargetSC/?.lua;'..package.path
+require('tests.pin_classic') -- Test7.29: Test7.28 defaults
 local R=require('resonance')
 local C=require('resonance_controls')
 local function copy(t)local r={}for k,v in pairs(t)do r[k]=v end return r end
